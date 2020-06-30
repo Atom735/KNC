@@ -268,10 +268,10 @@ Future parseLas(final IsoData iso, final File file) async {
         logError(r'Отсутсвует точка');
         continue lineLoop;
       }
-      if (line.contains('.', i0 + 1)) {
-        logError(r'Две точки на линии');
-        continue lineLoop;
-      }
+      // if (line.contains('.', i0 + 1)) {
+      //   logError(r'Две точки на линии');
+      //   continue lineLoop;
+      // }
       final i1 = line.indexOf(':');
       if (i1 == -1) {
         logError(r'Отсутсвует двоеточие');
@@ -281,10 +281,10 @@ Future parseLas(final IsoData iso, final File file) async {
         logError(r'Двоеточие перед первой точкой');
         continue lineLoop;
       }
-      if (line.contains(':', i1 + 1)) {
-        logError(r'Два двоеточия на линии');
-        continue lineLoop;
-      }
+      // if (line.contains(':', i1 + 1)) {
+      //   logError(r'Два двоеточия на линии');
+      //   continue lineLoop;
+      // }
       final i2 = line.indexOf(' ', i0);
       final mnem = line.substring(0, i0).trim();
       final unit = line.substring(i0 + 1, i2).trim();
