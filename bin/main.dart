@@ -32,6 +32,7 @@ void runIsolate(final IsoData iso) {
   iso.iErrors = 0;
   iso.fErrors = File(iso.pathOut + '/errors/${iso.id}/__.txt')
       .openWrite(mode: FileMode.writeOnly, encoding: utf8);
+  iso.fErrors.writeCharCode(0xFEFF); // BOM
 
   receivePort.listen((final msg) {
     // Прослушивание сообщений полученных от главного изолята
@@ -50,6 +51,7 @@ void runIsolate(final IsoData iso) {
         return;
       }
     } else if (msg is File) {
+      // TODO: Parse File
       if (msg.path.toLowerCase().endsWith('.las')) {
         // futures.add(parseLas(iso, msg));
         return;
@@ -77,7 +79,6 @@ Future<void> main(List<String> args) async {
   final isolate = List<Future<Isolate>>(isoCount);
   // Порт прослушиваемый главным изолятом
   final receivePort = ReceivePort();
-
   // Путь для поиска файлов
   final pathIn = [r'\\NAS\Public\common\Gilyazeev\ГИС\Искринское м-е'];
   // Путь для выходных данных
