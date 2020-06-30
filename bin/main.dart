@@ -186,12 +186,21 @@ Future parseLas(final IsoData iso, final File file) async {
             break lineLoop;
           }
           if (val != wNullN) {
-            if (methodsStrt[iA] == null) {
-              methodsStrt[iA] = e;
-              methodsStrtN[iA] = val;
+            if (iA != 0) {
+              if (methodsStrt[iA] == null) {
+                methodsStrt[iA] = methodsStop[0];
+                methodsStrtN[iA] = methodsStopN[0];
+              }
+              methodsStop[iA] = methodsStop[0];
+              methodsStopN[iA] = methodsStopN[0];
+            } else {
+              if (methodsStrt[iA] == null) {
+                methodsStrt[iA] = e;
+                methodsStrtN[iA] = val;
+              }
+              methodsStop[iA] = e;
+              methodsStopN[iA] = val;
             }
-            methodsStop[iA] = e;
-            methodsStopN[iA] = val;
           }
           iA += 1;
           if (vWrap == 'YES' && iA >= methods.length) {
@@ -384,6 +393,7 @@ Future parseLas(final IsoData iso, final File file) async {
 
   /// ==========================================================================
   if (iErrors == 0) {
+    print([iso.id, wWell, methods, methodsStrt, methodsStop]);
     iso.sendPort
         .send([iso.id, '+las', wWell, methods, methodsStrt, methodsStop]);
 
@@ -443,6 +453,8 @@ Future<void> main(List<String> args) async {
       r'C:\Program Files (x86)\Microsoft Office\root\Office16\Wordconv.exe';
 
   final tasks = <Future>[];
+
+  final listOfLas = [];
 
   if (dirOut.existsSync()) {
     dirOut.deleteSync(recursive: true);
@@ -556,6 +568,7 @@ Future<void> main(List<String> args) async {
           // Обработан LAS файл и данные корректны
           isoTasks[msg[0] - 1] -= 1;
           print('main: sub[${msg[0]}] have ${isoTasks[msg[0] - 1]} tasks');
+          listOfLas.add(msg);
           return;
         } else if (msg[1] == '-las') {
           // Обработан LAS файл, но произошла ошибка
