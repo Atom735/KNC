@@ -108,6 +108,8 @@ void runIsolate(final IsoData iso) {
       if (path.endsWith('.las')) {
         tasks.add(parseLas(iso, msg));
         return;
+      } else if (path.endsWith('.txt')) {
+        tasks.add(parseTxt(iso, msg));
       }
     }
     print('sub[${iso.id}]: recieved unknown msg {$msg}');
@@ -120,6 +122,58 @@ void runIsolate(final IsoData iso) {
   return;
 }
 
+Future parseTxt(final IsoData iso, final File file) async {
+  // Считываем данные файла (Асинхронно)
+  final bytes = await file.readAsBytes();
+  // Подбираем кодировку
+  final cp = getMappingMax(getMappingRaitings(iso.charMaps, bytes));
+  final buffer = String.fromCharCodes(bytes
+      .map((i) => i >= 0x80 ? iso.charMaps[cp][i - 0x80].codeUnitAt(0) : i));
+  // Нарезаем на линии
+  final lines = LineSplitter.split(buffer);
+  var lineNum = 0;
+  var iErrors = 0;
+  Future futureCopyFile;
+
+  var state = '?';
+  String well;
+  String diametr;
+  String angle;
+  String altitude;
+
+  final re1 = RegExp(r'Скважина\s*N\s*(.+)Площадь');
+  final re2 = RegExp(r'Диаметр\s*N\s*(.+)Площадь');
+
+  void logError(final String txt) {
+    if (iErrors == 0) {
+      iso.iErrors += 1;
+      iso.fErrors.writeln(file);
+      final newPath = iso.pathOut + '/errors/${iso.id}/${iso.iErrors}.las';
+      iso.fErrors.writeln('\t$newPath');
+      futureCopyFile = file.copy(newPath);
+    }
+    iErrors += 1;
+    iso.fErrors.writeln('\t[$iErrors]\tСтрока:$lineNum\t$txt');
+  }
+
+  var iA = 0;
+  lineLoop:
+  for (final lineFull in lines) {
+    lineNum += 1;
+    final line = lineFull.trim().toLowerCase();
+    if (line.isEmpty) {
+      // Пустую строку и строк с комментарием пропускаем
+      continue lineLoop;
+    }
+    if (state == '?' && line == r'Замер кривизны'.toLowerCase()) {
+      state = 'A';
+      // Теперь мы точно знаем что мы проверяем фалй с инклинометрией
+      continue lineLoop;
+    }
+    if (state == 'A') {}
+  }
+}
+
 Future parseLas(final IsoData iso, final File file) async {
   // Считываем данные файла (Асинхронно)
   final bytes = await file.readAsBytes();
@@ -130,9 +184,10 @@ Future parseLas(final IsoData iso, final File file) async {
   // Нарезаем на линии
   final lines = LineSplitter.split(buffer);
   var lineNum = 0;
+  var iErrors = 0;
+  Future futureCopyFile;
 
   var section = '';
-  var iErrors = 0;
   String vVers;
   String vWrap;
   String wNull;
@@ -144,7 +199,6 @@ Future parseLas(final IsoData iso, final File file) async {
   String wStep;
   double wStepN;
   String wWell;
-  Future futureCopyFile;
   final methods = <String>[];
   List<String> methodsStrt;
   List<double> methodsStrtN;
