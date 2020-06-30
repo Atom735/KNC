@@ -6,8 +6,6 @@ import 'dart:typed_data';
 
 import 'package:knc/freq_2letters.dart';
 
-
-
 /// Поиск кодировок
 Future<Map<String, List<String>>> loadMappings(final String path) async {
   final map = <String, List<String>>{};
@@ -29,7 +27,8 @@ Future<Map<String, List<String>>> loadMappings(final String path) async {
               map[name][i - 0x80] =
                   String.fromCharCode(int.parse(lineCeils[1]));
             } else {
-              map[name][i - 0x80] = '?';
+              map[name][i - 0x80] =
+                  String.fromCharCode(unicodeReplacementCharacterRune);
             }
           }
         }
