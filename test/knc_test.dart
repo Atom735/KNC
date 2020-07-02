@@ -66,35 +66,38 @@ void main() {
   });
 
   test('doc parse', () async {
-    final pathBin_zip = r'C:\Program Files\7-Zip\7z.exe';
+    const pathBin_zip = r'C:\Program Files\7-Zip\7z.exe';
     // final pathBin_doc2x = r'D:\ARGilyazeev\doc2x_r649\doc2x.exe';
-    final pathBin_doc2x =
+    const pathBin_doc2x =
         r'C:\Program Files (x86)\Microsoft Office\root\Office16\Wordconv.exe';
-    final path2doc = r'test/test.doc';
-    final path2out = r'test/test.docx';
+    const path2doc = r'test/test.doc';
+    const path2out = r'test/doc/test.docx';
+    const path2outDir = r'test/doc/docx';
+    const path2outTxt = r'test/doc/test.txt';
 
-    if (await File(path2out).exists()) {
-      await File(path2out).deleteSync(recursive: true);
-    }
-    if (await Directory('test/test_doc').exists()) {
-      await Directory('test/test_doc').deleteSync(recursive: true);
-    }
-    if (await File('test/test_doc.txt').exists()) {
-      await File('test/test_doc.txt').deleteSync(recursive: true);
-    }
+    await Future.wait([
+      File(path2out)
+          .exists()
+          .then((b) => b ? File(path2out).delete(recursive: true) : null),
+      File(path2outTxt)
+          .exists()
+          .then((b) => b ? File(path2outTxt).delete(recursive: true) : null),
+      Directory(path2outDir).exists().then(
+          (b) => b ? Directory(path2outDir).delete(recursive: true) : null),
+    ]);
 
     await Process.run(pathBin_doc2x, ['-oice', '-nme', path2doc, path2out]);
-    await Process.run(pathBin_zip, ['x', '-otest/test_doc', path2out]);
+    await Process.run(pathBin_zip, ['x', '-o$path2outDir', path2out]);
 
     final data = [];
     String paragraph;
     List<List<List<String>>> data_tbl;
 
-    final out = File('test/test_doc.txt')
-        .openWrite(encoding: utf8, mode: FileMode.writeOnly);
+    final out =
+        File(path2outTxt).openWrite(encoding: utf8, mode: FileMode.writeOnly);
     out.writeCharCode(unicodeBomCharacterRune);
 
-    await for (final e in File('test/test_doc/word/document.xml')
+    await for (final e in File('$path2outDir/word/document.xml')
         .openRead()
         .transform(Utf8Decoder(allowMalformed: true))
         .transform(XmlEventDecoder())) {
@@ -153,10 +156,6 @@ void main() {
                   }
                 }
               }
-            }
-            var tblWidth = 0;
-            for (var i in tblCellWidth) {
-              tblWidth += i + 3;
             }
             out.write(r'╔');
             for (var icc = 0; icc < cells_max; icc++) {
