@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:knc/knc.dart';
+import 'package:knc/xls.dart';
 import 'package:test/test.dart';
 
 import 'package:xml/xml_events.dart';
@@ -65,7 +66,7 @@ void main() {
         .toList());
   });
 
-  test('doc parse', () async {
+  test('doc parse + xlsx', () async {
     const pathBin_zip = r'C:\Program Files\7-Zip\7z.exe';
     // final pathBin_doc2x = r'D:\ARGilyazeev\doc2x_r649\doc2x.exe';
     const pathBin_doc2x =
@@ -96,6 +97,8 @@ void main() {
     final out =
         File(path2outTxt).openWrite(encoding: utf8, mode: FileMode.writeOnly);
     out.writeCharCode(unicodeBomCharacterRune);
+
+    final xls = XlsBuilder(Directory('test/xls/test'));
 
     await for (final e in File('$path2outDir/word/document.xml')
         .openRead()
@@ -204,7 +207,8 @@ void main() {
                 }
               }
             }
-
+            await xls.future;
+            xls.write(data_tbl);
             data_tbl = null;
           }
           if (data_tbl == null) {
@@ -230,6 +234,7 @@ void main() {
         }
       }
     }
+    await xls.complete(pathBin_zip);
     await out.flush();
     await out.close();
   });
