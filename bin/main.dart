@@ -9,25 +9,27 @@ import 'mapping.dart';
 /// Las outer data [$WELL, $METHOD, $STRT, $STOP]
 /// Ink outer data [$WELL, $STRT, $STOP]
 
+List<String> pathToList(final String path) =>
+    path.split(r'\').expand((e) => e.split(r'/')).toList();
+
 Future<ProcessResult> runZip(
-    String path2exe, final String path2arch, final String path2out) {
-  path2exe = path2exe.toLowerCase();
-  if (path2exe.endsWith(r'/7z.exe') || path2exe.endsWith(r'\7z.exe')) {
+    final String path2exe, final String path2arch, final String path2out) {
+  final pathList = pathToList(path2exe.toLowerCase());
+  if (pathList.last == '7z.exe') {
     // 7z <x или e> <архивный файл> -o"<путь, куда распаковываем>"
-    return Process.run(path2exe, ['x', path2arch, '-o$path2out']);
+    return Process.run(path2exe, ['x', '-o$path2out', path2arch]);
   }
   return Future.error(r'Not valid path to 7z.exe');
 }
 
 Future<ProcessResult> runDoc2X(
-    String path2exe, final String path2doc, final String path2out) {
-  path2exe = path2exe.toLowerCase();
-  if (path2exe.endsWith(r'/doc2x.exe') || path2exe.endsWith(r'\doc2x.exe')) {
+    final String path2exe, final String path2doc, final String path2out) {
+  final pathList = pathToList(path2exe.toLowerCase());
+  if (pathList.last == 'doc2x.exe') {
     // [-c | inputfile] [-o outputfile] [-v level] [-?]
     return Process.run(path2exe, [path2doc, '-o', path2out]);
   }
-  if (path2exe.endsWith(r'/wordconv.exe') ||
-      path2exe.endsWith(r'\wordconv.exe')) {
+  if (pathList.last == 'wordconv.exe') {
     // -oice -nme <input file> <output file>
     return Process.run(path2exe, ['-oice', '-nme', path2doc, path2out]);
   }
@@ -56,6 +58,8 @@ class IsoData {
 
   int iErrors; // Количество ошибок
   IOSink fErrors; // Файл для записи ошибок
+  Random
+      randomTemp; // Рандомизатор для создания временных фалов или папок в temp
 
   IsoData(
       final int id,
@@ -72,6 +76,11 @@ class IsoData {
         pathBin_doc2x = pathBin_doc2x;
 }
 
+String getRnadomName(final IsoData iso) =>
+    iso.pathOut +
+    '/temp/${iso.id}/0x' +
+    iso.randomTemp.nextInt(1 << 16).toRadixString(16).padLeft(16, '0');
+
 // ===========================================================================
 void runIsolate(final IsoData iso) {
   // Порт прослушиваемый изолятом
@@ -80,6 +89,8 @@ void runIsolate(final IsoData iso) {
 
   Directory(iso.pathOut + '/errors/${iso.id}').createSync(recursive: true);
   Directory(iso.pathOut + '/las/${iso.id}').createSync(recursive: true);
+  Directory(iso.pathOut + '/temp/${iso.id}').createSync(recursive: true);
+  iso.randomTemp = Random(iso.id);
 
   iso.iErrors = 0;
   iso.fErrors = File(iso.pathOut + '/errors/${iso.id}/__.txt')
@@ -108,8 +119,8 @@ void runIsolate(final IsoData iso) {
       if (path.endsWith('.las')) {
         tasks.add(parseLas(iso, msg));
         return;
-      } else if (path.endsWith('.txt')) {
-        tasks.add(parseTxt(iso, msg));
+      } else if (path.endsWith('.doc')) {
+        tasks.add(parseDoc(iso, msg));
       }
     }
     print('sub[${iso.id}]: recieved unknown msg {$msg}');
@@ -122,56 +133,15 @@ void runIsolate(final IsoData iso) {
   return;
 }
 
-Future parseTxt(final IsoData iso, final File file) async {
-  // Считываем данные файла (Асинхронно)
-  final bytes = await file.readAsBytes();
-  // Подбираем кодировку
-  final cp = getMappingMax(getMappingRaitings(iso.charMaps, bytes));
-  final buffer = String.fromCharCodes(bytes
-      .map((i) => i >= 0x80 ? iso.charMaps[cp][i - 0x80].codeUnitAt(0) : i));
-  // Нарезаем на линии
-  final lines = LineSplitter.split(buffer);
-  var lineNum = 0;
-  var iErrors = 0;
-  Future futureCopyFile;
+Future parseDocX(final IsoData iso, final File file) async {
+  final path = getRnadomName(iso);
+  await runZip(iso.pathBin_zip, file.path, path);
+}
 
-  var state = '?';
-  String well;
-  String diametr;
-  String angle;
-  String altitude;
-
-  final re1 = RegExp(r'Скважина\s*N\s*(.+)Площадь');
-  final re2 = RegExp(r'Диаметр\s*N\s*(.+)Площадь');
-
-  void logError(final String txt) {
-    if (iErrors == 0) {
-      iso.iErrors += 1;
-      iso.fErrors.writeln(file);
-      final newPath = iso.pathOut + '/errors/${iso.id}/${iso.iErrors}.las';
-      iso.fErrors.writeln('\t$newPath');
-      futureCopyFile = file.copy(newPath);
-    }
-    iErrors += 1;
-    iso.fErrors.writeln('\t[$iErrors]\tСтрока:$lineNum\t$txt');
-  }
-
-  var iA = 0;
-  lineLoop:
-  for (final lineFull in lines) {
-    lineNum += 1;
-    final line = lineFull.trim().toLowerCase();
-    if (line.isEmpty) {
-      // Пустую строку и строк с комментарием пропускаем
-      continue lineLoop;
-    }
-    if (state == '?' && line == r'Замер кривизны'.toLowerCase()) {
-      state = 'A';
-      // Теперь мы точно знаем что мы проверяем фалй с инклинометрией
-      continue lineLoop;
-    }
-    if (state == 'A') {}
-  }
+Future parseDoc(final IsoData iso, final File file) async {
+  final path = getRnadomName(iso) + '.docx';
+  await runDoc2X(iso.pathBin_doc2x, file.path, path);
+  return parseDocX(iso, file).then((v) => File(path).delete());
 }
 
 Future parseLas(final IsoData iso, final File file) async {
