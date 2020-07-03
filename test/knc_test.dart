@@ -2,8 +2,11 @@
 import 'dart:cli';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:knc/knc.dart';
+import 'package:knc/las.dart';
+import 'package:knc/mapping.dart';
 import 'package:knc/xls.dart';
 import 'package:test/test.dart';
 
@@ -237,5 +240,20 @@ void main() {
     await xls.complete(pathBin_zip);
     await out.flush();
     await out.close();
+  });
+
+  test('Las files', () async {
+    print('as'[3]);
+    return;
+    final charMaps = await loadMappings(r'mappings');
+    final tasks = <Future>[];
+    await Directory(r'.ag47/las').list(recursive: true).listen((e) {
+      if (e is File && e.path.toLowerCase().endsWith('.las')) {
+        tasks.add(e.readAsBytes().then((final bytes) =>
+            getLasData(UnmodifiableUint8ListView(bytes), charMaps)));
+      }
+    }).asFuture();
+    final outData = await Future.wait(tasks);
+    print(outData);
   });
 }
