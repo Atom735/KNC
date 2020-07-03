@@ -245,7 +245,7 @@ void main() {
   test('Las files', () async {
     final charMaps = await loadMappings(r'mappings');
     final tasks = <Future>[];
-    await Directory(r'.ag47/las').list(recursive: true).listen((e) {
+    await Directory(r'.ag47/').list(recursive: true).listen((e) {
       if (e is File && e.path.toLowerCase().endsWith('.las')) {
         tasks.add(e.readAsBytes().then((final bytes) =>
             LasData(UnmodifiableUint8ListView(bytes), charMaps)));
@@ -253,8 +253,7 @@ void main() {
     }).asFuture();
     final outData = await Future.wait(tasks);
     for (final i in outData) {
-      print((i as LasData).info);
-      print((i as LasData).curves);
+      print((i as LasData).listOfErrors);
     }
   });
 }
