@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
-import 'mapping.dart';
+import 'package:knc/mapping.dart';
 
 /// Las outer data [$WELL, $METHOD, $STRT, $STOP]
 /// Ink outer data [$WELL, $STRT, $STOP]

@@ -4,7 +4,7 @@ import 'dart:math';
 
 import 'dart:typed_data';
 
-import 'package:knc/freq_2letters.dart';
+import 'freq_2letters.dart';
 
 /// Поиск кодировок
 Future<Map<String, List<String>>> loadMappings(final String path) async {
@@ -40,8 +40,8 @@ Future<Map<String, List<String>>> loadMappings(final String path) async {
 }
 
 /// Возвращает актуальность той или иной кодировки
-Map<String, int> getMappingRaitings(
-    final Map<String, List<String>> map, final Uint8List bytes) {
+Map<String, int> getMappingRaitings(final Map<String, List<String>> map,
+    final UnmodifiableUint8ListView bytes) {
   final r = <String, int>{};
   map.forEach((k, v) {
     r[k] = 0;
