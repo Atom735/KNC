@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:knc/ink.dart';
 import 'package:knc/knc.dart';
 import 'package:knc/las.dart';
 import 'package:knc/mapping.dart';
@@ -255,5 +256,55 @@ void main() {
     for (final i in outData) {
       print((i as LasData).listOfErrors);
     }
+  });
+
+  test('parse double', () {
+    print(double.tryParse(r'132.4123 exasd'));
+  });
+
+  test('Ink.txt files', () async {
+    final charMaps = await loadMappings(r'mappings');
+    final tasks = <Future>[];
+    await Directory(r'test/ink').list(recursive: true).listen((e) {
+      if (e is File && e.path.toLowerCase().endsWith('.txt')) {
+        tasks.add(e.readAsBytes().then((final bytes) =>
+            InkData.txt(UnmodifiableUint8ListView(bytes), charMaps)));
+      }
+    }).asFuture();
+    final outData = await Future.wait(tasks);
+    var sink = File(r'test/ink.out')
+        .openWrite(encoding: utf8, mode: FileMode.writeOnly);
+    sink.writeCharCode(unicodeBomCharacterRune);
+    for (final i in outData) {
+      if (i is InkData) {
+        InkData a = i;
+        if (a.listOfErrors.isEmpty) {
+          sink.writeln('''
+---------------------------------------OK---------------------------------------');
+Кодировка у оригинала ${a.encode}
+Скважина N ${a.well}
+Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
+Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
+          for (var line in a.list) {
+            sink.writeln(
+                '\t${line.depthN}\t${line.angleN}\t${line.azimuthN}\t${line.depth}\t${line.angle}\t${line.azimuth}');
+          }
+        } else {
+          sink.writeln('''
+-------------------------------------ERROR--------------------------------------');
+Кодировка у оригинала ${a.encode}
+Скважина N ${a.well}
+Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
+Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
+          for (var line in a.listOfErrors) {
+            sink.writeln('\t${line}');
+          }
+        }
+        sink.writeln(
+            '================================================================================');
+      }
+    }
+    await sink.flush();
+    await sink.close();
   });
 }
