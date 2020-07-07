@@ -79,7 +79,7 @@ class InkData {
               'Некорректный тип для значения градусов/минуты (Угол склонения)');
           return;
       }
-      angleN = double.tryParse(angle);
+      angleN = double.tryParse(angle.substring(0, angle.indexOf(' ')));
       if (angleN == null) {
         logError('Невозможно разобрать значение углас клонения: "$angle"');
         return;
