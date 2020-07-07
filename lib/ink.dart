@@ -254,8 +254,8 @@ class InkData {
       } else if (iseesoo >= 20) {
         if (iseesoo == 20) {
           var s = line.split('|');
-          for (var i in s) {
-            i = i.trim();
+          for (var i = 0; i < s.length; i++) {
+            s[i] = s[i].trim();
           }
           if (s.last.isEmpty) {
             s = s.sublist(0, s.length - 1);
@@ -273,8 +273,8 @@ class InkData {
             continue lineLoop;
           } else {
             var s = line.split('|');
-            for (var i in s) {
-              i = i.trim();
+            for (var i = 0; i < s.length; i++) {
+              s[i] = s[i].trim();
             }
             if (s.last.isEmpty) {
               s = s.sublist(0, s.length - 1);
