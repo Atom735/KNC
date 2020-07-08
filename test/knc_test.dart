@@ -272,15 +272,19 @@ void main() {
       }
     }).asFuture();
     final outData = await Future.wait(tasks);
-    var sink = File(r'test/ink.out')
+    var sink = File(r'test/ink.txt.out')
         .openWrite(encoding: utf8, mode: FileMode.writeOnly);
     sink.writeCharCode(unicodeBomCharacterRune);
     for (final i in outData) {
       if (i is InkData) {
-        InkData a = i;
+        var a = i;
+        if (a.bInkFile != true) {
+          continue;
+        }
+
         if (a.listOfErrors.isEmpty) {
           sink.writeln('''
----------------------------------------OK---------------------------------------');
+---------------------------------------OK---------------------------------------
 Кодировка у оригинала ${a.encode}
 Скважина N ${a.well}
 Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
@@ -291,7 +295,64 @@ void main() {
           }
         } else {
           sink.writeln('''
--------------------------------------ERROR--------------------------------------');
+-------------------------------------ERROR--------------------------------------
+Кодировка у оригинала ${a.encode}
+Скважина N ${a.well}
+Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
+Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
+          for (var line in a.listOfErrors) {
+            sink.writeln('\t${line}');
+          }
+        }
+        sink.writeln(
+            '================================================================================');
+      }
+    }
+    await sink.flush();
+    await sink.close();
+  });
+  test('Ink.docx files', () async {
+    final tasks = <Future>[];
+    await Directory(r'test/ink').list(recursive: true).listen((e) {
+      if (e is File &&
+          e.path.toLowerCase().endsWith('.docx') &&
+          !e.path.startsWith(r'~$')) {
+        const pathBin_zip = r'C:\Program Files\7-Zip\7z.exe';
+        const path2out = r'test/ink/docx';
+
+        tasks.add(Directory(path2out)
+            .exists()
+            .then((b) => b ? Directory(path2out).delete(recursive: true) : null)
+            .then((_) => Process.run(pathBin_zip, ['x', '-o$path2out', e.path]))
+            .then((_) => File('$path2out/word/document.xml').openRead())
+            .then((bytes) => InkData.docx(bytes)));
+      }
+    }).asFuture();
+    final outData = await Future.wait(tasks);
+    var sink = File(r'test/ink.docx.out')
+        .openWrite(encoding: utf8, mode: FileMode.writeOnly);
+    sink.writeCharCode(unicodeBomCharacterRune);
+    for (final i in outData) {
+      if (i is InkData) {
+        var a = i;
+        await a.future;
+        if (a.bInkFile != true) {
+          continue;
+        }
+        if (a.listOfErrors.isEmpty) {
+          sink.writeln('''
+---------------------------------------OK---------------------------------------
+Кодировка у оригинала ${a.encode}
+Скважина N ${a.well}
+Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
+Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
+          for (var line in a.list) {
+            sink.writeln(
+                '\t${line.depthN}\t${line.angleN}\t${line.azimuthN}\t${line.depth}\t${line.angle}\t${line.azimuth}');
+          }
+        } else {
+          sink.writeln('''
+-------------------------------------ERROR--------------------------------------
 Кодировка у оригинала ${a.encode}
 Скважина N ${a.well}
 Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}

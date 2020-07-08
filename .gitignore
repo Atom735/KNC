@@ -25,3 +25,4 @@ doc/api/
 test/doc
 test/xls
 test/*.out
+test/ink/docx
