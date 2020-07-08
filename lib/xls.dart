@@ -64,11 +64,22 @@ class XlsBuilder {
 	</sheetViews>
 	<sheetFormatPr defaultRowHeight="15" x14ac:dyDescent="0.25"/>
 	<cols>
-		<col min="1" max="4" width="9.140625" style="1"/>
-		<col min="5" max="5" width="11.42578125" style="1" customWidth="1"/>
+		<col min="1" max="1" width="12.0" style="1" customWidth="1"/>
+		<col min="2" max="4" width="9.140625" style="1"/>
+		<col min="5" max="5" width="12.0" style="1" customWidth="1"/>
 		<col min="6" max="16384" width="9.140625" style="1"/>
 	</cols>
-	<sheetData>''');
+	<sheetData>
+  <row r="1">
+  <c r="A1"><v>Скважина</v></c>
+  <c r="B1"><v>Год</v></c>
+  <c r="C1"><v>X устья</v></c>
+  <c r="D1"><v>Y устья</v></c>
+  <c r="E1"><v>Альтитуда</v></c>
+  <c r="F1"><v>Наличие инклинометра</v></c>
+  <c r="H1"><v>Методы ГИС</v></c>
+  </row>
+  ''');
               })
             ])),
         // copy(r'data\xl\worksheets\sheet1.xml'),
