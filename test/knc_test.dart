@@ -13,6 +13,8 @@ import 'package:test/test.dart';
 
 import 'package:xml/xml_events.dart';
 
+import 'package:path/path.dart' as p;
+
 void main() {
   test('calculate', () {
     expect(calculate(), 42);
@@ -367,5 +369,87 @@ void main() {
     }
     await sink.flush();
     await sink.close();
+  });
+
+  test('ZipFile', () async {
+    Future<ProcessResult> Function(String path2arch, String path2out)
+        createUnzipperFunc(final String path2bin_7z) =>
+            (final String path2arch, final String path2out) =>
+                Process.run(path2bin_7z, ['x', '-o$path2out', path2arch]);
+
+    final unzipper = createUnzipperFunc(r'C:\Program Files\7-Zip\7z.exe');
+
+    final dirZip = Directory(r'test/zip');
+    if (dirZip.existsSync()) {
+      dirZip.deleteSync(recursive: true);
+    }
+    dirZip.createSync(recursive: true);
+
+    await dirZip.createTemp().then((dirTemp) {
+      print('temp created $dirTemp');
+      return unzipper(r'test/zip.zip', dirTemp.path).then((procResult) {
+        if (procResult.exitCode == 0) {
+          print('unzipper = ok');
+          final tasks = <Future>[];
+          return dirTemp
+              .list(recursive: true, followLinks: false)
+              .listen((entityInZip) {
+                if (entityInZip is File) {
+                  print('entity in zip $entityInZip');
+                  final ext = p.extension(entityInZip.path).toLowerCase();
+                  if (ext == '.zip') {
+                    // TODO: GoTo Recursion
+                    print('2 archive on archive ${entityInZip}');
+                    tasks.add(dirZip.createTemp().then((dirTemp) {
+                      print('2 temp created $dirTemp');
+                      return unzipper(entityInZip.path, dirTemp.path)
+                          .then((procResult) {
+                        if (procResult.exitCode == 0) {
+                          print('2 unzipper = ok');
+                          final tasks = <Future>[];
+                          return dirTemp
+                              .list(recursive: true, followLinks: false)
+                              .listen((entityInZip) {
+                                if (entityInZip is File) {
+                                  print('2 entity in zip $entityInZip');
+                                }
+                              })
+                              .asFuture(tasks)
+                              .then((taskList) {
+                                print('2 all files listed');
+                                return dirTemp
+                                    .delete(recursive: true)
+                                    .then((value) {
+                                  print('2 temp deleted $dirTemp');
+                                });
+                              });
+                        } else {
+                          print('2 unzipper = error ${procResult.exitCode}');
+                          return Future.error(
+                              '2 unzipper = error ${procResult.exitCode}');
+                        }
+                      });
+                    }));
+                    // End of Recursion
+                  }
+                }
+              })
+              .asFuture(tasks)
+              .then((taskList) {
+                print('all files listed');
+                print('waiting for tasks withl listed files');
+                return Future.wait(taskList).then((taskListEnded) {
+                  print('all tasks was ended');
+                  return dirTemp.delete(recursive: true).then((value) {
+                    print('temp deleted $dirTemp');
+                  });
+                });
+              });
+        } else {
+          print('unzipper = error ${procResult.exitCode}');
+          return Future.error('unzipper = error ${procResult.exitCode}');
+        }
+      });
+    });
   });
 }
