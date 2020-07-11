@@ -8,6 +8,7 @@ import 'package:knc/ink.dart';
 import 'package:knc/knc.dart';
 import 'package:knc/las.dart';
 import 'package:knc/mapping.dart';
+import 'package:knc/unzipper.dart';
 import 'package:knc/xls.dart';
 import 'package:test/test.dart';
 
@@ -451,5 +452,49 @@ void main() {
         }
       });
     });
+  });
+
+  test('Unzzipper Lib', () async {
+    var unzipper = Unzipper(r'test/zip', r'C:\Program Files\7-Zip\7z.exe');
+
+    Future listFiles(FileSystemEntity entity) async {
+      if (entity is File) {
+        print(entity);
+        final ext = p.extension(entity.path).toLowerCase();
+        if (ext == '.zip') {
+          return unzipper.unzip(entity.path, listFiles, (list) async {
+            print(list);
+          });
+        }
+      }
+    }
+
+    await unzipper.clear();
+    print(await unzipper.unzip(r'test/zip.zip', listFiles, (list) async {
+      print(list);
+    }));
+  });
+
+  test('Unzzipper Lib Debug', () async {
+    var unzipper = Unzipper(r'test/zip', r'C:\Program Files\7-Zip\7z.exe');
+
+    Future Function(FileSystemEntity entity) listFilesGet(int i) =>
+        (FileSystemEntity entity) async {
+          if (entity is File) {
+            print('$i: $entity');
+            final ext = p.extension(entity.path).toLowerCase();
+            if (ext == '.zip') {
+              return unzipper.unzip(entity.path, listFilesGet(i + 1),
+                  (list) async {
+                print('$i: $list');
+              });
+            }
+          }
+        };
+
+    await unzipper.clear();
+    print(await unzipper.unzip(r'test/zip.zip', listFilesGet(1), (list) async {
+      print(list);
+    }));
   });
 }
