@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Action</title>
+    </head>
+
+    <body>
+        <script>
+            const webSocket = new WebSocket('ws://localhost:4040/echo');
+
+            webSocket.onopen = event => {
+                alert('onopen');
+                webSocket.send("Hello Web Socket!");
+            };
+
+            webSocket.onmessage = event => {
+                alert('onmessage, ' + event.data);
+            };
+
+            webSocket.onclose = event => {
+                alert('onclose');
+            };
+
+
+
+        </script>
+
+    </body>
+
+</html>
