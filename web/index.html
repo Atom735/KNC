@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>title</title>
+</head>
+
+<body>
+    <form action="begin" method="POST" enctype="multipart/form-data">
+        <fieldset id="fieldset">
+            <legend>Пути к файлам/папкам на обработку</legend>
+            <p><input type="text" id="path" name="path"></p>
+            <p><input type="button" value="Добавить ещё одну" onclick="addNewTextInput();"></p>
+        </fieldset>
+        <p><input type="submit" value="Начать обработку"></p>
+    </form>
+
+
+
+    <script>
+        var ff = document.getElementById('fieldset');
+        var ic = 0;
+        function addNewTextInput() {
+            var p = document.createElement('p');
+            var i = document.createElement('input');
+            ic+=1;
+            i.type = 'text';
+            i.name = i.id = 'path'+ic;
+            p.append(i);
+            ff.insertBefore(p, ff.lastElementChild);
+        }
+    </script>
+
+</body>
+
+</html>
