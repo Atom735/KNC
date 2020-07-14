@@ -27,6 +27,11 @@ Future main(List<String> args) async {
   // Путь для выходных данных
   var pathOut = r'.ag47';
 
+  String pathOutLas;
+  String pathOutInk;
+  String pathOutErrors;
+  IOSink errorsOut;
+
   print('Search 7zip and WordConv');
 
   String pathBin_zip;
@@ -83,16 +88,138 @@ Future main(List<String> args) async {
 
   var websockets = <WebSocket>[];
 
+  Future newWebConnection(final HttpResponse response) {
+    response.headers.contentType = ContentType.html;
+    response.statusCode = HttpStatus.ok;
+    return response.addStream(File(r'web/action.html').openRead());
+  }
+
+  Future<void> sendSettingsPage(final HttpResponse response) async {
+    response.headers.contentType = ContentType.html;
+    response.statusCode = HttpStatus.ok;
+    var data = await File(r'web/index.html').readAsString();
+    var i0 = 0;
+    var i1 = data.indexOf(r'${{');
+    while (i1 != -1) {
+      response.write(data.substring(i0, i1));
+      i0 = data.indexOf(r'}}', i1);
+      var name = data.substring(i1 + 3, i0);
+      switch (name) {
+        case 'ssPathOut':
+          response.write(pathOut);
+          break;
+        case 'ssPath7z':
+          response.write(pathBin_zip);
+          break;
+        case 'ssPathWordconv':
+          response.write(pathBin_doc2x);
+          break;
+        case 'charMaps':
+          charMaps.forEach((key, value) {
+            response.write('<li>$key</li>');
+          });
+          break;
+        default:
+          response.write('[UNDIFINED NAME]');
+      }
+      i0 += 2;
+      i1 = data.indexOf(r'${{', i0);
+    }
+    response.write(data.substring(i0));
+  }
+
+  Future<bool> workInit(final String content) async {
+    print(content);
+    print('parse content');
+    final map = <String, String>{};
+    if (content.startsWith('--')) {
+      final contentList = LineSplitter().convert(content);
+      final bound = contentList[0];
+      var bounded = true;
+      var data = <String>[];
+      var dataname = '';
+      for (var line in contentList) {
+        if (line == bound) {
+          bounded = true;
+          if (data.isNotEmpty) {
+            map[dataname] = data.join('\n').trim();
+            data.clear();
+          }
+        } else if (bounded) {
+          if (line.toLowerCase().startsWith('content-disposition')) {
+            final i0 = line.toLowerCase().indexOf('name=');
+            if (i0 == -1) {
+              return false;
+            }
+            final i1 = line.indexOf('"', i0 + 5);
+            dataname = line.substring(i1 + 1, line.indexOf('"', i1 + 1));
+          } else {
+            if (line.isEmpty) {
+              bounded = false;
+            }
+          }
+        } else {
+          data.add(line);
+        }
+      }
+    } else {
+      return false;
+    }
+
+    if (map['ssPathOut'] != null) {
+      pathOut = map['ssPathOut'];
+    }
+    if (map['ssPath7z'] != null) {
+      pathBin_zip = map['ssPath7z'];
+    }
+    if (map['ssPathWordconv'] != null) {
+      pathBin_doc2x = map['ssPathWordconv'];
+    }
+    pathInList.clear();
+    for (var i = 0; map['path$i'] != null; i++) {
+      pathInList.add(map['path$i']);
+    }
+
+    print('work init');
+    pathOutLas = p.join(pathOut, 'las');
+    pathOutInk = p.join(pathOut, 'ink');
+    pathOutErrors = p.join(pathOut, 'errors');
+
+    final dirOut = Directory(pathOut);
+    if (await dirOut.exists()) {
+      await dirOut.delete(recursive: true);
+    }
+    await dirOut.create(recursive: true);
+    await Future.wait([
+      Directory(pathOutLas).create(recursive: true),
+      Directory(pathOutErrors).create(recursive: true),
+      Directory(pathOutErrors).create(recursive: true)
+    ]);
+
+    errorsOut = File(p.join(pathOutErrors, '.errors.txt'))
+        .openWrite(encoding: utf8, mode: FileMode.writeOnly);
+    errorsOut.writeCharCode(unicodeBomCharacterRune);
+
+    print('start working');
+    runing = true;
+    return true;
+  }
+
   await for (var req in server) {
     // final contentType = req.headers.contentType;
     final response = req.response;
     if (req.uri.path == '/ws') {
       var socket = await WebSocketTransformer.upgrade(req);
       websockets.add(socket);
+      print('WS: socket(${socket.hashCode}) opened ');
       socket.listen((event) {
         print('WS: $event');
+      }, onDone: () {
+        print('WS: socket(${socket.hashCode}) closed');
+        websockets.remove(socket);
       });
       socket.add('Hello by Dart!');
+      socket.add('$websockets');
       continue;
     } else if (req.uri.path == '/main.dart.js') {
       response.headers.contentType = ct_JS;
@@ -103,49 +230,17 @@ Future main(List<String> args) async {
       response.statusCode = HttpStatus.ok;
       await response.addStream(File(r'web/main.dart.js.map').openRead());
     } else if (runing) {
-      response.headers.contentType = ContentType.html;
-      response.statusCode = HttpStatus.ok;
-      await response.addStream(File(r'web/action.html').openRead());
+      await newWebConnection(response);
     } else {
       final content = await utf8.decoder.bind(req).join();
       if (content.isNotEmpty) {
-        runing = true;
-
-        response.headers.contentType = ContentType.html;
-        response.statusCode = HttpStatus.ok;
-        await response.addStream(File(r'web/action.html').openRead());
-      } else {
-        response.headers.contentType = ContentType.html;
-        response.statusCode = HttpStatus.ok;
-        var data = await File(r'web/index.html').readAsString();
-        var i0 = 0;
-        var i1 = data.indexOf(r'${{');
-        while (i1 != -1) {
-          response.write(data.substring(i0, i1));
-          i0 = data.indexOf(r'}}', i1);
-          var name = data.substring(i1 + 3, i0);
-          switch (name) {
-            case 'ssPathOut':
-              response.write(pathOut);
-              break;
-            case 'ssPath7z':
-              response.write(pathBin_zip);
-              break;
-            case 'ssPathWordconv':
-              response.write(pathBin_doc2x);
-              break;
-            case 'charMaps':
-              charMaps.forEach((key, value) {
-                response.write('<li>$key</li>');
-              });
-              break;
-            default:
-              response.write('[UNDIFINED NAME]');
-          }
-          i0 += 2;
-          i1 = data.indexOf(r'${{', i0);
+        if (await workInit(content)) {
+          await newWebConnection(response);
+        } else {
+          await sendSettingsPage(response);
         }
-        response.write(data.substring(i0));
+      } else {
+        await sendSettingsPage(response);
       }
     }
 
