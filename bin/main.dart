@@ -81,55 +81,72 @@ Future main(List<String> args) async {
 
   var runing = false;
 
+  var websockets = <WebSocket>[];
+
   await for (var req in server) {
     // final contentType = req.headers.contentType;
     final response = req.response;
     if (req.uri.path == '/ws') {
       var socket = await WebSocketTransformer.upgrade(req);
-      socket.listen((event) {});
+      websockets.add(socket);
+      socket.listen((event) {
+        print('WS: $event');
+      });
       socket.add('Hello by Dart!');
       continue;
     } else if (req.uri.path == '/main.dart.js') {
       response.headers.contentType = ct_JS;
       response.statusCode = HttpStatus.ok;
       await response.addStream(File(r'web/main.dart.js').openRead());
+    } else if (req.uri.path == '/main.dart.js.map') {
+      response.headers.contentType = ContentType.json;
+      response.statusCode = HttpStatus.ok;
+      await response.addStream(File(r'web/main.dart.js.map').openRead());
     } else if (runing) {
       response.headers.contentType = ContentType.html;
       response.statusCode = HttpStatus.ok;
       await response.addStream(File(r'web/action.html').openRead());
     } else {
-      if()
-      response.headers.contentType = ContentType.html;
-      response.statusCode = HttpStatus.ok;
-      var data = await File(r'web/index.html').readAsString();
-      var i0 = 0;
-      var i1 = data.indexOf(r'${{');
-      while (i1 != -1) {
-        response.write(data.substring(i0, i1));
-        i0 = data.indexOf(r'}}', i1);
-        var name = data.substring(i1 + 3, i0);
-        switch (name) {
-          case 'ssPathOut':
-            response.write(pathOut);
-            break;
-          case 'ssPath7z':
-            response.write(pathBin_zip);
-            break;
-          case 'ssPathWordconv':
-            response.write(pathBin_doc2x);
-            break;
-          case 'charMaps':
-            charMaps.forEach((key, value) {
-              response.write('<li>$key</li>');
-            });
-            break;
-          default:
-            response.write('[UNDIFINED NAME]');
+      final content = await utf8.decoder.bind(req).join();
+      if (content.isNotEmpty) {
+        runing = true;
+
+        response.headers.contentType = ContentType.html;
+        response.statusCode = HttpStatus.ok;
+        await response.addStream(File(r'web/action.html').openRead());
+      } else {
+        response.headers.contentType = ContentType.html;
+        response.statusCode = HttpStatus.ok;
+        var data = await File(r'web/index.html').readAsString();
+        var i0 = 0;
+        var i1 = data.indexOf(r'${{');
+        while (i1 != -1) {
+          response.write(data.substring(i0, i1));
+          i0 = data.indexOf(r'}}', i1);
+          var name = data.substring(i1 + 3, i0);
+          switch (name) {
+            case 'ssPathOut':
+              response.write(pathOut);
+              break;
+            case 'ssPath7z':
+              response.write(pathBin_zip);
+              break;
+            case 'ssPathWordconv':
+              response.write(pathBin_doc2x);
+              break;
+            case 'charMaps':
+              charMaps.forEach((key, value) {
+                response.write('<li>$key</li>');
+              });
+              break;
+            default:
+              response.write('[UNDIFINED NAME]');
+          }
+          i0 += 2;
+          i1 = data.indexOf(r'${{', i0);
         }
-        i0 += 2;
-        i1 = data.indexOf(r'${{', i0);
+        response.write(data.substring(i0));
       }
-      response.write(data.substring(i0));
     }
 
     await response.flush();
