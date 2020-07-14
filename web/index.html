@@ -4,24 +4,49 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Index</title>
+        <title>Settings</title>
     </head>
 
     <body>
         <form action="begin" method="POST" enctype="multipart/form-data">
-            <fieldset id="fieldset">
+            <fieldset id="fsPath">
                 <legend>Пути к файлам/папкам на обработку</legend>
                 <p><input type="text" id="path" name="path"></p>
                 <p><input type="button" value="Добавить ещё одну"
                         onclick="addNewTextInput();"></p>
             </fieldset>
             <p><input type="submit" value="Начать обработку"></p>
-        </form>
+            <hr>
+            <fieldset id="fsSettings">
+                <legend>Настройки</legend>
+                <p>
+                    <label for="name">Путь для конечных данных</label>
+                    <input type="text" id="ssPathOut" name="ssPathOut"
+                        value="${{ssPathOut}}">
+                </p>
+                <p>
+                    <label for="name">Путь для архиватора 7Zip (путь к
+                        7z.exe)</label>
+                    <input type="text" id="ssPath7z" name="ssPath7z"
+                        value="${{ssPath7z}}">
+                </p>
+                <p>
+                    <label for="name">Путь для конвертера старых word файлов
+                        (путь к wordconv.exe)</label>
+                    <input type="text" id="ssPathWordconv" name="ssPathWordconv"
+                        value="${{ssPathWordconv}}">
+                </p>
 
+            </fieldset>
+        </form>
+        <h2>Доступные кодировки</h2>
+        <ul>
+            ${{charMaps}}
+        </ul>
 
 
         <script>
-            var ff = document.getElementById('fieldset');
+            var ff = document.getElementById('fsPath');
             var ic = 0;
             function addNewTextInput() {
                 var p = document.createElement('p');

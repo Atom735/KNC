@@ -21,15 +21,134 @@ Future<ProcessResult> runDoc2X(
 
 Future main(List<String> args) async {
   final charMaps = await loadMappings('mappings');
+  final ct_JS = ContentType.parse('application/javascript');
   // Путь для поиска файлов
-  final pathInList = [r'\\NAS\Public\common\Gilyazeev\ГИС\Искринское м-е'];
+  final pathInList = <String>[];
   // Путь для выходных данных
-  final pathOut = r'.ag47';
-  final pathOutLas = p.join(pathOut, 'las');
-  final pathOutErrors = p.join(pathOut, 'errors');
+  var pathOut = r'.ag47';
 
-  final pathBin_zip = r'C:\Program Files\7-Zip\7z.exe';
-  final pathBin_doc2x =
+  print('Search 7zip and WordConv');
+
+  String pathBin_zip;
+  String pathBin_doc2x;
+
+  await Future.wait([
+    File(r'C:\Program Files\7-Zip\7z.exe').exists().then((exist) {
+      if (pathBin_zip == null && exist) {
+        pathBin_zip = r'C:\Program Files\7-Zip\7z.exe';
+      }
+    }),
+    File(r'C:\Program Files (x86)\7-Zip\7z.exe').exists().then((exist) {
+      if (pathBin_zip == null && exist) {
+        pathBin_zip = r'C:\Program Files (x86)\7-Zip\7z.exe';
+      }
+    }),
+    Directory(r'C:\Program Files\Microsoft Office').exists().then((exist) {
+      if (exist) {
+        return Directory(r'C:\Program Files\Microsoft Office')
+            .list(recursive: true, followLinks: false)
+            .listen((file) {
+          if (file is File) {
+            if (pathBin_doc2x == null &&
+                p.basename(file.path).toLowerCase() == 'wordconv.exe') {
+              pathBin_doc2x = file.path;
+            }
+          }
+        }).asFuture();
+      }
+    }),
+    Directory(r'C:\Program Files (x86)\Microsoft Office')
+        .exists()
+        .then((exist) {
+      if (exist) {
+        return Directory(r'C:\Program Files (x86)\Microsoft Office')
+            .list(recursive: true, followLinks: false)
+            .listen((file) {
+          if (file is File) {
+            if (pathBin_doc2x == null &&
+                p.basename(file.path).toLowerCase() == 'wordconv.exe') {
+              pathBin_doc2x = file.path;
+            }
+          }
+        }).asFuture();
+      }
+    })
+  ]);
+
+  final server = await HttpServer.bind(InternetAddress.anyIPv4, 4040);
+  print('Listening on http://${server.address.address}:${server.port}/');
+  print('For connect use http://localhost:${server.port}/');
+
+  var runing = false;
+
+  await for (var req in server) {
+    // final contentType = req.headers.contentType;
+    final response = req.response;
+    if (req.uri.path == '/ws') {
+      var socket = await WebSocketTransformer.upgrade(req);
+      socket.listen((event) {});
+      socket.add('Hello by Dart!');
+      continue;
+    } else if (req.uri.path == '/main.dart.js') {
+      response.headers.contentType = ct_JS;
+      response.statusCode = HttpStatus.ok;
+      await response.addStream(File(r'web/main.dart.js').openRead());
+    } else if (runing) {
+      response.headers.contentType = ContentType.html;
+      response.statusCode = HttpStatus.ok;
+      await response.addStream(File(r'web/action.html').openRead());
+    } else {
+      if()
+      response.headers.contentType = ContentType.html;
+      response.statusCode = HttpStatus.ok;
+      var data = await File(r'web/index.html').readAsString();
+      var i0 = 0;
+      var i1 = data.indexOf(r'${{');
+      while (i1 != -1) {
+        response.write(data.substring(i0, i1));
+        i0 = data.indexOf(r'}}', i1);
+        var name = data.substring(i1 + 3, i0);
+        switch (name) {
+          case 'ssPathOut':
+            response.write(pathOut);
+            break;
+          case 'ssPath7z':
+            response.write(pathBin_zip);
+            break;
+          case 'ssPathWordconv':
+            response.write(pathBin_doc2x);
+            break;
+          case 'charMaps':
+            charMaps.forEach((key, value) {
+              response.write('<li>$key</li>');
+            });
+            break;
+          default:
+            response.write('[UNDIFINED NAME]');
+        }
+        i0 += 2;
+        i1 = data.indexOf(r'${{', i0);
+      }
+      response.write(data.substring(i0));
+    }
+
+    await response.flush();
+    await response.close();
+  }
+}
+
+Future mainOld(List<String> args) async {
+  final charMaps = await loadMappings('mappings');
+  // Путь для поиска файлов
+  final pathInList = <String>[];
+  // Путь для выходных данных
+  var pathOut = r'.ag47';
+  var pathOutLas = p.join(pathOut, 'las');
+  var pathOutInk = p.join(pathOut, 'ink');
+  var pathOutErrors = p.join(pathOut, 'errors');
+
+  var pathBin_zip = r'C:\Program Files\7-Zip\7z.exe';
+  var pathBin_doc2x =
       r'C:\Program Files (x86)\Microsoft Office\root\Office16\Wordconv.exe';
 
   final dirOut = Directory(pathOut);
