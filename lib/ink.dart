@@ -40,7 +40,7 @@ class InkData {
   var iseesoo = 0;
 
   void _logError(final String txt) {
-    listOfErrors.add('${listOfErrors.length}\tСтрока:$lineNum\t$txt');
+    listOfErrors.add('Строка:$lineNum\t$txt');
   }
 
   void _prepareForTable1() {

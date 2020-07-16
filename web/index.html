@@ -18,7 +18,7 @@
             <p><input type="submit" value="Начать обработку"></p>
             <hr>
             <fieldset id="fsSettings">
-                <legend>Настройки</legend>
+                <legend>Настройки путей</legend>
                 <p>
                     <label for="name">Путь для конечных данных</label>
                     <input type="text" id="ssPathOut" name="ssPathOut"
@@ -35,6 +35,28 @@
                         (путь к wordconv.exe)</label>
                     <input type="text" id="ssPathWordconv" name="ssPathWordconv"
                         value="${{ssPathWordconv}}">
+                </p>
+
+            </fieldset>
+
+            <fieldset id="fsSettings">
+                <legend>Настройки расширений файлов (разделяются точкой с
+                    запятой)</legend>
+                <p>
+                    <label for="name">Расширения архивных файлов, которые будут
+                        вскрыты программой 7Zip</label>
+                    <input type="text" id="ssFileExtAr" name="ssFileExtAr"
+                        value="${{ssFileExtAr}}">
+                </p>
+                <p>
+                    <label for="name">Расширения файлов LAS</label>
+                    <input type="text" id="ssFileExtLas" name="ssFileExtLas"
+                        value="${{ssFileExtLas}}">
+                </p>
+                <p>
+                    <label for="name">Расширение файлов с инклинометрией</label>
+                    <input type="text" id="ssFileExtInk" name="ssFileExtInk"
+                        value="${{ssFileExtInk}}">
                 </p>
 
             </fieldset>

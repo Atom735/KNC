@@ -20,43 +20,66 @@ Future<ProcessResult> runDoc2X(
 }
 
 Future main(List<String> args) async {
+  /// Текстовые кодировки
   final charMaps = await loadMappings('mappings');
+
+  /// ContentType mime = application/javascript
   final ct_JS = ContentType.parse('application/javascript');
-  // Путь для поиска файлов
+
+  /// Путь для поиска файлов
   final pathInList = <String>[];
-  // Путь для выходных данных
+
+  /// Путь для выходных данных
   var pathOut = r'.ag47';
 
+  /// Путь для копирования LAS файлов
   String pathOutLas;
+
+  /// Путь для генерации файлов инклинометрии
   String pathOutInk;
+
+  /// Путь для копирования файлов с ошибкой
   String pathOutErrors;
+
+  /// Файл с данными ошибок
   IOSink errorsOut;
+
+  /// Настройки расширения для архивных файлов
+  var ssFileExtAr = <String>['.zip', '.rar'];
+
+  /// Настройки расширения для файлов LAS
+  var ssFileExtLas = <String>['.las'];
+
+  /// Настройки расширения для файлов с инклинометрией
+  var ssFileExtInk = <String>['.doc', '.docx', '.txt', '.dbf'];
 
   print('Search 7zip and WordConv');
 
-  String pathBin_zip;
-  String pathBin_doc2x;
+  String ssPath7z;
+  String ssPathWordconv;
 
   await Future.wait([
     File(r'C:\Program Files\7-Zip\7z.exe').exists().then((exist) {
-      if (pathBin_zip == null && exist) {
-        pathBin_zip = r'C:\Program Files\7-Zip\7z.exe';
+      if (ssPath7z == null && exist) {
+        ssPath7z = r'C:\Program Files\7-Zip\7z.exe';
       }
     }),
     File(r'C:\Program Files (x86)\7-Zip\7z.exe').exists().then((exist) {
-      if (pathBin_zip == null && exist) {
-        pathBin_zip = r'C:\Program Files (x86)\7-Zip\7z.exe';
+      if (ssPath7z == null && exist) {
+        ssPath7z = r'C:\Program Files (x86)\7-Zip\7z.exe';
       }
     }),
-    Directory(r'C:\Program Files\Microsoft Office').exists().then((exist) {
+    Directory(r'C:\Program Files\Microsoft Office')
+        .exists()
+        .then((exist) async {
       if (exist) {
         return Directory(r'C:\Program Files\Microsoft Office')
             .list(recursive: true, followLinks: false)
             .listen((file) {
           if (file is File) {
-            if (pathBin_doc2x == null &&
+            if (ssPathWordconv == null &&
                 p.basename(file.path).toLowerCase() == 'wordconv.exe') {
-              pathBin_doc2x = file.path;
+              ssPathWordconv = file.path;
             }
           }
         }).asFuture();
@@ -64,15 +87,15 @@ Future main(List<String> args) async {
     }),
     Directory(r'C:\Program Files (x86)\Microsoft Office')
         .exists()
-        .then((exist) {
+        .then((exist) async {
       if (exist) {
         return Directory(r'C:\Program Files (x86)\Microsoft Office')
             .list(recursive: true, followLinks: false)
             .listen((file) {
           if (file is File) {
-            if (pathBin_doc2x == null &&
+            if (ssPathWordconv == null &&
                 p.basename(file.path).toLowerCase() == 'wordconv.exe') {
-              pathBin_doc2x = file.path;
+              ssPathWordconv = file.path;
             }
           }
         }).asFuture();
@@ -109,10 +132,37 @@ Future main(List<String> args) async {
           response.write(pathOut);
           break;
         case 'ssPath7z':
-          response.write(pathBin_zip);
+          response.write(ssPath7z);
           break;
         case 'ssPathWordconv':
-          response.write(pathBin_doc2x);
+          response.write(ssPathWordconv);
+          break;
+        case 'ssFileExtAr':
+          if (ssFileExtAr.isNotEmpty) {
+            response.write(ssFileExtAr[0]);
+            for (var i = 1; i < ssFileExtAr.length; i++) {
+              response.write(';');
+              response.write(ssFileExtAr[i]);
+            }
+          }
+          break;
+        case 'ssFileExtLas':
+          if (ssFileExtLas.isNotEmpty) {
+            response.write(ssFileExtLas[0]);
+            for (var i = 1; i < ssFileExtLas.length; i++) {
+              response.write(';');
+              response.write(ssFileExtLas[i]);
+            }
+          }
+          break;
+        case 'ssFileExtInk':
+          if (ssFileExtInk.isNotEmpty) {
+            response.write(ssFileExtInk[0]);
+            for (var i = 1; i < ssFileExtInk.length; i++) {
+              response.write(';');
+              response.write(ssFileExtInk[i]);
+            }
+          }
           break;
         case 'charMaps':
           charMaps.forEach((key, value) {
@@ -170,10 +220,25 @@ Future main(List<String> args) async {
       pathOut = map['ssPathOut'];
     }
     if (map['ssPath7z'] != null) {
-      pathBin_zip = map['ssPath7z'];
+      ssPath7z = map['ssPath7z'];
     }
     if (map['ssPathWordconv'] != null) {
-      pathBin_doc2x = map['ssPathWordconv'];
+      ssPathWordconv = map['ssPathWordconv'];
+    }
+    if (map['ssFileExtAr'] != null) {
+      ssFileExtAr.clear();
+      ssFileExtAr = map['ssFileExtAr'].split(';');
+      ssFileExtAr.removeWhere((element) => element.isEmpty);
+    }
+    if (map['ssFileExtLas'] != null) {
+      ssFileExtLas.clear();
+      ssFileExtLas = map['ssFileExtLas'].split(';');
+      ssFileExtLas.removeWhere((element) => element.isEmpty);
+    }
+    if (map['ssFileExtInk'] != null) {
+      ssFileExtInk.clear();
+      ssFileExtInk = map['ssFileExtInk'].split(';');
+      ssFileExtInk.removeWhere((element) => element.isEmpty);
     }
     pathInList.clear();
     for (var i = 0; map['path$i'] != null; i++) {
@@ -192,7 +257,7 @@ Future main(List<String> args) async {
     await dirOut.create(recursive: true);
     await Future.wait([
       Directory(pathOutLas).create(recursive: true),
-      Directory(pathOutErrors).create(recursive: true),
+      Directory(pathOutInk).create(recursive: true),
       Directory(pathOutErrors).create(recursive: true)
     ]);
 

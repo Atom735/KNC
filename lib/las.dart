@@ -60,7 +60,7 @@ class LasData {
     var lineNum = 0;
 
     void logError(final String txt) {
-      listOfErrors.add('${listOfErrors.length}\tСтрока:$lineNum\t$txt');
+      listOfErrors.add('Строка:$lineNum\t$txt');
     }
 
     String vVers;
