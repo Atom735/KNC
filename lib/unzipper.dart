@@ -13,8 +13,8 @@ class Unzipper {
   Future<void> clear() => _dirTemp.exists().then((exist) => exist
       ? _dirTemp
           .delete(recursive: true)
-          .then((_) => _dirTemp.createSync(recursive: true))
-      : _dirTemp.createSync(recursive: true));
+          .then((_) => _dirTemp.create(recursive: true))
+      : _dirTemp.create(recursive: true));
 
   /// Распаковывает архив [pathToArchive] в папку [pathToOutDir] если она указана.
   /// Если папка [pathToOutDir] не задана, то будет создана
