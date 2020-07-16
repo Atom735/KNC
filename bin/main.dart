@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:knc/unzipper.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:knc/las.dart';
@@ -52,6 +53,8 @@ Future main(List<String> args) async {
 
   /// Настройки расширения для файлов с инклинометрией
   var ssFileExtInk = <String>['.doc', '.docx', '.txt', '.dbf'];
+
+  Unzipper unzipper;
 
   print('Search 7zip and WordConv');
 
@@ -110,6 +113,13 @@ Future main(List<String> args) async {
   var runing = false;
 
   var websockets = <WebSocket>[];
+
+  void errorAdd(final String txt) {
+    errorsOut.writeln(txt);
+    websockets.forEach((ws) {
+      ws.add('#ERROR:$txt');
+    });
+  }
 
   Future newWebConnection(final HttpResponse response) {
     response.headers.contentType = ContentType.html;
@@ -246,6 +256,7 @@ Future main(List<String> args) async {
     }
 
     print('work init');
+    unzipper = Unzipper(p.join(pathOut, 'temp'), ssPath7z);
     pathOutLas = p.join(pathOut, 'las');
     pathOutInk = p.join(pathOut, 'ink');
     pathOutErrors = p.join(pathOut, 'errors');
@@ -256,6 +267,7 @@ Future main(List<String> args) async {
     }
     await dirOut.create(recursive: true);
     await Future.wait([
+      unzipper.clear(),
       Directory(pathOutLas).create(recursive: true),
       Directory(pathOutInk).create(recursive: true),
       Directory(pathOutErrors).create(recursive: true)
@@ -267,6 +279,29 @@ Future main(List<String> args) async {
 
     print('start working');
     runing = true;
+
+    var tasks = <Future>[];
+
+    pathInList.forEach((path) {
+      if (path.isNotEmpty) {
+        tasks.add(FileSystemEntity.type(path).then((entity) {
+          switch (entity) {
+            case FileSystemEntityType.directory:
+              print('dir: $path');
+              break;
+            case FileSystemEntityType.file:
+              print('file: $path');
+              break;
+            case FileSystemEntityType.notFound:
+              errorAdd('Не корректный путь: $path');
+              break;
+            default:
+              errorAdd('По указанному пути находится непонятно что: $path');
+          }
+        }));
+      }
+    });
+
     return true;
   }
 
