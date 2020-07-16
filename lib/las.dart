@@ -46,6 +46,7 @@ class LasData {
   Map<String, int> encodesRaiting;
   String encode;
   bool zWrap;
+  String wWell;
 
   LasData(final UnmodifiableUint8ListView bytes,
       final Map<String, List<String>> charMaps) {
@@ -73,7 +74,6 @@ class LasData {
     double wStopN;
     String wStep;
     double wStepN;
-    String wWell;
 
     var iA = 0;
     var section = '';

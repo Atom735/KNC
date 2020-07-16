@@ -27,6 +27,9 @@ Future main(List<String> args) async {
   /// ContentType mime = application/javascript
   final ct_JS = ContentType.parse('application/javascript');
 
+  /// ContentType mime = application/vnd.dart
+  final ct_Dart = ContentType.parse('application/vnd.dart');
+
   /// Путь для поиска файлов
   final pathInList = <String>[];
 
@@ -111,14 +114,29 @@ Future main(List<String> args) async {
   print('For connect use http://localhost:${server.port}/');
 
   var runing = false;
+  var runingDone = false;
 
   var websockets = <WebSocket>[];
 
+  Future endTask;
+  var socketMsgSended = <String>[];
+
+  void sendMsg(final String txt) {
+    socketMsgSended.add(txt);
+    websockets.forEach((ws) {
+      ws.add(txt);
+    });
+  }
+
   void errorAdd(final String txt) {
     errorsOut.writeln(txt);
-    websockets.forEach((ws) {
-      ws.add('#ERROR:$txt');
-    });
+    sendMsg('#ERROR:$txt');
+  }
+
+  void newSocketOpend(final WebSocket ws) {
+    for (var msg in socketMsgSended) {
+      ws.add(msg);
+    }
   }
 
   Future newWebConnection(final HttpResponse response) {
@@ -188,6 +206,136 @@ Future main(List<String> args) async {
     response.write(data.substring(i0));
   }
 
+  Future<String> getOutPathNew(String prePath, String path) async {
+    if (await File(p.join(prePath, p.basename(path))).exists()) {
+      final f0 = p.join(prePath, p.basenameWithoutExtension(path));
+      final fe = p.extension(path);
+      var i = 0;
+      while (await File('${f0}_$i$fe').exists()) {
+        i++;
+      }
+      return '${f0}_$i$fe';
+    } else {
+      return p.join(prePath, p.basename(path));
+    }
+  }
+
+  Future workFileLas(String origin, File file) async {
+    final data = LasData(await file.readAsBytes(), charMaps);
+    if (data.listOfErrors.isEmpty) {
+      // No error
+      final newPath = await getOutPathNew(
+          p.join(pathOutLas, data.wWell + '___'), file.path);
+
+      sendMsg('#LAS:+"$origin"');
+      sendMsg('#LAS:\t"${file.path}" => "${newPath}"');
+      for (final c in data.curves) {
+        sendMsg('#LAS:\t${c.mnem}: ${c.strtN} <=> ${c.stopN}');
+      }
+      sendMsg('#LAS:' + ''.padRight(20, '='));
+      await file.copy(newPath);
+    } else {
+      // On Error
+      final newPath = await getOutPathNew(pathOutErrors, file.path);
+      errorAdd('+LAS("$origin")');
+      errorAdd('\t"${file.path}" => "${newPath}"');
+      for (final err in data.listOfErrors) {
+        errorAdd('\t$err');
+      }
+      errorAdd(''.padRight(20, '='));
+      await file.copy(newPath);
+    }
+  }
+
+  Future workFileInk(String origin, File file) async {}
+
+  Future Function(FileSystemEntity entity) getFileEntityFunc(
+          String pathToArch) =>
+      (FileSystemEntity file) async {
+        if (file is File) {
+          final origin = p.join(
+              pathToArch, file.path.substring(unzipper.pathToTempDir.length));
+          final ext = p.extension(file.path).toLowerCase();
+          for (var item in ssFileExtAr) {
+            if (item == ext) {
+              // Вскрываем архив
+              return unzipper.unzip(file.path, getFileEntityFunc(file.path));
+            }
+          }
+          for (var item in ssFileExtLas) {
+            if (item == ext) {
+              // LAS файл
+              return workFileLas(origin, file);
+            }
+          }
+          for (var item in ssFileExtInk) {
+            if (item == ext) {
+              // Файл с инклинометрией
+              return workFileInk(origin, file);
+            }
+          }
+        }
+      };
+
+  Future workDir(String origin, Directory dir) async {}
+
+  Future workFile(String origin, File file) async {
+    final ext = p.extension(file.path).toLowerCase();
+    for (var item in ssFileExtAr) {
+      if (item == ext) {
+        // Вскрываем архив
+        return unzipper.unzip(file.path, getFileEntityFunc(file.path));
+      }
+    }
+    for (var item in ssFileExtLas) {
+      if (item == ext) {
+        // LAS файл
+        return workFileLas(origin, file);
+      }
+    }
+    for (var item in ssFileExtInk) {
+      if (item == ext) {
+        // Файл с инклинометрией
+        return workFileInk(origin, file);
+      }
+    }
+  }
+
+  Future work() {
+    var tasks = <Future>[];
+
+    pathInList.forEach((path) {
+      if (path.isNotEmpty) {
+        tasks.add(FileSystemEntity.type(path).then((entity) {
+          switch (entity) {
+            case FileSystemEntityType.directory:
+              print('dir: $path');
+              tasks.add(workDir(path, Directory(path)));
+              break;
+            case FileSystemEntityType.file:
+              print('file: $path');
+              tasks.add(workFile(path, File(path)));
+              break;
+            case FileSystemEntityType.notFound:
+              errorAdd('Не корректный путь: $path');
+              break;
+            default:
+              errorAdd('По указанному пути находится непонятно что: $path');
+          }
+        }));
+      }
+    });
+
+    return Future.wait(tasks);
+  }
+
+  void workEnd() {
+    endTask = errorsOut.flush().then((_) => errorsOut.close()).then((_) {
+      runingDone = true;
+      sendMsg('#DONE!');
+    });
+  }
+
   Future<bool> workInit(final String content) async {
     print(content);
     print('parse content');
@@ -237,17 +385,17 @@ Future main(List<String> args) async {
     }
     if (map['ssFileExtAr'] != null) {
       ssFileExtAr.clear();
-      ssFileExtAr = map['ssFileExtAr'].split(';');
+      ssFileExtAr = map['ssFileExtAr'].toLowerCase().split(';');
       ssFileExtAr.removeWhere((element) => element.isEmpty);
     }
     if (map['ssFileExtLas'] != null) {
       ssFileExtLas.clear();
-      ssFileExtLas = map['ssFileExtLas'].split(';');
+      ssFileExtLas = map['ssFileExtLas'].toLowerCase().split(';');
       ssFileExtLas.removeWhere((element) => element.isEmpty);
     }
     if (map['ssFileExtInk'] != null) {
       ssFileExtInk.clear();
-      ssFileExtInk = map['ssFileExtInk'].split(';');
+      ssFileExtInk = map['ssFileExtInk'].toLowerCase().split(';');
       ssFileExtInk.removeWhere((element) => element.isEmpty);
     }
     pathInList.clear();
@@ -280,26 +428,8 @@ Future main(List<String> args) async {
     print('start working');
     runing = true;
 
-    var tasks = <Future>[];
-
-    pathInList.forEach((path) {
-      if (path.isNotEmpty) {
-        tasks.add(FileSystemEntity.type(path).then((entity) {
-          switch (entity) {
-            case FileSystemEntityType.directory:
-              print('dir: $path');
-              break;
-            case FileSystemEntityType.file:
-              print('file: $path');
-              break;
-            case FileSystemEntityType.notFound:
-              errorAdd('Не корректный путь: $path');
-              break;
-            default:
-              errorAdd('По указанному пути находится непонятно что: $path');
-          }
-        }));
-      }
+    await work().then((value) {
+      workEnd();
     });
 
     return true;
@@ -314,13 +444,21 @@ Future main(List<String> args) async {
       print('WS: socket(${socket.hashCode}) opened ');
       socket.listen((event) {
         print('WS: $event');
+        if (event is String) {
+          if (event == '#STOP!') {
+            server.close();
+          }
+        }
       }, onDone: () {
         print('WS: socket(${socket.hashCode}) closed');
         websockets.remove(socket);
       });
-      socket.add('Hello by Dart!');
-      socket.add('$websockets');
+      newSocketOpend(socket);
       continue;
+    } else if (req.uri.path == '/main.dart') {
+      response.headers.contentType = ct_Dart;
+      response.statusCode = HttpStatus.ok;
+      await response.addStream(File(r'web/main.dart').openRead());
     } else if (req.uri.path == '/main.dart.js') {
       response.headers.contentType = ct_JS;
       response.statusCode = HttpStatus.ok;
@@ -347,6 +485,7 @@ Future main(List<String> args) async {
     await response.flush();
     await response.close();
   }
+  await endTask;
 }
 
 Future mainOld(List<String> args) async {
