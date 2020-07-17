@@ -206,26 +206,27 @@ Future main(List<String> args) async {
     response.write(data.substring(i0));
   }
 
-  Future<String> getOutPathNew(String prePath, String path) async {
-    if (await File(p.join(prePath, p.basename(path))).exists()) {
-      final f0 = p.join(prePath, p.basenameWithoutExtension(path));
-      final fe = p.extension(path);
+  Future<String> getOutPathNew(String prePath, String name) async {
+    if (await File(p.join(prePath, p.basename(name))).exists()) {
+      final f0 = p.join(prePath, p.basenameWithoutExtension(name));
+      final fe = p.extension(name);
       var i = 0;
       while (await File('${f0}_$i$fe').exists()) {
         i++;
       }
       return '${f0}_$i$fe';
     } else {
-      return p.join(prePath, p.basename(path));
+      return p.join(prePath, p.basename(name));
     }
   }
 
   Future workFileLas(String origin, File file) async {
-    final data = LasData(await file.readAsBytes(), charMaps);
+    final data =
+        LasData(UnmodifiableUint8ListView(await file.readAsBytes()), charMaps);
     if (data.listOfErrors.isEmpty) {
       // No error
       final newPath = await getOutPathNew(
-          p.join(pathOutLas, data.wWell + '___'), file.path);
+          pathOutLas, data.wWell + '___' + p.basename(file.path));
 
       sendMsg('#LAS:+"$origin"');
       sendMsg('#LAS:\t"${file.path}" => "${newPath}"');
@@ -236,7 +237,7 @@ Future main(List<String> args) async {
       await file.copy(newPath);
     } else {
       // On Error
-      final newPath = await getOutPathNew(pathOutErrors, file.path);
+      final newPath = await getOutPathNew(pathOutErrors, p.basename(file.path));
       errorAdd('+LAS("$origin")');
       errorAdd('\t"${file.path}" => "${newPath}"');
       for (final err in data.listOfErrors) {
@@ -277,7 +278,36 @@ Future main(List<String> args) async {
         }
       };
 
-  Future workDir(String origin, Directory dir) async {}
+  Future workDir(String origin, Directory dir) async {
+    var tasks = <Future>[];
+    await dir.list(recursive: true).listen((file) {
+      if (file is File) {
+        final ext = p.extension(file.path).toLowerCase();
+        for (var item in ssFileExtAr) {
+          if (item == ext) {
+            // Вскрываем архив
+            tasks.add(unzipper.unzip(file.path, getFileEntityFunc(file.path)));
+            return;
+          }
+        }
+        for (var item in ssFileExtLas) {
+          if (item == ext) {
+            // LAS файл
+            tasks.add(workFileLas(file.path, file));
+            return;
+          }
+        }
+        for (var item in ssFileExtInk) {
+          if (item == ext) {
+            // Файл с инклинометрией
+            tasks.add(workFileInk(file.path, file));
+            return;
+          }
+        }
+      }
+    }).asFuture();
+    return Future.wait(tasks);
+  }
 
   Future workFile(String origin, File file) async {
     final ext = p.extension(file.path).toLowerCase();
@@ -329,8 +359,8 @@ Future main(List<String> args) async {
     return Future.wait(tasks);
   }
 
-  void workEnd() {
-    endTask = errorsOut.flush().then((_) => errorsOut.close()).then((_) {
+  Future workEnd() async {
+    return errorsOut.flush().then((_) => errorsOut.close()).then((_) {
       runingDone = true;
       sendMsg('#DONE!');
     });
@@ -428,9 +458,7 @@ Future main(List<String> args) async {
     print('start working');
     runing = true;
 
-    await work().then((value) {
-      workEnd();
-    });
+    endTask = work();
 
     return true;
   }
@@ -486,6 +514,8 @@ Future main(List<String> args) async {
     await response.close();
   }
   await endTask;
+
+  await workEnd();
 }
 
 Future mainOld(List<String> args) async {
