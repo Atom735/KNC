@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:knc/errors.dart';
 import 'package:knc/knc.dart';
 import 'package:knc/unzipper.dart';
 import 'package:knc/web.dart';
@@ -22,14 +23,162 @@ Future<ProcessResult> runDoc2X(
   return Process.run(path2exe, ['-oice', '-nme', path2doc, path2out]);
 }
 
+Future<String> getOutPathNew(String prePath, String name) async {
+  if (await File(p.join(prePath, p.basename(name))).exists()) {
+    final f0 = p.join(prePath, p.basenameWithoutExtension(name));
+    final fe = p.extension(name);
+    var i = 0;
+    while (await File('${f0}_$i$fe').exists()) {
+      i++;
+    }
+    return '${f0}_$i$fe';
+  } else {
+    return p.join(prePath, p.basename(name));
+  }
+}
+
 Future main(List<String> args) async {
   /// настройки
   final ss = KncSettings();
   await Future.wait([ss.loadCharMaps(), ss.serchPrograms()]);
 
   final server = MyServer(Directory(r'web'));
+  final tasks = <Future>[];
+  final tasks2 = <Future>[];
+  Future workEnd;
 
+  Unzipper unzipper;
+
+  void errorAdd(final String txt) {
+    ss.errorsOut.writeln(txt);
+    server.sendMsg('#ERROR:$txt');
+  }
+
+  Future listFiles(final FileSystemEntity entity) async {
+    if (entity is File) {
+      print(entity);
+      final ext = p.extension(entity.path).toLowerCase();
+      if (ss.ssFileExtAr.contains(ext)) {
+        return unzipper.unzip(entity.path, listFiles);
+      }
+      if (ss.ssFileExtLas.contains(ext)) {
+        final bytes = UnmodifiableUint8ListView(await entity.readAsBytes());
+        // Подбираем кодировку
+        final encodesRaiting = getMappingRaitings(ss.ssCharMaps, bytes);
+        final encode = getMappingMax(encodesRaiting);
+        // Преобразуем байты из кодировки в символы
+        final buffer = String.fromCharCodes(bytes.map((i) =>
+            i >= 0x80 ? ss.ssCharMaps[encode][i - 0x80].codeUnitAt(0) : i));
+        final data = LasData(buffer);
+        data.encodesRaiting = encodesRaiting;
+        data.encode = encode;
+        if (data.listOfErrors.isEmpty) {
+          // No error
+          final newPath = await getOutPathNew(
+              ss.pathOutLas, data.wWell + '___' + p.basename(entity.path));
+
+          server.sendMsg('#LAS:+"${entity.path}"');
+          server.sendMsg('#LAS:\t"${entity.path}" => "${newPath}"');
+          for (final c in data.curves) {
+            server.sendMsg('#LAS:\t${c.mnem}: ${c.strtN} <=> ${c.stopN}');
+          }
+          server.sendMsg('#LAS:' + ''.padRight(20, '='));
+          return entity.copy(newPath);
+        } else {
+          // On Error
+          final newPath =
+              await getOutPathNew(ss.pathOutErrors, p.basename(entity.path));
+          errorAdd('+LAS("${entity.path}")');
+          errorAdd('\t"${entity.path}" => "${newPath}"');
+          for (final err in data.listOfErrors) {
+            errorAdd('\tСтрока ${err.line}: ${kncErrorStrings[err.err]}');
+          }
+          errorAdd(''.padRight(20, '='));
+          return entity.copy(newPath);
+        }
+      }
+      if (ss.ssFileExtInk.contains(ext)) {}
+    }
+  }
+
+  Future onWorkEnd() async {
+    print('Work Ended');
+  }
+
+  Future<bool> reqWhileWork(
+      HttpRequest req, String content, MyServer serv) async {
+    final response = req.response;
+    response.headers.contentType = ContentType.html;
+    response.statusCode = HttpStatus.ok;
+    await response.addStream(File(r'web/action.html').openRead());
+    await response.flush();
+    await response.close();
+    return true;
+  }
+
+  Future<bool> reqBeforeWork(
+      HttpRequest req, String content, MyServer serv) async {
+    if (content.isEmpty) {
+      final response = req.response;
+      response.headers.contentType = ContentType.html;
+      response.statusCode = HttpStatus.ok;
+      response.write(
+          ss.updateBufferByThis(await File(r'web/index.html').readAsString()));
+      await response.flush();
+      await response.close();
+      return true;
+    } else {
+      serv.handleRequest = reqWhileWork;
+      ss.updateByMultiPartFormData(parseMultiPartFormData(content));
+      unzipper = Unzipper(p.join(ss.ssPathOut, 'temp'), ss.ssPath7z);
+
+      ss.pathOutLas = p.join(ss.ssPathOut, 'las');
+      ss.pathOutInk = p.join(ss.ssPathOut, 'ink');
+      ss.pathOutErrors = p.join(ss.ssPathOut, 'errors');
+
+      final dirOut = Directory(ss.ssPathOut);
+      if (await dirOut.exists()) {
+        await dirOut.delete(recursive: true);
+      }
+      await dirOut.create(recursive: true);
+      await Future.wait([
+        unzipper.clear(),
+        Directory(ss.pathOutLas).create(recursive: true),
+        Directory(ss.pathOutInk).create(recursive: true),
+        Directory(ss.pathOutErrors).create(recursive: true)
+      ]);
+
+      ss.errorsOut = File(p.join(ss.pathOutErrors, '.errors.txt'))
+          .openWrite(encoding: utf8, mode: FileMode.writeOnly);
+      ss.errorsOut.writeCharCode(unicodeBomCharacterRune);
+
+      ss.pathInList.forEach((element) {
+        if (element.isNotEmpty) {
+          print('pathInList => $element');
+          tasks.add(FileSystemEntity.type(element).then((value) =>
+              value == FileSystemEntityType.file
+                  ? listFiles(File(element))
+                  : value == FileSystemEntityType.directory
+                      ? Directory(element)
+                          .list(recursive: true)
+                          .listen((entity) => tasks2.add(listFiles(entity)))
+                          .asFuture()
+                      : null));
+        }
+      });
+
+      workEnd = Future.wait(tasks)
+          .then((_) => Future.wait(tasks2).then((_) => onWorkEnd()));
+      return reqWhileWork(req, content, serv);
+    }
+  }
+
+  server.handleRequest = reqBeforeWork;
   await server.bind(4040);
+  if (ss.errorsOut != null) {
+    await ss.errorsOut.flush();
+    await ss.errorsOut.close();
+  }
 }
 
 Future main_old2(List<String> args) async {

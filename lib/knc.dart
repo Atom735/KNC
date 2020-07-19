@@ -32,6 +32,11 @@ class KncSettings {
   /// Путь для поиска файлов
   List<String> pathInList = [];
 
+  String pathOutLas;
+  String pathOutInk;
+  String pathOutErrors;
+  IOSink errorsOut;
+
   /// Загружает кодировки и записывает их в настройки
   Future<Map<String, List<String>>> loadCharMaps() =>
       loadMappings('mappings').then((charmap) => ssCharMaps = charmap);

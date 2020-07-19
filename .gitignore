@@ -27,3 +27,4 @@ test/xls
 test/*.out
 test/ink/docx
 .ignore
+out

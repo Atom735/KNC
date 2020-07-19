@@ -45,7 +45,6 @@ class Unzipper {
                               return dirTemp.delete(recursive: true);
                             }
                           }));
-              ;
             } else {
               return result;
             }

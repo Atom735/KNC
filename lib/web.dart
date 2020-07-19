@@ -90,14 +90,12 @@ class MyServer {
 
   /// Функция обработчик запросов к серверу.
   ///
-  /// Если вернёт `true`, то сервер завершит свою работу
+  /// Если вернёт `true`, то сервер считает что запрос был обрабатан
   Future<bool> Function(HttpRequest req, String content, MyServer serv)
       handleRequest;
 
   /// Функция обработчик данных отправляемых через _WebSocket_.
-  ///
-  /// Если вернёт `true`, то сервер завершит свою работу
-  Future<bool> Function(WebSocket socket, String content, MyServer serv)
+  Future<void> Function(WebSocket socket, String content, MyServer serv)
       handleRequestWS;
 
   MyServer(this.dir);
@@ -130,9 +128,8 @@ class MyServer {
             if (event == '#STOP!') {
               server.close(); // ignore: unawaited_futures
             }
-            if (handleRequestWS != null &&
-                await handleRequestWS(socket, event, this)) {
-              server.close(); // ignore: unawaited_futures
+            if (handleRequestWS != null) {
+              await handleRequestWS(socket, event, this);
             }
           }
         }, onDone: () {
@@ -175,7 +172,6 @@ class MyServer {
         } else if (handleRequest != null &&
             await handleRequest(
                 req, await utf8.decoder.bind(req).join(), this)) {
-          server.close(); // ignore: unawaited_futures
         } else {
           final response = req.response;
           response.statusCode = HttpStatus.internalServerError;

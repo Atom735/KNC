@@ -58,12 +58,6 @@ class LasData {
   String wWell;
 
   LasData(final String buffer) {
-    // Подбираем кодировку
-    // encodesRaiting = Map.unmodifiable(getMappingRaitings(charMaps, bytes));
-    // encode = getMappingMax(encodesRaiting);
-    // Преобразуем байты из кодировки в символы
-    // final buffer = String.fromCharCodes(bytes
-    //     .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
     // Нарезаем на линии
     final lines = LineSplitter.split(buffer);
     var lineNum = 0;
