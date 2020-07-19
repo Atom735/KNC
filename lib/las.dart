@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'errors.dart';
+import 'mapping.dart';
 
 class LasDataInfoLine {
   final String mnem;
@@ -57,7 +59,15 @@ class LasData {
   double wStepN;
   String wWell;
 
-  LasData(final String buffer) {
+  LasData(final UnmodifiableUint8ListView bytes,
+      final Map<String, List<String>> charMaps) {
+    // Подбираем кодировку
+    encodesRaiting = getMappingRaitings(charMaps, bytes);
+    encode = getMappingMax(encodesRaiting);
+    // Преобразуем байты из кодировки в символы
+    final buffer = String.fromCharCodes(bytes
+        .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
+
     // Нарезаем на линии
     final lines = LineSplitter.split(buffer);
     var lineNum = 0;

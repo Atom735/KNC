@@ -171,4 +171,8 @@ class KncSettings {
         searchProgram_7Zip().then((path) => ssPath7z = path),
         searchProgram_WordConv().then((path) => ssPathWordconv = path),
       ]);
+
+  Future<ProcessResult> runDoc2X(
+          final String path2doc, final String path2out) =>
+      Process.run(ssPathWordconv, ['-oice', '-nme', path2doc, path2out]);
 }

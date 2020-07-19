@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:knc/errors.dart';
+import 'package:knc/ink.dart';
 import 'package:knc/knc.dart';
 import 'package:knc/unzipper.dart';
 import 'package:knc/web.dart';
@@ -62,16 +63,9 @@ Future main(List<String> args) async {
         return unzipper.unzip(entity.path, listFiles);
       }
       if (ss.ssFileExtLas.contains(ext)) {
-        final bytes = UnmodifiableUint8ListView(await entity.readAsBytes());
-        // Подбираем кодировку
-        final encodesRaiting = getMappingRaitings(ss.ssCharMaps, bytes);
-        final encode = getMappingMax(encodesRaiting);
-        // Преобразуем байты из кодировки в символы
-        final buffer = String.fromCharCodes(bytes.map((i) =>
-            i >= 0x80 ? ss.ssCharMaps[encode][i - 0x80].codeUnitAt(0) : i));
-        final data = LasData(buffer);
-        data.encodesRaiting = encodesRaiting;
-        data.encode = encode;
+        final data = LasData(
+            UnmodifiableUint8ListView(await entity.readAsBytes()),
+            ss.ssCharMaps);
         if (data.listOfErrors.isEmpty) {
           // No error
           final newPath = await getOutPathNew(
@@ -97,12 +91,135 @@ Future main(List<String> args) async {
           return entity.copy(newPath);
         }
       }
-      if (ss.ssFileExtInk.contains(ext)) {}
+      if (ss.ssFileExtInk.contains(ext)) {
+        final bytes = UnmodifiableUint8ListView(await entity.readAsBytes());
+        var spaces = 0;
+        InkData ink;
+        for (var i = 0; i < 30; i++) {
+          if (bytes[i] == 20) {
+            spaces += 1;
+          }
+        }
+        if (spaces > 10) {
+          ink = InkData.txt(bytes, ss.ssCharMaps);
+        } else {
+          bool b = true;
+          const signatureDoc = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+          for (var i = 0; i < signatureDoc.length && b; i++) {
+            b = bytes[i] == signatureDoc[i];
+          }
+
+          if (b) {
+            final newPath = await getOutPathNew(
+                ss.pathOutLas, p.basename(entity.path) + '.docx');
+            await ss.runDoc2X(entity.path, newPath);
+            await unzipper.unzip(newPath, (FileSystemEntity entity2) async {
+              if (entity2 is File &&
+                  p.dirname(entity2.path) == 'word' &&
+                  p.basename(entity2.path) == 'document.xml') {
+                ink = InkData.docx(entity2.openRead());
+                await ink.future;
+                if (ink.listOfErrors.isEmpty) {
+                  // No error
+                  final newPath = await getOutPathNew(
+                      ss.pathOutInk,
+                      ink.well +
+                          '___' +
+                          p.basenameWithoutExtension(entity.path) +
+                          '.txt');
+
+                  server.sendMsg('#INK:+"${entity.path}"');
+                  server.sendMsg('#INK:\t"${entity.path}" => "${newPath}"');
+                  server.sendMsg('#INK:' + ''.padRight(20, '='));
+                  final io = File(newPath).openWrite(mode: FileMode.writeOnly);
+                  io.writeln(ink.well);
+                  for (final item in ink.list) {
+                    io.writeln(
+                        '${item.depthN}\t${item.angleN}\t${item.azimuthN}');
+                  }
+                  await io.flush();
+                  await io.close();
+                } else {
+                  // On Error
+                  final newPath = await getOutPathNew(
+                      ss.pathOutErrors, p.basename(entity.path));
+                  errorAdd('+INK("${entity.path}")');
+                  errorAdd('\t"${entity.path}" => "${newPath}"');
+                  for (final err in ink.listOfErrors) {
+                    errorAdd('\t$err');
+                  }
+                  errorAdd(''.padRight(20, '='));
+                  await entity.copy(newPath);
+                }
+              }
+            });
+            return File(newPath).delete();
+          }
+
+          const signatureZip = [
+            [0x50, 0x4B, 0x03, 0x04],
+            [0x50, 0x4B, 0x05, 0x06],
+            [0x50, 0x4B, 0x07, 0x08]
+          ];
+
+          for (var j = 0; j < signatureZip.length && b; j++) {
+            b = true;
+            for (var i = 0; i < signatureZip[j].length && b; i++) {
+              b = bytes[i] == signatureZip[j][i];
+            }
+            if (b) {
+              await unzipper.unzip(entity.path,
+                  (FileSystemEntity entity2) async {
+                if (entity2 is File &&
+                    p.dirname(entity2.path) == 'word' &&
+                    p.basename(entity2.path) == 'document.xml') {
+                  ink = InkData.docx(entity2.openRead());
+                  await ink.future;
+                  if (ink.listOfErrors.isEmpty) {
+                    // No error
+                    final newPath = await getOutPathNew(
+                        ss.pathOutInk,
+                        ink.well +
+                            '___' +
+                            p.basenameWithoutExtension(entity.path) +
+                            '.txt');
+
+                    server.sendMsg('#INK:+"${entity.path}"');
+                    server.sendMsg('#INK:\t"${entity.path}" => "${newPath}"');
+                    server.sendMsg('#INK:' + ''.padRight(20, '='));
+                    final io =
+                        File(newPath).openWrite(mode: FileMode.writeOnly);
+                    io.writeln(ink.well);
+                    for (final item in ink.list) {
+                      io.writeln(
+                          '${item.depthN}\t${item.angleN}\t${item.azimuthN}');
+                    }
+                    await io.flush();
+                    await io.close();
+                  } else {
+                    // On Error
+                    final newPath = await getOutPathNew(
+                        ss.pathOutErrors, p.basename(entity.path));
+                    errorAdd('+INK("${entity.path}")');
+                    errorAdd('\t"${entity.path}" => "${newPath}"');
+                    for (final err in ink.listOfErrors) {
+                      errorAdd('\t$err');
+                    }
+                    errorAdd(''.padRight(20, '='));
+                    await entity.copy(newPath);
+                  }
+                }
+              });
+            }
+          }
+        }
+      }
     }
   }
 
   Future onWorkEnd() async {
     print('Work Ended');
+    server.sendMsg('#DONE!');
   }
 
   Future<bool> reqWhileWork(
