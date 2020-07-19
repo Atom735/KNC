@@ -1,6 +1,6 @@
 import 'dart:html';
 
-main(List<String> args) {
+void main(List<String> args) {
   final webSocket = WebSocket('ws://localhost:4040/ws');
   final pSockState = document.createElement('p');
   document.body.append(pSockState);

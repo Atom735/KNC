@@ -112,7 +112,7 @@ class MyServer {
 
   /// Подключить сервер на прослушку порта [port]
   ///
-  /// Изначально необходимо установить функции обработчики запросов,
+  /// Изначально необходимо установить функции обработчики запросов [handleRequest],
   /// хотя можно обойтись и без этого, тогда сервер будет работать как файловый
   /// сервер к папке [this.dir]
   Future<void> bind(final int port) async {
@@ -143,7 +143,7 @@ class MyServer {
           socket.add(msg);
         }
       } else {
-        final file = File(p.join(dir.path, req.uri.path));
+        final file = File(p.join(dir.absolute.path, req.uri.path.substring(1)));
         final response = req.response;
         if (await file.exists()) {
           print('serve: $file');

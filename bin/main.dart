@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:knc/knc.dart';
 import 'package:knc/unzipper.dart';
+import 'package:knc/web.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:knc/las.dart';
@@ -21,6 +23,16 @@ Future<ProcessResult> runDoc2X(
 }
 
 Future main(List<String> args) async {
+  /// настройки
+  final ss = KncSettings();
+  await Future.wait([ss.loadCharMaps(), ss.serchPrograms()]);
+
+  final server = MyServer(Directory(r'web'));
+
+  await server.bind(4040);
+}
+
+Future main_old2(List<String> args) async {
   /// Текстовые кодировки
   final charMaps = await loadMappings('mappings');
 
@@ -221,8 +233,8 @@ Future main(List<String> args) async {
   }
 
   Future workFileLas(String origin, File file) async {
-    final data =
-        LasData(UnmodifiableUint8ListView(await file.readAsBytes()), charMaps);
+    final data = null;
+    // LasData(UnmodifiableUint8ListView(await file.readAsBytes()), charMaps);
     if (data.listOfErrors.isEmpty) {
       // No error
       final newPath = await getOutPathNew(
@@ -552,8 +564,8 @@ Future mainOld(List<String> args) async {
     switch (fileExt) {
       case '.las':
         {
-          final data = LasData(
-              UnmodifiableUint8ListView(file.readAsBytesSync()), charMaps);
+          final data = null; //LasData(
+          // UnmodifiableUint8ListView(file.readAsBytesSync()), charMaps);
           if (data.listOfErrors.isEmpty) {
             // LasData no errors
             var newPath = p.join(pathOutLas, name);

@@ -246,20 +246,20 @@ void main() {
     await out.close();
   });
 
-  test('Las files', () async {
-    final charMaps = await loadMappings(r'mappings');
-    final tasks = <Future>[];
-    await Directory(r'.ag47/').list(recursive: true).listen((e) {
-      if (e is File && e.path.toLowerCase().endsWith('.las')) {
-        tasks.add(e.readAsBytes().then((final bytes) =>
-            LasData(UnmodifiableUint8ListView(bytes), charMaps)));
-      }
-    }).asFuture();
-    final outData = await Future.wait(tasks);
-    for (final i in outData) {
-      print((i as LasData).listOfErrors);
-    }
-  });
+  // test('Las files', () async {
+  //   final charMaps = await loadMappings(r'mappings');
+  //   final tasks = <Future>[];
+  //   await Directory(r'.ag47/').list(recursive: true).listen((e) {
+  //     if (e is File && e.path.toLowerCase().endsWith('.las')) {
+  //       tasks.add(e.readAsBytes().then((final bytes) =>
+  //           LasData(UnmodifiableUint8ListView(bytes), charMaps)));
+  //     }
+  //   }).asFuture();
+  //   final outData = await Future.wait(tasks);
+  //   for (final i in outData) {
+  //     print((i as LasData).listOfErrors);
+  //   }
+  // });
 
   test('parse double', () {
     print(double.tryParse(r'132.4123 exasd'));
@@ -496,5 +496,18 @@ void main() {
     print(await unzipper.unzip(r'test/zip.zip', listFilesGet(1), (list) async {
       print(list);
     }));
+  });
+
+  test('Las ignore', () async {
+    var map = {
+      'W~WELL': ['WELL', 'Well']
+    };
+    var io = File(r'data\las.ignore.json')
+        .openWrite(encoding: utf8, mode: FileMode.writeOnly);
+    io.writeCharCode(unicodeBomCharacterRune);
+    var json = JsonCodec();
+    io.write(json.encode(map));
+    await io.flush();
+    await io.close();
   });
 }

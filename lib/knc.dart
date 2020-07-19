@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
 
+import 'mapping.dart';
+
 int calculate() {
   return 6 * 7;
 }
@@ -30,10 +32,9 @@ class KncSettings {
   /// Путь для поиска файлов
   List<String> pathInList = [];
 
-  static const _SearchPath_7Zip = [
-    r'C:\Program Files\7-Zip\7z.exe',
-    r'C:\Program Files (x86)\7-Zip\7z.exe'
-  ];
+  /// Загружает кодировки и записывает их в настройки
+  Future<Map<String, List<String>>> loadCharMaps() =>
+      loadMappings('mappings').then((charmap) => ssCharMaps = charmap);
 
   /// Заменяет теги ${{tag}} на значение настройки
   String updateBufferByThis(final String data) {
@@ -127,6 +128,11 @@ class KncSettings {
       pathInList.add(map['path$i']);
     }
   }
+
+  static const _SearchPath_7Zip = [
+    r'C:\Program Files\7-Zip\7z.exe',
+    r'C:\Program Files (x86)\7-Zip\7z.exe'
+  ];
 
   /// Ищет где находися программа 7Zip
   static Future<String> searchProgram_7Zip() => Future.wait(

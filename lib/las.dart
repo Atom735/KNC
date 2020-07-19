@@ -1,7 +1,6 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
-import 'mapping.dart';
+import 'errors.dart';
 
 class LasDataInfoLine {
   final String mnem;
@@ -42,52 +41,82 @@ class LasData {
   final info = <String, Map<String, LasDataInfoLine>>{};
   final curves = <LasDataCurve>[];
   final ascii = <List<double>>[];
-  final listOfErrors = <String>[];
+  final listOfErrors = <ErrorOnLine>[];
   Map<String, int> encodesRaiting;
   String encode;
   bool zWrap;
+  String vVers;
+  String vWrap;
+  String wNull;
+  double wNullN;
+  String wStrt;
+  double wStrtN;
+  String wStop;
+  double wStopN;
+  String wStep;
+  double wStepN;
   String wWell;
 
-  LasData(final UnmodifiableUint8ListView bytes,
-      final Map<String, List<String>> charMaps) {
+  LasData(final String buffer) {
     // Подбираем кодировку
-    encodesRaiting = Map.unmodifiable(getMappingRaitings(charMaps, bytes));
-    encode = getMappingMax(encodesRaiting);
+    // encodesRaiting = Map.unmodifiable(getMappingRaitings(charMaps, bytes));
+    // encode = getMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
-    final buffer = String.fromCharCodes(bytes
-        .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
+    // final buffer = String.fromCharCodes(bytes
+    //     .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
     // Нарезаем на линии
     final lines = LineSplitter.split(buffer);
     var lineNum = 0;
 
-    void logError(final String txt) {
-      listOfErrors.add('Строка:$lineNum\t$txt');
-    }
-
-    String vVers;
-    String vWrap;
-    String wNull;
-    double wNullN;
-    String wStrt;
-    double wStrtN;
-    String wStop;
-    double wStopN;
-    String wStep;
-    double wStepN;
+    void logError(KncError err) => listOfErrors.add(ErrorOnLine(err, lineNum));
 
     var iA = 0;
     var section = '';
+
+    bool startSection() {
+      switch (section) {
+        case 'A': // ASCII Log data
+          if (listOfErrors.isNotEmpty) {
+            logError(KncError.lasErrorsNotEmpty);
+            return true;
+          } else if (vVers == null ||
+              vWrap == null ||
+              wNull == null ||
+              wNullN == null ||
+              wStrt == null ||
+              wStrtN == null ||
+              wStop == null ||
+              wStopN == null ||
+              wStep == null ||
+              wStepN == null ||
+              wWell == null) {
+            logError(KncError.lasAllDataNotCorrect);
+            return true;
+          }
+          return false;
+        case 'C': // ~Curve information
+        case 'O': // ~Other information
+        case 'P': // ~Parameter information
+        case 'V': // ~Version information
+        case 'W': // ~Well information
+          info[section] = {};
+          return false;
+        default:
+          logError(KncError.lasUnknownSection);
+          return true;
+      }
+    }
 
     bool parseAsciiLine(final String line) {
       for (final e in line.split(' ')) {
         if (e.isNotEmpty) {
           var val = double.tryParse(e);
           if (val == null) {
-            logError(r'Ошибка в разборе числа');
+            logError(KncError.lasNumberParseError);
             return true;
           }
           if (zWrap == false && iA >= curves.length) {
-            logError(r'Слишком много чисел в линии');
+            logError(KncError.lasTooManyNumbers);
             return true;
           }
           if (iA == 0) {
@@ -123,81 +152,28 @@ class LasData {
         if (iA == curves.length) {
           iA = 0;
         } else {
-          logError(r'Ошибка в количестве чисел в линии');
+          logError(KncError.lasTooManyNumbers);
           return true;
         }
       }
       return false;
     }
 
-    bool startSection() {
-      switch (section) {
-        case 'A': // ASCII Log data
-          if (listOfErrors.isNotEmpty) {
-            logError(r'Невозможно перейти к разбору ASCII данных с ошибками');
-            return true;
-          } else if (vVers == null ||
-              vWrap == null ||
-              wNull == null ||
-              wNullN == null ||
-              wStrt == null ||
-              wStrtN == null ||
-              wStop == null ||
-              wStopN == null ||
-              wStep == null ||
-              wStepN == null ||
-              wWell == null) {
-            logError(r'Не все данные корректны для продолжения парсинга');
-            logError('Vers  === $vVers');
-            logError('Wrap  === $vWrap');
-            logError('Null  === $wNull');
-            logError('NullN === $wNullN');
-            logError('Strt  === $wStrt');
-            logError('StrtN === $wStrtN');
-            logError('Stop  === $wStop');
-            logError('StopN === $wStopN');
-            logError('Step  === $wStep');
-            logError('StepN === $wStepN');
-            logError('Well  === $wWell');
-            return true;
-          }
-          return false;
-        case 'C': // ~Curve information
-        case 'O': // ~Other information
-        case 'P': // ~Parameter information
-        case 'V': // ~Version information
-        case 'W': // ~Well information
-          info[section] = {};
-          return false;
-        default:
-          logError(r'Неизвестная секция');
-          return true;
-      }
-    }
-
     bool parseLine(final String line) {
       if (section.isEmpty) {
-        logError(r'Отсутсвует секция');
+        logError(KncError.lasSectionIsNull);
         return true;
       }
       final i0 = line.indexOf('.');
       if (i0 == -1) {
-        logError(r'Отсутсвует точка');
+        logError(KncError.lasHaventDot);
         return false;
       }
-      // if (line.contains('.', i0 + 1)) {
-      //   logError(r'Две точки на линии');
-      //   return false;
-      // }
       final i1 = line.lastIndexOf(':');
       if (i1 == -1) {
-        logError(r'Отсутсвует двоеточие');
+        logError(KncError.lasHaventDoubleDot);
         return false;
       }
-      // if (line.contains(':', i1 + 1)) {
-      //   logError(r'Два двоеточия на линии');
-      //   return false;
-      // }
       final i2 = line.indexOf(' ', i0);
       final mnem = line.substring(0, i0).trim();
       final unit = line.substring(i0 + 1, i2).trim();
@@ -212,26 +188,26 @@ class LasData {
             case 'VERS':
               vVers = data;
               if (unit.isNotEmpty) {
-                logError(r'После точки должен быть пробел');
+                logError(KncError.lasHaventSpaceAfterDot);
               }
               if (vVers != '1.20' && vVers != '2.0') {
-                logError(r'Ошибка в версии файла');
+                logError(KncError.lasVersionError);
                 vVers = null;
               }
               return false;
             case 'WRAP':
               vWrap = data;
               if (unit.isNotEmpty) {
-                logError(r'После точки должен быть пробел');
+                logError(KncError.lasHaventSpaceAfterDot);
               }
               if (vWrap != 'YES' && vWrap != 'NO') {
-                logError(r'Ошибка в значении многострочности');
+                logError(KncError.lasLineWarpError);
                 vWrap = null;
               }
               zWrap = vWrap == 'YES';
               return false;
             default:
-              logError(r'Неизвестная мнемоника в секции ~V');
+              logError(KncError.lasUncknownMnemInVSection);
               return false;
           }
           break;
@@ -241,28 +217,28 @@ class LasData {
               wNull = data;
               wNullN = double.tryParse(wNull);
               if (wNullN == null) {
-                logError(r'Некорректное число');
+                logError(KncError.lasUncorrectNumber);
               }
               return false;
             case 'STEP':
               wStep = data;
               wStepN = double.tryParse(wStep);
               if (wStepN == null) {
-                logError(r'Некорректное число');
+                logError(KncError.lasUncorrectNumber);
               }
               return false;
             case 'STRT':
               wStrt = data;
               wStrtN = double.tryParse(wStrt);
               if (wStrtN == null) {
-                logError(r'Некорректное число');
+                logError(KncError.lasUncorrectNumber);
               }
               return false;
             case 'STOP':
               wStop = data;
               wStopN = double.tryParse(wStop);
               if (wStopN == null) {
-                logError(r'Некорректное число');
+                logError(KncError.lasUncorrectNumber);
               }
               return false;
             case 'WELL':
@@ -284,7 +260,7 @@ class LasData {
                     'Скважина',
                     'скважина'
                   ].contains(wWell)) {
-                logError(r'Невозможно получить номер скважины по полю WELL');
+                logError(KncError.lasCantGetWell);
                 wWell = null;
               }
               return false;
