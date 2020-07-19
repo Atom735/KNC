@@ -185,5 +185,10 @@ class MyServer {
         }
       }
     }
+    var list = <Future>[];
+    for (var socket in ws) {
+      list.add(socket.close());
+    }
+    await Future.wait(list);
   }
 }
