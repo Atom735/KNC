@@ -17,6 +17,19 @@ import 'package:xml/xml_events.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('las files test', () async {
+    const path = r'test\6280___rk_1.las';
+    final entity = File(path);
+    final charMaps = await loadMappings('mappings');
+    final las1 = LasData(
+        UnmodifiableUint8ListView(await entity.readAsBytes()), charMaps);
+    final las2 = LasData(
+        UnmodifiableUint8ListView(await entity.readAsBytes()), charMaps);
+    final db = LasDataBase();
+    print(db.addLasData(las1));
+    print(db.addLasData(las2));
+  });
+
   test('calculate', () {
     expect(calculate(), 42);
   });
