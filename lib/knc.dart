@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'dart:convert';
 
 import 'mapping.dart';
+import 'unzipper.dart';
 
 int calculate() {
   return 6 * 7;
@@ -37,9 +39,51 @@ class KncSettings {
   String pathOutErrors;
   IOSink errorsOut;
 
+  Unzipper unzipper;
+
   /// Загружает кодировки и записывает их в настройки
   Future<Map<String, List<String>>> loadCharMaps() =>
       loadMappings('mappings').then((charmap) => ssCharMaps = charmap);
+
+  /// Очищает папки, подготавливает распаковщик,
+  /// открывает файл с ошибками для записи
+  Future<void> initializing() async {
+    final dirOut = Directory(ssPathOut);
+    if (await dirOut.exists()) {
+      await dirOut.delete(recursive: true);
+    }
+    await dirOut.create(recursive: true);
+    if (dirOut.isAbsolute == false) {
+      ssPathOut = dirOut.absolute.path;
+    }
+
+    unzipper = Unzipper(p.join(ssPathOut, 'temp'), ssPath7z);
+
+    pathOutLas = p.join(ssPathOut, 'las');
+    pathOutInk = p.join(ssPathOut, 'ink');
+    pathOutErrors = p.join(ssPathOut, 'errors');
+
+    await Future.wait([
+      unzipper.clear(),
+      Directory(pathOutLas).create(recursive: true),
+      Directory(pathOutInk).create(recursive: true),
+      Directory(pathOutErrors).create(recursive: true)
+    ]);
+
+    errorsOut = File(p.join(pathOutErrors, '.errors.txt'))
+        .openWrite(encoding: utf8, mode: FileMode.writeOnly);
+    errorsOut.writeCharCode(unicodeBomCharacterRune);
+  }
+
+  /// Отправляет страницу с натсройками
+  Future servSettings(final HttpResponse response) async {
+    response.headers.contentType = ContentType.html;
+    response.statusCode = HttpStatus.ok;
+    response.write(
+        updateBufferByThis(await File(r'web/index.html').readAsString()));
+    await response.flush();
+    await response.close();
+  }
 
   /// Заменяет теги ${{tag}} на значение настройки
   String updateBufferByThis(final String data) {
