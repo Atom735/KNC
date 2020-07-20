@@ -179,6 +179,14 @@ class LasData {
         return false;
       }
       final i2 = line.indexOf(' ', i0);
+      if (i2 == -1) {
+        logError(KncError.lasHaventSpaceAfterDot);
+        return false;
+      }
+      if (i1 < i2) {
+        logError(KncError.lasDotAfterDoubleDot);
+        return false;
+      }
       final mnem = line.substring(0, i0).trim();
       final unit = line.substring(i0 + 1, i2).trim();
       final data = line.substring(i2 + 1, i1).trim();

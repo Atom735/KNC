@@ -43,6 +43,9 @@ enum KncError {
 
   /// 14
   lasCantGetWell,
+
+  /// 15
+  lasDotAfterDoubleDot,
 }
 
 const kncErrorStrings = [
@@ -90,6 +93,9 @@ const kncErrorStrings = [
 
   /// 14
   r'Невозможно получить номер скважины по полю WELL',
+
+  /// 15
+  r'Точка найдена после двоеточия',
 ];
 
 class ErrorOnLine {

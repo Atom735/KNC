@@ -60,7 +60,14 @@ Future main(List<String> args) async {
       print(entity);
       final ext = p.extension(entity.path).toLowerCase();
       if (ss.ssFileExtAr.contains(ext)) {
-        return unzipper.unzip(entity.path, listFiles);
+        try {
+          await unzipper.unzip(entity.path, listFiles);
+        } catch (e) {
+          errorAdd('+UNZIPPER: ${entity.path}');
+          errorAdd('\t$e');
+          errorAdd(''.padRight(20, '='));
+        }
+        return;
       }
       if (ss.ssFileExtLas.contains(ext)) {
         final data = LasData(
@@ -77,7 +84,13 @@ Future main(List<String> args) async {
             server.sendMsg('#LAS:\t${c.mnem}: ${c.strtN} <=> ${c.stopN}');
           }
           server.sendMsg('#LAS:' + ''.padRight(20, '='));
-          return entity.copy(newPath);
+          try {
+            await entity.copy(newPath);
+          } catch (e) {
+            errorAdd('+FILE_COPY: ${entity.path} => $newPath');
+            errorAdd('\t$e');
+            errorAdd(''.padRight(20, '='));
+          }
         } else {
           // On Error
           final newPath =
@@ -88,11 +101,19 @@ Future main(List<String> args) async {
             errorAdd('\tСтрока ${err.line}: ${kncErrorStrings[err.err]}');
           }
           errorAdd(''.padRight(20, '='));
-          return entity.copy(newPath);
+          try {
+            await entity.copy(newPath);
+          } catch (e) {
+            errorAdd('+FILE_COPY: ${entity.path} => $newPath');
+            errorAdd('\t$e');
+            errorAdd(''.padRight(20, '='));
+          }
+          return;
         }
       }
       if (ss.ssFileExtInk.contains(ext)) {
         final bytes = UnmodifiableUint8ListView(await entity.readAsBytes());
+        if (bytes.length <= 30) return;
         var spaces = 0;
         InkData ink;
         for (var i = 0; i < 30; i++) {
@@ -103,7 +124,7 @@ Future main(List<String> args) async {
         if (spaces > 10) {
           ink = InkData.txt(bytes, ss.ssCharMaps);
         } else {
-          bool b = true;
+          var b = true;
           const signatureDoc = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
           for (var i = 0; i < signatureDoc.length && b; i++) {
             b = bytes[i] == signatureDoc[i];
@@ -111,49 +132,68 @@ Future main(List<String> args) async {
 
           if (b) {
             final newPath = await getOutPathNew(
-                ss.pathOutLas, p.basename(entity.path) + '.docx');
+                ss.pathOutInk, p.basename(entity.path) + '.docx');
             await ss.runDoc2X(entity.path, newPath);
-            await unzipper.unzip(newPath, (FileSystemEntity entity2) async {
-              if (entity2 is File &&
-                  p.dirname(entity2.path) == 'word' &&
-                  p.basename(entity2.path) == 'document.xml') {
-                ink = InkData.docx(entity2.openRead());
-                await ink.future;
-                if (ink.listOfErrors.isEmpty) {
-                  // No error
-                  final newPath = await getOutPathNew(
-                      ss.pathOutInk,
-                      ink.well +
-                          '___' +
-                          p.basenameWithoutExtension(entity.path) +
-                          '.txt');
+            try {
+              await unzipper.unzip(newPath, (FileSystemEntity entity2) async {
+                if (entity2 is File &&
+                    p.dirname(entity2.path) == 'word' &&
+                    p.basename(entity2.path) == 'document.xml') {
+                  ink = InkData.docx(entity2.openRead());
+                  await ink.future;
+                  if (ink.listOfErrors.isEmpty) {
+                    // No error
+                    final newPath = await getOutPathNew(
+                        ss.pathOutInk,
+                        ink.well +
+                            '___' +
+                            p.basenameWithoutExtension(entity.path) +
+                            '.txt');
 
-                  server.sendMsg('#INK:+"${entity.path}"');
-                  server.sendMsg('#INK:\t"${entity.path}" => "${newPath}"');
-                  server.sendMsg('#INK:' + ''.padRight(20, '='));
-                  final io = File(newPath).openWrite(mode: FileMode.writeOnly);
-                  io.writeln(ink.well);
-                  for (final item in ink.list) {
-                    io.writeln(
-                        '${item.depthN}\t${item.angleN}\t${item.azimuthN}');
+                    server.sendMsg('#INK:+"${entity.path}"');
+                    server.sendMsg('#INK:\t"${entity.path}" => "${newPath}"');
+                    server.sendMsg('#INK:' + ''.padRight(20, '='));
+                    final io =
+                        File(newPath).openWrite(mode: FileMode.writeOnly);
+                    io.writeln(ink.well);
+                    for (final item in ink.list) {
+                      io.writeln(
+                          '${item.depthN}\t${item.angleN}\t${item.azimuthN}');
+                    }
+                    await io.flush();
+                    await io.close();
+                  } else {
+                    // On Error
+                    final newPath = await getOutPathNew(
+                        ss.pathOutErrors, p.basename(entity.path));
+                    errorAdd('+INK("${entity.path}")');
+                    errorAdd('\t"${entity.path}" => "${newPath}"');
+                    for (final err in ink.listOfErrors) {
+                      errorAdd('\t$err');
+                    }
+                    errorAdd(''.padRight(20, '='));
+                    try {
+                      await entity.copy(newPath);
+                    } catch (e) {
+                      errorAdd('+FILE_COPY: ${entity.path} => $newPath');
+                      errorAdd('\t$e');
+                      errorAdd(''.padRight(20, '='));
+                    }
                   }
-                  await io.flush();
-                  await io.close();
-                } else {
-                  // On Error
-                  final newPath = await getOutPathNew(
-                      ss.pathOutErrors, p.basename(entity.path));
-                  errorAdd('+INK("${entity.path}")');
-                  errorAdd('\t"${entity.path}" => "${newPath}"');
-                  for (final err in ink.listOfErrors) {
-                    errorAdd('\t$err');
-                  }
-                  errorAdd(''.padRight(20, '='));
-                  await entity.copy(newPath);
                 }
-              }
-            });
-            return File(newPath).delete();
+              });
+            } catch (e) {
+              errorAdd('+UNZIPPER: ${entity.path}');
+              errorAdd('\t$e');
+              errorAdd(''.padRight(20, '='));
+            }
+            try {
+              await File(newPath).delete();
+            } catch (e) {
+              errorAdd('+FILE_DELETE: ${entity.path}');
+              errorAdd('\t$e');
+              errorAdd(''.padRight(20, '='));
+            }
           }
 
           const signatureZip = [
@@ -206,7 +246,13 @@ Future main(List<String> args) async {
                       errorAdd('\t$err');
                     }
                     errorAdd(''.padRight(20, '='));
-                    await entity.copy(newPath);
+                    try {
+                      await entity.copy(newPath);
+                    } catch (e) {
+                      errorAdd('+FILE_COPY: ${entity.path} => $newPath');
+                      errorAdd('\t$e');
+                      errorAdd(''.padRight(20, '='));
+                    }
                   }
                 }
               });
@@ -247,17 +293,22 @@ Future main(List<String> args) async {
     } else {
       serv.handleRequest = reqWhileWork;
       ss.updateByMultiPartFormData(parseMultiPartFormData(content));
-      unzipper = Unzipper(p.join(ss.ssPathOut, 'temp'), ss.ssPath7z);
-
-      ss.pathOutLas = p.join(ss.ssPathOut, 'las');
-      ss.pathOutInk = p.join(ss.ssPathOut, 'ink');
-      ss.pathOutErrors = p.join(ss.ssPathOut, 'errors');
 
       final dirOut = Directory(ss.ssPathOut);
       if (await dirOut.exists()) {
         await dirOut.delete(recursive: true);
       }
       await dirOut.create(recursive: true);
+      if (dirOut.isAbsolute == false) {
+        ss.ssPathOut = dirOut.absolute.path;
+      }
+
+      unzipper = Unzipper(p.join(ss.ssPathOut, 'temp'), ss.ssPath7z);
+
+      ss.pathOutLas = p.join(ss.ssPathOut, 'las');
+      ss.pathOutInk = p.join(ss.ssPathOut, 'ink');
+      ss.pathOutErrors = p.join(ss.ssPathOut, 'errors');
+
       await Future.wait([
         unzipper.clear(),
         Directory(ss.pathOutLas).create(recursive: true),
