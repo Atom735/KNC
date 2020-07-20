@@ -9,18 +9,6 @@ import 'package:path/path.dart' as p;
 
 import 'package:knc/las.dart';
 
-Future<ProcessResult> runUnZip(
-    final String path2exe, final String path2arch, final String path2out) {
-  // 7z <x или e> <архивный файл> -o"<путь, куда распаковываем>"
-  return Process.run(path2exe, ['x', '-o$path2out', path2arch]);
-}
-
-Future<ProcessResult> runDoc2X(
-    final String path2exe, final String path2doc, final String path2out) {
-  // -oice -nme <input file> <output file>
-  return Process.run(path2exe, ['-oice', '-nme', path2doc, path2out]);
-}
-
 Future<String> getOutPathNew(String prePath, String name) async {
   if (await File(p.join(prePath, p.basename(name))).exists()) {
     final f0 = p.join(prePath, p.basenameWithoutExtension(name));
