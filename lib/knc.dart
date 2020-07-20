@@ -52,7 +52,26 @@ class KncSettings {
   Map<String, List<String>> ssCharMaps;
 
   /// Путь для поиска файлов
+  /// получается из полей `[path0, path1, path2, path3, ...]`
   List<String> pathInList = [];
+
+  /// Максимальный размер вскрываемого архива в байтах
+  ///
+  /// Для задания значения можно использовать постфиксы:
+  /// * `k` = КилоБайты
+  /// * `m` = МегаБайты = `kk`
+  /// * `g` = ГигаБайты = `kkk`
+  ///
+  /// `0` - для всех архивов
+  ///
+  /// По умолчанию 1Gb
+  int ssArMaxSize = 1024 * 1024 * 1024;
+
+  /// Максимальный глубина прохода по архивам
+  /// * `-1` - для бесконечной вложенности (По умолчанию)
+  /// * `0` - для отбрасывания всех архивов
+  /// * `1` - для входа на один уровень архива
+  int ssArMaxDepth = -1;
 
   String pathOutLas;
   String pathOutInk;
@@ -164,6 +183,20 @@ class KncSettings {
             out.write('<li>$key</li>');
           });
           break;
+        case 'ssArMaxSize':
+          if (ssArMaxSize % (1024 * 1024 * 1024) == 0) {
+            out.write('${ssArMaxSize ~/ (1024 * 1024 * 1024)}G');
+          } else if (ssArMaxSize % (1024 * 1024) == 0) {
+            out.write('${ssArMaxSize ~/ (1024 * 1024)}M');
+          } else if (ssArMaxSize % (1024) == 0) {
+            out.write('${ssArMaxSize ~/ (1024)}K');
+          } else {
+            out.write('${ssArMaxSize}');
+          }
+          break;
+        case 'ssArMaxDepth':
+          out.write('${ssArMaxDepth}');
+          break;
         default:
           out.write('[UNDIFINED NAME]');
       }
@@ -199,6 +232,29 @@ class KncSettings {
       ssFileExtInk.clear();
       ssFileExtInk = map['ssFileExtInk'].toLowerCase().split(';');
       ssFileExtInk.removeWhere((element) => element.isEmpty);
+    }
+    if (map['ssArMaxSize'] != null) {
+      final str = map['ssArMaxSize'].toLowerCase();
+      ssArMaxSize = int.tryParse(
+          str.replaceAll('k', '').replaceAll('m', '').replaceAll('g', ''));
+      if (ssArMaxSize != null) {
+        if (str.endsWith('kkk') ||
+            str.endsWith('g') ||
+            str.endsWith('km') ||
+            str.endsWith('mk')) {
+          ssArMaxSize *= 1024 * 1024 * 1024;
+        } else if (str.endsWith('kk') || str.endsWith('m')) {
+          ssArMaxSize *= 1024 * 1024;
+        } else if (str.endsWith('k')) {
+          ssArMaxSize *= 1024;
+        }
+      } else {
+        ssArMaxSize = 0;
+      }
+    }
+    if (map['ssArMaxDepth'] != null) {
+      ssArMaxDepth = int.tryParse(map['ssArMaxDepth']);
+      ssArMaxDepth ??= -1;
     }
     pathInList.clear();
     for (var i = 0; map['path$i'] != null; i++) {
