@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'mapping.dart';
 import 'unzipper.dart';
+import 'las.dart';
 
 int calculate() {
   return 6 * 7;
@@ -38,6 +39,8 @@ class KncSettings {
   String pathOutInk;
   String pathOutErrors;
   IOSink errorsOut;
+
+  LasDataBase lasDB = LasDataBase();
 
   Unzipper unzipper;
 
