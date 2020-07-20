@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'errors.dart';
@@ -43,11 +44,103 @@ class SingleCurveLasData {
       return false;
     }
   }
+
+  /// Сохранение данных в бинарном виде
+  void save(final IOSink io) {
+    io.add(utf8.encoder.convert(origin));
+    io.add([0]);
+    io.add(utf8.encoder.convert(well));
+    io.add([0]);
+    io.add(utf8.encoder.convert(name));
+    io.add([0]);
+    final bb = ByteData(20);
+    bb.setFloat64(0, strt);
+    bb.setFloat64(8, stop);
+    bb.setUint32(16, data.length);
+    io.add(bb.buffer.asUint8List());
+    final bl = ByteData(8 * data.length);
+    for (var i = 0; i < data.length; i++) {
+      bl.setFloat64(8 * i, data[i]);
+    }
+    io.add(bl.buffer.asUint8List());
+  }
 }
 
 class LasDataBase {
   /// База данных, где ключём является Имя скважины
   var db = <String, List<SingleCurveLasData>>{};
+
+  /// `+{key}{0}{listLen}LIST{SingleCurveLasData}`
+  /// ...
+  /// Сохранение данных в бинарном виде в файл
+  Future save(final String path) async {
+    final io = File(path).openWrite(encoding: null, mode: FileMode.writeOnly);
+    db.forEach((key, value) {
+      io.add(['+'.codeUnits[0]]);
+      io.add(utf8.encoder.convert(key));
+      io.add([0]);
+      final bb = ByteData(4);
+      bb.setUint32(0, value.length);
+      io.add(bb.buffer.asUint8List());
+      for (final item in value) {
+        item.save(io);
+      }
+    });
+    io.add([0]);
+    await io.flush();
+    await io.close();
+  }
+
+  /// Загрузка бинарных данных
+  Future load(final String path) async {
+    final buf = await File(path).readAsBytes();
+    var offset = 0;
+    db.clear();
+    while (buf[offset] == '+'.codeUnits[0]) {
+      offset += 1;
+      var iNull = 0;
+      while (buf[offset + iNull] != 0) {
+        iNull += 1;
+      }
+      final key = utf8.decoder.convert(buf.sublist(offset, offset + iNull));
+      offset += iNull + 1;
+      db[key] = <SingleCurveLasData>[];
+      db[key].length = ByteData.view(buf.buffer, offset, 4).getUint32(0);
+      offset += 4;
+      for (var i = 0; i < db[key].length; i++) {
+        iNull = 0;
+        while (buf[offset + iNull] != 0) {
+          iNull += 1;
+        }
+        final origin =
+            utf8.decoder.convert(buf.sublist(offset, offset + iNull));
+        offset += iNull + 1;
+        iNull = 0;
+        while (buf[offset + iNull] != 0) {
+          iNull += 1;
+        }
+        final well = utf8.decoder.convert(buf.sublist(offset, offset + iNull));
+        offset += iNull + 1;
+        iNull = 0;
+        while (buf[offset + iNull] != 0) {
+          iNull += 1;
+        }
+        final name = utf8.decoder.convert(buf.sublist(offset, offset + iNull));
+        offset += iNull + 1;
+        final bb = ByteData.view(buf.buffer, offset, 20);
+        offset += 20;
+        final strt = bb.getFloat64(0);
+        final stop = bb.getFloat64(8);
+        final data = List<double>(bb.getUint32(16));
+        final bl = ByteData.view(buf.buffer, offset, 8 * data.length);
+        offset += 8 * data.length;
+        for (var i = 0; i < data.length; i++) {
+          data[i] = bl.getFloat64(8 * i);
+        }
+        db[key][i] = SingleCurveLasData(origin, well, name, strt, stop, data);
+      }
+    }
+  }
 
   /// Добавляет данные LAS файла в базу,
   /// если такие данные уже имеются

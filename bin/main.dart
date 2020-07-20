@@ -34,7 +34,7 @@ Future main(List<String> args) async {
         // а [pathToArch] - пустая строка, но не `null`
         if (entity is File) {
           final ext = p.extension(entity.path).toLowerCase();
-          // == UNZIPPER ==
+          // == UNZIPPER == Begin
           if (ss.ssFileExtAr.contains(ext)) {
             try {
               if (ss.ssArMaxSize > 0) {
@@ -60,7 +60,7 @@ Future main(List<String> args) async {
                 return;
               }
             } catch (e) {
-              // Ошибка архиватора
+              // TODO: Ошибка архиватора
               errorAdd('+UNZIPPER: ${entity.path}');
               errorAdd('\t$e');
               errorAdd(''.padRight(20, '='));
@@ -68,6 +68,22 @@ Future main(List<String> args) async {
             return;
           } // == UNZIPPER == End
 
+          // == LAS FILES == Begin
+          if (ss.ssFileExtLas.contains(ext)) {
+            try {
+              final las = LasData(
+                  UnmodifiableUint8ListView(await entity.readAsBytes()),
+                  ss.ssCharMaps);
+              if (las.listOfErrors.isEmpty) {
+                // Данные корректны
+              } else {
+                // Ошибка в данных файла
+              }
+            } catch (e) {
+              // TODO: Ошибка чтения файла LAS
+            }
+            return;
+          } // == LAS FILES == End
         }
       };
 
