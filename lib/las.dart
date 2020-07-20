@@ -4,6 +4,78 @@ import 'dart:typed_data';
 import 'errors.dart';
 import 'mapping.dart';
 
+class SingleCurveLasData {
+  String well;
+  String name;
+  double strt;
+  double stop;
+  List<double> data;
+
+  static List<SingleCurveLasData> getByLasData(final LasData las) {
+    final cs = las.curves;
+    final cc = cs.length - 1;
+    final out = List<SingleCurveLasData>(cc);
+    for (var i = 0; i < cc; i++) {
+      out[i].well = las.wWell;
+      final ci = cs[i + 1];
+      out[i].name = ci.mnem;
+      out[i].strt = ci.strtN;
+      out[i].stop = ci.stopN;
+      out[i].data = las.ascii[i + 1].sublist(ci.strtI, ci.stopI);
+    }
+    return out;
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other is SingleCurveLasData) {
+      return well == other.well &&
+          name == other.name &&
+          strt == other.strt &&
+          stop == other.stop &&
+          data.length == other.data.length;
+    } else {
+      return false;
+    }
+  }
+}
+
+class LasDataBase {
+  /// База данных, где ключём является Имя скважины
+  var db = <String, List<SingleCurveLasData>>{};
+
+  /// Добавляет данные LAS файла в базу,
+  /// если такие данные уже имеются
+  /// то функция вернёт `false`
+  bool addLasData(final LasData las) {
+    final list = SingleCurveLasData.getByLasData(las);
+    if (db[las.wWell] == null) {
+      db[las.wWell] = [];
+      db[las.wWell].addAll(list);
+      return true;
+    } else {
+      /// Флаг уникальности данных
+      var b = true;
+      uniqueLoop:
+      for (var scdb in db[las.wWell]) {
+        for (var scld in list) {
+          if (scdb == scld) {
+            // Если совпадают
+            b = false;
+            break uniqueLoop;
+          }
+        }
+      }
+      if (b) {
+        db[las.wWell].addAll(list);
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+}
+
 class LasDataInfoLine {
   final String mnem;
   final String unit;
@@ -32,6 +104,8 @@ class LasDataCurve extends LasDataInfoLine {
   String stop;
   double strtN;
   double stopN;
+  int strtI;
+  int stopI;
 
   LasDataCurve(final String mnem, final String unit, final String data,
       final String desc)
@@ -131,16 +205,21 @@ class LasData {
             if (iA == 0) {
               // Depth
               if (curves[iA].strt == null) {
+                curves[iA].strtI = ascii.length - 1;
                 curves[iA].strt = e;
                 curves[iA].strtN = val;
               }
+              curves[iA].stopI = ascii.length - 1;
               curves[iA].stop = e;
               curves[iA].stopN = val;
             } else {
+              // Not Depth
               if (curves[iA].strt == null) {
+                curves[iA].strtI = ascii.length - 1;
                 curves[iA].strt = curves[0].stop;
                 curves[iA].strtN = curves[0].stopN;
               }
+              curves[iA].stopI = ascii.length - 1;
               curves[iA].stop = curves[0].stop;
               curves[iA].stopN = curves[0].stopN;
             }
