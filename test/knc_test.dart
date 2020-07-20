@@ -17,6 +17,20 @@ import 'package:xml/xml_events.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('las db load and print', () async {
+    final db = LasDataBase();
+    await db.load(r'out/las/.db.bin');
+    db.db.forEach((key, value) {
+      value.sort((a, b) => a.name.compareTo(b.name));
+      value.forEach((element) {
+        final f = element.toString().split(';');
+        print('${key.padLeft(20)}: ${f[0]}');
+        print(
+            '${''.padLeft(20)}: ${f[2].padRight(10)} | ${element.strt} | ${element.stop}');
+      });
+    });
+  });
+
   test('las db save/load', () async {
     const path = r'test\6280___rk_1.las';
     final entity = File(path);

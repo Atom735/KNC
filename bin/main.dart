@@ -73,14 +73,52 @@ Future main(List<String> args) async {
             try {
               final las = LasData(
                   UnmodifiableUint8ListView(await entity.readAsBytes()),
-                  ss.ssCharMaps);
+                  ss.ssCharMaps,
+                  ss.lasIgnore);
+              las.origin = pathToArch + relPath;
               if (las.listOfErrors.isEmpty) {
                 // Данные корректны
+                final newPath = await getOutPathNew(
+                    ss.pathOutLas, las.wWell + '___' + p.basename(entity.path));
+                final na = ss.lasDB.addLasData(las);
+                server.sendMsg('#LAS:+"${las.origin}"');
+                server.sendMsg(
+                    '#LAS:\tВ базу добавлено ${las.curves.length - 1 - na} кривых');
+                server.sendMsg('#LAS:\t"${entity.path}" => "${newPath}"');
+                for (final c in las.curves) {
+                  server.sendMsg('#LAS:\t${c.mnem}: ${c.strtN} <=> ${c.stopN}');
+                }
+                server.sendMsg('#LAS:' + ''.padRight(20, '='));
+                try {
+                  await entity.copy(newPath);
+                } catch (e) {
+                  errorAdd('+LAS: ${entity.path} => $newPath');
+                  errorAdd('\t$e');
+                  errorAdd(''.padRight(20, '='));
+                }
               } else {
                 // Ошибка в данных файла
+                final newPath = await getOutPathNew(
+                    ss.pathOutErrors, p.basename(entity.path));
+                errorAdd('+LAS("${las.origin}")');
+                errorAdd('\t"${entity.path}" => "${newPath}"');
+                for (final err in las.listOfErrors) {
+                  errorAdd('\tСтрока ${err.line}: ${kncErrorStrings[err.err]}');
+                }
+                errorAdd(''.padRight(20, '='));
+                try {
+                  await entity.copy(newPath);
+                } catch (e) {
+                  errorAdd('+LAS: ${entity.path} => $newPath');
+                  errorAdd('\t$e');
+                  errorAdd(''.padRight(20, '='));
+                }
               }
             } catch (e) {
               // TODO: Ошибка чтения файла LAS
+              errorAdd('+LAS: ${entity.path}');
+              errorAdd('\t$e');
+              errorAdd(''.padRight(20, '='));
             }
             return;
           } // == LAS FILES == End
@@ -299,6 +337,12 @@ Future main(List<String> args) async {
   Future onWorkEnd() async {
     print('Work Ended');
     server.sendMsg('#DONE!');
+    if (ss.errorsOut != null) {
+      await ss.errorsOut.flush();
+      await ss.errorsOut.close();
+      ss.errorsOut = null;
+    }
+    await ss.lasDB.save(p.join(ss.pathOutLas, '.db.bin'));
   }
 
   Future<bool> reqWhileWork(
@@ -348,5 +392,6 @@ Future main(List<String> args) async {
   if (ss.errorsOut != null) {
     await ss.errorsOut.flush();
     await ss.errorsOut.close();
+    ss.errorsOut = null;
   }
 }
