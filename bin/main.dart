@@ -9,20 +9,6 @@ import 'package:path/path.dart' as p;
 
 import 'package:knc/las.dart';
 
-Future<String> getOutPathNew(String prePath, String name) async {
-  if (await File(p.join(prePath, p.basename(name))).exists()) {
-    final f0 = p.join(prePath, p.basenameWithoutExtension(name));
-    final fe = p.extension(name);
-    var i = 0;
-    while (await File('${f0}_$i$fe').exists()) {
-      i++;
-    }
-    return '${f0}_$i$fe';
-  } else {
-    return p.join(prePath, p.basename(name));
-  }
-}
-
 Future main(List<String> args) async {
   /// настройки
   final ss = KncSettings();

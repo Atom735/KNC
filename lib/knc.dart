@@ -10,6 +10,25 @@ int calculate() {
   return 6 * 7;
 }
 
+/// Подбирает новое имя для файла, если он уже существует в папке [prePath]
+///
+/// [prePath] - это путь именно к существующей папке
+///
+/// [name] - это может быть как путь, так и только имя
+Future<String> getOutPathNew(String prePath, String name) async {
+  if (await File(p.join(prePath, p.basename(name))).exists()) {
+    final f0 = p.join(prePath, p.basenameWithoutExtension(name));
+    final fe = p.extension(name);
+    var i = 0;
+    while (await File('${f0}_$i$fe').exists()) {
+      i++;
+    }
+    return '${f0}_$i$fe';
+  } else {
+    return p.join(prePath, p.basename(name));
+  }
+}
+
 class KncSettings {
   /// Путь к конечным данным
   String ssPathOut = 'out';
