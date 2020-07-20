@@ -83,6 +83,8 @@ class KncSettings {
 
   Unzipper unzipper;
 
+  final lasCurvesNameOriginals = <String>[];
+
   /// Загружает кодировки и записывает их в настройки
   Future<Map<String, List<String>>> loadCharMaps() =>
       loadMappings('mappings').then((charmap) => ssCharMaps = charmap);

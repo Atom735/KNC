@@ -81,6 +81,11 @@ Future main(List<String> args) async {
                 final newPath = await getOutPathNew(
                     ss.pathOutLas, las.wWell + '___' + p.basename(entity.path));
                 final na = ss.lasDB.addLasData(las);
+                for (var item in las.curves) {
+                  if (!ss.lasCurvesNameOriginals.contains(item.mnem)) {
+                    ss.lasCurvesNameOriginals.add(item.mnem);
+                  }
+                }
                 server.sendMsg('#LAS:+"${las.origin}"');
                 server.sendMsg(
                     '#LAS:\tВ базу добавлено ${las.curves.length - 1 - na} кривых');
@@ -345,6 +350,10 @@ Future main(List<String> args) async {
       ss.errorsOut = null;
     }
     await ss.lasDB.save(p.join(ss.pathOutLas, '.db.bin'));
+
+    ss.lasCurvesNameOriginals.sort((a, b) => a.compareTo(b));
+    await File(p.join(ss.pathOutLas, '.cs.txt'))
+        .writeAsString(ss.lasCurvesNameOriginals.join('\r\n'));
   }
 
   Future<bool> reqWhileWork(
