@@ -25,7 +25,53 @@ Future main(List<String> args) async {
     server.sendMsg('#ERROR:$txt');
   }
 
-  Future listFiles(final FileSystemEntity entity) async {
+  Future Function(FileSystemEntity entity, String relPath) listFilesGet(
+          final int iArchDepth, final String pathToArch) =>
+      (final FileSystemEntity entity, final String relPath) async {
+        // [pathToArch] - путь к вскрытому архиву
+        // [relPath] - путь относительный архива
+        // Вне архива, [relPath]- содержит полный путь
+        // а [pathToArch] - пустая строка, но не `null`
+        if (entity is File) {
+          final ext = p.extension(entity.path).toLowerCase();
+          // == UNZIPPER ==
+          if (ss.ssFileExtAr.contains(ext)) {
+            try {
+              if (ss.ssArMaxSize > 0) {
+                // если максимальный размер архива установлен
+                if (await entity.length() < ss.ssArMaxSize &&
+                    (ss.ssArMaxDepth == -1 || iArchDepth < ss.ssArMaxDepth)) {
+                  // вскрываем архив если он соотвествует размеру и мы не привысили глубину вложенности
+                  await ss.unzipper.unzip(entity.path,
+                      listFilesGet(iArchDepth + 1, pathToArch + relPath));
+                  return;
+                } else {
+                  // отбрасываем большой архив
+                  return;
+                }
+              } else if (ss.ssArMaxDepth == -1 ||
+                  iArchDepth < ss.ssArMaxDepth) {
+                // если не указан размер, и мы не превысили вложенность
+                await ss.unzipper.unzip(entity.path,
+                    listFilesGet(iArchDepth + 1, pathToArch + relPath));
+                return;
+              } else {
+                // игнорируем из за вложенности
+                return;
+              }
+            } catch (e) {
+              // Ошибка архиватора
+              errorAdd('+UNZIPPER: ${entity.path}');
+              errorAdd('\t$e');
+              errorAdd(''.padRight(20, '='));
+            }
+            return;
+          } // == UNZIPPER == End
+
+        }
+      };
+
+  Future listFiles(final FileSystemEntity entity, final String relPath) async {
     if (entity is File) {
       // print(entity);
       final ext = p.extension(entity.path).toLowerCase();
@@ -106,7 +152,7 @@ Future main(List<String> args) async {
             await ss.runDoc2X(entity.path, newPath);
             try {
               await ss.unzipper.unzip(newPath,
-                  (FileSystemEntity entity2) async {
+                  (final FileSystemEntity entity2, final String relPath) async {
                 if (entity2 is File &&
                     p.dirname(entity2.path) == 'word' &&
                     p.basename(entity2.path) == 'document.xml') {
@@ -180,7 +226,7 @@ Future main(List<String> args) async {
             }
             if (b) {
               await ss.unzipper.unzip(entity.path,
-                  (FileSystemEntity entity2) async {
+                  (final FileSystemEntity entity2, final String relPath) async {
                 if (entity2 is File &&
                     p.dirname(entity2.path) == 'word' &&
                     p.basename(entity2.path) == 'document.xml') {
@@ -262,15 +308,16 @@ Future main(List<String> args) async {
       ss.pathInList.forEach((element) {
         if (element.isNotEmpty) {
           print('pathInList => $element');
-          tasks.add(FileSystemEntity.type(element).then((value) =>
-              value == FileSystemEntityType.file
-                  ? listFiles(File(element))
-                  : value == FileSystemEntityType.directory
-                      ? Directory(element)
-                          .list(recursive: true)
-                          .listen((entity) => tasks2.add(listFiles(entity)))
-                          .asFuture()
-                      : null));
+          tasks.add(FileSystemEntity.type(element).then((value) => value ==
+                  FileSystemEntityType.file
+              ? listFilesGet(0, '')(File(element), element)
+              : value == FileSystemEntityType.directory
+                  ? Directory(element)
+                      .list(recursive: true)
+                      .listen((entity) =>
+                          tasks2.add(listFilesGet(0, '')(entity, entity.path)))
+                      .asFuture()
+                  : null));
         }
       });
 

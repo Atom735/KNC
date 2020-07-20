@@ -470,7 +470,7 @@ void main() {
   test('Unzzipper Lib', () async {
     var unzipper = Unzipper(r'test/zip', r'C:\Program Files\7-Zip\7z.exe');
 
-    Future listFiles(FileSystemEntity entity) async {
+    Future listFiles(FileSystemEntity entity, String relPath) async {
       if (entity is File) {
         print(entity);
         final ext = p.extension(entity.path).toLowerCase();
@@ -491,14 +491,18 @@ void main() {
   test('Unzzipper Lib Debug', () async {
     var unzipper = Unzipper(r'test/zip', r'C:\Program Files\7-Zip\7z.exe');
 
-    Future Function(FileSystemEntity entity) listFilesGet(int i) =>
-        (FileSystemEntity entity) async {
+    Future Function(FileSystemEntity entity, String relPath) listFilesGet(
+            int i, String path) =>
+        (FileSystemEntity entity, String relPath) async {
           if (entity is File) {
             print('$i: $entity');
+            print('\t$relPath');
+            print('\t$path');
             final ext = p.extension(entity.path).toLowerCase();
             if (ext == '.zip') {
-              return unzipper.unzip(entity.path, listFilesGet(i + 1),
-                  (list) async {
+              return unzipper
+                  .unzip(entity.path, listFilesGet(i + 1, path + relPath),
+                      (list) async {
                 print('$i: $list');
               });
             }
@@ -506,7 +510,8 @@ void main() {
         };
 
     await unzipper.clear();
-    print(await unzipper.unzip(r'test/zip.zip', listFilesGet(1), (list) async {
+    print(await unzipper
+        .unzip(r'test/zip.zip', listFilesGet(1, r'test/zip.zip'), (list) async {
       print(list);
     }));
   });

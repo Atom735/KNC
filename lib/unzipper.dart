@@ -20,7 +20,7 @@ class Unzipper {
   /// Если папка [pathToOutDir] не задана, то будет создана
   /// внутреняя временная папка, которая будет удалена по завершению работ
   Future unzip(String pathToArchive,
-      [Future Function(FileSystemEntity entity) funcEntity,
+      [Future Function(FileSystemEntity entity, String relPath) funcEntity,
       Future Function(dynamic taskListEnded) funcEnd,
       String pathToOutDir]) {
     if (pathToOutDir == null) {
@@ -32,7 +32,8 @@ class Unzipper {
                   .list(recursive: true, followLinks: false)
                   .listen((entityInZip) {
                     if (funcEntity != null) {
-                      tasks.add(funcEntity(entityInZip));
+                      tasks.add(funcEntity(entityInZip,
+                          entityInZip.path.substring(dirTemp.path.length)));
                     }
                   })
                   .asFuture(tasks)
