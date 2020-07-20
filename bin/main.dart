@@ -90,7 +90,9 @@ Future main(List<String> args) async {
                 }
                 server.sendMsg('#LAS:' + ''.padRight(20, '='));
                 try {
-                  await entity.copy(newPath);
+                  if (las.curves.length - 1 - na > 0) {
+                    await entity.copy(newPath);
+                  }
                 } catch (e) {
                   errorAdd('+LAS: ${entity.path} => $newPath');
                   errorAdd('\t$e');
