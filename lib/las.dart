@@ -5,23 +5,28 @@ import 'errors.dart';
 import 'mapping.dart';
 
 class SingleCurveLasData {
-  String well;
-  String name;
-  double strt;
-  double stop;
-  List<double> data;
+  final String origin;
+  final String well;
+  final String name;
+  final double strt;
+  final double stop;
+  final List<double> data;
+
+  SingleCurveLasData(
+      this.origin, this.well, this.name, this.strt, this.stop, this.data);
 
   static List<SingleCurveLasData> getByLasData(final LasData las) {
     final cs = las.curves;
     final cc = cs.length - 1;
     final out = List<SingleCurveLasData>(cc);
     for (var i = 0; i < cc; i++) {
-      out[i].well = las.wWell;
       final ci = cs[i + 1];
-      out[i].name = ci.mnem;
-      out[i].strt = ci.strtN;
-      out[i].stop = ci.stopN;
-      out[i].data = las.ascii[i + 1].sublist(ci.strtI, ci.stopI);
+      final data = List<double>(ci.stopI - ci.strtI + 1);
+      for (var j = 0; j < data.length; j++) {
+        data[j] = las.ascii[j + ci.strtI][i + 1];
+      }
+      out[i] = SingleCurveLasData(
+          las.origin, las.wWell, ci.mnem, ci.strtN, ci.stopN, data);
     }
     return out;
   }
@@ -115,6 +120,7 @@ class LasDataCurve extends LasDataInfoLine {
 }
 
 class LasData {
+  String origin;
   final info = <String, Map<String, LasDataInfoLine>>{};
   final curves = <LasDataCurve>[];
   final ascii = <List<double>>[];
