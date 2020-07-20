@@ -41,12 +41,18 @@ class KncSettings {
   IOSink errorsOut;
 
   LasDataBase lasDB = LasDataBase();
+  dynamic lasIgnore;
 
   Unzipper unzipper;
 
   /// Загружает кодировки и записывает их в настройки
   Future<Map<String, List<String>>> loadCharMaps() =>
       loadMappings('mappings').then((charmap) => ssCharMaps = charmap);
+
+  /// Загружает таблицу игнорирования полей LAS файла
+  Future loadLasIgnore() => File(r'data/las.ignore.json')
+      .readAsString(encoding: utf8)
+      .then((buffer) => lasIgnore = json.decode(buffer));
 
   /// Очищает папки, подготавливает распаковщик,
   /// открывает файл с ошибками для записи

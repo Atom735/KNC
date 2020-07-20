@@ -26,7 +26,8 @@ Future<String> getOutPathNew(String prePath, String name) async {
 Future main(List<String> args) async {
   /// настройки
   final ss = KncSettings();
-  await Future.wait([ss.loadCharMaps(), ss.serchPrograms()]);
+  await Future.wait(
+      [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
 
   final server = MyServer(Directory(r'web'));
   final tasks = <Future>[];

@@ -142,7 +142,7 @@ class LasData {
 
   LasData(final UnmodifiableUint8ListView bytes,
       final Map<String, List<String>> charMaps,
-      [Map<String, List<String>> mapIgnore]) {
+      [dynamic mapIgnore]) {
     // Подбираем кодировку
     encodesRaiting = getMappingRaitings(charMaps, bytes);
     encode = getMappingMax(encodesRaiting);
