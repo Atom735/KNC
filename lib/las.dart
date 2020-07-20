@@ -46,32 +46,33 @@ class LasDataBase {
 
   /// Добавляет данные LAS файла в базу,
   /// если такие данные уже имеются
-  /// то функция вернёт `false`
-  bool addLasData(final LasData las) {
+  /// то функция вернёт количество совпадений
+  ///
+  /// Кол-во совпадений можно сравнить с `LasData.curves.length - 1`
+  /// Если их меньше, то выборочные данные были добавлены
+  int addLasData(final LasData las) {
     final list = SingleCurveLasData.getByLasData(las);
     if (db[las.wWell] == null) {
       db[las.wWell] = [];
       db[las.wWell].addAll(list);
-      return true;
+      return 0;
     } else {
       /// Флаг уникальности данных
-      var b = true;
-      uniqueLoop:
-      for (var scdb in db[las.wWell]) {
-        for (var scld in list) {
+      var b = 0;
+      for (var scld in list) {
+        var bk = true;
+        for (var scdb in db[las.wWell]) {
           if (scdb == scld) {
             // Если совпадают
-            b = false;
-            break uniqueLoop;
+            b += 1;
+            bk = false;
           }
         }
+        if (bk) {
+          db[las.wWell].add(scld);
+        }
       }
-      if (b) {
-        db[las.wWell].addAll(list);
-        return true;
-      } else {
-        return false;
-      }
+      return b;
     }
   }
 }
