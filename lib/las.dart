@@ -45,13 +45,34 @@ class SingleCurveLasData {
     }
   }
 
+  @override
+  String toString() {
+    var str = '';
+    if (origin != null) {
+      str += 'origin: "$origin";';
+    }
+    if (well != null) {
+      str += 'well: "$well";';
+    }
+    if (name != null) {
+      str += 'name: "$name";';
+    }
+    return '[$str]';
+  }
+
   /// Сохранение данных в бинарном виде
   void save(final IOSink io) {
-    io.add(utf8.encoder.convert(origin));
+    if (origin != null) {
+      io.add(utf8.encoder.convert(origin));
+    }
     io.add([0]);
-    io.add(utf8.encoder.convert(well));
+    if (well != null) {
+      io.add(utf8.encoder.convert(well));
+    }
     io.add([0]);
-    io.add(utf8.encoder.convert(name));
+    if (name != null) {
+      io.add(utf8.encoder.convert(name));
+    }
     io.add([0]);
     final bb = ByteData(20);
     bb.setFloat64(0, strt);

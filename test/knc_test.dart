@@ -17,6 +17,38 @@ import 'package:xml/xml_events.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('las db save/load', () async {
+    const path = r'test\6280___rk_1.las';
+    final entity = File(path);
+    final charMaps = await loadMappings('mappings');
+    final las1 = LasData(
+        UnmodifiableUint8ListView(await entity.readAsBytes()), charMaps);
+    final las2 = LasData(
+        UnmodifiableUint8ListView(await entity.readAsBytes()), charMaps);
+    final db = LasDataBase();
+    print(db.addLasData(las1));
+    print(db.addLasData(las2));
+    las2.origin = 'hehe';
+    las2.wWell = 'sec';
+    print(db.addLasData(las2));
+    await db.save(r'test/las.db.out');
+    final db2 = LasDataBase();
+    await db2.load(r'test/las.db.out');
+
+    var s1 = '';
+    var s2 = '';
+
+    db.db.forEach((key, value) {
+      s1 += '$key:$value,';
+    });
+    db2.db.forEach((key, value) {
+      s2 += '$key:$value,';
+    });
+
+    print(s1);
+    print(s2);
+  });
+
   test('las files test', () async {
     const path = r'test\6280___rk_1.las';
     final entity = File(path);
