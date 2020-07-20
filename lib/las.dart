@@ -141,7 +141,8 @@ class LasData {
   String wWell;
 
   LasData(final UnmodifiableUint8ListView bytes,
-      final Map<String, List<String>> charMaps) {
+      final Map<String, List<String>> charMaps,
+      [Map<String, List<String>> mapIgnore]) {
     // Подбираем кодировку
     encodesRaiting = getMappingRaitings(charMaps, bytes);
     encode = getMappingMax(encodesRaiting);
@@ -176,6 +177,9 @@ class LasData {
               wStepN == null ||
               wWell == null) {
             logError(KncError.lasAllDataNotCorrect);
+            if (wWell == null) {
+              logError(KncError.lasCantGetWell);
+            }
             return true;
           }
           return false;
@@ -275,10 +279,19 @@ class LasData {
       }
       final mnem = line.substring(0, i0).trim();
       final unit = line.substring(i0 + 1, i2).trim();
-      final data = line.substring(i2 + 1, i1).trim();
-      final desc = line.substring(i1 + 1).trim();
+      var data = line.substring(i2 + 1, i1).trim();
+      var desc = line.substring(i1 + 1).trim();
       if (section != 'C') {
         info[section][mnem] = LasDataInfoLine(mnem, unit, data, desc);
+        if (mapIgnore != null && mapIgnore['$section~$mnem'] != null) {
+          if (mapIgnore['$section~$mnem'].contains(data)) {
+            data = desc;
+            desc = null;
+          }
+          if (mapIgnore['$section~$mnem'].contains(data)) {
+            data = null;
+          }
+        }
       }
       switch (section) {
         case 'V':
@@ -313,53 +326,57 @@ class LasData {
           switch (mnem) {
             case 'NULL':
               wNull = data;
+              if (wNull == null) {
+                logError(KncError.lasUncorrectNumber);
+                return false;
+              }
               wNullN = double.tryParse(wNull);
               if (wNullN == null) {
                 logError(KncError.lasUncorrectNumber);
+                return false;
               }
               return false;
             case 'STEP':
               wStep = data;
+              if (wStep == null) {
+                logError(KncError.lasUncorrectNumber);
+                return false;
+              }
               wStepN = double.tryParse(wStep);
               if (wStepN == null) {
                 logError(KncError.lasUncorrectNumber);
+                return false;
               }
               return false;
             case 'STRT':
               wStrt = data;
+              if (wStrt == null) {
+                logError(KncError.lasUncorrectNumber);
+                return false;
+              }
               wStrtN = double.tryParse(wStrt);
               if (wStrtN == null) {
                 logError(KncError.lasUncorrectNumber);
+                return false;
               }
               return false;
             case 'STOP':
               wStop = data;
+              if (wStop == null) {
+                logError(KncError.lasUncorrectNumber);
+                return false;
+              }
               wStopN = double.tryParse(wStop);
               if (wStopN == null) {
                 logError(KncError.lasUncorrectNumber);
+                return false;
               }
               return false;
             case 'WELL':
               wWell = data;
-              if (wWell.isEmpty || wWell == 'WELL') {
-                wWell = desc;
-              }
-              if (wWell.isEmpty ||
-                  [
-                    'WELL',
-                    'WELL NAME',
-                    'WELL NUMBER',
-                    'Well',
-                    'Well name',
-                    'Наименование скважины',
-                    'Нет поля СКВАЖИН',
-                    'Номер скважины',
-                    'СКВ№',
-                    'Скважина',
-                    'скважина'
-                  ].contains(wWell)) {
+              if (wWell == null) {
                 logError(KncError.lasCantGetWell);
-                wWell = null;
+                return false;
               }
               return false;
             default:
