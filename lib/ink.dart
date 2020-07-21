@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:knc/dbf.dart';
 import 'package:xml/xml_events.dart';
 
 import 'errors.dart';
@@ -116,8 +117,8 @@ class SingleInkData {
       ink.data.first.depthN,
       ink.data.last.depthN,
       ink.data
-          .map((e) =>
-              InkDataOneLineFinal(e.depthN, e.angleN, e.azimuthN + ink.angleN))
+          .map((e) => InkDataOneLineFinal(e.depthN, e.angleN,
+              ink.angleN != null ? e.azimuthN + ink.angleN : e.azimuthN))
           .toList(growable: false));
 
   /// Оператор сравнения на совпадение
@@ -961,6 +962,100 @@ class InkData {
     }
 
     return o;
+  }
+
+  /// Получает данные из базы данных
+  /// * [dbf] - база данных DBF
+  /// * [map] (opt) - маппинг данных полей
+  ///
+  /// (прим: `{'GLUB': ['GLU', 'DEPT']}`, вместо поля `GLUB` так же
+  /// могут быть использованны поля `GLU` и `DEPT`)
+  /// Если в базе данных нет подходящих данных, то возвращает `null`
+  static List<InkData> getByDbf(final DbfFile dbf,
+      [Map<String, List<String>> map]) {
+    ///  `GLUB`, `UGOL1` (так как он уже в долях) и `AZIMUT` (а азимут без значений после запятой идет), а номер скважины из колонки `NSKV`
+    final fields = dbf.fields;
+    var iGlub = -1;
+    var iUgol = -1;
+    var iUgol1 = -1;
+    var iAzimut = -1;
+    var iNskv = -1;
+
+    for (var i = 0; i < fields.length; i++) {
+      final name = fields[i].name.trim().toUpperCase();
+      switch (name) {
+        case 'GLUB':
+          iGlub = i + 1;
+          break;
+        case 'UGOL':
+          iUgol = i + 1;
+          break;
+        case 'UGOL1':
+          iUgol1 = i + 1;
+          break;
+        case 'AZIMUT':
+          iAzimut = i + 1;
+          break;
+        case 'NSKV':
+          iNskv = i + 1;
+          break;
+        default:
+          if (map != null) {
+            if (map['GLUB'] != null && map['GLUB'].contains(name)) {
+              iGlub = i + 1;
+            } else if (map['UGOL'] != null && map['UGOL'].contains(name)) {
+              iUgol = i + 1;
+            } else if (map['UGOL1'] != null && map['UGOL1'].contains(name)) {
+              iUgol1 = i + 1;
+            } else if (map['AZIMUT'] != null && map['AZIMUT'].contains(name)) {
+              iAzimut = i + 1;
+            } else if (map['NSKV'] != null && map['NSKV'].contains(name)) {
+              iNskv = i + 1;
+            }
+          }
+      }
+    }
+
+    if (iGlub == -1 ||
+        iAzimut == -1 ||
+        iNskv == -1 ||
+        (iUgol == -1 && iUgol1 == -1)) {
+      return null;
+    }
+    final ol = <InkData>[];
+
+    for (var rec in dbf.records) {
+      final well = rec[iNskv].trim();
+
+      var bNotAllowed = true;
+      for (var i = 0; i < ol.length && bNotAllowed; i++) {
+        if (ol[i].well == well) {
+          ol[i].data.add(ol[i]._getDataLine(rec));
+          bNotAllowed = true;
+        }
+      }
+      if (bNotAllowed) {
+        final ink = InkData();
+        ink.origin = dbf.origin;
+        ink.well = well;
+        ink.isInk = 100;
+
+        ink.iDepth = iGlub;
+        ink.iAzimuth = iAzimut;
+        ink.bAzimuthMinuts = false;
+        if (iUgol1 != -1) {
+          ink.iAngle = iUgol1;
+          ink.bAngleMinuts = false;
+        } else {
+          ink.iAngle = iUgol;
+          ink.bAngleMinuts = true;
+        }
+        ink.data.add(ink._getDataLine(rec));
+        ol.add(ink);
+      }
+    }
+
+    return null;
   }
 }
 

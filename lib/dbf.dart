@@ -40,6 +40,9 @@ class DbfFieldDesc {
 }
 
 class DbfFile {
+  /// Путь к оригиналу файла
+  String origin;
+
   int version;
   int lastUpdateYY;
   int lastUpdateMM;
