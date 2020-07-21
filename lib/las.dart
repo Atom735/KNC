@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'errors.dart';
 import 'mapping.dart';
 
+/// Конечные данные одной кривой (хранятся в базе данных LAS)
 class SingleCurveLasData {
   /// Путь к оригиналу файла
   final String origin;
@@ -103,6 +104,7 @@ class SingleCurveLasData {
   }
 }
 
+/// Класс хранящий базу данных LAS
 class LasDataBase {
   /// База данных, где ключём является Имя скважины
   var db = <String, List<SingleCurveLasData>>{};
