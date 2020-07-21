@@ -115,8 +115,10 @@ class SingleInkData {
       ink.well,
       ink.data.first.depthN,
       ink.data.last.depthN,
-      ink.data.map((e) =>
-          InkDataOneLineFinal(e.depthN, e.angleN, e.azimuthN + ink.angleN)));
+      ink.data
+          .map((e) =>
+              InkDataOneLineFinal(e.depthN, e.angleN, e.azimuthN + ink.angleN))
+          .toList(growable: false));
 
   /// Оператор сравнения на совпадение
   @override
@@ -455,7 +457,7 @@ class InkData {
     for (var i = 0; i < iLengthDepth; i++) {
       // проходим по всем строкам данных
       lineNum = i + 1;
-      var l = _getDataLine(row.map((e) => e[i]));
+      var l = _getDataLine(row.map((e) => e[i]).toList(growable: false));
       if (l == null) {
         return true;
       }
@@ -730,7 +732,8 @@ class InkData {
           return true;
         }
       } else if (rowIn is List<List<String>>) {
-        if (o._parseSecondTableTitle(rowIn.map((e) => e[0]))) {
+        if (o._parseSecondTableTitle(
+            rowIn.map((e) => e[0]).toList(growable: false))) {
           return true;
         }
       } else {
