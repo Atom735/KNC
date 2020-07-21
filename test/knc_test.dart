@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:knc/dbf.dart';
 import 'package:knc/ink.dart';
 import 'package:knc/knc.dart';
 import 'package:knc/las.dart';
@@ -17,6 +18,57 @@ import 'package:xml/xml_events.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('dbf parse', () async {
+    await for (var file in Directory(r'.ignore/dbf').list()) {
+      if (file is File) {
+        final bytes = await file.readAsBytes();
+        final dbf = DbfFile();
+        if (dbf.loadByByteData(ByteData.view(bytes.buffer))) {
+          print('${p.basename(file.path)} OK');
+          print('\tDate: ' +
+              '${dbf.lastUpdateDD}.${dbf.lastUpdateMM}.${dbf.lastUpdateYY}'
+                  .padRight(12) +
+              'Records: ${dbf.numberOfRecords}'.padRight(20) +
+              'Fields: ${dbf.fields.length}');
+          for (var i = 0; i < dbf.fields.length; i++) {
+            print('\t' +
+                dbf.fields[i].name.padRight(12) +
+                ':[${dbf.fields[i].type}] (0x' +
+                dbf.fields[i].address
+                    .toRadixString(16)
+                    .toLowerCase()
+                    .padLeft(8, '0') +
+                ') size: ' +
+                dbf.fields[i].length.toString() +
+                ' dec: ' +
+                dbf.fields[i].decimalCount.toString());
+          }
+
+          for (var i = 0;
+              i < ((10 < dbf.records.length) ? 10 : dbf.records.length);
+              i++) {
+            print('\t' + dbf.records[i].join('|'));
+          }
+        } else {
+          print('${p.basename(file.path)} ERROR');
+        }
+      }
+    }
+  });
+
+  test('dbf first bytes', () async {
+    await for (var file in Directory(r'.ignore/dbf').list()) {
+      if (file is File) {
+        final bytes = await file.readAsBytes();
+        final str = bytes
+            .sublist(0, 20)
+            .map((e) => e.toRadixString(16).toUpperCase().padLeft(2, '0'))
+            .join(' ');
+        print('${str} | ${p.basename(file.path)}');
+      }
+    }
+  });
+
   test('las db load and print', () async {
     final db = LasDataBase();
     await db.load(r'out/las/.db.bin');
