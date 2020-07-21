@@ -64,7 +64,7 @@ class SingleCurveLasData {
 
   @override
   String toString() =>
-      '[Origin: "$origin", Well: "$well", Name: "$name", Strt: $strt, Stop: $stop, Step: $step]';
+      '[Origin: "$origin", Well: "$well", Name: "$name", Strt: $strt, Stop: $stop, Points: ${data.length}]';
 
   /// Сохранение данных в бинарном виде
   void save(final IOSink io) {
@@ -98,9 +98,11 @@ class LasDataBase {
   /// База данных, где ключём является Имя скважины
   var db = <String, List<SingleCurveLasData>>{};
 
-  /// `+{key}{0}{listLen}LIST{SingleCurveLasData}`
-  /// ...
   /// Сохранение данных в бинарном виде в файл
+  /// - `+{key1}{0}{listLen1}LIST{SingleCurveLasData1}`
+  /// - `+{key2}{0}{listLen2}LIST{SingleCurveLasData2}`
+  /// - `...`
+  /// - `{0}`
   Future save(final String path) async {
     final io = File(path).openWrite(encoding: null, mode: FileMode.writeOnly);
     db.forEach((key, value) {

@@ -73,6 +73,23 @@ class SingleInkData {
 
   SingleInkData(this.origin, this.well, this.strt, this.stop, this.data);
 
+  /// Оператор сравнения на совпадение
+  @override
+  bool operator ==(dynamic other) {
+    if (other is SingleInkData) {
+      return well == other.well &&
+          strt == other.strt &&
+          stop == other.stop &&
+          data.length == other.data.length;
+    } else {
+      return false;
+    }
+  }
+
+  @override
+  String toString() =>
+      '[Origin: "$origin", Well: "$well", Strt: $strt, Stop: $stop, Points: ${data.length}]';
+
   /// Сохранение данных в бинарном виде
   void save(final IOSink io) {
     if (origin != null) {
@@ -94,13 +111,82 @@ class SingleInkData {
   }
 }
 
-class InkDataLine {
-  String depth;
-  double depthN;
-  String angle;
-  double angleN;
-  String azimuth;
-  double azimuthN;
+/// Класс хранящий базу данных с инклинометрией
+class InkDataBase {
+  /// База данных, где ключём является Имя скважины
+  var db = <String, List<SingleInkData>>{};
+
+  /// Сохранение данных в бинарном виде в файл
+  /// - `+{key1}{0}{listLen1}LIST{SingleInkData1}`
+  /// - `+{key2}{0}{listLen2}LIST{SingleInkData2}`
+  /// - `...`
+  /// - `{0}`
+  Future save(final String path) async {
+    final io = File(path).openWrite(encoding: null, mode: FileMode.writeOnly);
+    db.forEach((key, value) {
+      io.add(['+'.codeUnits[0]]);
+      io.add(utf8.encoder.convert(key));
+      io.add([0]);
+      final bb = ByteData(4);
+      bb.setUint32(0, value.length);
+      io.add(bb.buffer.asUint8List());
+      for (final item in value) {
+        item.save(io);
+      }
+    });
+    io.add([0]);
+    await io.flush();
+    await io.close();
+  }
+
+  /// Загрузка бинарных данных
+  Future load(final String path) async {
+    final buf = await File(path).readAsBytes();
+    var offset = 0;
+    db.clear();
+    while (buf[offset] == '+'.codeUnits[0]) {
+      offset += 1;
+      var iNull = 0;
+      while (buf[offset + iNull] != 0) {
+        iNull += 1;
+      }
+      final key = utf8.decoder.convert(buf.sublist(offset, offset + iNull));
+      offset += iNull + 1;
+      db[key] = <SingleInkData>[];
+      db[key].length = ByteData.view(buf.buffer, offset, 4).getUint32(0);
+      offset += 4;
+      for (var i = 0; i < db[key].length; i++) {
+        iNull = 0;
+        while (buf[offset + iNull] != 0) {
+          iNull += 1;
+        }
+        final origin =
+            utf8.decoder.convert(buf.sublist(offset, offset + iNull));
+        offset += iNull + 1;
+        iNull = 0;
+        while (buf[offset + iNull] != 0) {
+          iNull += 1;
+        }
+        final well = utf8.decoder.convert(buf.sublist(offset, offset + iNull));
+        offset += iNull + 1;
+        final bb = ByteData.view(buf.buffer, offset, 20);
+        offset += 20;
+        final strt = bb.getFloat64(0);
+        final stop = bb.getFloat64(8);
+        final data = List<InkDataOneLineFinal>(bb.getUint32(16));
+        final bl = ByteData.view(
+            buf.buffer, offset, 8 * data.length * InkDataOneLineFinal.length);
+        offset += 8 * data.length * InkDataOneLineFinal.length;
+        for (var i = 0; i < data.length; i++) {
+          for (var j = 0; j < InkDataOneLineFinal.length; j++) {
+            data[i][j] =
+                bl.getFloat64(8 * (i * InkDataOneLineFinal.length + j));
+          }
+        }
+        db[key][i] = SingleInkData(origin, well, strt, stop, data);
+      }
+    }
+  }
 }
 
 class InkData {
@@ -156,9 +242,66 @@ class InkData {
   /// Функция записи ошибки (сохраняет внутри класса)
   void logError(KncError err, [String txt]) =>
       listOfErrors.add(ErrorOnLine(err, lineNum, txt));
+}
 
-  @deprecated
-  final listOfErrorsOLD = <String>[];
+class InkDataLine {
+  String depth;
+  double depthN;
+  String angle;
+  double angleN;
+  String azimuth;
+  double azimuthN;
+}
+
+@deprecated
+class InkDataOLD {
+  /// Путь к оригиналу файла
+  String origin;
+
+  /// Название скважины
+  String well;
+
+  /// Название площади
+  String square;
+
+  /// Диаметр скважины
+  String diametr;
+
+  /// Глубина башмака
+  String depth;
+
+  /// Угол склонения (оригинальная запись)
+  String angle;
+
+  /// Флаг оригинальной записи в град'мин
+  bool angleM;
+
+  /// Угол склонения, числовое значение (в градусах и долях градуса)
+  double angleN;
+
+  /// Альтитуда
+  String altitude;
+
+  /// Глубина забоя
+  String zaboy;
+
+  final list = <InkDataLine>[];
+
+  bool bInkFile;
+
+  var iDepth = -1;
+  var iAngle = -1;
+  bool bAngleMinuts;
+  var iAzimuth = -1;
+  bool bAzimuthMinuts;
+  var iseesoo = 0;
+
+  /// Номер обрабатываемой строки
+  ///
+  /// После обработки, хранит количество строк в файле
+  var lineNum = 0;
+
+  final listOfErrors = <String>[];
 
   /// Значение рейтинга кодировок (действительно только для текстовых файлов)
   Map<String, int> encodesRaiting;
@@ -166,9 +309,10 @@ class InkData {
   /// Конечная подобранная кодировка (действительно только для текстовых файлов)
   String encode;
 
-  @deprecated
+  Future future;
+
   void _logErrorOLD(final String txt) {
-    listOfErrorsOLD.add('Строка:$lineNum\t$txt');
+    listOfErrors.add('Строка:$lineNum\t$txt');
   }
 
   void _prepareForTable1() {
@@ -321,7 +465,7 @@ class InkData {
   }
 
   /// bytes <- Stream by File.openRead, await future for complete
-  InkData.docx(final Stream<List<int>> bytes) {
+  InkDataOLD.docx(final Stream<List<int>> bytes) {
     final data = [];
     String paragraph;
     List<List<List<String>>> data_tbl;
@@ -335,7 +479,7 @@ class InkData {
     var reL3 = RegExp(r'Угол\s+склонения:?(.+)Альтитуда:?(.+)Забой:?(.+)');
 
     void _parseSecondTblData(final List<List<String>> row) {
-      if (listOfErrorsOLD.isNotEmpty) {
+      if (listOfErrors.isNotEmpty) {
         return;
       }
       final iLengthDepth =
@@ -529,7 +673,7 @@ class InkData {
     }).asFuture(this);
   }
 
-  InkData.txt(final UnmodifiableUint8ListView bytes,
+  InkDataOLD.txt(final UnmodifiableUint8ListView bytes,
       final Map<String, List<String>> charMaps) {
     bInkFile = false;
     // Подбираем кодировку
@@ -658,7 +802,7 @@ class InkData {
           if (line.startsWith('----')) {
             iseesoo += 1;
             _prepareForStartList(tbl2[0]);
-            if (listOfErrorsOLD.isNotEmpty) {
+            if (listOfErrors.isNotEmpty) {
               break lineLoop;
             }
             continue lineLoop;

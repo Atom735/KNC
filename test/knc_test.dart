@@ -330,7 +330,7 @@ void main() {
     await Directory(r'test/ink').list(recursive: true).listen((e) {
       if (e is File && e.path.toLowerCase().endsWith('.txt')) {
         tasks.add(e.readAsBytes().then((final bytes) =>
-            InkData.txt(UnmodifiableUint8ListView(bytes), charMaps)));
+            InkDataOLD.txt(UnmodifiableUint8ListView(bytes), charMaps)));
       }
     }).asFuture();
     final outData = await Future.wait(tasks);
@@ -338,13 +338,13 @@ void main() {
         .openWrite(encoding: utf8, mode: FileMode.writeOnly);
     sink.writeCharCode(unicodeBomCharacterRune);
     for (final i in outData) {
-      if (i is InkData) {
+      if (i is InkDataOLD) {
         var a = i;
         if (a.bInkFile != true) {
           continue;
         }
 
-        if (a.listOfErrorsOLD.isEmpty) {
+        if (a.listOfErrors.isEmpty) {
           sink.writeln('''
 ---------------------------------------OK---------------------------------------
 Кодировка у оригинала ${a.encode}
@@ -362,7 +362,7 @@ void main() {
 Скважина N ${a.well}
 Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
 Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
-          for (var line in a.listOfErrorsOLD) {
+          for (var line in a.listOfErrors) {
             sink.writeln('\t${line}');
           }
         }
@@ -387,7 +387,7 @@ void main() {
             .then((b) => b ? Directory(path2out).delete(recursive: true) : null)
             .then((_) => Process.run(pathBin_zip, ['x', '-o$path2out', e.path]))
             .then((_) => File('$path2out/word/document.xml').openRead())
-            .then((bytes) => InkData.docx(bytes)));
+            .then((bytes) => InkDataOLD.docx(bytes)));
       }
     }).asFuture();
     final outData = await Future.wait(tasks);
@@ -395,13 +395,13 @@ void main() {
         .openWrite(encoding: utf8, mode: FileMode.writeOnly);
     sink.writeCharCode(unicodeBomCharacterRune);
     for (final i in outData) {
-      if (i is InkData) {
+      if (i is InkDataOLD) {
         var a = i;
         await a.future;
         if (a.bInkFile != true) {
           continue;
         }
-        if (a.listOfErrorsOLD.isEmpty) {
+        if (a.listOfErrors.isEmpty) {
           sink.writeln('''
 ---------------------------------------OK---------------------------------------
 Кодировка у оригинала ${a.encode}
@@ -419,7 +419,7 @@ void main() {
 Скважина N ${a.well}
 Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
 Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
-          for (var line in a.listOfErrorsOLD) {
+          for (var line in a.listOfErrors) {
             sink.writeln('\t${line}');
           }
         }

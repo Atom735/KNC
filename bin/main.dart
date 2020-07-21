@@ -192,14 +192,14 @@ Future main(List<String> args) async {
         final bytes = UnmodifiableUint8ListView(await entity.readAsBytes());
         if (bytes.length <= 30) return;
         var spaces = 0;
-        InkData ink;
+        InkDataOLD ink;
         for (var i = 0; i < 30; i++) {
           if (bytes[i] == 20) {
             spaces += 1;
           }
         }
         if (spaces > 10) {
-          ink = InkData.txt(bytes, ss.ssCharMaps);
+          ink = InkDataOLD.txt(bytes, ss.ssCharMaps);
         } else {
           var b = true;
           const signatureDoc = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
@@ -217,9 +217,9 @@ Future main(List<String> args) async {
                 if (entity2 is File &&
                     p.dirname(entity2.path) == 'word' &&
                     p.basename(entity2.path) == 'document.xml') {
-                  ink = InkData.docx(entity2.openRead());
+                  ink = InkDataOLD.docx(entity2.openRead());
                   await ink.future;
-                  if (ink.listOfErrorsOLD.isEmpty) {
+                  if (ink.listOfErrors.isEmpty) {
                     // No error
                     final newPath = await getOutPathNew(
                         ss.pathOutInk,
@@ -246,7 +246,7 @@ Future main(List<String> args) async {
                         ss.pathOutErrors, p.basename(entity.path));
                     errorAdd('+INK("${entity.path}")');
                     errorAdd('\t"${entity.path}" => "${newPath}"');
-                    for (final err in ink.listOfErrorsOLD) {
+                    for (final err in ink.listOfErrors) {
                       errorAdd('\t$err');
                     }
                     errorAdd(''.padRight(20, '='));
@@ -291,9 +291,9 @@ Future main(List<String> args) async {
                 if (entity2 is File &&
                     p.dirname(entity2.path) == 'word' &&
                     p.basename(entity2.path) == 'document.xml') {
-                  ink = InkData.docx(entity2.openRead());
+                  ink = InkDataOLD.docx(entity2.openRead());
                   await ink.future;
-                  if (ink.listOfErrorsOLD.isEmpty) {
+                  if (ink.listOfErrors.isEmpty) {
                     // No error
                     final newPath = await getOutPathNew(
                         ss.pathOutInk,
@@ -320,7 +320,7 @@ Future main(List<String> args) async {
                         ss.pathOutErrors, p.basename(entity.path));
                     errorAdd('+INK("${entity.path}")');
                     errorAdd('\t"${entity.path}" => "${newPath}"');
-                    for (final err in ink.listOfErrorsOLD) {
+                    for (final err in ink.listOfErrors) {
                       errorAdd('\t$err');
                     }
                     errorAdd(''.padRight(20, '='));
