@@ -63,19 +63,8 @@ class SingleCurveLasData {
   }
 
   @override
-  String toString() {
-    var str = '';
-    if (origin != null) {
-      str += 'origin: "$origin";';
-    }
-    if (well != null) {
-      str += 'well: "$well";';
-    }
-    if (name != null) {
-      str += 'name: "$name";';
-    }
-    return '[$str]';
-  }
+  String toString() =>
+      '[Origin: "$origin", Well: "$well", Name: "$name", Strt: $strt, Stop: $stop, Step: $step]';
 
   /// Сохранение данных в бинарном виде
   void save(final IOSink io) {
