@@ -1055,7 +1055,7 @@ class InkData {
       }
     }
 
-    return null;
+    return ol;
   }
 }
 
