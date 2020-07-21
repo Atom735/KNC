@@ -7,10 +7,44 @@ import 'package:xml/xml_events.dart';
 import 'errors.dart';
 import 'mapping.dart';
 
-/// Конечные данные инклинометрии (одна линия)
+/// преобразует число из минут в доли градуса
+/// - `1.30` в минутах => `1.50` в градусах
+double convertAngleMinuts2Gradus(final double val) {
+  var v = (val % 1.0);
+  return val + (v * 10.0 / 6.0) - v;
+}
+
+/// Возвращает разобраный тип данных угла
+/// - `true` - минуты
+/// - `false` - градусы
+/// - `null` - неудалось разобрать
+bool parseAngleType(final String txt) {
+  // 11.30 град'мин.
+  var k = txt.indexOf("'");
+  if (k == -1) {
+    return null;
+  }
+  switch (txt[k + 1].toLowerCase()) {
+    case 'м':
+      return true;
+      break;
+    case 'г':
+      return false;
+      break;
+    default:
+      return null;
+  }
+}
+
+/// Конечные данные инклинометрии (одна точка)
 class InkDataOneLineFinal {
+  /// Глубина точки
   double depth;
+
+  /// Угол (градусы)
   double angle;
+
+  /// Азимут (градусы)
   double azimuth;
 
   static const length = 3;
@@ -189,6 +223,27 @@ class InkDataBase {
   }
 }
 
+/// Данные одной точки инклинометрии (непреобразованный)
+class InkDataLine {
+  /// Глубина точки (оригинальная запись)
+  String depth;
+
+  /// Глубина точки (числовое значение)
+  double depthN;
+
+  /// Угол (оригинальная запись)
+  String angle;
+
+  /// Угол (числовое значение в градусах)
+  double angleN;
+
+  /// Азимут (оригинальная запись)
+  String azimuth;
+
+  /// Азимут (числовое значение в градусах)
+  double azimuthN;
+}
+
 class InkData {
   /// Путь к оригиналу файла
   String origin;
@@ -214,43 +269,362 @@ class InkData {
   /// Угол склонения, числовое значение (в градусах и долях градуса)
   double angleN;
 
+  set angleTxt(final String txt) {
+    angle = txt;
+    angleM = parseAngleType(txt);
+    if (angleM == null) {
+      _logError(KncError.inkUncorrectAngleType, txt);
+    } else {
+      var i0 = 0;
+      i0 = txt.indexOf(' ');
+      if (i0 == -1) {
+        i0 = txt.indexOf('г');
+      }
+      if (i0 == -1) {
+        angleN = double.tryParse(txt);
+      } else {
+        angleN = double.tryParse(txt.substring(0, i0));
+      }
+      if (angleN == null) {
+        _logError(KncError.parseNumber, txt);
+      }
+    }
+  }
+
   /// Альтитуда
   String altitude;
 
   /// Глубина забоя
   String zaboy;
 
-  final list = <InkDataLine>[];
+  /// Список данных инклинометрии
+  final data = <InkDataLine>[];
 
-  bool bInkFile;
+  /// Значение рейтинга кодировок
+  Map<String, int> encodesRaiting;
 
+  /// Конечная подобранная кодировка
+  String encode;
+
+  /// Номер столбца для глубины точек
   var iDepth = -1;
+
+  /// Номер столбца для угла
   var iAngle = -1;
-  bool bAngleMinuts;
+
+  /// Номер столбца для азимута
   var iAzimuth = -1;
+
+  /// Флаг записи угла в минутах
+  bool bAngleMinuts;
+
+  /// Флаг записи азимута в минутах
   bool bAzimuthMinuts;
-  var iseesoo = 0;
 
   /// Номер обрабатываемой строки
   ///
-  /// После обработки, хранит количество строк в файле
+  /// После обработки:
+  /// - для текстового файла хранит количество строк в файле
   var lineNum = 0;
 
   /// Список ошибок (Если он пуст после разбора, то данные корректны)
   final listOfErrors = <ErrorOnLine>[];
 
   /// Функция записи ошибки (сохраняет внутри класса)
-  void logError(KncError err, [String txt]) =>
+  void _logError(KncError err, [String txt]) =>
       listOfErrors.add(ErrorOnLine(err, lineNum, txt));
-}
 
-class InkDataLine {
-  String depth;
-  double depthN;
-  String angle;
-  double angleN;
-  String azimuth;
-  double azimuthN;
+  /// Является ли файл файлом с инклинометрией
+  var isInk = 0;
+
+  /// Минимальная длина разделителя таблицы (необходим для текстовых файлов)
+  static const tableLineLen = 40;
+
+  /// Разбор TXT файла с инклинометрией и преобразование к внутреннему представлению
+  /// * [bytes] - данные файла в байтовом представлении
+  /// * [charMaps] - доступные кодировки
+  InkData.txt(final UnmodifiableUint8ListView bytes,
+      final Map<String, List<String>> charMaps) {
+    // Подбираем кодировку
+    encodesRaiting = getMappingRaitings(charMaps, bytes);
+    encode = getMappingMax(encodesRaiting);
+    // Преобразуем байты из кодировки в символы
+    final buffer = String.fromCharCodes(bytes
+        .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
+
+    // Нарезаем на линии
+    final lines = LineSplitter.split(buffer);
+
+    var lastLine;
+    bool Function(String) section;
+
+    var tbl2l = 0;
+    var tbl2title = <String>[];
+
+    /// Разбор второй таблицы
+    bool _parseTable2(final String line) {
+      if (line.startsWith(''.padLeft(tableLineLen, '-'))) {
+        if (isInk < 20) {
+          /// обработка первого разделителя
+          isInk = 20;
+          tbl2l = line.length;
+          return false;
+        } else if (isInk < 30) {
+          /// обработка второго разделителя
+          /// обработка заголовка второй таблицы
+          for (var i = 0; i < tbl2title.length; i++) {
+            if (iDepth == -1 && tbl2title[i].startsWith('Глубина')) {
+              iDepth = i;
+            } else if (iAngle == -1 && tbl2title[i].startsWith('Угол')) {
+              iAngle = i;
+              bAngleMinuts = parseAngleType(tbl2title[i]);
+              if (bAngleMinuts == null) {
+                _logError(KncError.inkUncorrectAngleType, tbl2title[i]);
+                return true;
+              }
+            } else if (iAzimuth == -1 && tbl2title[i].startsWith('Азимут')) {
+              iAzimuth = i;
+              bAzimuthMinuts = parseAngleType(tbl2title[i]);
+              if (bAzimuthMinuts == null) {
+                _logError(KncError.inkUncorrectAngleType, tbl2title[i]);
+                return true;
+              }
+            }
+          }
+          if (iDepth == -1 || iAngle == -1 || iAzimuth == -1) {
+            _logError(KncError.inkCantGoToSecondTblData, tbl2title.join(' | '));
+            return true;
+          }
+          isInk = 30;
+          return false;
+        } else if (isInk < 40) {
+          /// третий разделитель
+          isInk = 40;
+          return false;
+        } else {
+          _logError(KncError.inkUncorrectSecondTableSeparator);
+          return true;
+        }
+      } else if (isInk == 20) {
+        // Первая линия заголовка таблицы
+        final s = line.split('|');
+        for (var i = 0; i < s.length; i++) {
+          s[i] = s[i].trim();
+        }
+        if (s.last.isEmpty) {
+          s.length -= 1;
+        }
+        tbl2title = s;
+        isInk = 21;
+        return false;
+      } else if (isInk == 21) {
+        // Последующие линии заголовка таблицы
+        var s = line.split('|');
+        for (var i = 0; i < s.length; i++) {
+          s[i] = s[i].trim();
+        }
+        if (s.last.isEmpty) {
+          s = s.sublist(0, s.length - 1);
+        }
+        if (s.length != tbl2title.length) {
+          _logError(KncError.inkUncorrectTableColumnCount);
+          return true;
+        }
+        for (var i = 0; i < s.length; i++) {
+          if (s[i].isNotEmpty) {
+            tbl2title[i] += ' ' + s[i];
+          }
+        }
+      } else if (isInk == 30) {
+        // строки данных таблицы
+        var s = line.split(' ');
+        s.removeWhere((e) => e.isEmpty);
+        if (s.length != tbl2title.length) {
+          _logError(KncError.inkUncorrectTableColumnCount);
+          return true;
+        }
+        var l = InkDataLine();
+        l.depth = s[iDepth];
+        l.depthN = double.tryParse(l.depth);
+        if (l.depthN == null) {
+          _logError(KncError.parseNumber);
+          return true;
+        }
+        l.angle = s[iAngle];
+        l.angleN = double.tryParse(l.angle);
+        if (l.angleN == null) {
+          _logError(KncError.parseNumber);
+          return true;
+        } else if (bAngleMinuts) {
+          l.angleN = convertAngleMinuts2Gradus(l.angleN);
+        }
+        l.azimuth = s[iAzimuth];
+        l.azimuthN = double.tryParse(
+            l.azimuth[0] == '*' ? l.azimuth.substring(1) : l.azimuth);
+        if (l.azimuthN == null) {
+          _logError(KncError.parseNumber);
+          return true;
+        } else {
+          if (bAzimuthMinuts) {
+            l.azimuthN = convertAngleMinuts2Gradus(l.azimuthN);
+          }
+          l.azimuthN += angleN;
+        }
+        data.add(l);
+      }
+      return false;
+    }
+
+    var tbl1l = 0;
+
+    /// Разбор первой таблицы
+    bool _parseTable1(final String line) {
+      if (line.startsWith(''.padLeft(tableLineLen, '-'))) {
+        if (isInk < 10) {
+          isInk = 10;
+          tbl1l = line.length;
+          return false;
+        }
+        if (line.length != tbl1l) {
+          section = _parseTable2;
+          return section(line);
+        }
+      }
+      return false;
+    }
+
+    /// Разбор начальных общих данных
+    bool _parseTitle(final String line) {
+      if (line.startsWith(r'Скважина')) {
+        var i0 = line.indexOf(r'N', 8);
+        if (i0 == -1) {
+          _logError(KncError.inkTitleWellCantGet, line);
+          return true;
+        }
+        var i1 = line.indexOf(r'Площадь', i0);
+        if (i1 == -1) {
+          well = line.substring(i0 + 1).trim();
+          return false;
+        }
+        well = line.substring(i0 + 1, i1).trim();
+        var i2 = line.indexOf(r':', i1 + 7);
+        if (i2 == -1) {
+          return false;
+        }
+        square = line.substring(i2 + 1).trim();
+        return false;
+      } else if (line.startsWith(r'Диаметр')) {
+        var i0 = line.indexOf(r':', 8);
+        if (i0 == -1) {
+          return false;
+        }
+        var i1 = line.indexOf(r'Глубина', i0 + 1);
+        if (i1 == -1) {
+          diametr = line.substring(i0 + 1).trim();
+          return false;
+        }
+        diametr = line.substring(i0 + 1, i1).trim();
+        var i2 = line.indexOf(r':', i0 + 1);
+        if (i2 == -1) {
+          return false;
+        }
+        depth = line.substring(i2 + 1).trim();
+      } else if (line.startsWith(r'Угол')) {
+        var i0 = line.indexOf(r':', 8);
+        if (i0 == -1) {
+          _logError(KncError.inkTitleAngleCantGet, line);
+          return true;
+        }
+        var i1 = line.indexOf(r'Альтитуда', i0 + 1);
+        if (i1 == -1) {
+          angleTxt = line.substring(i0 + 1).trim();
+          if (angleN == null) {
+            _logError(KncError.inkTitleAngleCantGet, line);
+            return true;
+          }
+          return false;
+        }
+        angleTxt = line.substring(i0 + 1, i1).trim();
+        if (angleN == null) {
+          _logError(KncError.inkTitleAngleCantGet, line);
+          return true;
+        }
+        var i2 = line.indexOf(r':', i0 + 1);
+        if (i2 == -1) {
+          return false;
+        }
+        var i3 = line.indexOf(r'Забой', i2 + 1);
+        if (i3 == -1) {
+          altitude = line.substring(i2 + 1).trim();
+          return false;
+        }
+        altitude = line.substring(i2 + 1, i3).trim();
+        var i4 = line.indexOf(r':', i2 + 1);
+        if (i4 == -1) {
+          return false;
+        }
+        zaboy = line.substring(i4 + 1).trim();
+      } else if (line.startsWith(''.padLeft(tableLineLen, '-'))) {
+        section = _parseTable1;
+        if (well == null || angle == null) {
+          _logError(KncError.inkCantGoToFirstTbl);
+          return true;
+        }
+        return section(line);
+      }
+      return false;
+    }
+
+    /// Разбор начальных данных (проверка на инклинометричность)
+    bool _parsePreTitle(final String line) {
+      if (line == r'Утверждаю' ||
+          line == r'Инклинометрия' ||
+          line == r'Замер кривизны' ||
+          line.startsWith(r'Главный геолог') ||
+          line.startsWith(r'Заказчик')) {
+        isInk += 1;
+        return false;
+      }
+      if (isInk >= 3 && line.startsWith(''.padLeft(tableLineLen, '-'))) {
+        _logError(KncError.inkTitleEnd);
+        return true;
+      }
+      if (line.startsWith(r'Скважина') ||
+          line.startsWith(r'Диаметр') ||
+          line.startsWith(r'Угол')) {
+        if (isInk < 3) {
+          _logError(KncError.inkTitleEnd);
+          return true;
+        } else {
+          section = _parseTitle;
+          return section(line);
+        }
+      }
+      return false;
+    }
+
+    section = _parsePreTitle;
+
+    lineLoop:
+    for (final lineFull in lines) {
+      if (section == null) {
+        return;
+      }
+      lastLine = lineFull;
+      lineNum += 1;
+      final line = lineFull.trim();
+      if (line.isEmpty) {
+        // Пустую строку и строк с комментарием пропускаем
+        continue lineLoop;
+      } else {
+        if (section(line)) {
+          break lineLoop;
+        } else {
+          continue lineLoop;
+        }
+      }
+    }
+  }
 }
 
 @deprecated

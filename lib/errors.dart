@@ -12,7 +12,7 @@ enum KncError {
   lasUnknownSection,
 
   /// 4
-  lasNumberParseError,
+  parseNumber,
 
   /// 5
   lasTooManyNumbers,
@@ -49,6 +49,30 @@ enum KncError {
 
   /// 16
   lasEmptyData,
+
+  /// 17
+  inkTitleEnd,
+
+  /// 18
+  inkTitleWellCantGet,
+
+  /// 19
+  inkTitleAngleCantGet,
+
+  /// 20
+  inkCantGoToFirstTbl,
+
+  /// 21
+  inkUncorrectAngleType,
+
+  /// 22
+  inkUncorrectSecondTableSeparator,
+
+  /// 23
+  inkUncorrectTableColumnCount,
+
+  /// 24
+  inkCantGoToSecondTblData,
 }
 
 const kncErrorStrings = [
@@ -102,6 +126,30 @@ const kncErrorStrings = [
 
   /// 16
   r'Отсутвуют данные',
+
+  /// 17
+  r'Заголовок закончился без общих данных инклинометрии',
+
+  /// 18
+  r'Невозможно получить наименование скважины',
+
+  /// 19
+  r'Невозможно получить угол склонения',
+
+  /// 20
+  r'Невозможно приступить к разбору первой таблицы без корректных данных',
+
+  /// 21
+  r'Некорректный тип для значения градусов/минуты',
+
+  /// 22
+  r'Неожиданный разделитель для второй таблицы',
+
+  /// 23
+  r'Несовпадает количество столбцов',
+
+  /// 24
+  r'Неудалось установить в каких столбцах находятся данные',
 ];
 
 class ErrorOnLine {

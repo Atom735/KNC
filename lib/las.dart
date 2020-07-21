@@ -403,7 +403,7 @@ class LasData {
           // Непустую строку пытаемся разобрать на число
           var val = double.tryParse(e);
           if (val == null) {
-            _logError(KncError.lasNumberParseError, e);
+            _logError(KncError.parseNumber, e);
             return true;
           }
           if (zWrap == false && iA >= curves.length) {
