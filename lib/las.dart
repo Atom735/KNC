@@ -6,16 +6,31 @@ import 'errors.dart';
 import 'mapping.dart';
 
 class SingleCurveLasData {
+  /// Путь к оригиналу файла
   final String origin;
+
+  /// Наименование скважины
   final String well;
+
+  /// Наименование иследования
   final String name;
+
+  /// Начальная глубина
   final double strt;
+
+  /// Конечная глубина
   final double stop;
+
+  /// Данные иследования
   final List<double> data;
+
+  /// Шаг квантования глубины
+  double get step => data.length >= 2 ? (stop - strt) / (data.length - 1) : 0;
 
   SingleCurveLasData(
       this.origin, this.well, this.name, this.strt, this.stop, this.data);
 
+  /// Получить данные с помощью разобранных LAS данных файла
   static List<SingleCurveLasData> getByLasData(final LasData las) {
     final cs = las.curves;
     final cc = cs.length - 1;
@@ -32,6 +47,7 @@ class SingleCurveLasData {
     return out;
   }
 
+  /// Оператор сравнения на совпадение
   @override
   bool operator ==(dynamic other) {
     if (other is SingleCurveLasData) {
@@ -196,10 +212,18 @@ class LasDataBase {
   }
 }
 
+/// Данные строки LAS файла
 class LasDataInfoLine {
+  /// Мнемоника
   final String mnem;
+
+  /// Размерность данных
   final String unit;
+
+  /// Данные
   final String data;
+
+  /// Описание данных
   final String desc;
 
   LasDataInfoLine(this.mnem, this.unit, this.data, this.desc);
@@ -219,12 +243,26 @@ class LasDataInfoLine {
                   : throw RangeError.index(i, this, 'index', null, 4);
 }
 
+/// Данные о кривой LAS файла
+///
+/// Наименование кривой хранится в переменной `mnem`
 class LasDataCurve extends LasDataInfoLine {
+  /// Начальная глубина (оригинальная запись)
   String strt;
-  String stop;
+
+  /// Начальная глубина (числовое значение)
   double strtN;
+
+  /// Конечная глубина (оригинальная запись)
+  String stop;
+
+  /// Конечная глубина (числовое значение)
   double stopN;
+
+  /// Индекс начальной глубины в таблице значений `curves` из `LasData`
   int strtI;
+
+  /// Индекс конечной глубины в таблице значений `curves` из `LasData`
   int stopI;
 
   LasDataCurve(final String mnem, final String unit, final String data,
@@ -234,26 +272,79 @@ class LasDataCurve extends LasDataInfoLine {
 }
 
 class LasData {
+  /// Путь к оригиналу файла
   String origin;
+
+  /// Данные секций
+  ///
+  /// `info['W']['WELL']` - значение поля WELL в секции ~W
   final info = <String, Map<String, LasDataInfoLine>>{};
+
+  /// Данные о кривых LAS файла, ну или секции ~C
   final curves = <LasDataCurve>[];
+
+  /// Числовые данные самих кривых
+  ///
+  /// `ascii[0]` - данные глубины (Обычно)
   final ascii = <List<double>>[];
+
+  /// Список ошибок (Если он пуст после разбора, то данные корректны)
   final listOfErrors = <ErrorOnLine>[];
+
+  /// Значение рейтинга кодировок
   Map<String, int> encodesRaiting;
+
+  /// Конечная подобранная кодировка
   String encode;
+
+  /// Флаг переноса строки для ascii данных
   bool zWrap;
+
+  /// Версия LAS файла
   String vVers;
+
+  /// Флаг переноса строки для ascii данных (Оригинальная запись)
   String vWrap;
+
+  /// Значение отсуствующих данных (Оригинальная запись)
   String wNull;
+
+  /// Значение отсуствующих данных (Числовое значение)
   double wNullN;
+
+  /// Значение начальной глубины (Оригинальная запись)
   String wStrt;
+
+  /// Значение начальной глубины (Числовое значение)
   double wStrtN;
+
+  /// Значение конечной глубины (Оригинальная запись)
   String wStop;
+
+  /// Значение конечной глубины (Числовое значение)
   double wStopN;
+
+  /// Шаг квантования глубины (Оригинальная запись)
   String wStep;
+
+  /// Шаг квантования глубины (Числовое значение)
   double wStepN;
+
+  /// Наименование скважины
   String wWell;
 
+  /// Номер обрабатываемой строки
+  ///
+  /// После обработки, хранит количество строк в файле
+  var lineNum = 0;
+
+  /// Функция записи ошибки (сохраняет внутри класса)
+  void _logError(KncError err) => listOfErrors.add(ErrorOnLine(err, lineNum));
+
+  /// Разбор LAS файла и преобразование к внутреннему преставлению
+  /// * [bytes] - данные файла в байтовом представлении
+  /// * [charMaps] - доступные кодировки
+  /// * [mapIgnore] (opt) - Таблица шаблонных значений
   LasData(final UnmodifiableUint8ListView bytes,
       final Map<String, List<String>> charMaps,
       [dynamic mapIgnore]) {
@@ -266,18 +357,16 @@ class LasData {
 
     // Нарезаем на линии
     final lines = LineSplitter.split(buffer);
-    var lineNum = 0;
-
-    void logError(KncError err) => listOfErrors.add(ErrorOnLine(err, lineNum));
 
     var iA = 0;
     var section = '';
 
+    /// Обработка начала секции
     bool startSection() {
       switch (section) {
         case 'A': // ASCII Log data
           if (listOfErrors.isNotEmpty) {
-            logError(KncError.lasErrorsNotEmpty);
+            _logError(KncError.lasErrorsNotEmpty);
             return true;
           } else if (vVers == null ||
               vWrap == null ||
@@ -290,9 +379,9 @@ class LasData {
               wStep == null ||
               wStepN == null ||
               wWell == null) {
-            logError(KncError.lasAllDataNotCorrect);
+            _logError(KncError.lasAllDataNotCorrect);
             if (wWell == null) {
-              logError(KncError.lasCantGetWell);
+              _logError(KncError.lasCantGetWell);
             }
             return true;
           }
@@ -305,21 +394,24 @@ class LasData {
           info[section] = {};
           return false;
         default:
-          logError(KncError.lasUnknownSection);
+          _logError(KncError.lasUnknownSection);
           return true;
       }
     }
 
+    /// Обработка линии с данными
     bool parseAsciiLine(final String line) {
+      // Нарезаем строку с помощью пробелов
       for (final e in line.split(' ')) {
         if (e.isNotEmpty) {
+          // Непустую строку пытаемся разобрать на число
           var val = double.tryParse(e);
           if (val == null) {
-            logError(KncError.lasNumberParseError);
+            _logError(KncError.lasNumberParseError);
             return true;
           }
           if (zWrap == false && iA >= curves.length) {
-            logError(KncError.lasTooManyNumbers);
+            _logError(KncError.lasTooManyNumbers);
             return true;
           }
           if (iA == 0) {
@@ -360,35 +452,36 @@ class LasData {
         if (iA == curves.length) {
           iA = 0;
         } else {
-          logError(KncError.lasTooManyNumbers);
+          _logError(KncError.lasTooManyNumbers);
           return true;
         }
       }
       return false;
     }
 
+    /// Разбор строки секции с информации
     bool parseLine(final String line) {
       if (section.isEmpty) {
-        logError(KncError.lasSectionIsNull);
+        _logError(KncError.lasSectionIsNull);
         return true;
       }
       final i0 = line.indexOf('.');
       if (i0 == -1) {
-        logError(KncError.lasHaventDot);
+        _logError(KncError.lasHaventDot);
         return false;
       }
       final i1 = line.lastIndexOf(':');
       if (i1 == -1) {
-        logError(KncError.lasHaventDoubleDot);
+        _logError(KncError.lasHaventDoubleDot);
         return false;
       }
       final i2 = line.indexOf(' ', i0);
       if (i2 == -1) {
-        logError(KncError.lasHaventSpaceAfterDot);
+        _logError(KncError.lasHaventSpaceAfterDot);
         return false;
       }
       if (i1 < i2) {
-        logError(KncError.lasDotAfterDoubleDot);
+        _logError(KncError.lasDotAfterDoubleDot);
         return false;
       }
       final mnem = line.substring(0, i0).trim();
@@ -413,26 +506,26 @@ class LasData {
             case 'VERS':
               vVers = data;
               if (unit.isNotEmpty) {
-                logError(KncError.lasHaventSpaceAfterDot);
+                _logError(KncError.lasHaventSpaceAfterDot);
               }
               if (vVers != '1.20' && vVers != '2.0') {
-                logError(KncError.lasVersionError);
+                _logError(KncError.lasVersionError);
                 vVers = null;
               }
               return false;
             case 'WRAP':
               vWrap = data;
               if (unit.isNotEmpty) {
-                logError(KncError.lasHaventSpaceAfterDot);
+                _logError(KncError.lasHaventSpaceAfterDot);
               }
               if (vWrap != 'YES' && vWrap != 'NO') {
-                logError(KncError.lasLineWarpError);
+                _logError(KncError.lasLineWarpError);
                 vWrap = null;
               }
               zWrap = vWrap == 'YES';
               return false;
             default:
-              logError(KncError.lasUncknownMnemInVSection);
+              _logError(KncError.lasUncknownMnemInVSection);
               return false;
           }
           break;
@@ -441,55 +534,55 @@ class LasData {
             case 'NULL':
               wNull = data;
               if (wNull == null) {
-                logError(KncError.lasUncorrectNumber);
+                _logError(KncError.lasUncorrectNumber);
                 return false;
               }
               wNullN = double.tryParse(wNull);
               if (wNullN == null) {
-                logError(KncError.lasUncorrectNumber);
+                _logError(KncError.lasUncorrectNumber);
                 return false;
               }
               return false;
             case 'STEP':
               wStep = data;
               if (wStep == null) {
-                logError(KncError.lasUncorrectNumber);
+                _logError(KncError.lasUncorrectNumber);
                 return false;
               }
               wStepN = double.tryParse(wStep);
               if (wStepN == null) {
-                logError(KncError.lasUncorrectNumber);
+                _logError(KncError.lasUncorrectNumber);
                 return false;
               }
               return false;
             case 'STRT':
               wStrt = data;
               if (wStrt == null) {
-                logError(KncError.lasUncorrectNumber);
+                _logError(KncError.lasUncorrectNumber);
                 return false;
               }
               wStrtN = double.tryParse(wStrt);
               if (wStrtN == null) {
-                logError(KncError.lasUncorrectNumber);
+                _logError(KncError.lasUncorrectNumber);
                 return false;
               }
               return false;
             case 'STOP':
               wStop = data;
               if (wStop == null) {
-                logError(KncError.lasUncorrectNumber);
+                _logError(KncError.lasUncorrectNumber);
                 return false;
               }
               wStopN = double.tryParse(wStop);
               if (wStopN == null) {
-                logError(KncError.lasUncorrectNumber);
+                _logError(KncError.lasUncorrectNumber);
                 return false;
               }
               return false;
             case 'WELL':
               wWell = data;
               if (wWell == null) {
-                logError(KncError.lasCantGetWell);
+                _logError(KncError.lasCantGetWell);
                 return false;
               }
               return false;
@@ -505,6 +598,7 @@ class LasData {
       return false;
     }
 
+    /// цикл разбора строк
     lineLoop:
     for (final lineFull in lines) {
       lineNum += 1;
