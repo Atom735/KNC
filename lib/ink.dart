@@ -1,9 +1,98 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:xml/xml_events.dart';
 
+import 'errors.dart';
 import 'mapping.dart';
+
+/// Конечные данные инклинометрии (одна линия)
+class InkDataOneLineFinal {
+  double depth;
+  double angle;
+  double azimuth;
+
+  static const length = 3;
+
+  void operator []=(final int i, final double val) {
+    switch (i) {
+      case 0:
+        depth = val;
+        break;
+      case 1:
+        angle = val;
+        break;
+      case 2:
+        azimuth = val;
+        break;
+      default:
+        throw RangeError.index(i, this, 'index', null, length);
+    }
+  }
+
+  double operator [](final int i) {
+    switch (i) {
+      case 0:
+        return depth;
+      case 1:
+        return angle;
+      case 2:
+        return azimuth;
+      default:
+        throw RangeError.index(i, this, 'index', null, length);
+    }
+  }
+
+  /// Сохранение данных в бинарном виде
+  void save(final IOSink io) {
+    final bl = ByteData(8 * length);
+    for (var i = 0; i < length; i++) {
+      bl.setFloat64(8 * i, this[i]);
+    }
+    io.add(bl.buffer.asUint8List());
+  }
+}
+
+/// Конечные данные инклинометрии
+class SingleInkData {
+  /// Путь к оригиналу файла
+  final String origin;
+
+  /// Наименование скважины
+  final String well;
+
+  /// Начальная глубина
+  final double strt;
+
+  /// Конечная глубина
+  final double stop;
+
+  /// Данные инклинометрии
+  final List<InkDataOneLineFinal> data;
+
+  SingleInkData(this.origin, this.well, this.strt, this.stop, this.data);
+
+  /// Сохранение данных в бинарном виде
+  void save(final IOSink io) {
+    if (origin != null) {
+      io.add(utf8.encoder.convert(origin));
+    }
+    io.add([0]);
+    if (well != null) {
+      io.add(utf8.encoder.convert(well));
+    }
+    io.add([0]);
+    final bb = ByteData(20);
+    bb.setFloat64(0, strt);
+    bb.setFloat64(8, stop);
+    bb.setUint32(16, data.length);
+    io.add(bb.buffer.asUint8List());
+    for (var i = 0; i < data.length; i++) {
+      data[i].save(io);
+    }
+  }
+}
 
 class InkDataLine {
   String depth;
@@ -15,22 +104,39 @@ class InkDataLine {
 }
 
 class InkData {
+  /// Путь к оригиналу файла
+  String origin;
+
+  /// Название скважины
   String well;
+
+  /// Название площади
   String square;
+
+  /// Диаметр скважины
   String diametr;
+
+  /// Глубина башмака
   String depth;
+
+  /// Угол склонения (оригинальная запись)
   String angle;
-  double angleN;
+
+  /// Флаг оригинальной записи в град'мин
   bool angleM;
+
+  /// Угол склонения, числовое значение (в градусах и долях градуса)
+  double angleN;
+
+  /// Альтитуда
   String altitude;
+
+  /// Глубина забоя
   String zaboy;
+
   final list = <InkDataLine>[];
-  final listOfErrors = <String>[];
-  Map<String, int> encodesRaiting;
-  String encode;
+
   bool bInkFile;
-  Future future;
-  var lineNum = 0;
 
   var iDepth = -1;
   var iAngle = -1;
@@ -39,8 +145,30 @@ class InkData {
   bool bAzimuthMinuts;
   var iseesoo = 0;
 
-  void _logError(final String txt) {
-    listOfErrors.add('Строка:$lineNum\t$txt');
+  /// Номер обрабатываемой строки
+  ///
+  /// После обработки, хранит количество строк в файле
+  var lineNum = 0;
+
+  /// Список ошибок (Если он пуст после разбора, то данные корректны)
+  final listOfErrors = <ErrorOnLine>[];
+
+  /// Функция записи ошибки (сохраняет внутри класса)
+  void logError(KncError err, [String txt]) =>
+      listOfErrors.add(ErrorOnLine(err, lineNum, txt));
+
+  @deprecated
+  final listOfErrorsOLD = <String>[];
+
+  /// Значение рейтинга кодировок (действительно только для текстовых файлов)
+  Map<String, int> encodesRaiting;
+
+  /// Конечная подобранная кодировка (действительно только для текстовых файлов)
+  String encode;
+
+  @deprecated
+  void _logErrorOLD(final String txt) {
+    listOfErrorsOLD.add('Строка:$lineNum\t$txt');
   }
 
   void _prepareForTable1() {
@@ -59,7 +187,7 @@ class InkData {
           iAngle = i;
           var k = tt[i].indexOf("'");
           if (k == -1) {
-            _logError(
+            _logErrorOLD(
                 'Ненайден разделитель для значения градусов/минуты (Угол)');
           } else {
             var m = tt[i][k + 1].toLowerCase();
@@ -71,7 +199,7 @@ class InkData {
                 bAngleMinuts = false;
                 break;
               default:
-                _logError(
+                _logErrorOLD(
                     'Некорректный тип для значения градусов/минуты (Угол)');
             }
           }
@@ -79,7 +207,7 @@ class InkData {
           iAzimuth = i;
           var k = tt[i].indexOf("'");
           if (k == -1) {
-            _logError(
+            _logErrorOLD(
                 'Ненайден разделитель для значения градусов/минуты (Азимут)');
           } else {
             var m = tt[i][k + 1].toLowerCase();
@@ -91,7 +219,7 @@ class InkData {
                 bAzimuthMinuts = false;
                 break;
               default:
-                _logError(
+                _logErrorOLD(
                     'Некорректный тип для значения градусов/минуты (Азимут)');
             }
           }
@@ -106,7 +234,7 @@ class InkData {
           iAngle = i;
           var k = tt[i][0].indexOf("'");
           if (k == -1) {
-            _logError(
+            _logErrorOLD(
                 'Ненайден разделитель для значения градусов/минуты (Угол)');
           } else {
             var m = tt[i][0][k + 1].toLowerCase();
@@ -118,7 +246,7 @@ class InkData {
                 bAngleMinuts = false;
                 break;
               default:
-                _logError(
+                _logErrorOLD(
                     'Некорректный тип для значения градусов/минуты (Угол)');
             }
           }
@@ -126,7 +254,7 @@ class InkData {
           iAzimuth = i;
           var k = tt[i][0].indexOf("'");
           if (k == -1) {
-            _logError(
+            _logErrorOLD(
                 'Ненайден разделитель для значения градусов/минуты (Азимут)');
           } else {
             var m = tt[i][0][k + 1].toLowerCase();
@@ -138,26 +266,26 @@ class InkData {
                 bAzimuthMinuts = false;
                 break;
               default:
-                _logError(
+                _logErrorOLD(
                     'Некорректный тип для значения градусов/минуты (Азимут)');
             }
           }
         }
       }
     } else {
-      _logError('Неправильный тип аргумента для функции');
+      _logErrorOLD('Неправильный тип аргумента для функции');
     }
     if (iDepth == -1 ||
         iAngle == -1 ||
         iAzimuth == -1 ||
         bAngleMinuts == null ||
         bAzimuthMinuts == null) {
-      _logError('Не все данные корректны');
-      _logError('iDepth         = $iDepth');
-      _logError('iAngle         = $iAngle');
-      _logError('iAzimuth       = $iAzimuth');
-      _logError('bAngleMinuts   = $bAngleMinuts');
-      _logError('bAzimuthMinuts = $bAzimuthMinuts');
+      _logErrorOLD('Не все данные корректны');
+      _logErrorOLD('iDepth         = $iDepth');
+      _logErrorOLD('iAngle         = $iAngle');
+      _logErrorOLD('iAzimuth       = $iAzimuth');
+      _logErrorOLD('bAngleMinuts   = $bAngleMinuts');
+      _logErrorOLD('bAzimuthMinuts = $bAzimuthMinuts');
     }
   }
 
@@ -165,7 +293,7 @@ class InkData {
     // 11.30 град'мин.
     var k = angle.indexOf("'");
     if (k == -1) {
-      _logError(
+      _logErrorOLD(
           'Ненайден разделитель для значения градусов/минуты (Угол склонения)');
       return;
     }
@@ -177,13 +305,13 @@ class InkData {
         angleM = false;
         break;
       default:
-        _logError(
+        _logErrorOLD(
             'Некорректный тип для значения градусов/минуты (Угол склонения)');
         return;
     }
     angleN = double.tryParse(angle.substring(0, angle.indexOf(' ')));
     if (angleN == null) {
-      _logError('Невозможно разобрать значение углас клонения: "$angle"');
+      _logErrorOLD('Невозможно разобрать значение углас клонения: "$angle"');
       return;
     }
     if (angleM) {
@@ -207,7 +335,7 @@ class InkData {
     var reL3 = RegExp(r'Угол\s+склонения:?(.+)Альтитуда:?(.+)Забой:?(.+)');
 
     void _parseSecondTblData(final List<List<String>> row) {
-      if (listOfErrors.isNotEmpty) {
+      if (listOfErrorsOLD.isNotEmpty) {
         return;
       }
       final iLengthDepth =
@@ -217,7 +345,7 @@ class InkData {
       final iLengthAzimuth =
           row[iAzimuth].length - (row[iAzimuth].last.isEmpty ? 1 : 0);
       if (iLengthDepth != iLengthAngle || iLengthDepth != iLengthAzimuth) {
-        _logError('количество строк в колонках таблицы несовпадает');
+        _logErrorOLD('количество строк в колонках таблицы несовпадает');
         return;
       }
       for (var i = 0; i < iLengthDepth; i++) {
@@ -226,12 +354,12 @@ class InkData {
         l.depth = row[iDepth][i];
         l.depthN = double.tryParse(l.depth);
         if (l.depthN == null) {
-          _logError('Невозможно разобрать значение глубины');
+          _logErrorOLD('Невозможно разобрать значение глубины');
         }
         l.angle = row[iAngle][i];
         l.angleN = double.tryParse(l.angle);
         if (l.angleN == null) {
-          _logError('Невозможно разобрать значение угла');
+          _logErrorOLD('Невозможно разобрать значение угла');
         } else if (bAngleMinuts) {
           var v = (l.angleN % 1.0);
           l.angleN += (v * 10.0 / 6.0) - v;
@@ -240,7 +368,7 @@ class InkData {
         l.azimuthN = double.tryParse(
             l.azimuth[0] == '*' ? l.azimuth.substring(1) : l.azimuth);
         if (l.azimuthN == null) {
-          _logError('Невозможно разобрать значение азимута');
+          _logErrorOLD('Невозможно разобрать значение азимута');
         } else {
           if (bAzimuthMinuts) {
             var v = (l.azimuthN % 1.0);
@@ -421,12 +549,12 @@ class InkData {
       l.depth = s[iDepth];
       l.depthN = double.tryParse(l.depth);
       if (l.depthN == null) {
-        _logError('Невозможно разобрать значение глубины');
+        _logErrorOLD('Невозможно разобрать значение глубины');
       }
       l.angle = s[iAngle];
       l.angleN = double.tryParse(l.angle);
       if (l.angleN == null) {
-        _logError('Невозможно разобрать значение угла');
+        _logErrorOLD('Невозможно разобрать значение угла');
       } else if (bAngleMinuts) {
         var v = (l.angleN % 1.0);
         l.angleN += (v * 10.0 / 6.0) - v;
@@ -435,7 +563,7 @@ class InkData {
       l.azimuthN = double.tryParse(
           l.azimuth[0] == '*' ? l.azimuth.substring(1) : l.azimuth);
       if (l.azimuthN == null) {
-        _logError('Невозможно разобрать значение азимута');
+        _logErrorOLD('Невозможно разобрать значение азимута');
       } else {
         if (bAzimuthMinuts) {
           var v = (l.azimuthN % 1.0);
@@ -530,7 +658,7 @@ class InkData {
           if (line.startsWith('----')) {
             iseesoo += 1;
             _prepareForStartList(tbl2[0]);
-            if (listOfErrors.isNotEmpty) {
+            if (listOfErrorsOLD.isNotEmpty) {
               break lineLoop;
             }
             continue lineLoop;
@@ -543,7 +671,7 @@ class InkData {
               s = s.sublist(0, s.length - 1);
             }
             if (s.length != tbl2[0].length) {
-              _logError('Несовпадает количество столбцов');
+              _logErrorOLD('Несовпадает количество столбцов');
               break lineLoop;
             }
             for (var i = 0; i < s.length; i++) {
@@ -562,7 +690,7 @@ class InkData {
             var s = line.split(' ');
             s.removeWhere((e) => e.isEmpty);
             if (s.length != tbl2[0].length) {
-              _logError('Несовпадает количество столбцов');
+              _logErrorOLD('Несовпадает количество столбцов');
               break lineLoop;
             }
             tbl2.add(s);

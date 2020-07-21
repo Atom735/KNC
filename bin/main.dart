@@ -219,7 +219,7 @@ Future main(List<String> args) async {
                     p.basename(entity2.path) == 'document.xml') {
                   ink = InkData.docx(entity2.openRead());
                   await ink.future;
-                  if (ink.listOfErrors.isEmpty) {
+                  if (ink.listOfErrorsOLD.isEmpty) {
                     // No error
                     final newPath = await getOutPathNew(
                         ss.pathOutInk,
@@ -246,7 +246,7 @@ Future main(List<String> args) async {
                         ss.pathOutErrors, p.basename(entity.path));
                     errorAdd('+INK("${entity.path}")');
                     errorAdd('\t"${entity.path}" => "${newPath}"');
-                    for (final err in ink.listOfErrors) {
+                    for (final err in ink.listOfErrorsOLD) {
                       errorAdd('\t$err');
                     }
                     errorAdd(''.padRight(20, '='));
@@ -293,7 +293,7 @@ Future main(List<String> args) async {
                     p.basename(entity2.path) == 'document.xml') {
                   ink = InkData.docx(entity2.openRead());
                   await ink.future;
-                  if (ink.listOfErrors.isEmpty) {
+                  if (ink.listOfErrorsOLD.isEmpty) {
                     // No error
                     final newPath = await getOutPathNew(
                         ss.pathOutInk,
@@ -320,7 +320,7 @@ Future main(List<String> args) async {
                         ss.pathOutErrors, p.basename(entity.path));
                     errorAdd('+INK("${entity.path}")');
                     errorAdd('\t"${entity.path}" => "${newPath}"');
-                    for (final err in ink.listOfErrors) {
+                    for (final err in ink.listOfErrorsOLD) {
                       errorAdd('\t$err');
                     }
                     errorAdd(''.padRight(20, '='));

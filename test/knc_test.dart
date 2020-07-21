@@ -344,7 +344,7 @@ void main() {
           continue;
         }
 
-        if (a.listOfErrors.isEmpty) {
+        if (a.listOfErrorsOLD.isEmpty) {
           sink.writeln('''
 ---------------------------------------OK---------------------------------------
 Кодировка у оригинала ${a.encode}
@@ -362,7 +362,7 @@ void main() {
 Скважина N ${a.well}
 Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
 Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
-          for (var line in a.listOfErrors) {
+          for (var line in a.listOfErrorsOLD) {
             sink.writeln('\t${line}');
           }
         }
@@ -401,7 +401,7 @@ void main() {
         if (a.bInkFile != true) {
           continue;
         }
-        if (a.listOfErrors.isEmpty) {
+        if (a.listOfErrorsOLD.isEmpty) {
           sink.writeln('''
 ---------------------------------------OK---------------------------------------
 Кодировка у оригинала ${a.encode}
@@ -419,7 +419,7 @@ void main() {
 Скважина N ${a.well}
 Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
 Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
-          for (var line in a.listOfErrors) {
+          for (var line in a.listOfErrorsOLD) {
             sink.writeln('\t${line}');
           }
         }
