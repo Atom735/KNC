@@ -49,6 +49,8 @@ class InkDataOneLineFinal {
 
   static const length = 3;
 
+  InkDataOneLineFinal(this.depth, this.angle, this.azimuth);
+
   void operator []=(final int i, final double val) {
     switch (i) {
       case 0:
@@ -106,6 +108,15 @@ class SingleInkData {
   final List<InkDataOneLineFinal> data;
 
   SingleInkData(this.origin, this.well, this.strt, this.stop, this.data);
+
+  /// Получить данные с помощью разобранных INK данных файла
+  static SingleInkData getByInkData(final InkData ink) => SingleInkData(
+      ink.origin,
+      ink.well,
+      ink.data.first.depthN,
+      ink.data.last.depthN,
+      ink.data.map((e) =>
+          InkDataOneLineFinal(e.depthN, e.angleN, e.azimuthN + ink.angleN)));
 
   /// Оператор сравнения на совпадение
   @override
@@ -219,6 +230,27 @@ class InkDataBase {
         }
         db[key][i] = SingleInkData(origin, well, strt, stop, data);
       }
+    }
+  }
+
+  /// Добавляет данные INK файла в базу,
+  /// если такие данные уже имеются
+  /// то функция вернёт `true` иначе `false`
+  bool addInkData(final InkData ink) {
+    final dat = SingleInkData.getByInkData(ink);
+    if (db[dat.well] == null) {
+      db[dat.well] = [];
+      db[dat.well].add(dat);
+      return false;
+    } else {
+      for (final scdb in db[dat.well]) {
+        if (scdb == dat) {
+          // Если совпадают
+          return true;
+        }
+      }
+      db[dat.well].add(dat);
+      return false;
     }
   }
 }
@@ -355,10 +387,8 @@ class InkData {
     // Нарезаем на линии
     final lines = LineSplitter.split(buffer);
 
-    var lastLine;
     bool Function(String) section;
 
-    var tbl2l = 0;
     var tbl2title = <String>[];
 
     /// Разбор второй таблицы
@@ -367,7 +397,6 @@ class InkData {
         if (isInk < 20) {
           /// обработка первого разделителя
           isInk = 20;
-          tbl2l = line.length;
           return false;
         } else if (isInk < 30) {
           /// обработка второго разделителя
@@ -468,7 +497,6 @@ class InkData {
           if (bAzimuthMinuts) {
             l.azimuthN = convertAngleMinuts2Gradus(l.azimuthN);
           }
-          l.azimuthN += angleN;
         }
         data.add(l);
       }
@@ -610,7 +638,6 @@ class InkData {
       if (section == null) {
         return;
       }
-      lastLine = lineFull;
       lineNum += 1;
       final line = lineFull.trim();
       if (line.isEmpty) {
