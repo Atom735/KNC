@@ -73,6 +73,12 @@ enum KncError {
 
   /// 24
   inkCantGoToSecondTblData,
+
+  /// 25
+  inkArgumentNotTable,
+
+  /// 26
+  inkTableRowCount,
 }
 
 const kncErrorStrings = [
@@ -150,6 +156,12 @@ const kncErrorStrings = [
 
   /// 24
   r'Неудалось установить в каких столбцах находятся данные',
+
+  /// 25
+  r'Аргумент функции не является таблицей',
+
+  /// 26
+  r'Количество строк в колонках таблицы несовпадает',
 ];
 
 class ErrorOnLine {
