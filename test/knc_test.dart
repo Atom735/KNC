@@ -49,6 +49,16 @@ void main() {
               i++) {
             print('\t' + dbf.records[i].join('|'));
           }
+          final inks = InkData.getByDbf(dbf);
+          if (inks != null) {
+            for (final ink in inks) {
+              print('Well: ${ink.well} with ${ink.data.length} Points');
+              for (final line in ink.data) {
+                print(
+                    '\t${line.depthN.toStringAsPrecision(4)}\t${line.angleN.toStringAsPrecision(4)}\t${line.azimuthN.toStringAsPrecision(4)}');
+              }
+            }
+          }
         } else {
           print('${p.basename(file.path)} ERROR');
         }
