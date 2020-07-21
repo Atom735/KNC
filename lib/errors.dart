@@ -46,6 +46,9 @@ enum KncError {
 
   /// 15
   lasDotAfterDoubleDot,
+
+  /// 16
+  lasEmptyData,
 }
 
 const kncErrorStrings = [
@@ -96,11 +99,15 @@ const kncErrorStrings = [
 
   /// 15
   r'Точка найдена после двоеточия',
+
+  /// 16
+  r'Отсутвуют данные',
 ];
 
 class ErrorOnLine {
   final int err;
   final int line;
+  final String txt;
 
-  ErrorOnLine(final KncError err, this.line) : err = err.index;
+  ErrorOnLine(final KncError err, this.line, this.txt) : err = err.index;
 }
