@@ -1031,7 +1031,7 @@ class InkData {
       for (var i = 0; i < ol.length && bNotAllowed; i++) {
         if (ol[i].well == well) {
           ol[i].data.add(ol[i]._getDataLine(rec));
-          bNotAllowed = true;
+          bNotAllowed = false;
         }
       }
       if (bNotAllowed) {
