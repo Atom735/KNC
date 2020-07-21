@@ -382,7 +382,7 @@ void main() {
     await Directory(r'test/ink').list(recursive: true).listen((e) {
       if (e is File && e.path.toLowerCase().endsWith('.txt')) {
         tasks.add(e.readAsBytes().then((final bytes) =>
-            InkDataOLD.txt(UnmodifiableUint8ListView(bytes), charMaps)));
+            InkData.txt(UnmodifiableUint8ListView(bytes), charMaps)));
       }
     }).asFuture();
     final outData = await Future.wait(tasks);
@@ -390,9 +390,9 @@ void main() {
         .openWrite(encoding: utf8, mode: FileMode.writeOnly);
     sink.writeCharCode(unicodeBomCharacterRune);
     for (final i in outData) {
-      if (i is InkDataOLD) {
+      if (i is InkData) {
         var a = i;
-        if (a.bInkFile != true) {
+        if (a.isInk < 3) {
           continue;
         }
 
@@ -403,7 +403,7 @@ void main() {
 Скважина N ${a.well}
 Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
 Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
-          for (var line in a.list) {
+          for (var line in a.data) {
             sink.writeln(
                 '\t${line.depthN}\t${line.angleN}\t${line.azimuthN}\t${line.depth}\t${line.angle}\t${line.azimuth}');
           }
@@ -439,7 +439,7 @@ void main() {
             .then((b) => b ? Directory(path2out).delete(recursive: true) : null)
             .then((_) => Process.run(pathBin_zip, ['x', '-o$path2out', e.path]))
             .then((_) => File('$path2out/word/document.xml').openRead())
-            .then((bytes) => InkDataOLD.docx(bytes)));
+            .then((bytes) => InkData.getByDocx(bytes)));
       }
     }).asFuture();
     final outData = await Future.wait(tasks);
@@ -447,10 +447,9 @@ void main() {
         .openWrite(encoding: utf8, mode: FileMode.writeOnly);
     sink.writeCharCode(unicodeBomCharacterRune);
     for (final i in outData) {
-      if (i is InkDataOLD) {
-        var a = i;
-        await a.future;
-        if (a.bInkFile != true) {
+      if (i is InkData) {
+        var a = await i;
+        if (a.isInk < 3) {
           continue;
         }
         if (a.listOfErrors.isEmpty) {
@@ -460,7 +459,7 @@ void main() {
 Скважина N ${a.well}
 Диаметр скважины: ${a.diametr} Глубина башмака: ${a.depth}
 Угол склонения: ${a.angle} (${a.angleN}) Альтитуда: ${a.altitude} Забой: ${a.zaboy}''');
-          for (var line in a.list) {
+          for (var line in a.data) {
             sink.writeln(
                 '\t${line.depthN}\t${line.angleN}\t${line.azimuthN}\t${line.depth}\t${line.angle}\t${line.azimuth}');
           }
@@ -510,7 +509,7 @@ void main() {
                   print('entity in zip $entityInZip');
                   final ext = p.extension(entityInZip.path).toLowerCase();
                   if (ext == '.zip') {
-                    // TODO: GoTo Recursion
+                    // GoTo Recursion
                     print('2 archive on archive ${entityInZip}');
                     tasks.add(dirZip.createTemp().then((dirTemp) {
                       print('2 temp created $dirTemp');
