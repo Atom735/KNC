@@ -8,6 +8,10 @@ final ct_JS = ContentType.parse('application/javascript');
 /// ContentType mime = application/vnd.dart
 final ct_Dart = ContentType.parse('application/vnd.dart');
 
+/// ContentType mime = application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+final ct_Xlsx = ContentType.parse(
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
 String getRequestDebugData(final HttpRequest request) {
   final string = StringBuffer();
   string.writeln('Received request ${request.method}: ${request.uri.path}');
@@ -150,6 +154,9 @@ class MyServer {
               break;
             case '.dart':
               response.headers.contentType = ct_Dart;
+              break;
+            case '.xlsx':
+              response.headers.contentType = ct_Xlsx;
               break;
             case '.html':
               response.headers.contentType = ContentType.html;
