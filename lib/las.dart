@@ -172,12 +172,11 @@ class LasDataBase {
     }
   }
 
-  /// Добавляет данные LAS файла в базу,
-  /// если такие данные уже имеются
-  /// то функция вернёт количество совпадений
+  /// Добавляет данные LAS файла в базу.
   ///
-  /// Кол-во совпадений можно сравнить с `LasData.curves.length - 1`
-  /// Если их меньше, то выборочные данные были добавлены
+  /// Функция вернёт количество добавленных оригинальных кривых
+  ///
+  /// Если все кривые совпдаают вернёт `0`
   int addLasData(final LasData las) {
     final list = SingleCurveLasData.getByLasData(las);
     if (db[las.wWell] == null) {
@@ -200,7 +199,7 @@ class LasDataBase {
           db[las.wWell].add(scld);
         }
       }
-      return b;
+      return las.curves.length - 1 - b;
     }
   }
 }
