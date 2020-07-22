@@ -105,6 +105,9 @@ class KncSettings {
 
   final lasCurvesNameOriginals = <String>[];
 
+  Future get loadAll => Future.wait(
+      [loadCharMaps(), loadLasIgnore(), loadInkDbfMap(), serchPrograms()]);
+
   /// Загружает кодировки и записывает их в настройки
   Future<Map<String, List<String>>> loadCharMaps() =>
       loadMappings('mappings').then((charmap) => ssCharMaps = charmap);
@@ -333,6 +336,8 @@ class KncSettings {
   /// - [handleErrorLas] (opt) - обработчик ошибок разобранного Las файла
   /// - [handleOkLas] (opt) - обработчик разобранного Ink файла
   /// - [handleErrorLas] (opt) - обработчик ошибок разобранного Ink файла
+  ///
+  /// возвращает Future который завершится по обработке всех файлов
   Future startWork({
     final Future Function(dynamic e) handleErrorCatcher,
     final Future Function(LasData las, File file, String newPath, int originals)
@@ -370,7 +375,21 @@ class KncSettings {
                 : null));
       }
     });
-    await Future.wait(tasks).then((_) => Future.wait(tasks2));
+    await Future.wait(tasks).then((_) => Future.wait(tasks2)).then((_) async {
+      lasCurvesNameOriginals.sort((a, b) => a.compareTo(b));
+      await Future.wait([
+        File(p.join(pathOutLas, '.cs.txt'))
+            .writeAsString(lasCurvesNameOriginals.join('\r\n')),
+        lasDB.save(p.join(pathOutLas, '.db.bin')),
+        inkDB.save(p.join(pathOutInk, '.db.bin'))
+      ]);
+      if (errorsOut != null) {
+        await errorsOut.flush();
+        await errorsOut.close();
+        errorsOut = null;
+      }
+      print('Work Ended');
+    });
   }
 
   /// Получает новый экземляр функции для обхода по файлам
