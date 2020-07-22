@@ -98,7 +98,7 @@ class KncSettings {
   dynamic lasIgnore;
 
   final inkDB = InkDataBase();
-  dynamic inkMap;
+  dynamic inkDbfMap;
 
   Unzipper unzipper;
 
@@ -112,6 +112,11 @@ class KncSettings {
   Future loadLasIgnore() => File(r'data/las.ignore.json')
       .readAsString(encoding: utf8)
       .then((buffer) => lasIgnore = json.decode(buffer));
+
+  /// Загружает таблицу переназначения полей DBF для инклинометрии
+  Future loadInkDbfMap() => File(r'data/ink.dbf.map.json')
+      .readAsString(encoding: utf8)
+      .then((buffer) => inkDbfMap = json.decode(buffer));
 
   /// Очищает папки, подготавливает распаковщик,
   /// открывает файл с ошибками для записи
@@ -350,8 +355,7 @@ class KncSettings {
                 handleOkLas: handleOkLas,
                 handleErrorLas: handleErrorLas,
                 handleOkInk: handleOkInk,
-                handleErrorInk: handleErrorInk)
-                (File(element), element)
+                handleErrorInk: handleErrorInk)(File(element), element)
             : value == FileSystemEntityType.directory
                 ? Directory(element)
                     .list(recursive: true)
@@ -360,8 +364,7 @@ class KncSettings {
                         handleOkLas: handleOkLas,
                         handleErrorLas: handleErrorLas,
                         handleOkInk: handleOkInk,
-                        handleErrorInk: handleErrorInk)
-                        (entity, entity.path)))
+                        handleErrorInk: handleErrorInk)(entity, entity.path)))
                     .asFuture()
                 : null));
       }

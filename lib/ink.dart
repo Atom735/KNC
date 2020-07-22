@@ -1159,7 +1159,7 @@ class InkData {
       final dbf = DbfFile();
       if (dbf.loadByByteData(bytes.buffer.asByteData())) {
         // Dbf file
-        return getByDbf(dbf, ss.inkMap);
+        return getByDbf(dbf, ss.inkDbfMap);
       } else {
         return null;
       }
