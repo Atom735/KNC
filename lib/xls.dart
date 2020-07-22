@@ -64,6 +64,8 @@ class KncXlsBuilder {
   KncXlsBuilder(this.dir);
 
   /// Подготавливает временные файлы для эксель таблицы
+  /// - [dir] - папка где будет хранится распакованные данные
+  /// - [reCreate] (opt) - пересоздаёт папку если она будет существовать
   static Future<KncXlsBuilder> start(final Directory dir,
       [final bool reCreate = false]) async {
     if (await dir.exists()) {
