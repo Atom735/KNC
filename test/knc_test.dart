@@ -18,6 +18,41 @@ import 'package:xml/xml_events.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('KncXls las test', () async {
+    final ss = KncSettings();
+    await Future.wait(
+        [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
+
+    ss.pathInList = [r'\\NAS\Public\common\Gilyazeev\ГИС\Искринское м-е\2003г'];
+    await ss.initializing();
+
+    await ss.startWork(
+      handleErrorCatcher: (e) async {
+        print(e);
+      },
+      handleOkLas: (las, file, newPath, originals) async {
+        print('OK: $originals $file');
+      },
+      handleErrorLas: (las, file, newPath) async {
+        print('ERROR: $file');
+      },
+    );
+
+    for (var a in ss.lasCurvesNameOriginals) {
+      print(a);
+    }
+
+    final dir = Directory(p.join('test', 'xls', 'zzz')).absolute;
+    final xls = await KncXlsBuilder.start(dir, true);
+    xls.addDataBases(ss.lasDB);
+    await xls.rewriteSharedStrings();
+    await xls.rewriteSheet1();
+    final outPath = dir.path + '.xlsx';
+    if (await File(outPath).exists()) {
+      await File(outPath).delete();
+    }
+    await ss.unzipper.zip(dir.path, dir.path + '.xlsx');
+  }, timeout: Timeout.factor(10));
   test('KncXls start test', () async {
     final ss = KncSettings();
     await Future.wait(
@@ -27,6 +62,7 @@ void main() {
     final xls = await KncXlsBuilder.start(dir, true);
     xls.sharedStrings.add('<hehe>&to4ka! "C:/path" \'or not=!@\$#\'');
     await xls.rewriteSharedStrings();
+    await xls.rewriteSheet1();
     final outPath = dir.path + '.xlsx';
     if (await File(outPath).exists()) {
       await File(outPath).delete();
