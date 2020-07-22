@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 import 'dart:convert';
 
@@ -301,6 +302,142 @@ class KncSettings {
         searchProgram_7Zip().then((path) => ssPath7z = path),
         searchProgram_WordConv().then((path) => ssPathWordconv = path),
       ]);
+
+  /// Начинает обработку файлов с настоящими настройками
+  /// - [handleErrorUnzipper] - обработчик ошибки от архиватора
+  /// - [handleOkLas] - обработчик разобранного Las файла
+  /// - [handleErrorLas] - обработчик ошибок разобранного Las файла
+  Future startWork({
+    final Future Function(dynamic e) handleErrorCatcher,
+    final Future Function(LasData las, File file, String newPath, int originals)
+        handleOkLas,
+    final Future Function(LasData las, File file, String newPath)
+        handleErrorLas,
+  }) async {
+    final tasks = <Future>[];
+    final tasks2 = <Future>[];
+    pathInList.forEach((element) {
+      if (element.isNotEmpty) {
+        print('pathInList => $element');
+        tasks.add(FileSystemEntity.type(element).then((value) => value ==
+                FileSystemEntityType.file
+            ? listFilesGet(0, '',
+                handleErrorCatcher: handleErrorCatcher,
+                handleOkLas: handleOkLas,
+                handleErrorLas: handleErrorLas)(File(element), element)
+            : value == FileSystemEntityType.directory
+                ? Directory(element)
+                    .list(recursive: true)
+                    .listen((entity) => tasks2.add(listFilesGet(0, '',
+                        handleErrorCatcher: handleErrorCatcher,
+                        handleOkLas: handleOkLas,
+                        handleErrorLas: handleErrorLas)(entity, entity.path)))
+                    .asFuture()
+                : null));
+      }
+    });
+    await Future.wait(tasks).then((_) => Future.wait(tasks2));
+  }
+
+  /// Получает новый экземляр функции для обхода по файлам
+  /// с настоящими настройками
+  /// - [handleErrorUnzipper] - обработчик ошибки от архиватора
+  /// - [handleOkLas] - обработчик разобранного Las файла
+  /// - [handleErrorLas] - обработчик ошибок разобранного Las файла
+  Future Function(FileSystemEntity entity, String relPath) listFilesGet(
+    final int iArchDepth,
+    final String pathToArch, {
+    final Future Function(dynamic e) handleErrorCatcher,
+    final Future Function(LasData las, File file, String newPath, int originals)
+        handleOkLas,
+    final Future Function(LasData las, File file, String newPath)
+        handleErrorLas,
+  }) =>
+      (final FileSystemEntity entity, final String relPath) async {
+        // [pathToArch] - путь к вскрытому архиву
+        // [relPath] - путь относительный архива
+        // Вне архива, [relPath]- содержит полный путь
+        // а [pathToArch] - пустая строка, но не `null`
+        if (entity is File) {
+          final ext = p.extension(entity.path).toLowerCase();
+          // == UNZIPPER == Begin
+          if (unzipper != null && ssFileExtAr.contains(ext)) {
+            try {
+              if (ssArMaxSize > 0) {
+                // если максимальный размер архива установлен
+                if (await entity.length() < ssArMaxSize &&
+                    (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth)) {
+                  // вскрываем архив если он соотвествует размеру и мы не привысили глубину вложенности
+                  await unzipper.unzip(
+                      entity.path,
+                      listFilesGet(iArchDepth + 1, pathToArch + relPath,
+                          handleErrorCatcher: handleErrorCatcher,
+                          handleOkLas: handleOkLas,
+                          handleErrorLas: handleErrorLas));
+                  return;
+                } else {
+                  // отбрасываем большой архив
+                  return;
+                }
+              } else if (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth) {
+                // если не указан размер, и мы не превысили вложенность
+                await unzipper.unzip(
+                    entity.path,
+                    listFilesGet(iArchDepth + 1, pathToArch + relPath,
+                        handleErrorCatcher: handleErrorCatcher,
+                        handleOkLas: handleOkLas,
+                        handleErrorLas: handleErrorLas));
+                return;
+              } else {
+                // игнорируем из за вложенности
+                return;
+              }
+            } catch (e) {
+              if (handleErrorCatcher != null) {
+                await handleErrorCatcher(e);
+              }
+            }
+            return;
+          } // == UNZIPPER == End
+
+          // == LAS FILES == Begin
+          if (ssFileExtLas.contains(ext)) {
+            try {
+              final las = LasData(
+                  UnmodifiableUint8ListView(await entity.readAsBytes()),
+                  ssCharMaps,
+                  lasIgnore);
+              las.origin = pathToArch + relPath;
+              if (las.listOfErrors.isEmpty) {
+                // Данные корректны
+                final newPath = await getOutPathNew(
+                    pathOutLas, las.wWell + '___' + p.basename(entity.path));
+                final originals = lasDB.addLasData(las);
+                for (var item in las.curves) {
+                  if (!lasCurvesNameOriginals.contains(item.mnem)) {
+                    lasCurvesNameOriginals.add(item.mnem);
+                  }
+                }
+                if (handleOkLas != null) {
+                  await handleOkLas(las, entity, newPath, originals);
+                }
+              } else {
+                // Ошибка в данных файла
+                final newPath =
+                    await getOutPathNew(pathOutErrors, p.basename(entity.path));
+                if (handleErrorLas != null) {
+                  await handleErrorLas(las, entity, newPath);
+                }
+              }
+            } catch (e) {
+              if (handleErrorCatcher != null) {
+                await handleErrorCatcher(e);
+              }
+            }
+            return;
+          } // == LAS FILES == End
+        }
+      };
 
   Future<ProcessResult> runDoc2X(
           final String path2doc, final String path2out) =>
