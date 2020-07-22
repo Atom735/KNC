@@ -413,7 +413,8 @@ class KncSettings {
                 final newPath = await getOutPathNew(
                     pathOutLas, las.wWell + '___' + p.basename(entity.path));
                 final originals = lasDB.addLasData(las);
-                for (var item in las.curves) {
+                for (var i = 1; i < las.curves.length; i++) {
+                  final item = las.curves[i];
                   if (!lasCurvesNameOriginals.contains(item.mnem)) {
                     lasCurvesNameOriginals.add(item.mnem);
                   }
