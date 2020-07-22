@@ -24,7 +24,13 @@ void main() {
         [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
     await ss.initializing();
     final dir = Directory(p.join('test', 'xls', 'zzz')).absolute;
-    await KncXlsBuilder.start(dir);
+    final xls = await KncXlsBuilder.start(dir, true);
+    xls.sharedStrings.add('<hehe>&to4ka! "C:/path" \'or not=!@\$#\'');
+    await xls.rewriteSharedStrings();
+    final outPath = dir.path + '.xlsx';
+    if (await File(outPath).exists()) {
+      await File(outPath).delete();
+    }
     await ss.unzipper.zip(dir.path, dir.path + '.xlsx');
   });
 

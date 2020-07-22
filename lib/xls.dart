@@ -21,9 +21,14 @@ class KncXlsBuilder {
   KncXlsBuilder(this.dir);
 
   /// Подготавливает временные файлы для эксель таблицы
-  static Future<KncXlsBuilder> start(Directory dir) async {
+  static Future<KncXlsBuilder> start(final Directory dir,
+      [final bool reCreate = false]) async {
     if (await dir.exists()) {
-      return null;
+      if (reCreate) {
+        await dir.delete(recursive: true);
+      } else {
+        return null;
+      }
     }
     await dir.create(recursive: true);
     final dirInitData = Directory(p.join('data', 'xls')).absolute;
@@ -45,7 +50,7 @@ class KncXlsBuilder {
     }
 
     await _fc(dirInitData);
-    return KncXlsBuilder(dirInitData);
+    return KncXlsBuilder(dir);
   }
 
   /// Перезаписывает файл xl/sharedStrings.xml
