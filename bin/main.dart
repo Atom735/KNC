@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:knc/ink.dart';
 import 'package:knc/knc.dart';
+import 'package:knc/las.dart';
 import 'package:knc/web.dart';
 
 Future main(List<String> args) async {
@@ -18,6 +20,20 @@ Future main(List<String> args) async {
     ss.errorsOut.writeln(e.toString());
     server.sendMsg('#EXCEPTION:${e.toString()}');
   }
+
+  /// Обработчик готовых Las данных
+  Future handleOkLas(
+      LasData las, File file, String newPath, int originals) async {}
+
+  /// Обработчик ошибочных Las данных
+  Future handleErrorLas(LasData las, File file, String newPath) async {}
+
+  /// Обработчик готовых Ink данных
+  Future handleOkInk(
+      InkData ink, File file, String newPath, bool original) async {}
+
+  /// Обработчик ошибочных Ink данных
+  Future handleErrorInk(InkData ink, File file, String newPath) async {}
 
   /// Обработчик соединения во время работы
   Future<bool> reqWhileWork(
@@ -41,7 +57,12 @@ Future main(List<String> args) async {
       serv.handleRequest = reqWhileWork;
       ss.updateByMultiPartFormData(parseMultiPartFormData(content));
       await ss.initializing();
-      work = ss.startWork(handleErrorCatcher: handleErrorCatcher);
+      work = ss.startWork(
+          handleErrorCatcher: handleErrorCatcher,
+          handleOkLas: handleOkLas,
+          handleErrorLas: handleErrorLas,
+          handleOkInk: handleOkInk,
+          handleErrorInk: handleErrorInk);
       return reqWhileWork(req, content, serv);
     }
   }
