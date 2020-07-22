@@ -32,43 +32,74 @@ void main(List<String> args) {
       if (data == '#DONE!') {
         btnStop.innerText = 'Работа закончена, нажмите чтобы закрыть программу';
       } else if (data.startsWith('#LAS:')) {
-        if (data.startsWith('#LAS:+')) {
+        final datatxt = data.substring(5);
+        if (datatxt.startsWith('+')) {
           lastInfoSection = document.createElement('details');
+          lastInfoSection.classes.add('las');
           final summary = document.createElement('summary');
-          summary.innerText = data.substring(5);
+          summary.innerText = datatxt.substring(1);
           lastInfoSection.append(summary);
-        } else if (data.startsWith('#LAS:\t')) {
+        } else if (datatxt.startsWith('\t')) {
           final p = document.createElement('p');
-          p.innerText = data.substring(6);
+          p.innerText = datatxt.substring(1);
           lastInfoSection.append(p);
-        } else if (data.startsWith('#LAS:==========') &&
+        } else if (datatxt.startsWith('==========') &&
             lastInfoSection != null) {
           sectionInfo.append(lastInfoSection);
           lastInfoSection = null;
         } else {
           final p = document.createElement('p');
-          p.innerText = data.substring(5);
+          p.innerText = datatxt;
+          sectionInfo.append(p);
+        }
+      } else if (data.startsWith('#INK:')) {
+        final datatxt = data.substring(5);
+        if (datatxt.startsWith('+')) {
+          lastInfoSection = document.createElement('details');
+          lastInfoSection.classes.add('ink');
+          final summary = document.createElement('summary');
+          summary.innerText = datatxt.substring(1);
+          lastInfoSection.append(summary);
+        } else if (datatxt.startsWith('\t')) {
+          final p = document.createElement('p');
+          p.innerText = datatxt.substring(1);
+          lastInfoSection.append(p);
+        } else if (datatxt.startsWith('==========') &&
+            lastInfoSection != null) {
+          sectionInfo.append(lastInfoSection);
+          lastInfoSection = null;
+        } else {
+          final p = document.createElement('p');
+          p.innerText = datatxt;
           sectionInfo.append(p);
         }
       } else if (data.startsWith('#ERROR:')) {
-        if (data.startsWith('#ERROR:+')) {
+        final datatxt = data.substring(7);
+        if (datatxt.startsWith('+')) {
           lastErrorSection = document.createElement('details');
+          lastErrorSection.classes.add('error');
           final summary = document.createElement('summary');
-          summary.innerText = data.substring(7);
+          summary.innerText = datatxt.substring(1);
           lastErrorSection.append(summary);
-        } else if (data.startsWith('#ERROR:\t')) {
+        } else if (datatxt.startsWith('\t')) {
           final p = document.createElement('p');
-          p.innerText = data.substring(8);
+          p.innerText = datatxt.substring(1);
           lastErrorSection.append(p);
-        } else if (data.startsWith('#ERROR:==========') &&
+        } else if (datatxt.startsWith('==========') &&
             lastErrorSection != null) {
           sectionErrors.append(lastErrorSection);
           lastErrorSection = null;
         } else {
           final p = document.createElement('p');
-          p.innerText = data.substring(7);
+          p.innerText = datatxt;
           sectionErrors.append(p);
         }
+      } else if (data.startsWith('#EXCEPTION:')) {
+        final datatxt = data.substring(11);
+        final p = document.createElement('p');
+        p.classes.add('exception');
+        p.innerText = datatxt;
+        sectionErrors.append(p);
       }
     }
 

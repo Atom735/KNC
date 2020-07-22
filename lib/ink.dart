@@ -243,7 +243,7 @@ class InkDataBase {
   /// если такие данные уже имеются
   /// то функция вернёт `true` иначе `false`
   bool addInkData(final InkData ink) {
-    final dat = SingleInkData.getByInkData(ink);
+    final dat = ink.inkData;
     if (db[dat.well] == null) {
       db[dat.well] = [];
       db[dat.well].add(dat);
@@ -378,6 +378,12 @@ class InkData {
   /// Минимальная длина разделителя таблицы (необходим для текстовых файлов)
   static const tableLineLen = 40;
 
+  double get strt => data.isEmpty ? null : data.first.depthN;
+  double get stop => data.isEmpty ? null : data.last.depthN;
+
+  SingleInkData _sid;
+  SingleInkData get inkData =>
+      _sid ?? (_sid = SingleInkData.getByInkData(this));
   InkData();
 
   /// Преобразует список данных в заголовке второй таблицы

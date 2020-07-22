@@ -60,6 +60,48 @@
                 </p>
 
             </fieldset>
+
+            <fieldset id="fsSettings">
+                <legend>Другие настройки</legend>
+                <p>
+                    <label for="name">
+                        Максимальный размер вскрываемого архива в байтах
+                        <details>
+                            <summary>(Подробнее)</summary>
+
+                            Для задания значения можно использовать постфиксы:
+                            <ul>
+                                <li><em>`k`</em> КилоБайты</li>
+                                <li><em>`m`</em> МегаБайты = `kk`</li>
+                                <li><em>`g`</em> ГигаБайты = `kkk`</li>
+                                <li><em>`0`</em> для всех архивов</li>
+                            </ul>
+                        </details>
+
+                    </label>
+                    <input type="text" id="ssArMaxSize" name="ssArMaxSize"
+                        value="${{ssArMaxSize}}">
+                </p>
+                <p>
+                    <label for="name">Максимальный глубина прохода по архивам
+                        <details>
+                            <summary>(Подробнее)</summary>
+
+                            Для задания значения можно использовать постфиксы:
+                            <ul>
+                                <li><em>`-1`</em> для бесконечной вложенности
+                                    (По умолчанию)</li>
+                                <li><em>`0`</em> для отбрасывания всех архивов
+                                </li>
+                                <li><em>`1`</em> для входа на один уровень
+                                    архива</li>
+                            </ul>
+                        </details></label>
+                    <input type="text" id="ssArMaxDepth" name="ssArMaxDepth"
+                        value="${{ssArMaxDepth}}">
+                </p>
+
+            </fieldset>
         </form>
         <h2>Доступные кодировки</h2>
         <ul>
