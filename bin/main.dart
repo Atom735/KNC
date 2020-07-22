@@ -123,12 +123,26 @@ Future main(List<String> args) async {
       serv.handleRequest = reqWhileWork;
       ss.updateByMultiPartFormData(parseMultiPartFormData(content));
       await ss.initializing();
-      work = ss.startWork(
-          handleErrorCatcher: handleErrorCatcher,
-          handleOkLas: handleOkLas,
-          handleErrorLas: handleErrorLas,
-          handleOkInk: handleOkInk,
-          handleErrorInk: handleErrorInk);
+      work = ss
+          .startWork(
+              handleErrorCatcher: handleErrorCatcher,
+              handleOkLas: handleOkLas,
+              handleErrorLas: handleErrorLas,
+              handleOkInk: handleOkInk,
+              handleErrorInk: handleErrorInk)
+          .then((_) async {
+        /// По заверешнию работы
+        /// начинаем подготавливать таблицу
+        server.sendMsg('#PREPARE_TABLE!');
+        var xls = await ss.createXlTable();
+        xls = File(xls)
+            .absolute
+            .path
+            .substring(Directory('web').absolute.path.length);
+
+        /// ОТправляем клиенту что всё закончено и файл можно скачать
+        server.sendMsg('#DONE:$xls');
+      });
       return reqWhileWork(req, content, serv);
     }
   }
