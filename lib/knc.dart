@@ -11,22 +11,36 @@ int calculate() {
   return 6 * 7;
 }
 
+final _reservedPathNew = <String>[];
+
 /// Подбирает новое имя для файла, если он уже существует в папке [prePath]
+/// И резервирует его
 ///
 /// [prePath] - это путь именно к существующей папке
 ///
-/// [name] - это может быть как путь, так и только имя
-Future<String> getOutPathNew(String prePath, String name) async {
-  if (await File(p.join(prePath, p.basename(name))).exists()) {
+/// [name] (opt) - это может быть как путь, так и только имя
+/// Если он остуствует то резервация снимается со файла
+/// указанным в [preParh]
+Future<String> getOutPathNew(String prePath, [String name]) async {
+  if (name == null) {
+    _reservedPathNew.remove(prePath);
+    return null;
+  }
+  var o = p.join(prePath, p.basename(name));
+  if (await File(o).exists() || _reservedPathNew.contains(o)) {
     final f0 = p.join(prePath, p.basenameWithoutExtension(name));
     final fe = p.extension(name);
     var i = 0;
-    while (await File('${f0}_$i$fe').exists()) {
+    var o = '${f0}_$i$fe';
+    while (await File(o).exists() || _reservedPathNew.contains(o)) {
       i++;
+      o = '${f0}_$i$fe';
     }
-    return '${f0}_$i$fe';
+    _reservedPathNew.add(o);
+    return o;
   } else {
-    return p.join(prePath, p.basename(name));
+    _reservedPathNew.add(o);
+    return o;
   }
 }
 
@@ -81,6 +95,8 @@ class KncSettings {
 
   LasDataBase lasDB = LasDataBase();
   dynamic lasIgnore;
+
+  Map<String, List<String>> inkMap;
 
   Unzipper unzipper;
 
@@ -304,9 +320,9 @@ class KncSettings {
       ]);
 
   /// Начинает обработку файлов с настоящими настройками
-  /// - [handleErrorUnzipper] - обработчик ошибки от архиватора
-  /// - [handleOkLas] - обработчик разобранного Las файла
-  /// - [handleErrorLas] - обработчик ошибок разобранного Las файла
+  /// - [handleErrorCatcher] (opt) - обработчик ошибки от архиватора
+  /// - [handleOkLas] (opt) - обработчик разобранного Las файла
+  /// - [handleErrorLas] (opt) - обработчик ошибок разобранного Las файла
   Future startWork({
     final Future Function(dynamic e) handleErrorCatcher,
     final Future Function(LasData las, File file, String newPath, int originals)
@@ -341,9 +357,9 @@ class KncSettings {
 
   /// Получает новый экземляр функции для обхода по файлам
   /// с настоящими настройками
-  /// - [handleErrorUnzipper] - обработчик ошибки от архиватора
-  /// - [handleOkLas] - обработчик разобранного Las файла
-  /// - [handleErrorLas] - обработчик ошибок разобранного Las файла
+  /// - [handleErrorCatcher] (opt) - обработчик ошибки от архиватора
+  /// - [handleOkLas] (opt) - обработчик разобранного Las файла
+  /// - [handleErrorLas] (opt) - обработчик ошибок разобранного Las файла
   Future Function(FileSystemEntity entity, String relPath) listFilesGet(
     final int iArchDepth,
     final String pathToArch, {
@@ -422,6 +438,7 @@ class KncSettings {
                 if (handleOkLas != null) {
                   await handleOkLas(las, entity, newPath, originals);
                 }
+                await getOutPathNew(newPath);
               } else {
                 // Ошибка в данных файла
                 final newPath =
@@ -429,6 +446,8 @@ class KncSettings {
                 if (handleErrorLas != null) {
                   await handleErrorLas(las, entity, newPath);
                 }
+
+                await getOutPathNew(newPath);
               }
             } catch (e) {
               if (handleErrorCatcher != null) {
