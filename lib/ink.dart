@@ -3,10 +3,13 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:knc/dbf.dart';
+import 'package:knc/knc.dart';
 import 'package:xml/xml_events.dart';
 
 import 'errors.dart';
 import 'mapping.dart';
+
+import 'package:path/path.dart' as p;
 
 /// преобразует число из минут в доли градуса
 /// - `1.30` в минутах => `1.50` в градусах
@@ -1056,6 +1059,113 @@ class InkData {
     }
 
     return ol;
+  }
+
+  /// Получает список данных инклинометрии от файла (любого)
+  /// с настоящими настройками
+  /// - [entity] - файл
+  /// - [ss] - настройки
+  /// - [handleErrorCatcher] (opt) - обработчик ошибки от архиватора
+  static Future<List<InkData>> loadFile(final File entity, final KncSettings ss,
+      {final Future Function(dynamic e) handleErrorCatcher}) async {
+    final bytes = UnmodifiableUint8ListView(await entity.readAsBytes());
+    if (bytes.length <= 128) {
+      return null;
+    }
+    const signatureDoc = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+    const signatureZip = [
+      [0x50, 0x4B, 0x03, 0x04],
+      [0x50, 0x4B, 0x05, 0x06],
+      [0x50, 0x4B, 0x07, 0x08]
+    ];
+    var b = true;
+    for (var i = 0; i < signatureDoc.length && b; i++) {
+      b = bytes[i] == signatureDoc[i];
+    }
+    if (b) {
+      /// Doc file
+      final newPath =
+          await getOutPathNew(ss.pathOutInk, p.basename(entity.path) + '.docx');
+      final procRes = await ss.runDoc2X(entity.path, newPath);
+      if (procRes.exitCode != 0) {
+        await getOutPathNew(newPath);
+        return null;
+      }
+      if (await File(newPath).exists()) {
+        InkData ink;
+        try {
+          await ss.unzipper.unzip(newPath,
+              (final FileSystemEntity entity2, final String relPath) async {
+            if (entity2 is File &&
+                p.dirname(entity2.path) == 'word' &&
+                p.basename(entity2.path) == 'document.xml') {
+              ink = await getByDocx(entity2.openRead());
+            }
+          });
+        } catch (e) {
+          if (handleErrorCatcher != null) {
+            await handleErrorCatcher(e);
+          }
+        }
+        try {
+          await File(newPath).delete();
+        } catch (e) {
+          if (handleErrorCatcher != null) {
+            await handleErrorCatcher(e);
+          }
+        }
+        await getOutPathNew(newPath);
+        if (ink != null) {
+          return [ink];
+        } else {
+          return null;
+        }
+      }
+      await getOutPathNew(newPath);
+      return null;
+    }
+
+    for (var j = 0; j < signatureZip.length && b; j++) {
+      b = true;
+      for (var i = 0; i < signatureZip[j].length && b; i++) {
+        b = bytes[i] == signatureZip[j][i];
+      }
+      if (b) {
+        // Docx file
+        InkData ink;
+        try {
+          await ss.unzipper.unzip(entity.path,
+              (final FileSystemEntity entity2, final String relPath) async {
+            if (entity2 is File &&
+                p.dirname(entity2.path) == 'word' &&
+                p.basename(entity2.path) == 'document.xml') {
+              ink = await getByDocx(entity2.openRead());
+            }
+          });
+        } catch (e) {
+          if (handleErrorCatcher != null) {
+            await handleErrorCatcher(e);
+          }
+        }
+        if (ink != null) {
+          return [ink];
+        } else {
+          return null;
+        }
+      }
+    }
+
+    if (bytes[0] == 0x03) {
+      final dbf = DbfFile();
+      if (dbf.loadByByteData(bytes.buffer.asByteData())) {
+        // Dbf file
+        return getByDbf(dbf, ss.inkMap);
+      } else {
+        return null;
+      }
+    }
+
+    return [InkData.txt(bytes, ss.ssCharMaps)];
   }
 }
 
