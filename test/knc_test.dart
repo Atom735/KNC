@@ -18,6 +18,34 @@ import 'package:xml/xml_events.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('WordConv returncode', () async {
+    final ss = KncSettings();
+    await Future.wait(
+        [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
+
+    var a = await ss.runDoc2X(
+        r'test\ink\Пример_инклинометра_1240_1_239.doc', r'.ignore\1.docx');
+    print('${a.exitCode}');
+    a = await ss.runDoc2X(
+        r'test\ink\Пример_инклинометра_1240_1_239.doc', r'.ignore\1.docx');
+    print('${a.exitCode}');
+    a = await ss.runDoc2X(
+        r'test\ink\Пример_инклинометра_1240_1_239.docx', r'.ignore\2.docx');
+    print('${a.exitCode}');
+    a = await ss.runDoc2X(
+        r'test\ink\Пример_инклинометра_1240_1_239.docx', r'.ignore\2.docx');
+    print('${a.exitCode}');
+    a = await ss.runDoc2X(
+        r'test\ink\Пример_инклинометра_1240_1_239.s', r'.ignore\3.docx');
+    print('${a.exitCode}');
+    a = await ss.runDoc2X(
+        r'test\ink\Пример инклинометра_2255_1_141.txt', r'.ignore\3.docx');
+    print('${a.exitCode}');
+    a = await ss.runDoc2X(r'test\ink\Пример_инклинометра_1240_1_239.doc',
+        r'.ignore\notFolder\1.docx');
+    print('${a.exitCode}');
+  });
+
   test('KncXls las test', () async {
     final ss = KncSettings();
     await Future.wait(
