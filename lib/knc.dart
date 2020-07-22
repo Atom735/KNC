@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 import 'dart:convert';
 
+import 'ink.dart';
 import 'mapping.dart';
 import 'unzipper.dart';
 import 'las.dart';
@@ -93,10 +94,11 @@ class KncSettings {
   String pathOutErrors;
   IOSink errorsOut;
 
-  LasDataBase lasDB = LasDataBase();
+  final lasDB = LasDataBase();
   dynamic lasIgnore;
 
-  Map<String, List<String>> inkMap;
+  final inkDB = InkDataBase();
+  dynamic inkMap;
 
   Unzipper unzipper;
 
@@ -323,12 +325,18 @@ class KncSettings {
   /// - [handleErrorCatcher] (opt) - обработчик ошибки от архиватора
   /// - [handleOkLas] (opt) - обработчик разобранного Las файла
   /// - [handleErrorLas] (opt) - обработчик ошибок разобранного Las файла
+  /// - [handleOkLas] (opt) - обработчик разобранного Ink файла
+  /// - [handleErrorLas] (opt) - обработчик ошибок разобранного Ink файла
   Future startWork({
     final Future Function(dynamic e) handleErrorCatcher,
     final Future Function(LasData las, File file, String newPath, int originals)
         handleOkLas,
     final Future Function(LasData las, File file, String newPath)
         handleErrorLas,
+    final Future Function(InkData ink, File file, String newPath, bool original)
+        handleOkInk,
+    final Future Function(InkData ink, File file, String newPath)
+        handleErrorInk,
   }) async {
     final tasks = <Future>[];
     final tasks2 = <Future>[];
@@ -340,14 +348,20 @@ class KncSettings {
             ? listFilesGet(0, '',
                 handleErrorCatcher: handleErrorCatcher,
                 handleOkLas: handleOkLas,
-                handleErrorLas: handleErrorLas)(File(element), element)
+                handleErrorLas: handleErrorLas,
+                handleOkInk: handleOkInk,
+                handleErrorInk: handleErrorInk)
+                (File(element), element)
             : value == FileSystemEntityType.directory
                 ? Directory(element)
                     .list(recursive: true)
                     .listen((entity) => tasks2.add(listFilesGet(0, '',
                         handleErrorCatcher: handleErrorCatcher,
                         handleOkLas: handleOkLas,
-                        handleErrorLas: handleErrorLas)(entity, entity.path)))
+                        handleErrorLas: handleErrorLas,
+                        handleOkInk: handleOkInk,
+                        handleErrorInk: handleErrorInk)
+                        (entity, entity.path)))
                     .asFuture()
                 : null));
       }
@@ -360,6 +374,8 @@ class KncSettings {
   /// - [handleErrorCatcher] (opt) - обработчик ошибки от архиватора
   /// - [handleOkLas] (opt) - обработчик разобранного Las файла
   /// - [handleErrorLas] (opt) - обработчик ошибок разобранного Las файла
+  /// - [handleOkLas] (opt) - обработчик разобранного Ink файла
+  /// - [handleErrorLas] (opt) - обработчик ошибок разобранного Ink файла
   Future Function(FileSystemEntity entity, String relPath) listFilesGet(
     final int iArchDepth,
     final String pathToArch, {
@@ -368,6 +384,10 @@ class KncSettings {
         handleOkLas,
     final Future Function(LasData las, File file, String newPath)
         handleErrorLas,
+    final Future Function(InkData ink, File file, String newPath, bool original)
+        handleOkInk,
+    final Future Function(InkData ink, File file, String newPath)
+        handleErrorInk,
   }) =>
       (final FileSystemEntity entity, final String relPath) async {
         // [pathToArch] - путь к вскрытому архиву
@@ -389,7 +409,9 @@ class KncSettings {
                       listFilesGet(iArchDepth + 1, pathToArch + relPath,
                           handleErrorCatcher: handleErrorCatcher,
                           handleOkLas: handleOkLas,
-                          handleErrorLas: handleErrorLas));
+                          handleErrorLas: handleErrorLas,
+                          handleOkInk: handleOkInk,
+                          handleErrorInk: handleErrorInk));
                   return;
                 } else {
                   // отбрасываем большой архив
@@ -402,7 +424,9 @@ class KncSettings {
                     listFilesGet(iArchDepth + 1, pathToArch + relPath,
                         handleErrorCatcher: handleErrorCatcher,
                         handleOkLas: handleOkLas,
-                        handleErrorLas: handleErrorLas));
+                        handleErrorLas: handleErrorLas,
+                        handleOkInk: handleOkInk,
+                        handleErrorInk: handleErrorInk));
                 return;
               } else {
                 // игнорируем из за вложенности
@@ -456,6 +480,48 @@ class KncSettings {
             }
             return;
           } // == LAS FILES == End
+
+          // == INK FILES == Begin
+          if (ssFileExtInk.contains(ext)) {
+            try {
+              final inks = await InkData.loadFile(entity, this,
+                  handleErrorCatcher: handleErrorCatcher);
+              if (inks != null) {
+                for (final ink in inks) {
+                  if (ink != null) {
+                    ink.origin = pathToArch + relPath;
+                    if (ink.listOfErrors.isEmpty) {
+                      // Данные корректны
+                      final newPath = await getOutPathNew(
+                          pathOutInk,
+                          ink.well +
+                              '___' +
+                              p.basenameWithoutExtension(entity.path) +
+                              '.txt');
+                      final original = inkDB.addInkData(ink);
+                      if (handleOkInk != null) {
+                        await handleOkInk(ink, entity, newPath, original);
+                      }
+                      await getOutPathNew(newPath);
+                    } else {
+                      // Ошибка в данных файла
+                      final newPath = await getOutPathNew(
+                          pathOutErrors, p.basename(entity.path));
+                      if (handleErrorInk != null) {
+                        await handleErrorInk(ink, entity, newPath);
+                      }
+                      await getOutPathNew(newPath);
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              if (handleErrorCatcher != null) {
+                await handleErrorCatcher(e);
+              }
+            }
+            return;
+          } // == INK FILES == End
         }
       };
 
