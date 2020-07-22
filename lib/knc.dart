@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:knc/xls.dart';
 import 'package:path/path.dart' as p;
 import 'dart:convert';
 
@@ -527,6 +528,18 @@ class KncSettings {
           } // == INK FILES == End
         }
       };
+
+  /// Создаёт конечную таблицу XLSX в папке `web` и возвращает путь к файлу таблицы
+  Future<String> createXlTable() async {
+    final dir = await Directory('web').createTemp();
+    final o = p.join(dir.path, 'table.xlsx');
+    final xls =
+        await KncXlsBuilder.start(Directory(p.join(dir.path, 'xlsx')), true);
+    xls.addDataBases(lasDB, inkDB);
+    await Future.wait([xls.rewriteSharedStrings(), xls.rewriteSheet1()]);
+    await unzipper.zip(xls.dir.path, o);
+    return o;
+  }
 
   Future<ProcessResult> runDoc2X(
           final String path2doc, final String path2out) =>
