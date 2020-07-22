@@ -18,6 +18,16 @@ import 'package:xml/xml_events.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('KncXls start test', () async {
+    final ss = KncSettings();
+    await Future.wait(
+        [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
+    await ss.initializing();
+    final dir = Directory(p.join('test', 'xls', 'zzz')).absolute;
+    await KncXlsBuilder.start(dir);
+    await ss.unzipper.zip(dir.path, dir.path + '.xlsx');
+  });
+
   test('dbf parse', () async {
     await for (var file in Directory(r'.ignore/dbf').list()) {
       if (file is File) {

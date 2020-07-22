@@ -1,4 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst 
-	xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="7" uniqueCount="7">
+    <si>
+        <t>Скважина</t>
+    </si>
+    <si>
+        <t>Год</t>
+    </si>
+    <si>
+        <t>X устья</t>
+    </si>
+    <si>
+        <t>Y устья</t>
+    </si>
+    <si>
+        <t>Альтитуда</t>
+    </si>
+    <si>
+        <t>Наличие инклинометра</t>
+    </si>
+    <si>
+        <t>Методы ГИС</t>
+    </si>
 </sst>

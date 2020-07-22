@@ -52,25 +52,34 @@ class Unzipper {
           }));
     } else {
       return Process.run(pathTo7z, ['x', '-o$pathToOutDir', pathToArchive])
-          .then((result) {
-        switch (result.exitCode) {
-          case 0:
-            return Future.value(null);
-          case 1:
-            return Future.value(
-                r'[7z]: Warning (Non fatal error(s)). For example, one or more files were locked by some other application, so they were not compressed.');
-          case 2:
-            return Future.error(r'[7z]: Fatal error');
-          case 7:
-            return Future.error(r'[7z]: Command line error');
-          case 8:
-            return Future.error(r'[7z]: Not enough memory for operation');
-          case 255:
-            return Future.error(r'[7z]: User stopped the process');
-          default:
-            return Future.error('[7z]: Unknown error');
-        }
-      });
+          .then((result) => results(result.exitCode));
     }
   }
+
+  /// Возвращает Future с ошибкой, если произошла ошибка
+  Future results(final int exitCode) {
+    switch (exitCode) {
+      case 0:
+        return Future.value(null);
+      case 1:
+        return Future.value(
+            r'[7z]: Warning (Non fatal error(s)). For example, one or more files were locked by some other application, so they were not compressed.');
+      case 2:
+        return Future.error(r'[7z]: Fatal error');
+      case 7:
+        return Future.error(r'[7z]: Command line error');
+      case 8:
+        return Future.error(r'[7z]: Not enough memory for operation');
+      case 255:
+        return Future.error(r'[7z]: User stopped the process');
+      default:
+        return Future.error('[7z]: Unknown error');
+    }
+  }
+
+  /// Запекает данные в zip архиф с помощью 7zip
+  Future zip(final String pathToData, final String pathToOutput) =>
+      Process.run(pathTo7z, ['a', '-tzip', pathToOutput, '*'],
+              workingDirectory: pathToData)
+          .then((result) => results(result.exitCode));
 }

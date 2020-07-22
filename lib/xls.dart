@@ -1,7 +1,68 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 import 'dart:math';
+
+class KncXlsBuilder {
+  final Directory dir;
+  final sharedStrings = <String>[
+    r'Скважина',
+    r'Год',
+    r'X устья',
+    r'Y устья',
+    r'Альтитуда',
+    r'Наличие инклинометра',
+    r'Методы ГИС',
+  ];
+
+  /// Создаёт таблицу эксель в папке [dir], хранит там временные файлы,
+  /// по окнчанию создаёт файл рядом с папкой с названием [dir].xlsx
+  KncXlsBuilder(this.dir);
+
+  /// Подготавливает временные файлы для эксель таблицы
+  static Future<KncXlsBuilder> start(Directory dir) async {
+    if (await dir.exists()) {
+      return null;
+    }
+    await dir.create(recursive: true);
+    final dirInitData = Directory(p.join('data', 'xls')).absolute;
+
+    Future _fc(final Directory _dir) async {
+      final tasks = <Future>[];
+      await for (final entity in _dir.list(recursive: false)) {
+        if (entity is File) {
+          tasks.add(entity.copy(p.join(
+              dir.path, entity.path.substring(dirInitData.path.length + 1))));
+        } else if (entity is Directory) {
+          tasks.add(Directory(p.join(
+                  dir.path, entity.path.substring(dirInitData.path.length + 1)))
+              .create(recursive: false)
+              .then((value) => _fc(entity)));
+        }
+      }
+      return await Future.wait(tasks);
+    }
+
+    await _fc(dirInitData);
+    return KncXlsBuilder(dirInitData);
+  }
+
+  /// Перезаписывает файл xl/sharedStrings.xml
+  Future rewriteSharedStrings() async {
+    final io = File(p.join(dir.path, 'xl', 'sharedStrings.xml'))
+        .openWrite(encoding: utf8, mode: FileMode.writeOnly);
+    io.write('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
+    io.write(
+        '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${sharedStrings.length}" uniqueCount="${sharedStrings.length}">');
+    for (final ss in sharedStrings) {
+      io.write('<si><t>${htmlEscape.convert(ss)}</t></si>');
+    }
+    io.write('</sst>');
+    await io.flush();
+    await io.close();
+  }
+}
 
 /**
  * Значение ячейки:
@@ -22,9 +83,9 @@ class XlsBuilder {
         _mergeCeils = <Rectangle<int>>[],
         _rows = 1 {
     Future<File> copy(final String path) =>
-        File(r'data/xls/' + path).copy(dir.path + r'/' + path);
+        File(p.join('data', 'xls', path)).copy(p.join(dir.path, path));
     Future<Directory> copyDir(final String path) =>
-        Directory(dir.path + r'/' + path).create(recursive: true);
+        Directory(p.join(dir.path, path)).create(recursive: true);
 
     future = dir
         .exists()
@@ -41,7 +102,7 @@ class XlsBuilder {
               copyDir(r'xl/_rels')
                   .then((_) => copy(r'xl/_rels/workbook.xml.rels')),
               copyDir(r'xl/theme').then((_) => copy(r'xl/theme/theme1.xml')),
-              File(dir.path + r'\xl\worksheets\sheet1.xml')
+              File(p.join(dir.path, r'xl/worksheets/sheet1.xml'))
                   .create(recursive: true)
                   .then((f) =>
                       f.openWrite(encoding: utf8, mode: FileMode.writeOnly))
