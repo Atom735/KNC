@@ -974,8 +974,7 @@ class InkData {
   /// (прим: `{'GLUB': ['GLU', 'DEPT']}`, вместо поля `GLUB` так же
   /// могут быть использованны поля `GLU` и `DEPT`)
   /// Если в базе данных нет подходящих данных, то возвращает `null`
-  static List<InkData> getByDbf(final DbfFile dbf,
-      [Map<String, List<String>> map]) {
+  static List<InkData> getByDbf(final DbfFile dbf, [dynamic map]) {
     ///  `GLUB`, `UGOL1` (так как он уже в долях) и `AZIMUT` (а азимут без значений после запятой идет), а номер скважины из колонки `NSKV`
     final fields = dbf.fields;
     var iGlub = -1;
