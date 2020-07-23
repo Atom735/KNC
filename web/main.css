@@ -2,38 +2,38 @@ p#status.prepareForTable{
     color: white;
     background-color: darkslategrey;
     border: 2px dotted grey;
-    border-radius: 3px;
 }
 p#status.withLink{
     color: white;
     background-color: forestgreen;
     border: 2px solid gold;
+}
+
+.exception, .error, .las, .ink, p#status.prepareForTable, p#status.withLink {
     border-radius: 3px;
+    padding: 5px;
+    margin: 5px;
 }
 
 .exception {
     color: white;
     background-color: rgb(71, 0, 0);
     border: 2px solid rgb(255, 0, 0);
-    border-radius: 3px;
 }
 
 .error {
     color: black;
     background-color: rgb(255, 184, 184);
     border: 2px solid rgb(255, 124, 124);
-    border-radius: 3px;
 }
 
 .las {
     color: black;
     background-color: rgb(244, 255, 184);
     border: 2px solid rgb(104, 104, 104);
-    border-radius: 3px;
 }
 .ink {
     color: black;
     background-color: rgb(186, 255, 184);
     border: 2px solid rgb(104, 104, 104);
-    border-radius: 3px;
 }

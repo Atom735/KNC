@@ -240,7 +240,9 @@ class KncXlsBuilder {
       if (cell.merge != null && (cell.merge.x != 0 || cell.merge.y != 0)) {
         mergeList.add(cell);
       }
-
+      if (cell.data.isEmpty) {
+        continue;
+      }
       if (row != cell.id.y) {
         row = cell.id.y;
         io.write('</row><row r="${row + 1}">');

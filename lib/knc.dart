@@ -550,7 +550,7 @@ class KncSettings {
 
   /// Создаёт конечную таблицу XLSX в папке `web` и возвращает путь к файлу таблицы
   Future<String> createXlTable() async {
-    final dir = await Directory('web').createTemp();
+    final dir = (await Directory('web').createTemp()).absolute;
     final o = p.join(dir.path, 'table.xlsx');
     final xls =
         await KncXlsBuilder.start(Directory(p.join(dir.path, 'xlsx')), true);
