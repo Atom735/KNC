@@ -152,5 +152,5 @@ Future main(List<String> args) async {
 
   /// запуск сервера, начало обработок
   server.handleRequest = reqBeforeWork;
-  await server.bind(4040);
+  await server.bind(80);
 }
