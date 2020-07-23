@@ -4,46 +4,30 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "dart2js dev",
+            "label": "dart2js all dev",
             "type": "shell",
-            "command": "dart2js",
+            "command": "dart ",
             "args": [
-                "-o",
-                "web/main.dart.js",
-                "web/main.dart"
+                "--enable-asserts",
+                "bin/build.dart"
+            ],
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "build release",
+            "type": "shell",
+            "command": "dart",
+            "args": [
+                "--enable-asserts",
+                "bin/build.dart",
+                "release"
             ],
             "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
-        },
-        {
-            "label": "dart2js release",
-            "type": "shell",
-            "command": "dart2js",
-            "args": [
-                "-O4",
-                "-o",
-                "web/main.dart.js",
-                "web/main.dart"
-            ],
-            "problemMatcher": [],
-            "group": "build"
-        },
-        {
-            "label": "dart2native release",
-            "type": "shell",
-            "command": "dart2native",
-            "args": [
-                "bin/main.dart",
-                "-k",
-                "exe",
-                "-o",
-                "server.exe"
-            ],
-            "problemMatcher": [],
-            "group": "build"
-        },
+        }
     ]
 }
