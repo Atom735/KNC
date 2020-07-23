@@ -127,6 +127,7 @@ class MyServer {
     print('Listening on http://${server.address.address}:${server.port}/');
     print('For connect use http://localhost:${server.port}/');
     await for (var req in server) {
+      print('Serv Req: ${req.method} => ${req.uri}');
       if (req.uri.path == '/ws') {
         final socket = await WebSocketTransformer.upgrade(req);
         ws.add(socket);
