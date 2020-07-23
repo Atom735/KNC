@@ -1,9 +1,11 @@
 ﻿import 'dart:async';
 import 'dart:cli';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:knc/async.dart';
 import 'package:knc/dbf.dart';
 import 'package:knc/ink.dart';
 import 'package:knc/knc.dart';
@@ -16,6 +18,24 @@ import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('Async Queue', () async {
+    final sw = Stopwatch();
+    final q = AsyncTaskQueue();
+    sw.start();
+    final list = <Future>[];
+    for (var i = 0; i < 30; i++) {
+      print('${sw.elapsedMilliseconds.toString().padLeft(32)} strt $i');
+      list.add(q.addTask(() {
+        print('${sw.elapsedMilliseconds.toString().padLeft(32)} work $i');
+        return Future.delayed(Duration(milliseconds: 200));
+      }).then((value) =>
+          print('${sw.elapsedMilliseconds.toString().padLeft(32)} stop $i')));
+    }
+    q.pause = false;
+    await Future.wait(list);
+    sw.stop();
+  }, timeout: Timeout.factor(10));
+
   test('WordConv returncode', () async {
     final ss = KncSettings();
     await Future.wait(
