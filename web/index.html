@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
     <head>
         <meta charset="UTF-8">
@@ -18,89 +18,73 @@
             </fieldset>
             <p><input type="submit" value="Начать обработку"></p>
             <hr>
-            <fieldset id="fsSettings">
+            <fieldset id="fsSettingsPath">
                 <legend>Настройки путей</legend>
-                <p>
-                    <label for="name">Путь для конечных данных</label>
-                    <input type="text" id="ssPathOut" name="ssPathOut"
-                        value="${{ssPathOut}}">
-                </p>
-                <p>
-                    <label for="name">Путь для архиватора 7Zip (путь к
-                        7z.exe)</label>
-                    <input type="text" id="ssPath7z" name="ssPath7z"
-                        value="${{ssPath7z}}">
-                </p>
-                <p>
-                    <label for="name">Путь для конвертера старых word файлов
-                        (путь к wordconv.exe)</label>
-                    <input type="text" id="ssPathWordconv" name="ssPathWordconv"
-                        value="${{ssPathWordconv}}">
-                </p>
+                <label for="name">Путь для конечных данных</label>
+                <input type="text" id="ssPathOut" name="ssPathOut"
+                    value="${{ssPathOut}}">
+                <label for="name">Путь для архиватора 7Zip (путь к
+                    7z.exe)</label>
+                <input type="text" id="ssPath7z" name="ssPath7z"
+                    value="${{ssPath7z}}">
+                <label for="name">Путь для конвертера старых word файлов
+                    (путь к wordconv.exe)</label>
+                <input type="text" id="ssPathWordconv" name="ssPathWordconv"
+                    value="${{ssPathWordconv}}">
 
             </fieldset>
 
-            <fieldset id="fsSettings">
+            <fieldset id="fsSettingsExt">
                 <legend>Настройки расширений файлов (разделяются точкой с
                     запятой)</legend>
-                <p>
-                    <label for="name">Расширения архивных файлов, которые будут
-                        вскрыты программой 7Zip</label>
-                    <input type="text" id="ssFileExtAr" name="ssFileExtAr"
-                        value="${{ssFileExtAr}}">
-                </p>
-                <p>
-                    <label for="name">Расширения файлов LAS</label>
-                    <input type="text" id="ssFileExtLas" name="ssFileExtLas"
-                        value="${{ssFileExtLas}}">
-                </p>
-                <p>
-                    <label for="name">Расширение файлов с инклинометрией</label>
-                    <input type="text" id="ssFileExtInk" name="ssFileExtInk"
-                        value="${{ssFileExtInk}}">
-                </p>
+                <label for="name">Расширения архивных файлов, которые будут
+                    вскрыты программой 7Zip</label>
+                <input type="text" id="ssFileExtAr" name="ssFileExtAr"
+                    value="${{ssFileExtAr}}">
+                <label for="name">Расширения файлов LAS</label>
+                <input type="text" id="ssFileExtLas" name="ssFileExtLas"
+                    value="${{ssFileExtLas}}">
+                <label for="name">Расширение файлов с инклинометрией</label>
+                <input type="text" id="ssFileExtInk" name="ssFileExtInk"
+                    value="${{ssFileExtInk}}">
 
             </fieldset>
 
-            <fieldset id="fsSettings">
+            <fieldset id="fsSettingsOther">
                 <legend>Другие настройки</legend>
-                <p>
-                    <label for="name">
-                        Максимальный размер вскрываемого архива в байтах
-                        <details>
-                            <summary>(Подробнее)</summary>
+                <label for="name">
+                    Максимальный размер вскрываемого архива в байтах
+                    <details>
+                        <summary>(Подробнее)</summary>
 
-                            Для задания значения можно использовать постфиксы:
-                            <ul>
-                                <li><em>`k`</em> КилоБайты</li>
-                                <li><em>`m`</em> МегаБайты = `kk`</li>
-                                <li><em>`g`</em> ГигаБайты = `kkk`</li>
-                                <li><em>`0`</em> для всех архивов</li>
-                            </ul>
-                        </details>
+                        Для задания значения можно использовать постфиксы:
+                        <ul>
+                            <li><em>`k`</em> КилоБайты</li>
+                            <li><em>`m`</em> МегаБайты = `kk`</li>
+                            <li><em>`g`</em> ГигаБайты = `kkk`</li>
+                            <li><em>`0`</em> для всех архивов</li>
+                        </ul>
+                    </details>
 
-                    </label>
-                    <input type="text" id="ssArMaxSize" name="ssArMaxSize"
-                        value="${{ssArMaxSize}}">
-                </p>
-                <p>
-                    <label for="name">Максимальный глубина прохода по архивам
-                        <details>
-                            <summary>(Подробнее)</summary>
+                </label>
+                <input type="text" id="ssArMaxSize" name="ssArMaxSize"
+                    value="${{ssArMaxSize}}">
+                <label for="name">Максимальный глубина прохода по архивам
+                    <details>
+                        <summary>(Подробнее)</summary>
 
-                            Для задания значения можно использовать постфиксы:
-                            <ul>
-                                <li><em>`-1`</em> для бесконечной вложенности
-                                    (По умолчанию)</li>
-                                <li><em>`0`</em> для отбрасывания всех архивов
-                                </li>
-                                <li><em>`1`</em> для входа на один уровень
-                                    архива</li>
-                            </ul>
-                        </details></label>
-                    <input type="text" id="ssArMaxDepth" name="ssArMaxDepth"
-                        value="${{ssArMaxDepth}}">
-                </p>
+                        Для задания значения можно использовать постфиксы:
+                        <ul>
+                            <li><em>`-1`</em> для бесконечной вложенности
+                                (По умолчанию)</li>
+                            <li><em>`0`</em> для отбрасывания всех архивов
+                            </li>
+                            <li><em>`1`</em> для входа на один уровень
+                                архива</li>
+                        </ul>
+                    </details></label>
+                <input type="text" id="ssArMaxDepth" name="ssArMaxDepth"
+                    value="${{ssArMaxDepth}}">
 
             </fieldset>
         </form>
