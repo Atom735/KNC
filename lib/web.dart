@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 
+/// https://developer.mozilla.org/ru/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+
 /// ContentType mime = application/javascript
 final ct_JS = ContentType.parse('application/javascript');
 
@@ -11,6 +13,9 @@ final ct_Dart = ContentType.parse('application/vnd.dart');
 /// ContentType mime = application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 final ct_Xlsx = ContentType.parse(
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+/// ContentType mime = text/css
+final ct_Css = ContentType.parse('text/css');
 
 String getRequestDebugData(final HttpRequest request) {
   final string = StringBuffer();
@@ -157,6 +162,9 @@ class MyServer {
               break;
             case '.xlsx':
               response.headers.contentType = ct_Xlsx;
+              break;
+            case '.css':
+              response.headers.contentType = ct_Css;
               break;
             case '.html':
               response.headers.contentType = ContentType.html;

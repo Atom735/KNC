@@ -9,7 +9,8 @@ void main(List<String> args) {
   var iSockLastMessge = 0;
   final sectionErrors = document.getElementById('errors');
   final sectionInfo = document.getElementById('info');
-  ButtonElement btnStop = document.getElementById('btnStop');
+  final ButtonElement btnStop = document.getElementById('btnStop');
+  final pStatus = document.getElementById('status');
 
   Element lastErrorSection;
   Element lastInfoSection;
@@ -29,8 +30,15 @@ void main(List<String> args) {
     iSockLastMessge += 1;
     final data = msg.data;
     if (data is String) {
-      if (data == '#DONE!') {
-        btnStop.innerText = 'Работа закончена, нажмите чтобы закрыть программу';
+      if (data == '#PREPARE_TABLE!') {
+        pStatus.innerText = 'Работа почти закончена, мы генерируем таблицу';
+        pStatus.classes.add('prepareForTable');
+      } else if (data.startsWith('#DONE:')) {
+        final datatxt = data.substring(6);
+        pStatus.innerHtml =
+            'Работа закончена, таблицу можно загрузить по <a href="$datatxt">ссылке</a>';
+        pStatus.classes.remove('prepareForTable');
+        pStatus.classes.add('withLink');
       } else if (data.startsWith('#LAS:')) {
         final datatxt = data.substring(5);
         if (datatxt.startsWith('+')) {
