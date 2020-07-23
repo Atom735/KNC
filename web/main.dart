@@ -1,7 +1,7 @@
 import 'dart:html';
 
 void main(List<String> args) {
-  final webSocket = WebSocket('ws://localhost:4040/ws');
+  final webSocket = WebSocket('ws://${document.domain}/ws');
   final pSockState = document.createElement('p');
   document.body.append(pSockState);
   final pSockLastMessage = document.createElement('p');
