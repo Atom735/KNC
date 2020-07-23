@@ -288,7 +288,7 @@ class KncSettings {
     }
     pathInList.clear();
     for (var i = 0; map['path$i'] != null; i++) {
-      pathInList.add(map['path$i']);
+      pathInList.add(map['path$i'].replaceAll('"', ''));
     }
   }
 
