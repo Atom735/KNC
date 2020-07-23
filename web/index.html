@@ -9,10 +9,16 @@
     </head>
 
     <body>
-        <section id='taskRunning'>
+        <details id='statusServer'>
+            <summary>Состояние сервера</summary>
+            <p id='statusSocket' class='unset'>Сокет ещё не открыт</p>
+        </details>
 
-        </section>
         <form action="action" method="POST" enctype="multipart/form-data">
+
+            <label for="ssTaskName">Название задачи (для отображения в состоянии
+                сервера)</label>
+            <input type="text" id="ssTaskName" name="ssTaskName">
             <fieldset id="fsPath">
                 <legend>Пути к файлам/папкам на обработку</legend>
                 <p><input type="text" id="path0" name="path0"></p>
@@ -23,14 +29,15 @@
             <hr>
             <fieldset id="fsSettingsPath">
                 <legend>Настройки путей</legend>
-                <label for="name">Путь для конечных данных</label>
+                <label for="ssPathOut">Путь для конечных данных</label>
                 <input type="text" id="ssPathOut" name="ssPathOut"
                     value="${{ssPathOut}}">
-                <label for="name">Путь для архиватора 7Zip (путь к
+                <label for="ssPath7z">Путь для архиватора 7Zip (путь к
                     7z.exe)</label>
                 <input type="text" id="ssPath7z" name="ssPath7z"
                     value="${{ssPath7z}}">
-                <label for="name">Путь для конвертера старых word файлов
+                <label for="ssPathWordconv">Путь для конвертера старых word
+                    файлов
                     (путь к wordconv.exe)</label>
                 <input type="text" id="ssPathWordconv" name="ssPathWordconv"
                     value="${{ssPathWordconv}}">
@@ -40,14 +47,16 @@
             <fieldset id="fsSettingsExt">
                 <legend>Настройки расширений файлов (разделяются точкой с
                     запятой)</legend>
-                <label for="name">Расширения архивных файлов, которые будут
+                <label for="ssFileExtAr">Расширения архивных файлов, которые
+                    будут
                     вскрыты программой 7Zip</label>
                 <input type="text" id="ssFileExtAr" name="ssFileExtAr"
                     value="${{ssFileExtAr}}">
-                <label for="name">Расширения файлов LAS</label>
+                <label for="ssFileExtLas">Расширения файлов LAS</label>
                 <input type="text" id="ssFileExtLas" name="ssFileExtLas"
                     value="${{ssFileExtLas}}">
-                <label for="name">Расширение файлов с инклинометрией</label>
+                <label for="ssFileExtInk">Расширение файлов с
+                    инклинометрией</label>
                 <input type="text" id="ssFileExtInk" name="ssFileExtInk"
                     value="${{ssFileExtInk}}">
 
@@ -55,7 +64,7 @@
 
             <fieldset id="fsSettingsOther">
                 <legend>Другие настройки</legend>
-                <label for="name">
+                <label for="ssArMaxSize">
                     Максимальный размер вскрываемого архива в байтах
                     <details>
                         <summary>(Подробнее)</summary>
@@ -110,6 +119,7 @@
                 ff.insertBefore(p, ff.lastElementChild);
             }
         </script>
+        <script defer src="/index.dart.js"></script>
 
     </body>
 

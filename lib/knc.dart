@@ -47,6 +47,9 @@ Future<String> getOutPathNew(String prePath, [String name]) async {
 }
 
 class KncSettings {
+  /// Наименование задачи
+  String ssTaskName = 'name';
+
   /// Путь к конечным данным
   String ssPathOut = 'out';
 
@@ -172,6 +175,9 @@ class KncSettings {
       i0 = data.indexOf(r'}}', i1);
       var name = data.substring(i1 + 3, i0);
       switch (name) {
+        case 'ssTaskName':
+          out.write(ssTaskName);
+          break;
         case 'ssPathOut':
           out.write(ssPathOut);
           break;
@@ -239,6 +245,9 @@ class KncSettings {
 
   /// Обновляет данные через полученные данные HTML формы
   void updateByMultiPartFormData(final Map<String, String> map) {
+    if (map['ssTaskName'] != null) {
+      ssTaskName= map['ssTaskName'];
+    }
     if (map['ssPathOut'] != null) {
       ssPathOut = map['ssPathOut'];
     }
