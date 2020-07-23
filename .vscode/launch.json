@@ -9,7 +9,7 @@
             "program": "bin/main.dart",
             "request": "launch",
             "type": "dart",
-            "preLaunchTask": "dart2js"
+            "preLaunchTask": "dart2js dev"
         }
     ]
 }

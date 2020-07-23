@@ -29,3 +29,5 @@ test/ink/docx
 .ignore
 out
 *.exe
+release
+web/*/
