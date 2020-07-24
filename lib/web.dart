@@ -90,6 +90,7 @@ class MyServer {
 
   /// Список отправленных данных через вебсокеты,
   /// будут отправлены вновь подключишимся сокетам
+  @deprecated
   var wsSendsList = <String>[];
 
   /// Виртуальная папка, при URL к файлам, файлы ищутся этой папке.
@@ -107,9 +108,13 @@ class MyServer {
   Future<void> Function(WebSocket socket, String content, MyServer serv)
       handleRequestWS;
 
+  /// Функция обработчик новго подключения _WebSocket_.
+  Future<void> Function(WebSocket socket, MyServer serv) handleWebSocketNew;
+
   MyServer(this.dir);
 
   /// Функция отправки сообщения через _WebSocket_.
+  @deprecated
   void sendMsg(final String txt) {
     wsSendsList.add(txt);
     ws.forEach((ws) {
@@ -146,8 +151,8 @@ class MyServer {
           print('WS: socket(${socket.hashCode}) closed');
           ws.remove(socket);
         });
-        for (final msg in wsSendsList) {
-          socket.add(msg);
+        if (handleWebSocketNew != null) {
+          await handleWebSocketNew(socket, this);
         }
       } else {
         final file = File(p.join(dir.absolute.path, req.uri.path.substring(1)));
