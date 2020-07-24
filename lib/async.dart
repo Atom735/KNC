@@ -48,7 +48,7 @@ class AsyncTaskQueue {
   /// Попытка запустить задчи из очереди
   void tryProc() {
     if (!_pause) {
-      final _min = min<int>(_max, _tasks.length);
+      final _min = _max == 0 ? _tasks.length : min<int>(_max, _tasks.length);
       for (var i = 0; i < _min; i++) {
         final task = _tasks[i];
         if (task.run == false) {
@@ -67,6 +67,9 @@ class AsyncTaskQueue {
 
   /// Добавить задачу в очередь
   Future<R> addTask<R>(Future<R> Function() func) {
+    if (_max == 0) {
+      return func();
+    }
     final task = AsyncTask<R>(func);
     _tasks.add(task);
     tryProc();
