@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 
+import 'www.dart';
+
 /// https://developer.mozilla.org/ru/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 
 /// ContentType mime = application/javascript
@@ -122,6 +124,13 @@ class MyServer {
     });
   }
 
+  /// Отправка сообщения всем сокетам
+  void sendMsgToAll(final String txt) {
+    ws.forEach((ws) {
+      ws.add(txt);
+    });
+  }
+
   /// Подключить сервер на прослушку порта [port]
   ///
   /// Изначально необходимо установить функции обработчики запросов [handleRequest],
@@ -133,7 +142,7 @@ class MyServer {
     print('For connect use http://localhost:${server.port}/');
     await for (var req in server) {
       print('Serv Req: ${req.method} => ${req.uri}');
-      if (req.uri.path == '/ws') {
+      if (req.uri.path == wwwPathToWs) {
         final socket = await WebSocketTransformer.upgrade(req);
         ws.add(socket);
         print('WS: socket(${socket.hashCode}) opened ');

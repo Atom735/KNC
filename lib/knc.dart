@@ -1,21 +1,14 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
-import 'package:knc/www.dart';
-import 'package:knc/xls.dart';
-import 'package:path/path.dart' as p;
 import 'dart:convert';
 
+import 'package:path/path.dart' as p;
+
 import 'ink.dart';
-import 'mapping.dart';
-import 'unzipper.dart';
 import 'las.dart';
-
-int calculate() {
-  return 6 * 7;
-}
-
-@deprecated
-final _reservedPathNew = <String>[];
+import 'www.dart';
+import 'xls.dart';
 
 class PathNewer {
   /// Путь именно к существующей папке, в которой будет подбираться имя
@@ -55,58 +48,43 @@ class PathNewer {
   bool unlock(final String name) => _reserved.remove(p.basename(name));
 }
 
-/// Подбирает новое имя для файла, если он уже существует в папке [prePath]
-/// И резервирует его
-///
-/// [prePath] - это путь именно к существующей папке
-///
-/// [name] (opt) - это может быть как путь, так и только имя
-/// Если он остуствует то резервация снимается со файла
-/// указанным в [preParh]
-@deprecated
-Future<String> getOutPathNew(String prePath, [String name]) async {
-  if (name == null) {
-    _reservedPathNew.remove(prePath);
-    return null;
-  }
-  var o = p.join(prePath, p.basename(name));
-  if (await File(o).exists() || _reservedPathNew.contains(o)) {
-    final f0 = p.join(prePath, p.basenameWithoutExtension(name));
-    final fe = p.extension(name);
-    var i = 0;
-    var o = '${f0}_$i$fe';
-    while (await File(o).exists() || _reservedPathNew.contains(o)) {
-      i++;
-      o = '${f0}_$i$fe';
-    }
-    _reservedPathNew.add(o);
-    return o;
-  } else {
-    _reservedPathNew.add(o);
-    return o;
-  }
-}
+class KncTask extends KncSettingsInternal {
+  /// Порт для передачи данных главному изоляту
+  SendPort sendPort;
 
-class KncSettings extends KncSettingsInternal {
+  /// Порт для получение сообщений этим изолятом
+  ReceivePort receivePort;
+
   String pathOutLas;
   String pathOutInk;
   String pathOutErrors;
   IOSink errorsOut;
 
-  KncSettings();
+  KncTask();
 
-  KncSettings.fromSettings(final KncSettingsInternal ss) {
+  /// Точка входа для нового изолята
+  static void isolateEntryPoint(KncTask task) => task.isolateEntryPointThis();
+
+  void isolateEntryPointThis() {
+    receivePort = ReceivePort();
+
+    receivePort.listen((final msg) {
+      // Прослушивание сообщений полученных от главного изолята
+    });
+
+    sendPort.send([uID, receivePort.sendPort]);
+  }
+
+  KncTask.fromSettings(final KncSettingsInternal ss) {
+    uID = ss.uID;
     ssTaskName = ss.ssTaskName;
     ssPathOut = ss.ssPathOut;
-    ssPath7z = ss.ssPath7z;
-    ssPathWordconv = ss.ssPathWordconv;
     ssFileExtAr = [];
     ssFileExtAr.addAll(ss.ssFileExtAr);
     ssFileExtLas = [];
     ssFileExtLas.addAll(ss.ssFileExtLas);
     ssFileExtInk = [];
     ssFileExtInk.addAll(ss.ssFileExtInk);
-    ssCharMaps = ss.ssCharMaps;
     pathInList = [];
     pathInList.addAll(ss.pathInList);
     ssArMaxSize = ss.ssArMaxSize;
@@ -119,17 +97,10 @@ class KncSettings extends KncSettingsInternal {
   final inkDB = InkDataBase();
   dynamic inkDbfMap;
 
-  Unzipper unzipper;
-
   final lasCurvesNameOriginals = <String>[];
 
   /// Загрузкить все данные
-  Future get loadAll => Future.wait(
-      [loadCharMaps(), loadLasIgnore(), loadInkDbfMap(), serchPrograms()]);
-
-  /// Загружает кодировки и записывает их в настройки
-  Future<Map<String, List<String>>> loadCharMaps() =>
-      loadMappings('mappings').then((charmap) => ssCharMaps = charmap);
+  Future get loadAll => Future.wait([loadLasIgnore(), loadInkDbfMap()]);
 
   /// Загружает таблицу игнорирования полей LAS файла
   Future loadLasIgnore() => File(r'data/las.ignore.json')
@@ -157,14 +128,11 @@ class KncSettings extends KncSettingsInternal {
       }
     }
 
-    unzipper = Unzipper(p.join(ssPathOut, 'temp'), ssPath7z);
-
     pathOutLas = p.join(ssPathOut, 'las');
     pathOutInk = p.join(ssPathOut, 'ink');
     pathOutErrors = p.join(ssPathOut, 'errors');
 
     await Future.wait([
-      unzipper.clear(),
       Directory(pathOutLas).create(recursive: true),
       Directory(pathOutInk).create(recursive: true),
       Directory(pathOutErrors).create(recursive: true)
@@ -174,54 +142,6 @@ class KncSettings extends KncSettingsInternal {
         .openWrite(encoding: utf8, mode: FileMode.writeOnly);
     errorsOut.writeCharCode(unicodeBomCharacterRune);
   }
-
-  /// Отправляет страницу с натсройками
-  Future servSettings(final HttpResponse response) async {
-    response.headers.contentType = ContentType.html;
-    response.statusCode = HttpStatus.ok;
-    response.write(
-        updateBufferByThis(await File(r'web/index.html').readAsString()));
-    await response.flush();
-    await response.close();
-  }
-
-  static const _SearchPath_7Zip = [
-    r'C:\Program Files\7-Zip\7z.exe',
-    r'C:\Program Files (x86)\7-Zip\7z.exe'
-  ];
-
-  /// Ищет где находися программа 7Zip
-  static Future<String> searchProgram_7Zip() => Future.wait(
-      _SearchPath_7Zip.map(
-          (e) => File(e).exists().then((exist) => exist ? e : null))).then(
-      (list) =>
-          list.firstWhere((element) => element != null, orElse: () => null));
-
-  static const _SearchPath_WordConv = [
-    r'C:\Program Files\Microsoft Office',
-    r'C:\Program Files (x86)\Microsoft Office'
-  ];
-
-  /// Ищет где находися программа WordConv
-  static Future<String> searchProgram_WordConv() =>
-      Future.wait(_SearchPath_WordConv.map((e) => Directory(e).exists().then((exist) => exist
-              ? Directory(e).list(recursive: true, followLinks: false).firstWhere(
-                  (file) =>
-                      file is File &&
-                      p.basename(file.path).toLowerCase() == 'wordconv.exe',
-                  orElse: () => null)
-              : null)))
-          .then((list) => list.firstWhere((element) => element != null, orElse: () => null))
-          .then((entity) => entity != null ? entity.path : null);
-
-  /// Устанавливает переменные путей программ в найденные,
-  /// возвращает список путей к программам
-  ///
-  /// Переменные установятся только если дождатся обещанного выполнения
-  Future<List<String>> serchPrograms() => Future.wait([
-        searchProgram_7Zip().then((path) => ssPath7z = path),
-        searchProgram_WordConv().then((path) => ssPathWordconv = path),
-      ]);
 
   /// Начинает обработку файлов с настоящими настройками
   /// - [handleErrorCatcher] (opt) - обработчик ошибки от архиватора

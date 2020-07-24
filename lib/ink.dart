@@ -1071,8 +1071,7 @@ class InkData {
   /// - [entity] - файл
   /// - [ss] - настройки
   /// - [handleErrorCatcher] (opt) - обработчик ошибки от архиватора
-  static Future<List<InkData>> loadFile(
-      final File entity, final KncSettings ss,
+  static Future<List<InkData>> loadFile(final File entity, final KncTask ss,
       {final Future Function(dynamic e) handleErrorCatcher}) async {
     final bytes = UnmodifiableUint8ListView(await entity.readAsBytes());
     if (bytes.length <= 128) {

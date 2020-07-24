@@ -1,195 +1,123 @@
+import 'dart:collection';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:knc/archiver.dart';
 import 'package:knc/errors.dart';
 import 'package:knc/ink.dart';
 import 'package:knc/knc.dart';
 import 'package:knc/las.dart';
-import 'package:knc/mapping.dart';
 import 'package:knc/web.dart';
 import 'package:knc/www.dart';
 
+class KncSettingsOnMain extends KncSettingsInternal {
+  /// Изолят выоплнения задачи
+  Isolate isolate;
+
+  SendPort sendPort;
+
+  KncSettingsOnMain(KncSettingsInternal ss) {
+    uID = ss.uID;
+    ssTaskName = ss.ssTaskName;
+    ssPathOut = ss.ssPathOut;
+    ssFileExtAr = [];
+    ssFileExtAr.addAll(ss.ssFileExtAr);
+    ssFileExtLas = [];
+    ssFileExtLas.addAll(ss.ssFileExtLas);
+    ssFileExtInk = [];
+    ssFileExtInk.addAll(ss.ssFileExtInk);
+    pathInList = [];
+    pathInList.addAll(ss.pathInList);
+    ssArMaxSize = ss.ssArMaxSize;
+    ssArMaxDepth = ss.ssArMaxDepth;
+  }
+}
+
 Future main(List<String> args) async {
   /// Настройки работы
-  final ss = KncSettings();
+  final ss = KncSettingsInternal();
 
   /// Поднятый сервер
   final server = MyServer(Directory(r'web'));
-
-  /// Флаг завершения работы, будет выполнен когда все файлы обработаются
-  Future work;
-
-  /// Обработчик исключений
-  Future handleErrorCatcher(dynamic e) async {
-    ss.errorsOut.writeln(e.toString());
-    server.sendMsg('#EXCEPTION:${e.toString()}');
-  }
-
-  void errorAdd(final String txt) {
-    ss.errorsOut.writeln(txt);
-    server.sendMsg('#ERROR:$txt');
-  }
-
-  /// Обработчик готовых Las данных
-  Future handleOkLas(
-      LasData las, File file, String newPath, int originals) async {
-    try {
-      if (originals > 0) {
-        await file.copy(newPath);
-        server.sendMsg('#LAS:+"${las.origin}"');
-        server.sendMsg('#LAS:\tВ базу добавлено ${originals} кривых');
-        server.sendMsg('#LAS:\t"${file.path}" => "${newPath}"');
-        server.sendMsg('#LAS:\t"Well: ${las.wWell}');
-        for (final c in las.curves) {
-          server.sendMsg('#LAS:\t${c.mnem}: ${c.strtN} <=> ${c.stopN}');
-        }
-        server.sendMsg('#LAS:' + ''.padRight(20, '='));
-      }
-    } catch (e) {
-      await handleErrorCatcher(e);
-    }
-  }
-
-  /// Обработчик ошибочных Las данных
-  Future handleErrorLas(LasData las, File file, String newPath) async {
-    try {
-      await file.copy(newPath);
-    } catch (e) {
-      await handleErrorCatcher(e);
-    }
-    errorAdd('+LAS("${las.origin}")');
-    errorAdd('\t"${file.path}" => "${newPath}"');
-    for (final err in las.listOfErrors) {
-      errorAdd('\tСтрока ${err.line}: ${kncErrorStrings[err.err]}');
-    }
-    errorAdd(''.padRight(20, '='));
-  }
-
-  /// Обработчик готовых Ink данных
-  Future handleOkInk(
-      InkData ink, File file, String newPath, bool original) async {
-    try {
-      if (original) {
-        server.sendMsg('#INK:+"${ink.origin}"');
-        server.sendMsg('#INK:\t"${file.path}" => "${newPath}"');
-        server.sendMsg('#INK:\tWell: ${ink.well}');
-        server.sendMsg('#INK:\t${ink.strt} <=> ${ink.stop}');
-        server.sendMsg('#INK:' + ''.padRight(20, '='));
-        final io = File(newPath).openWrite(mode: FileMode.writeOnly);
-        io.writeln(ink.well);
-        final dat = ink.inkData;
-        for (final item in dat.data) {
-          io.writeln('${item.depth}\t${item.angle}\t${item.azimuth}');
-        }
-        await io.flush();
-        await io.close();
-      }
-    } catch (e) {
-      await handleErrorCatcher(e);
-    }
-  }
-
-  /// Обработчик ошибочных Ink данных
-  Future handleErrorInk(InkData ink, File file, String newPath) async {
-    try {
-      await file.copy(newPath);
-    } catch (e) {
-      await handleErrorCatcher(e);
-    }
-    errorAdd('+INK("${ink.origin}")');
-    errorAdd('\t"${file.path}" => "${newPath}"');
-    for (final err in ink.listOfErrors) {
-      errorAdd('\tСтрока ${err.line}: ${kncErrorStrings[err.err]}');
-    }
-    errorAdd(''.padRight(20, '='));
-  }
-
-  /// Обработчик соединения во время работы
-  Future<bool> reqWhileWork(
-      HttpRequest req, String content, MyServer serv) async {
-    final response = req.response;
-    response.headers.contentType = ContentType.html;
-    response.statusCode = HttpStatus.ok;
-    await response.addStream(File(r'web/action.html').openRead());
-    await response.flush();
-    await response.close();
-    return true;
-  }
-
-  /// Обработчик соединения до начала работы
-  Future<bool> reqBeforeWork(
-      HttpRequest req, String content, MyServer serv) async {
-    if (content.isEmpty) {
-      await ss.servSettings(req.response);
-      return true;
-    } else {
-      serv.handleRequest = reqWhileWork;
-      ss.updateByMultiPartFormData(parseMultiPartFormData(content));
-      await ss.initializing();
-      work = ss
-          .startWork(
-              handleErrorCatcher: handleErrorCatcher,
-              handleOkLas: handleOkLas,
-              handleErrorLas: handleErrorLas,
-              handleOkInk: handleOkInk,
-              handleErrorInk: handleErrorInk)
-          .then((_) async {
-        /// По заверешнию работы
-        /// начинаем подготавливать таблицу
-        server.sendMsg('#PREPARE_TABLE!');
-        var xls = await ss.createXlTable();
-        xls = File(xls)
-            .absolute
-            .path
-            .substring(Directory('web').absolute.path.length);
-
-        /// ОТправляем клиенту что всё закончено и файл можно скачать
-        server.sendMsg('#DONE:$xls');
-      });
-      return reqWhileWork(req, content, serv);
-    }
-  }
-
-  /// загрузка всех настроек
-  await ss.loadAll;
-
-  /// запуск сервера, начало обработок
-  server.handleRequest = reqBeforeWork;
 
   /// Порт прослушиваемый главным изолятом
   final receivePort = ReceivePort();
 
   /// Список запущенных задач
-  final listOfSettings = <KncSettings>[];
+  final listOfTasks = <KncSettingsOnMain>[];
+
+  /// Уникальный номер задачи
+  var newTaskUID = 1;
+
+  /// Флаг завершения работы, будет выполнен когда все файлы обработаются
+  Future work;
+
+  receivePort.listen((final data) {
+    if (data is List && data[0] is int) {
+      final uID = data[0] as int;
+      var task = listOfTasks.singleWhere((element) => element.uID == uID);
+      if (data[1] is SendPort) {
+        task.sendPort = data[1];
+        task.iState = KncTaskState.synced;
+        server.sendMsgToAll(task.wsUpdateState);
+        return;
+      }
+    }
+    print('main: recieved unknown msg {$data}');
+  });
 
   /// Обработка новых подключений ВебСокета
   server.handleWebSocketNew = (WebSocket socket, MyServer serv) async {
-    for (final ss in listOfSettings) {
-      socket.add('#SS.ADD:${ss.json}');
+    for (final ss in listOfTasks) {
+      socket.add('${wwwKncTaskAdd}${ss.json}');
     }
   };
 
   server.handleRequest =
       (HttpRequest req, String content, MyServer serv) async {
     if (req.uri.path == '/') {
-      if (content.isEmpty) {
-        await ss.servSettings(req.response);
-        return true;
-      }
-    } else if (req.uri.path == '/action') {
-      if (content.isNotEmpty) {
-        ss.updateByMultiPartFormData(parseMultiPartFormData(content));
-        listOfSettings.add(ss);
-      }
-
       final response = req.response;
       response.headers.contentType = ContentType.html;
       response.statusCode = HttpStatus.ok;
-      await response.addStream(File(r'web/action.html').openRead());
+      response.write(ss
+          .updateBufferByThis(await File(r'web/index.html').readAsString())
+          .replaceAll(r'${{!uniqFormPost}}', '$wwwPathToTasks$newTaskUID'));
       await response.flush();
       await response.close();
-      return true;
+    } else if (req.uri.path.startsWith(wwwPathToTasks)) {
+      final taskUID =
+          int.tryParse(req.uri.path.substring(wwwPathToTasks.length));
+      if (taskUID != null) {
+        var bNew = true;
+        for (var task in listOfTasks) {
+          if (task.uID == taskUID) {
+            bNew = true;
+            break;
+          }
+        }
+        if (bNew && content.isNotEmpty) {
+          ss.updateByMultiPartFormData(parseMultiPartFormData(content));
+          ss.uID = taskUID;
+          final newTask = KncSettingsOnMain(ss);
+          listOfTasks.add(newTask);
+          newTaskUID += 1;
+          final newTaskSettigs = KncTask.fromSettings(ss);
+          newTaskSettigs.sendPort = receivePort.sendPort;
+          newTask.isolate = await Isolate.spawn(
+              KncTask.isolateEntryPoint, newTaskSettigs,
+              debugName:
+                  'task[${newTaskSettigs.uID}]: "${newTaskSettigs.ssTaskName}"');
+          for (final socket in serv.ws) {
+            socket.add('${wwwKncTaskAdd}${newTask.json}');
+          }
+        }
+        final response = req.response;
+        response.headers.contentType = ContentType.html;
+        response.statusCode = HttpStatus.ok;
+        await response.addStream(File(r'web/action.html').openRead());
+        await response.flush();
+        await response.close();
+        return true;
+      }
     } else if (req.uri.path == '/lib/www.dart') {
       final response = req.response;
       response.headers.contentType = ct_Dart;

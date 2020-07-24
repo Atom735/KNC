@@ -14,16 +14,16 @@
             <p id='statusSocket' class='unset'>Сокет ещё не открыт</p>
         </details>
 
-        <form action="action" method="POST" enctype="multipart/form-data">
+        <form action="${{!uniqFormPost}}" method="POST"
+            enctype="multipart/form-data">
 
-            <label for="ssTaskName">Название задачи (для отображения в состоянии
-                сервера)</label>
+            <label for="ssTaskName">Название задачи</label>
             <input type="text" id="ssTaskName" name="ssTaskName">
             <fieldset id="fsPath">
                 <legend>Пути к файлам/папкам на обработку</legend>
                 <p><input type="text" id="path0" name="path0"></p>
                 <p><input type="button" value="Добавить ещё одну"
-                        onclick="addNewTextInput();"></p>
+                        onclick="addNewTextInput();" required></p>
             </fieldset>
             <p><input type="submit" value="Начать обработку"></p>
             <hr>

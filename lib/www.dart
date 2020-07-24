@@ -3,18 +3,34 @@ import 'dart:convert' as converter;
 String _enc(final String str) =>
     str != null ? str.replaceAll(r'"', r'\"').replaceAll(r'\', r'\\') : str;
 
+/// Начало сообщения о начале выполнения KncTask
+const wwwKncTaskAdd = '#SS.A:';
+
+/// Начало сообщения о обновлении состояния задачи :{uID}:{iState}
+const wwwKncTaskUpdateState = '#SS.US:';
+
+/// Путь к задачам
+const wwwPathToTasks = '/task/';
+
+/// Путь к подключению WebSocket
+const wwwPathToWs = '/ws';
+
+enum KncTaskState { initializing, synced, work, end }
+
 class KncSettingsInternal {
+  String get wsUpdateState => '$wwwKncTaskUpdateState${uID}:${iState.index}';
+
+  /// Состояние задачи
+  KncTaskState iState = KncTaskState.initializing;
+
+  /// Уникальный идентификатор
+  int uID;
+
   /// Наименование задачи
   String ssTaskName = 'name';
 
   /// Путь к конечным данным
   String ssPathOut = 'out';
-
-  /// Путь к программе 7Zip
-  String ssPath7z;
-
-  /// Путь к программе WordConv
-  String ssPathWordconv;
 
   /// Настройки расширения для архивных файлов
   List<String> ssFileExtAr = ['.zip', '.rar'];
@@ -24,9 +40,6 @@ class KncSettingsInternal {
 
   /// Настройки расширения для файлов с инклинометрией
   List<String> ssFileExtInk = ['.doc', '.docx', '.txt', '.dbf'];
-
-  /// Таблица кодировок `ssCharMaps['CP866']`
-  Map<String, List<String>> ssCharMaps;
 
   /// Путь для поиска файлов
   /// получается из полей `[path0, path1, path2, path3, ...]`
@@ -54,10 +67,9 @@ class KncSettingsInternal {
   String get json {
     final s = StringBuffer();
     s.write('{');
+    s.write('"uID":"$uID"');
     s.write('"ssTaskName":"${_enc(ssTaskName)}"');
     s.write(',"ssPathOut":"${_enc(ssPathOut)}"');
-    s.write(',"ssPath7z":"${_enc(ssPath7z)}"');
-    s.write(',"ssPathWordconv":"${_enc(ssPathWordconv)}"');
     s.write(',"ssFileExtAr":[');
     if (ssFileExtAr.isNotEmpty) {
       s.write('"${_enc(ssFileExtAr[0])}"');
@@ -79,14 +91,6 @@ class KncSettingsInternal {
         s.write(',"${_enc(ssFileExtInk[i])}"');
       }
     }
-    s.write('],"ssCharMaps":[');
-    if (ssCharMaps.keys.isNotEmpty) {
-      var key = ssCharMaps.keys.iterator;
-      s.write('"${_enc(key.current)}"');
-      while (key.moveNext()) {
-        s.write(',"${_enc(key.current)}"');
-      }
-    }
     s.write('],"pathInList":[');
     if (pathInList.isNotEmpty) {
       s.write('"${_enc(pathInList[0])}"');
@@ -103,14 +107,18 @@ class KncSettingsInternal {
   /// Преобразует строку JSON в данные настроек
   set json(final String str) {
     final map = converter.json.decode(str);
+    if (map['uID'] != null) {
+      if (map['uID'] is num) {
+        uID = (map['uID'] as num).toInt();
+      } else if (map['uID'] is String) {
+        uID = int.tryParse(map['uID'] as String);
+      }
+    }
     if (map['ssTaskName'] != null && map['ssTaskName'] is String) {
       ssTaskName = map['ssTaskName'];
     }
     if (map['ssPathOut'] != null && map['ssPathOut'] is String) {
       ssPathOut = map['ssPathOut'];
-    }
-    if (map['ssPathWordconv'] != null && map['ssPathWordconv'] is String) {
-      ssPathWordconv = map['ssPathWordconv'];
     }
     if (map['ssFileExtAr'] != null) {
       if (ssFileExtAr == null) {
@@ -140,16 +148,6 @@ class KncSettingsInternal {
       }
       for (var item in map['ssFileExtInk']) {
         ssFileExtInk.add(item);
-      }
-    }
-    if (map['ssCharMaps'] != null) {
-      if (ssCharMaps == null) {
-        ssCharMaps = {};
-      } else {
-        ssCharMaps.clear();
-      }
-      for (var item in map['ssCharMaps']) {
-        ssCharMaps[item] = null;
       }
     }
     if (map['pathInList'] != null) {
@@ -188,17 +186,14 @@ class KncSettingsInternal {
       i0 = data.indexOf(r'}}', i1);
       var name = data.substring(i1 + 3, i0);
       switch (name) {
+        case 'uID':
+          out.write(uID);
+          break;
         case 'ssTaskName':
           out.write(ssTaskName);
           break;
         case 'ssPathOut':
           out.write(ssPathOut);
-          break;
-        case 'ssPath7z':
-          out.write(ssPath7z);
-          break;
-        case 'ssPathWordconv':
-          out.write(ssPathWordconv);
           break;
         case 'ssFileExtAr':
           if (ssFileExtAr.isNotEmpty) {
@@ -227,11 +222,6 @@ class KncSettingsInternal {
             }
           }
           break;
-        case 'ssCharMaps':
-          ssCharMaps.forEach((key, value) {
-            out.write('<li>$key</li>');
-          });
-          break;
         case 'ssArMaxSize':
           if (ssArMaxSize % (1024 * 1024 * 1024) == 0) {
             out.write('${ssArMaxSize ~/ (1024 * 1024 * 1024)}G');
@@ -247,7 +237,7 @@ class KncSettingsInternal {
           out.write('${ssArMaxDepth}');
           break;
         default:
-          out.write('[UNDIFINED NAME]');
+          out.write('\${{$name}}');
       }
       i0 += 2;
       i1 = data.indexOf(r'${{', i0);
@@ -263,12 +253,6 @@ class KncSettingsInternal {
     }
     if (map['ssPathOut'] != null) {
       ssPathOut = map['ssPathOut'];
-    }
-    if (map['ssPath7z'] != null) {
-      ssPath7z = map['ssPath7z'];
-    }
-    if (map['ssPathWordconv'] != null) {
-      ssPathWordconv = map['ssPathWordconv'];
     }
     if (map['ssFileExtAr'] != null) {
       ssFileExtAr.clear();

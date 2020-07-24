@@ -4,7 +4,7 @@ import 'package:knc/www.dart';
 
 void main(List<String> args) {
   /// Web Socket для связи с сервером в реальном времени
-  final ws = WebSocket('ws://${document.domain}/ws');
+  final ws = WebSocket('ws://${document.domain}${wwwPathToWs}');
 
   /// Параграф показывающий текст состояния ВебСокета
   final pStatusSocket = document.getElementById('statusSocket');

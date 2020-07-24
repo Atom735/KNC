@@ -37,7 +37,7 @@ void main() {
   }, timeout: Timeout.factor(10));
 
   test('WordConv returncode', () async {
-    final ss = KncSettings();
+    final ss = KncTask();
     await Future.wait(
         [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
 
@@ -65,7 +65,7 @@ void main() {
   });
 
   test('KncXls las test', () async {
-    final ss = KncSettings();
+    final ss = KncTask();
     await Future.wait(
         [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
 
@@ -100,7 +100,7 @@ void main() {
     await ss.unzipper.zip(dir.path, dir.path + '.xlsx');
   }, timeout: Timeout.factor(10));
   test('KncXls start test', () async {
-    final ss = KncSettings();
+    final ss = KncTask();
     await Future.wait(
         [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
     await ss.initializing();
