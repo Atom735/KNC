@@ -40,15 +40,11 @@ class Archiver {
                         }
                       })
                       .asFuture(tasks)
-                      .then((taskList) =>
-                          Future.wait(taskList).then((taskListEnded) {
-                            if (funcEnd != null) {
-                              return funcEnd(taskListEnded)
-                                  .then((_) => temp.delete(recursive: true));
-                            } else {
-                              return temp.delete(recursive: true);
-                            }
-                          }));
+                      .then((taskList) => Future.wait(taskList).then(
+                          (taskListEnded) => funcEnd != null
+                              ? funcEnd(taskListEnded)
+                                  .then((_) => temp.delete(recursive: true))
+                              : temp.delete(recursive: true)));
                 } else {
                   return result;
                 }
