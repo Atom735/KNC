@@ -113,31 +113,51 @@ class KncSettingsInternal {
       ssPathWordconv = map['ssPathWordconv'];
     }
     if (map['ssFileExtAr'] != null) {
-      ssFileExtAr.clear();
+      if (ssFileExtAr == null) {
+        ssFileExtAr = [];
+      } else {
+        ssFileExtAr.clear();
+      }
       for (var item in map['ssFileExtAr']) {
         ssFileExtAr.add(item);
       }
     }
     if (map['ssFileExtLas'] != null) {
-      ssFileExtLas.clear();
+      if (ssFileExtLas == null) {
+        ssFileExtLas = [];
+      } else {
+        ssFileExtLas.clear();
+      }
       for (var item in map['ssFileExtLas']) {
         ssFileExtLas.add(item);
       }
     }
     if (map['ssFileExtInk'] != null) {
-      ssFileExtInk.clear();
+      if (ssFileExtInk == null) {
+        ssFileExtInk = [];
+      } else {
+        ssFileExtInk.clear();
+      }
       for (var item in map['ssFileExtInk']) {
         ssFileExtInk.add(item);
       }
     }
     if (map['ssCharMaps'] != null) {
-      ssCharMaps.clear();
+      if (ssCharMaps == null) {
+        ssCharMaps = {};
+      } else {
+        ssCharMaps.clear();
+      }
       for (var item in map['ssCharMaps']) {
         ssCharMaps[item] = null;
       }
     }
     if (map['pathInList'] != null) {
-      pathInList.clear();
+      if (pathInList == null) {
+        pathInList = [];
+      } else {
+        pathInList.clear();
+      }
       for (var item in map['pathInList']) {
         pathInList.add(item);
       }
