@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:knc/www.dart';
 import 'package:knc/xls.dart';
 import 'package:path/path.dart' as p;
 import 'dart:convert';
@@ -85,53 +86,7 @@ Future<String> getOutPathNew(String prePath, [String name]) async {
   }
 }
 
-class KncSettings {
-  /// Наименование задачи
-  String ssTaskName = 'name';
-
-  /// Путь к конечным данным
-  String ssPathOut = 'out';
-
-  /// Путь к программе 7Zip
-  String ssPath7z;
-
-  /// Путь к программе WordConv
-  String ssPathWordconv;
-
-  /// Настройки расширения для архивных файлов
-  List<String> ssFileExtAr = ['.zip', '.rar'];
-
-  /// Настройки расширения для файлов LAS
-  List<String> ssFileExtLas = ['.las'];
-
-  /// Настройки расширения для файлов с инклинометрией
-  List<String> ssFileExtInk = ['.doc', '.docx', '.txt', '.dbf'];
-
-  /// Таблица кодировок `ssCharMaps['CP866']`
-  Map<String, List<String>> ssCharMaps;
-
-  /// Путь для поиска файлов
-  /// получается из полей `[path0, path1, path2, path3, ...]`
-  List<String> pathInList = [];
-
-  /// Максимальный размер вскрываемого архива в байтах
-  ///
-  /// Для задания значения можно использовать постфиксы:
-  /// * `k` = КилоБайты
-  /// * `m` = МегаБайты = `kk`
-  /// * `g` = ГигаБайты = `kkk`
-  ///
-  /// `0` - для всех архивов
-  ///
-  /// По умолчанию 1Gb
-  int ssArMaxSize = 1024 * 1024 * 1024;
-
-  /// Максимальный глубина прохода по архивам
-  /// * `-1` - для бесконечной вложенности (По умолчанию)
-  /// * `0` - для отбрасывания всех архивов
-  /// * `1` - для входа на один уровень архива
-  int ssArMaxDepth = -1;
-
+class KncSettings extends KncSettingsInternal {
   String pathOutLas;
   String pathOutInk;
   String pathOutErrors;
@@ -147,6 +102,7 @@ class KncSettings {
 
   final lasCurvesNameOriginals = <String>[];
 
+  /// Загрузкить все данные
   Future get loadAll => Future.wait(
       [loadCharMaps(), loadLasIgnore(), loadInkDbfMap(), serchPrograms()]);
 
@@ -202,142 +158,6 @@ class KncSettings {
         updateBufferByThis(await File(r'web/index.html').readAsString()));
     await response.flush();
     await response.close();
-  }
-
-  /// Заменяет теги ${{tag}} на значение настройки
-  String updateBufferByThis(final String data) {
-    final out = StringBuffer();
-    var i0 = 0;
-    var i1 = data.indexOf(r'${{');
-    while (i1 != -1) {
-      out.write(data.substring(i0, i1));
-      i0 = data.indexOf(r'}}', i1);
-      var name = data.substring(i1 + 3, i0);
-      switch (name) {
-        case 'ssTaskName':
-          out.write(ssTaskName);
-          break;
-        case 'ssPathOut':
-          out.write(ssPathOut);
-          break;
-        case 'ssPath7z':
-          out.write(ssPath7z);
-          break;
-        case 'ssPathWordconv':
-          out.write(ssPathWordconv);
-          break;
-        case 'ssFileExtAr':
-          if (ssFileExtAr.isNotEmpty) {
-            out.write(ssFileExtAr[0]);
-            for (var i = 1; i < ssFileExtAr.length; i++) {
-              out.write(';');
-              out.write(ssFileExtAr[i]);
-            }
-          }
-          break;
-        case 'ssFileExtLas':
-          if (ssFileExtLas.isNotEmpty) {
-            out.write(ssFileExtLas[0]);
-            for (var i = 1; i < ssFileExtLas.length; i++) {
-              out.write(';');
-              out.write(ssFileExtLas[i]);
-            }
-          }
-          break;
-        case 'ssFileExtInk':
-          if (ssFileExtInk.isNotEmpty) {
-            out.write(ssFileExtInk[0]);
-            for (var i = 1; i < ssFileExtInk.length; i++) {
-              out.write(';');
-              out.write(ssFileExtInk[i]);
-            }
-          }
-          break;
-        case 'ssCharMaps':
-          ssCharMaps.forEach((key, value) {
-            out.write('<li>$key</li>');
-          });
-          break;
-        case 'ssArMaxSize':
-          if (ssArMaxSize % (1024 * 1024 * 1024) == 0) {
-            out.write('${ssArMaxSize ~/ (1024 * 1024 * 1024)}G');
-          } else if (ssArMaxSize % (1024 * 1024) == 0) {
-            out.write('${ssArMaxSize ~/ (1024 * 1024)}M');
-          } else if (ssArMaxSize % (1024) == 0) {
-            out.write('${ssArMaxSize ~/ (1024)}K');
-          } else {
-            out.write('${ssArMaxSize}');
-          }
-          break;
-        case 'ssArMaxDepth':
-          out.write('${ssArMaxDepth}');
-          break;
-        default:
-          out.write('[UNDIFINED NAME]');
-      }
-      i0 += 2;
-      i1 = data.indexOf(r'${{', i0);
-    }
-    out.write(data.substring(i0));
-    return out.toString();
-  }
-
-  /// Обновляет данные через полученные данные HTML формы
-  void updateByMultiPartFormData(final Map<String, String> map) {
-    if (map['ssTaskName'] != null) {
-      ssTaskName = map['ssTaskName'];
-    }
-    if (map['ssPathOut'] != null) {
-      ssPathOut = map['ssPathOut'];
-    }
-    if (map['ssPath7z'] != null) {
-      ssPath7z = map['ssPath7z'];
-    }
-    if (map['ssPathWordconv'] != null) {
-      ssPathWordconv = map['ssPathWordconv'];
-    }
-    if (map['ssFileExtAr'] != null) {
-      ssFileExtAr.clear();
-      ssFileExtAr = map['ssFileExtAr'].toLowerCase().split(';');
-      ssFileExtAr.removeWhere((element) => element.isEmpty);
-    }
-    if (map['ssFileExtLas'] != null) {
-      ssFileExtLas.clear();
-      ssFileExtLas = map['ssFileExtLas'].toLowerCase().split(';');
-      ssFileExtLas.removeWhere((element) => element.isEmpty);
-    }
-    if (map['ssFileExtInk'] != null) {
-      ssFileExtInk.clear();
-      ssFileExtInk = map['ssFileExtInk'].toLowerCase().split(';');
-      ssFileExtInk.removeWhere((element) => element.isEmpty);
-    }
-    if (map['ssArMaxSize'] != null) {
-      final str = map['ssArMaxSize'].toLowerCase();
-      ssArMaxSize = int.tryParse(
-          str.replaceAll('k', '').replaceAll('m', '').replaceAll('g', ''));
-      if (ssArMaxSize != null) {
-        if (str.endsWith('kkk') ||
-            str.endsWith('g') ||
-            str.endsWith('km') ||
-            str.endsWith('mk')) {
-          ssArMaxSize *= 1024 * 1024 * 1024;
-        } else if (str.endsWith('kk') || str.endsWith('m')) {
-          ssArMaxSize *= 1024 * 1024;
-        } else if (str.endsWith('k')) {
-          ssArMaxSize *= 1024;
-        }
-      } else {
-        ssArMaxSize = 0;
-      }
-    }
-    if (map['ssArMaxDepth'] != null) {
-      ssArMaxDepth = int.tryParse(map['ssArMaxDepth']);
-      ssArMaxDepth ??= -1;
-    }
-    pathInList.clear();
-    for (var i = 0; map['path$i'] != null; i++) {
-      pathInList.add(map['path$i'].replaceAll('"', ''));
-    }
   }
 
   static const _SearchPath_7Zip = [
