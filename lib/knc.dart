@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
@@ -48,6 +49,13 @@ class PathNewer {
   bool unlock(final String name) => _reserved.remove(p.basename(name));
 }
 
+class CompleterWithUID<T> {
+  final Completer<T> completer;
+  final int uID;
+
+  CompleterWithUID(this.completer, this.uID);
+}
+
 class KncTask extends KncSettingsInternal {
   /// Порт для передачи данных главному изоляту
   SendPort sendPort;
@@ -60,19 +68,55 @@ class KncTask extends KncSettingsInternal {
   String pathOutErrors;
   IOSink errorsOut;
 
+  final lasDB = LasDataBase();
+  dynamic lasIgnore;
+
+  final inkDB = InkDataBase();
+  dynamic inkDbfMap;
+
+  final lasCurvesNameOriginals = <String>[];
+
+  var _completersNewUID = 0;
+  final _completers = <CompleterWithUID>[];
+
+  CompleterWithUID<T> completerAdd<T>() {
+    final o = CompleterWithUID<T>(Completer(), _completersNewUID += 1);
+    _completers.add(o);
+    return o;
+  }
+
+  void completerComplite<T>(final int uID, final T value) => _completers.remove(
+      _completers.singleWhere((e) => e.uID == uID)..completer.complete(value));
+
   KncTask();
 
   /// Точка входа для нового изолята
   static void isolateEntryPoint(KncTask task) => task.isolateEntryPointThis();
 
-  void isolateEntryPointThis() {
+  void isolateEntryPointThis() async {
     receivePort = ReceivePort();
 
     receivePort.listen((final msg) {
       // Прослушивание сообщений полученных от главного изолята
+      if (msg is List) {}
+      print('task[$uID]: recieved unknown msg {$msg}');
     });
 
     sendPort.send([uID, receivePort.sendPort]);
+
+    print('task[$uID]: Work Begin');
+    await initializing();
+  }
+
+  /// Распаковывает архив [pathToArchive]
+  /// Отправляет сообщение главному потоку который как раз и занимается разархивированием
+  Future unzip(
+      String pathToArchive,
+      Future Function(FileSystemEntity entity, String relPath) funcEntity,
+      Future Function(dynamic taskListEnded) funcEnd) async {
+    final c = completerAdd();
+    sendPort.send([uID, 'unzip', c.uID, pathToArchive]);
+    final dir = await c.completer.future;
   }
 
   KncTask.fromSettings(final KncSettingsInternal ss) {
@@ -90,14 +134,6 @@ class KncTask extends KncSettingsInternal {
     ssArMaxSize = ss.ssArMaxSize;
     ssArMaxDepth = ss.ssArMaxDepth;
   }
-
-  final lasDB = LasDataBase();
-  dynamic lasIgnore;
-
-  final inkDB = InkDataBase();
-  dynamic inkDbfMap;
-
-  final lasCurvesNameOriginals = <String>[];
 
   /// Загрузкить все данные
   Future get loadAll => Future.wait([loadLasIgnore(), loadInkDbfMap()]);
@@ -201,7 +237,7 @@ class KncTask extends KncSettingsInternal {
         await errorsOut.close();
         errorsOut = null;
       }
-      print('Work Ended');
+      print('task[$uID]: Work Ended');
     });
   }
 
@@ -233,7 +269,7 @@ class KncTask extends KncSettingsInternal {
         if (entity is File) {
           final ext = p.extension(entity.path).toLowerCase();
           // == UNZIPPER == Begin
-          if (unzipper != null && ssFileExtAr.contains(ext)) {
+          if (ssFileExtAr.contains(ext)) {
             try {
               if (ssArMaxSize > 0) {
                 // если максимальный размер архива установлен
