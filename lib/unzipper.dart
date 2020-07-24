@@ -1,5 +1,6 @@
 import 'dart:io';
 
+@deprecated
 class Unzipper {
   final String pathToTempDir;
   final String pathTo7z;
