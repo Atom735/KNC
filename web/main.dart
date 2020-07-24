@@ -27,6 +27,7 @@ void main(List<String> args) {
     });
   });
   webSocket.onMessage.listen((msg) {
+    print(msg);
     iSockLastMessge += 1;
     final data = msg.data;
     if (data is String) {

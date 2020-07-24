@@ -1,10 +1,14 @@
 import 'dart:io';
+import 'dart:isolate';
 
+import 'package:knc/archiver.dart';
 import 'package:knc/errors.dart';
 import 'package:knc/ink.dart';
 import 'package:knc/knc.dart';
 import 'package:knc/las.dart';
+import 'package:knc/mapping.dart';
 import 'package:knc/web.dart';
+import 'package:knc/www.dart';
 
 Future main(List<String> args) async {
   /// Настройки работы
@@ -152,5 +156,52 @@ Future main(List<String> args) async {
 
   /// запуск сервера, начало обработок
   server.handleRequest = reqBeforeWork;
+
+  /// Порт прослушиваемый главным изолятом
+  final receivePort = ReceivePort();
+
+  /// Список запущенных задач
+  final listOfSettings = <KncSettings>[];
+
+  /// Обработка новых подключений ВебСокета
+  server.handleWebSocketNew = (WebSocket socket, MyServer serv) async {
+    for (final ss in listOfSettings) {
+      socket.add('#SS.ADD:${ss.json}');
+    }
+  };
+
+  server.handleRequest =
+      (HttpRequest req, String content, MyServer serv) async {
+    if (req.uri.path == '/') {
+      if (content.isEmpty) {
+        await ss.servSettings(req.response);
+        return true;
+      }
+    } else if (req.uri.path == '/action') {
+      if (content.isNotEmpty) {
+        ss.updateByMultiPartFormData(parseMultiPartFormData(content));
+        listOfSettings.add(ss);
+      }
+
+      final response = req.response;
+      response.headers.contentType = ContentType.html;
+      response.statusCode = HttpStatus.ok;
+      await response.addStream(File(r'web/action.html').openRead());
+      await response.flush();
+      await response.close();
+      return true;
+    } else if (req.uri.path == '/lib/www.dart') {
+      final response = req.response;
+      response.headers.contentType = ct_Dart;
+      response.statusCode = HttpStatus.ok;
+
+      await response.addStream(File('lib/www.dart').openRead());
+      await response.flush();
+      await response.close();
+      return true;
+    }
+    return false;
+  };
+
   await server.bind(80);
 }
