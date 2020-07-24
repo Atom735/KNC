@@ -14,6 +14,7 @@ int calculate() {
   return 6 * 7;
 }
 
+@deprecated
 final _reservedPathNew = <String>[];
 
 class PathNewer {
@@ -92,6 +93,26 @@ class KncSettings extends KncSettingsInternal {
   String pathOutErrors;
   IOSink errorsOut;
 
+  KncSettings();
+
+  KncSettings.fromSettings(final KncSettingsInternal ss) {
+    ssTaskName = ss.ssTaskName;
+    ssPathOut = ss.ssPathOut;
+    ssPath7z = ss.ssPath7z;
+    ssPathWordconv = ss.ssPathWordconv;
+    ssFileExtAr = [];
+    ssFileExtAr.addAll(ss.ssFileExtAr);
+    ssFileExtLas = [];
+    ssFileExtLas.addAll(ss.ssFileExtLas);
+    ssFileExtInk = [];
+    ssFileExtInk.addAll(ss.ssFileExtInk);
+    ssCharMaps = ss.ssCharMaps;
+    pathInList = [];
+    pathInList.addAll(ss.pathInList);
+    ssArMaxSize = ss.ssArMaxSize;
+    ssArMaxDepth = ss.ssArMaxDepth;
+  }
+
   final lasDB = LasDataBase();
   dynamic lasIgnore;
 
@@ -123,13 +144,17 @@ class KncSettings extends KncSettingsInternal {
   /// Очищает папки, подготавливает распаковщик,
   /// открывает файл с ошибками для записи
   Future<void> initializing() async {
-    final dirOut = Directory(ssPathOut);
-    if (await dirOut.exists()) {
-      await dirOut.delete(recursive: true);
-    }
-    await dirOut.create(recursive: true);
-    if (dirOut.isAbsolute == false) {
-      ssPathOut = dirOut.absolute.path;
+    if (ssPathOut == null || ssPathOut.isEmpty) {
+      ssPathOut = (await Directory('temp').createTemp()).absolute.path;
+    } else {
+      final dirOut = Directory(ssPathOut).absolute;
+      if (await dirOut.exists()) {
+        await dirOut.delete(recursive: true);
+      }
+      await dirOut.create(recursive: true);
+      if (dirOut.isAbsolute == false) {
+        ssPathOut = dirOut.absolute.path;
+      }
     }
 
     unzipper = Unzipper(p.join(ssPathOut, 'temp'), ssPath7z);
