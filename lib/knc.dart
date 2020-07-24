@@ -15,6 +15,44 @@ int calculate() {
 
 final _reservedPathNew = <String>[];
 
+class PathNewer {
+  /// Путь именно к существующей папке, в которой будет подбираться имя
+  final String prePath;
+
+  /// Список зарезервированных имён файлов/папок
+  final _reserved = <String>[];
+
+  /// [prePath] - это путь именно к существующей папке
+  PathNewer(this.prePath);
+
+  /// Подбирает новое имя для файла, если он уже существует в папке [prePath]
+  /// И резервирует его
+  Future<String> lock(final String name) async {
+    var n = p.basename(name);
+    var o = p.join(prePath, n);
+    if (!_reserved.contains(n) &&
+        await FileSystemEntity.type(o) == FileSystemEntityType.notFound) {
+      // Если имя не зарезрвированно и файла с таким именем не существует
+      _reserved.add(p.basename(name));
+      return o;
+    } else {
+      final fn = p.basenameWithoutExtension(name);
+      final fe = p.extension(name);
+      var i = 0;
+      do {
+        n = '${fn}_${i}${fe}';
+        o = p.join(prePath, n);
+      } while (_reserved.contains(n) ||
+          await FileSystemEntity.type(o) != FileSystemEntityType.notFound);
+      _reserved.add(n);
+      return o;
+    }
+  }
+
+  /// Отменить резервацию файла
+  bool unlock(final String name) => _reserved.remove(p.basename(name));
+}
+
 /// Подбирает новое имя для файла, если он уже существует в папке [prePath]
 /// И резервирует его
 ///
@@ -23,6 +61,7 @@ final _reservedPathNew = <String>[];
 /// [name] (opt) - это может быть как путь, так и только имя
 /// Если он остуствует то резервация снимается со файла
 /// указанным в [preParh]
+@deprecated
 Future<String> getOutPathNew(String prePath, [String name]) async {
   if (name == null) {
     _reservedPathNew.remove(prePath);
@@ -246,7 +285,7 @@ class KncSettings {
   /// Обновляет данные через полученные данные HTML формы
   void updateByMultiPartFormData(final Map<String, String> map) {
     if (map['ssTaskName'] != null) {
-      ssTaskName= map['ssTaskName'];
+      ssTaskName = map['ssTaskName'];
     }
     if (map['ssPathOut'] != null) {
       ssPathOut = map['ssPathOut'];
