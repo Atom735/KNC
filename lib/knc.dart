@@ -203,15 +203,20 @@ class KncTask extends KncSettingsInternal {
           switch (msg[0]) {
             case 'unzip':
             case 'zip':
-            case 'doc2x':
-              completerComplite(msg[1], msg[2]);
+              completerComplite(msg[1], msg[2] as String);
               return;
-              break;
+            case 'doc2x':
+              if (msg[2] is ProcessResult) {
+                completerComplite(msg[1], msg[2] as ProcessResult);
+              } else {
+                handleErrorCatcher(msg[2]);
+                completerComplite(msg[1], null);
+              }
+              return;
             case 'charMaps':
               ssCharMaps = msg[1];
               completerComplite(cCharmMaps.uID, null);
               return;
-              break;
             default:
           }
         }
@@ -235,16 +240,16 @@ class KncTask extends KncSettingsInternal {
   }
 
   /// Преобразует данные
-  Future doc2x(final String path2doc, final String path2out) {
-    final c = completerAdd();
+  Future<ProcessResult> doc2x(final String path2doc, final String path2out) {
+    final c = completerAdd<ProcessResult>();
     // отправляем запрос на распаковку
     sendPort.send([uID, 'doc2x', c.uID, path2doc, path2out]);
     return c.completer.future;
   }
 
   /// Запекает данные в zip архиф с помощью 7zip
-  Future zip(final String pathToData, final String pathToOutput) {
-    final c = completerAdd();
+  Future<String> zip(final String pathToData, final String pathToOutput) {
+    final c = completerAdd<String>();
     // отправляем запрос на распаковку
     sendPort.send([uID, 'zip', c.uID, pathToData, pathToOutput]);
     return c.completer.future;
@@ -255,15 +260,24 @@ class KncTask extends KncSettingsInternal {
   Future unzip(String pathToArchive,
       [Future Function(FileSystemEntity entity, String relPath) funcEntity,
       Future Function(dynamic taskListEnded) funcEnd]) async {
-    final c = completerAdd();
+    final c = completerAdd<String>();
     // отправляем запрос на распаковку
     sendPort.send([uID, 'unzip', c.uID, pathToArchive]);
     // Ожидаем распаковку
-    final dir = await c.completer.future;
-    if (dir is Directory) {
+    final err = await c.completer.future;
+    final i0 = err.indexOf(':', 1);
+    final i1 = err.indexOf('#', i0 + 1);
+    final i2 = err.indexOf('"', i1 + 1);
+    final i3 = err.indexOf('"', i2 + 1);
+    // final i4 = err.indexOf('^!@#\$', i3 + 1);
+    // final eCode = err.substring(i0, i1);
+    final eOutPut = err.substring(i2, i3);
+    // final eStdOut = err.substring(i3 + 1, i4);
+    // final eStdErr = err.substring(i4 + 5);
+    if (err[0] == 'O') {
       // Если успешно распокавали
       final tasks = <Future>[];
-
+      final dir = Directory(eOutPut).absolute;
       await dir
           .list(recursive: true, followLinks: false)
           .listen((entity) {
@@ -279,7 +293,7 @@ class KncTask extends KncSettingsInternal {
                       .then((_) => dir.delete(recursive: true))
                   : dir.delete(recursive: true)));
     } else {
-      await handleErrorCatcher(dir);
+      await handleErrorCatcher(err);
     }
   }
 
@@ -435,6 +449,9 @@ class KncTask extends KncSettingsInternal {
         // Вне архива, [relPath]- содержит полный путь
         // а [pathToArch] - пустая строка, но не `null`
         if (entity is File) {
+          if (p.basename(entity.path).toLowerCase().startsWith(r'~$')) {
+            return;
+          }
           final ext = p.extension(entity.path).toLowerCase();
           // == UNZIPPER == Begin
           if (ssFileExtAr.contains(ext)) {

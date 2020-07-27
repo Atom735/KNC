@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'async.dart';
 
@@ -23,74 +24,99 @@ class Archiver {
   /// Если папка [pathToOutDir] не задана, то будет создана
   /// внутреняя временная папка, которая будет удалена по завершению работ
   ///
-  /// Если функции [funcEntity] и [funcEnd] не заданы, то будет возращена
-  /// папка в которую было произведено распаковывание
-  Future unzip(String pathToArchive,
-          [Future Function(FileSystemEntity entity, String relPath) funcEntity,
-          Future Function(dynamic taskListEnded) funcEnd,
-          String pathToOutDir]) =>
+  /// Возвращает строку ошибки
+  /// - первый символ означает тип ошибки
+  /// - тело сообщения между `:` и `#`
+  /// - следом между кавычками идёт имя выходной папки
+  /// - следом до символов `^!@#$` идёт строка стандартного вывода идёт
+  /// - следом идёт строка вывода ошибок идёт
+  ///
+  /// Первый символ:
+  /// - `O` - нет ошибки
+  /// - `W` - предупреждение
+  /// - `E` - ошибка
+  Future<String> unzip(String pathToArchive,
+          [String pathToOutDir]) =>
       pathToOutDir == null
           ? (dir.createTemp('arch').then((temp) =>
-              unzip(pathToArchive, null, null, temp.path).then((result) {
-                if (result == null) {
-                  if (funcEntity == null && funcEnd == null) {
-                    return temp;
-                  }
-                  final tasks = <Future>[];
-                  return temp
-                      .list(recursive: true, followLinks: false)
-                      .listen((entityInZip) {
-                        if (funcEntity != null) {
-                          tasks.add(funcEntity(entityInZip,
-                              entityInZip.path.substring(temp.path.length)));
-                        }
-                      })
-                      .asFuture(tasks)
-                      .then((taskList) => Future.wait(taskList).then(
-                          (taskListEnded) => funcEnd != null
-                              ? funcEnd(taskListEnded)
-                                  .then((_) => temp.delete(recursive: true))
-                              : temp.delete(recursive: true)));
-                } else {
-                  return result;
-                }
-              })))
+              unzip(pathToArchive, temp.path)
+              ))
           : queue != null
               ? (queue.addTask(() =>
                   Process.run(p7z, ['x', '-o$pathToOutDir', pathToArchive])
-                      .then((result) => results(result.exitCode))))
+                      .then((result) => results(result.exitCode, result.stdout, result.stderr, pathToOutDir))))
               : Process.run(p7z, ['x', '-o$pathToOutDir', pathToArchive])
-                  .then((result) => results(result.exitCode));
+                  .then((result) => results(result.exitCode, result.stdout, result.stderr, pathToOutDir));
 
-  /// Запаковывает данные внутри папки [pathToData] в zip архиф с помощью 7zip
-  Future zip(final String pathToData, final String pathToOutput) =>
+  /// Запаковывает данные внутри папки [pathToData] в zip архиф [pathToOutput]
+  /// с помощью 7zip
+  ///
+  /// Возвращает строку ошибки
+  /// - первый символ означает тип ошибки
+  /// - тело сообщения между `:` и `#`
+  /// - следом между кавычками идёт имя выходной папки
+  /// - следом до символов `^!@#$` идёт строка стандартного вывода идёт
+  /// - следом идёт строка вывода ошибок идёт
+  ///
+  /// Первый символ:
+  /// - `O` - нет ошибки
+  /// - `W` - предупреждение
+  /// - `E` - ошибка
+  Future<String> zip(final String pathToData, final String pathToOutput) =>
       queue != null
           ? queue.addTask(() => Process.run(
                   p7z, ['a', '-tzip', pathToOutput, '*'],
                   workingDirectory: pathToData)
-              .then((result) => results(result.exitCode)))
+              .then((result) => results(result.exitCode, result.stdout, result.stderr, pathToOutput)))
           : Process.run(p7z, ['a', '-tzip', pathToOutput, '*'],
                   workingDirectory: pathToData)
-              .then((result) => results(result.exitCode));
+              .then((result) => results(result.exitCode, result.stdout, result.stderr, pathToOutput));
 
-  /// Возвращает Future с ошибкой, если произошла ошибка
-  static Future results(final int exitCode) {
+  /// Возвращает строку ошибки
+  /// - первый символ означает тип ошибки
+  /// - тело сообщения между `:` и `#`
+  /// - следом между кавычками идёт имя выходной папки
+  /// - следом до символов `^!@#$` идёт строка стандартного вывода идёт
+  /// - следом идёт строка вывода ошибок идёт
+  ///
+  /// Первый символ:
+  /// - `O` - нет ошибки
+  /// - `W` - предупреждение
+  /// - `E` - ошибка
+  static String results(final int exitCode, final stdOut, final stdErr, final String pathToOutput) {
+    var sOut = '';
+    var sErr = '';
+    if(stdOut != null) {
+      if(stdOut is List<int>) {
+        sOut = ascii.decode(stdOut, allowInvalid: true);
+      } else if(stdOut is String) {
+        sOut = stdOut;
+      }
+    }
+    if(stdErr != null) {
+      if(stdErr is List<int>) {
+        sErr = ascii.decode(stdErr, allowInvalid: true);
+      } else if(stdErr is String) {
+        sErr = stdErr;
+      }
+    }
+    var sCode = '';
     switch (exitCode) {
       case 0:
-        return Future.value(null);
+        sCode = 'O:'; break;
       case 1:
-        return Future.value(
-            r'Warning (Non fatal error(s)). For example, one or more files were locked by some other application, so they were not compressed.');
-      case 2:
-        return Future.error(r'Fatal error');
-      case 7:
-        return Future.error(r'Command line error');
-      case 8:
-        return Future.error(r'Not enough memory for operation');
-      case 255:
-        return Future.error(r'User stopped the process');
-      default:
-        return Future.error('Unknown error');
+        sCode = r'W:(Non fatal error(s)). For example, one or more files were locked by some other application, so they were not compressed.';
+       break;case 2:
+        sCode = r'E:Fatal error';
+       break;case 7:
+        sCode = r'E:Command line error';
+       break;case 8:
+        sCode = r'E:Not enough memory for operation';
+      break;case 255:
+        sCode = r'E:User stopped the process';
+       break;default:
+        sCode = r'E:Unknown error';
     }
+    return '${sCode}#"${pathToOutput}"${sOut}^!@#\$${sErr}';
   }
 }

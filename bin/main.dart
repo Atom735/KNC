@@ -13,6 +13,18 @@ class KncSettingsOnMain extends KncSettingsInternal {
 
   SendPort sendPort;
 
+  final wsList = <WebSocket>[];
+
+  final wsMsgs = <String>[];
+
+  void sendMsg(String txt) {
+    lastWsMsg = txt;
+    wsMsgs.add(txt);
+    for (final ws in wsList) {
+      ws.add(txt);
+    }
+  }
+
   KncSettingsOnMain(KncSettingsInternal ss) {
     uID = ss.uID;
     ssTaskName = ss.ssTaskName;
@@ -31,6 +43,8 @@ class KncSettingsOnMain extends KncSettingsInternal {
 }
 
 Future main(List<String> args) async {
+  const printDebug = print;
+
   /// Настройки работы
   final ss = KncSettingsInternal();
 
@@ -65,11 +79,11 @@ Future main(List<String> args) async {
   /// - in 1`doc2x`, 2`{doc2x.uID}`, 3`{path2doc}`, 4`{path2out}` -
   /// Просьба переконвертировать doc в docx
   ///
-  /// - out 0`unzip`, 1`{unzip.uID}`, 2`{tempDir}` or 2`{value of error}` -
+  /// - out 0`unzip`, 1`{unzip.uID}`, 2`{outputString}` -
   /// Ответ на прозьбу распаковки
-  /// - out 0`zip`, 1`{zip.uID}`, 2`{value of error}` -
+  /// - out 0`zip`, 1`{zip.uID}`, 2`{outputString}` -
   /// Ответ на прозьбу запаковать
-  /// - out 0`doc2x`, 1`{doc2x.uID}`, 2`{value of error}` -
+  /// - out 0`doc2x`, 1`{doc2x.uID}`, 2`{exitCode}` -
   /// Ответ на прозьбу запаковать
   /// - out 0`charMaps`, 1`{ssCharMaps}` -
   /// Данные о кодировках
@@ -82,6 +96,7 @@ Future main(List<String> args) async {
       final uID = data[0] as int;
       var task = listOfTasks.singleWhere((element) => element.uID == uID);
       if (data[1] is SendPort) {
+        printDebug('<<<msg[$uID]: SendPort');
         task.sendPort = data[1];
         task.iState = KncTaskState.synced;
         server.sendMsgToAll(task.wsUpdateState);
@@ -91,33 +106,39 @@ Future main(List<String> args) async {
         switch (data[1]) {
           case 'unzip':
             if (data[2] is int) {
-              try {
-                final err = await converters.unzip(data[3]);
-                task.sendPort.send(['unzip', data[2], err]);
-                return;
-              } catch (e) {
-                task.sendPort.send(['unzip', data[2], e]);
-              }
+              printDebug('<<<msg[$uID]: ${data[1]}(${data[2]}): ${data[3]}');
+              final err = await converters.unzip(data[3]);
+              task.sendPort.send(['${data[1]}', data[2], err]);
+              printDebug('>>>msg[$uID]: ${data[1]}(${data[2]}): $err');
+              return;
             }
             break;
           case 'zip':
             if (data[2] is int) {
+              printDebug(
+                  '<<<msg[$uID]: ${data[1]}(${data[2]}): ${data[3]} => ${data[4]}');
               final err = await converters.zip(data[3], data[4]);
-              task.sendPort.send(['zip', data[2], err]);
+              task.sendPort.send(['${data[1]}', data[2], err]);
+              printDebug('>>>msg[$uID]: ${data[1]}(${data[2]}): $err');
               return;
             }
             break;
           case 'doc2x':
             if (data[2] is int) {
-              final err = await converters.doc2x(data[3], data[4]);
+              printDebug(
+                  '<<<msg[$uID]: ${data[1]}(${data[2]}): ${data[3]} => ${data[4]}');
+              final err = (await converters.doc2x(data[3], data[4])).exitCode;
               task.sendPort.send(['doc2x', data[2], err]);
+              printDebug('>>>msg[$uID]: ${data[1]}(${data[2]}): $err');
               return;
             }
             break;
           default:
             if (data[1][0] == '#') {
-              task.lastWsMsg = data[1];
-              server.sendMsgToAll('^${data[0] as int}${data[1]}');
+              task.sendMsg(data[1]);
+
+              // server.sendMsgToAll('^${data[0] as int}${data[1]}');
+              printDebug('>>>msg[All]: ^${data[0] as int}${data[1]}');
               return;
             }
         }
@@ -127,9 +148,24 @@ Future main(List<String> args) async {
   });
 
   /// Обработка новых подключений ВебСокета
-  server.handleWebSocketNew = (WebSocket socket, MyServer serv) async {
+  server.handleWebSocketNew =
+      (final WebSocket socket, final MyServer serv) async {
     for (final ss in listOfTasks) {
       socket.add('${wwwKncTaskAdd}${ss.json}');
+    }
+  };
+
+  server.handleRequestWS =
+      (final WebSocket socket, final String msg, final MyServer serv) async {
+    if (msg[0] == '^') {
+      final uri = Uri.parse(msg, 1);
+      final n = uri.pathSegments.last;
+      final uID = int.tryParse(n);
+      final task = listOfTasks.singleWhere((e) => e.uID == uID);
+      task.wsList.add(socket);
+      for (var msg in task.wsMsgs) {
+        socket.add(msg);
+      }
     }
   };
 
@@ -152,7 +188,7 @@ Future main(List<String> args) async {
         var bNew = true;
         for (var task in listOfTasks) {
           if (task.uID == taskUID) {
-            bNew = true;
+            bNew = false;
             break;
           }
         }

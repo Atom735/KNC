@@ -1,7 +1,11 @@
 import 'dart:convert' as converter;
 
-String _enc(final String str) =>
-    str != null ? str.replaceAll(r'"', r'\"').replaceAll(r'\', r'\\') : str;
+String _enc(final String str) => str != null
+    ? str
+        .replaceAll(r'\', r'\\')
+        .replaceAll(r'"', r'\"')
+        .replaceAll('\'', '\\\'')
+    : str;
 
 /// Начало сообщения о начале выполнения KncTask
 const wwwKncTaskAdd = '#SS.A:';
@@ -95,8 +99,8 @@ class KncSettingsInternal {
     final s = StringBuffer();
     s.write('{');
     s.write('"uID":"$uID"');
-    s.write('"lastWsMsg":"${_enc(lastWsMsg)}"');
-    s.write('"ssTaskName":"${_enc(ssTaskName)}"');
+    s.write(',"lastWsMsg":"${_enc(lastWsMsg)}"');
+    s.write(',"ssTaskName":"${_enc(ssTaskName)}"');
     s.write(',"ssPathOut":"${_enc(ssPathOut)}"');
     s.write(',"ssFileExtAr":[');
     if (ssFileExtAr.isNotEmpty) {
@@ -134,7 +138,9 @@ class KncSettingsInternal {
 
   /// Преобразует строку JSON в данные настроек
   set json(final String str) {
+    print(str);
     final map = converter.json.decode(str);
+    print(map);
     if (map['uID'] != null) {
       if (map['uID'] is num) {
         uID = (map['uID'] as num).toInt();
