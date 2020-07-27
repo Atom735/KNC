@@ -39,6 +39,7 @@ class PathNewer {
       do {
         n = '${fn}_${i}${fe}';
         o = p.join(prePath, n);
+        i += 1;
       } while (_reserved.contains(n) ||
           await FileSystemEntity.type(o) != FileSystemEntityType.notFound);
       _reserved.add(n);
