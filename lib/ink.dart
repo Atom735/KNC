@@ -1090,16 +1090,16 @@ class InkData {
     if (b) {
       /// Doc file
       final newPath =
-          await getOutPathNew(ss.pathOutInk, p.basename(entity.path) + '.docx');
-      final procRes = await ss.runDoc2X(entity.path, newPath);
+          await ss.newerOutInk.lock(p.basename(entity.path) + '.docx');
+      final procRes = await ss.doc2x(entity.path, newPath);
       if (procRes.exitCode != 0) {
-        await getOutPathNew(newPath);
+        await ss.newerOutInk.unlock(newPath);
         return null;
       }
       if (await File(newPath).exists()) {
         InkData ink;
         try {
-          await ss.unzipper.unzip(newPath,
+          await ss.unzip(newPath,
               (final FileSystemEntity entity2, final String relPath) async {
             if (entity2 is File &&
                 p.dirname(entity2.path) == 'word' &&
@@ -1119,14 +1119,14 @@ class InkData {
             await handleErrorCatcher(e);
           }
         }
-        await getOutPathNew(newPath);
+        await ss.newerOutInk.unlock(newPath);
         if (ink != null) {
           return [ink];
         } else {
           return null;
         }
       }
-      await getOutPathNew(newPath);
+      await ss.newerOutInk.unlock(newPath);
       return null;
     }
 
@@ -1139,7 +1139,7 @@ class InkData {
         // Docx file
         InkData ink;
         try {
-          await ss.unzipper.unzip(entity.path,
+          await ss.unzip(entity.path,
               (final FileSystemEntity entity2, final String relPath) async {
             if (entity2 is File &&
                 p.dirname(entity2.path) == 'word' &&

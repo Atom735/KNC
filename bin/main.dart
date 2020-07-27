@@ -1,11 +1,9 @@
-import 'dart:collection';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:knc/errors.dart';
-import 'package:knc/ink.dart';
+import 'package:knc/async.dart';
+import 'package:knc/converters.dart';
 import 'package:knc/knc.dart';
-import 'package:knc/las.dart';
 import 'package:knc/web.dart';
 import 'package:knc/www.dart';
 
@@ -48,10 +46,38 @@ Future main(List<String> args) async {
   /// Уникальный номер задачи
   var newTaskUID = 1;
 
-  /// Флаг завершения работы, будет выполнен когда все файлы обработаются
-  Future work;
+  /// Очередь выполнения субпроцессов
+  final queueProc = AsyncTaskQueue(8, false);
 
-  receivePort.listen((final data) {
+  /// Конвертер WordConv и архивтор 7zip
+  final converters = await MyConverters.init(queueProc);
+  await converters.clear();
+
+  /// - in 0`{task.uID}` -
+  /// Уникальный номер изолята
+  ///
+  /// - in 1`{SendPort}` -
+  /// Порт для общения с субизолятом с номером uID
+  /// - in 1`unzip`, 2`{unzip.uID}`, 3`{pathToArchive}` -
+  /// Просьба разархивировать от субизолята
+  /// - in 1`zip`, 2`{zip.uID}`, 3`{pathToData}`, 4`{pathToOutput}` -
+  /// Просьба запаковать данные в Zip
+  /// - in 1`doc2x`, 2`{doc2x.uID}`, 3`{path2doc}`, 4`{path2out}` -
+  /// Просьба переконвертировать doc в docx
+  ///
+  /// - out 0`unzip`, 1`{unzip.uID}`, 2`{tempDir}` or 2`{value of error}` -
+  /// Ответ на прозьбу распаковки
+  /// - out 0`zip`, 1`{zip.uID}`, 2`{value of error}` -
+  /// Ответ на прозьбу запаковать
+  /// - out 0`doc2x`, 1`{doc2x.uID}`, 2`{value of error}` -
+  /// Ответ на прозьбу запаковать
+  /// - out 0`charMaps`, 1`{ssCharMaps}` -
+  /// Данные о кодировках
+  ///
+  /// - in 1`#...` -
+  /// Сообщение передаваемое сокету
+  ///
+  receivePort.listen((final data) async {
     if (data is List && data[0] is int) {
       final uID = data[0] as int;
       var task = listOfTasks.singleWhere((element) => element.uID == uID);
@@ -59,7 +85,42 @@ Future main(List<String> args) async {
         task.sendPort = data[1];
         task.iState = KncTaskState.synced;
         server.sendMsgToAll(task.wsUpdateState);
+        task.sendPort.send(['charMaps', converters.ssCharMaps]);
         return;
+      } else if (data[1] is String) {
+        switch (data[1]) {
+          case 'unzip':
+            if (data[2] is int) {
+              try {
+                final err = await converters.unzip(data[3]);
+                task.sendPort.send(['unzip', data[2], err]);
+                return;
+              } catch (e) {
+                task.sendPort.send(['unzip', data[2], e]);
+              }
+            }
+            break;
+          case 'zip':
+            if (data[2] is int) {
+              final err = await converters.zip(data[3], data[4]);
+              task.sendPort.send(['zip', data[2], err]);
+              return;
+            }
+            break;
+          case 'doc2x':
+            if (data[2] is int) {
+              final err = await converters.doc2x(data[3], data[4]);
+              task.sendPort.send(['doc2x', data[2], err]);
+              return;
+            }
+            break;
+          default:
+            if (data[1][0] == '#') {
+              task.lastWsMsg = data[1];
+              server.sendMsgToAll('^${data[0] as int}${data[1]}');
+              return;
+            }
+        }
       }
     }
     print('main: recieved unknown msg {$data}');
@@ -83,6 +144,7 @@ Future main(List<String> args) async {
           .replaceAll(r'${{!uniqFormPost}}', '$wwwPathToTasks$newTaskUID'));
       await response.flush();
       await response.close();
+      return true;
     } else if (req.uri.path.startsWith(wwwPathToTasks)) {
       final taskUID =
           int.tryParse(req.uri.path.substring(wwwPathToTasks.length));

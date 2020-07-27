@@ -22,14 +22,20 @@ class Archiver {
   /// Распаковывает архив [pathToArchive] в папку [pathToOutDir] если она указана.
   /// Если папка [pathToOutDir] не задана, то будет создана
   /// внутреняя временная папка, которая будет удалена по завершению работ
+  ///
+  /// Если функции [funcEntity] и [funcEnd] не заданы, то будет возращена
+  /// папка в которую было произведено распаковывание
   Future unzip(String pathToArchive,
           [Future Function(FileSystemEntity entity, String relPath) funcEntity,
           Future Function(dynamic taskListEnded) funcEnd,
           String pathToOutDir]) =>
       pathToOutDir == null
-          ? (dir.createTemp().then((temp) =>
+          ? (dir.createTemp('arch').then((temp) =>
               unzip(pathToArchive, null, null, temp.path).then((result) {
                 if (result == null) {
+                  if (funcEntity == null && funcEnd == null) {
+                    return temp;
+                  }
                   final tasks = <Future>[];
                   return temp
                       .list(recursive: true, followLinks: false)
@@ -51,15 +57,21 @@ class Archiver {
               })))
           : queue != null
               ? (queue.addTask(() =>
-                  Process.run(p7z, ['x', '-o$pathToOutDir', pathToArchive])))
+                  Process.run(p7z, ['x', '-o$pathToOutDir', pathToArchive])
+                      .then((result) => results(result.exitCode))))
               : Process.run(p7z, ['x', '-o$pathToOutDir', pathToArchive])
                   .then((result) => results(result.exitCode));
 
   /// Запаковывает данные внутри папки [pathToData] в zip архиф с помощью 7zip
   Future zip(final String pathToData, final String pathToOutput) =>
-      Process.run(p7z, ['a', '-tzip', pathToOutput, '*'],
-              workingDirectory: pathToData)
-          .then((result) => results(result.exitCode));
+      queue != null
+          ? queue.addTask(() => Process.run(
+                  p7z, ['a', '-tzip', pathToOutput, '*'],
+                  workingDirectory: pathToData)
+              .then((result) => results(result.exitCode)))
+          : Process.run(p7z, ['a', '-tzip', pathToOutput, '*'],
+                  workingDirectory: pathToData)
+              .then((result) => results(result.exitCode));
 
   /// Возвращает Future с ошибкой, если произошла ошибка
   static Future results(final int exitCode) {

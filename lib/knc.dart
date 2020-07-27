@@ -6,6 +6,7 @@ import 'dart:convert';
 
 import 'package:path/path.dart' as p;
 
+import 'errors.dart';
 import 'ink.dart';
 import 'las.dart';
 import 'www.dart';
@@ -65,8 +66,15 @@ class KncTask extends KncSettingsInternal {
 
   String pathOutLas;
   String pathOutInk;
-  String pathOutErrors;
+  String pathOutErr;
   IOSink errorsOut;
+
+  PathNewer newerOutLas;
+  PathNewer newerOutInk;
+  PathNewer newerOutErr;
+
+  /// Кодировки
+  Map<String, List<String>> ssCharMaps;
 
   final lasDB = LasDataBase();
   dynamic lasIgnore;
@@ -90,33 +98,189 @@ class KncTask extends KncSettingsInternal {
 
   KncTask();
 
+  void sendMsg(final String txt) {
+    lastWsMsg = txt;
+    sendPort.send([uID, txt]);
+  }
+
+  void errorAdd(final String txt) {
+    errorsOut.writeln(txt);
+    sendMsg('$wwwMsgError$txt');
+  }
+
+  /// Обработчик исключений
+  Future handleErrorCatcher(dynamic e) async {
+    errorsOut.writeln(e.toString());
+    sendMsg('$wwwMsgException${e.toString()}');
+  }
+
+  /// Обработчик готовых Las данных
+  Future handleOkLas(
+      LasData las, File file, String newPath, int originals) async {
+    try {
+      if (originals > 0) {
+        await file.copy(newPath);
+        sendMsg('${wwwMsgLasBegin}"${las.origin}"');
+        sendMsg('${wwwMsgLas}В базу добавлено ${originals} кривых');
+        sendMsg('${wwwMsgLas}"${file.path}" => "${newPath}"');
+        sendMsg('${wwwMsgLas}"Well: ${las.wWell}');
+        for (final c in las.curves) {
+          sendMsg('${wwwMsgLas}${c.mnem}: ${c.strtN} <=> ${c.stopN}');
+        }
+        sendMsg(wwwMsgLasEnd);
+      }
+    } catch (e) {
+      await handleErrorCatcher(e);
+    }
+  }
+
+  /// Обработчик ошибочных Las данных
+  Future handleErrorLas(LasData las, File file, String newPath) async {
+    try {
+      await file.copy(newPath);
+    } catch (e) {
+      await handleErrorCatcher(e);
+    }
+    errorAdd('${wwwMsgLasBegin}${las.origin}');
+    errorAdd('\t"${file.path}" => "${newPath}"');
+    for (final err in las.listOfErrors) {
+      errorAdd('\tСтрока ${err.line}: ${kncErrorStrings[err.err]}');
+    }
+    errorAdd(''.padRight(20, '='));
+  }
+
+  /// Обработчик готовых Ink данных
+  Future handleOkInk(
+      InkData ink, File file, String newPath, bool original) async {
+    try {
+      if (original) {
+        sendMsg('${wwwMsgInkBegin}"${ink.origin}"');
+        sendMsg('${wwwMsgInk}"${file.path}" => "${newPath}"');
+        sendMsg('${wwwMsgInk}Well: ${ink.well}');
+        sendMsg('${wwwMsgInk}${ink.strt} <=> ${ink.stop}');
+        sendMsg(wwwMsgInkEnd);
+        final io = File(newPath).openWrite(mode: FileMode.writeOnly);
+        io.writeln(ink.well);
+        final dat = ink.inkData;
+        for (final item in dat.data) {
+          io.writeln('${item.depth}\t${item.angle}\t${item.azimuth}');
+        }
+        await io.flush();
+        await io.close();
+      }
+    } catch (e) {
+      await handleErrorCatcher(e);
+    }
+  }
+
+  /// Обработчик ошибочных Ink данных
+  Future handleErrorInk(InkData ink, File file, String newPath) async {
+    try {
+      await file.copy(newPath);
+    } catch (e) {
+      await handleErrorCatcher(e);
+    }
+    errorAdd('${wwwMsgInkBegin}${ink.origin}');
+    errorAdd('\t"${file.path}" => "${newPath}"');
+    for (final err in ink.listOfErrors) {
+      errorAdd('\tСтрока ${err.line}: ${kncErrorStrings[err.err]}');
+    }
+    errorAdd(''.padRight(20, '='));
+  }
+
   /// Точка входа для нового изолята
   static void isolateEntryPoint(KncTask task) => task.isolateEntryPointThis();
 
   void isolateEntryPointThis() async {
     receivePort = ReceivePort();
 
+    final cCharmMaps = completerAdd();
+
     receivePort.listen((final msg) {
       // Прослушивание сообщений полученных от главного изолята
-      if (msg is List) {}
+      if (msg is List) {
+        if (msg[0] is String) {
+          switch (msg[0]) {
+            case 'unzip':
+            case 'zip':
+            case 'doc2x':
+              completerComplite(msg[1], msg[2]);
+              return;
+              break;
+            case 'charMaps':
+              ssCharMaps = msg[1];
+              completerComplite(cCharmMaps.uID, null);
+              return;
+              break;
+            default:
+          }
+        }
+      }
       print('task[$uID]: recieved unknown msg {$msg}');
     });
 
     sendPort.send([uID, receivePort.sendPort]);
 
-    print('task[$uID]: Work Begin');
+    print('task[$uID]: Work Init');
+    await cCharmMaps.completer.future;
     await initializing();
+    print('task[$uID]: Work Begin');
+
+    await startWork(
+        handleErrorCatcher: handleErrorCatcher,
+        handleOkLas: handleOkLas,
+        handleErrorLas: handleErrorLas,
+        handleOkInk: handleOkInk,
+        handleErrorInk: handleErrorInk);
+  }
+
+  /// Преобразует данные
+  Future doc2x(final String path2doc, final String path2out) {
+    final c = completerAdd();
+    // отправляем запрос на распаковку
+    sendPort.send([uID, 'doc2x', c.uID, path2doc, path2out]);
+    return c.completer.future;
+  }
+
+  /// Запекает данные в zip архиф с помощью 7zip
+  Future zip(final String pathToData, final String pathToOutput) {
+    final c = completerAdd();
+    // отправляем запрос на распаковку
+    sendPort.send([uID, 'zip', c.uID, pathToData, pathToOutput]);
+    return c.completer.future;
   }
 
   /// Распаковывает архив [pathToArchive]
   /// Отправляет сообщение главному потоку который как раз и занимается разархивированием
-  Future unzip(
-      String pathToArchive,
-      Future Function(FileSystemEntity entity, String relPath) funcEntity,
-      Future Function(dynamic taskListEnded) funcEnd) async {
+  Future unzip(String pathToArchive,
+      [Future Function(FileSystemEntity entity, String relPath) funcEntity,
+      Future Function(dynamic taskListEnded) funcEnd]) async {
     final c = completerAdd();
+    // отправляем запрос на распаковку
     sendPort.send([uID, 'unzip', c.uID, pathToArchive]);
+    // Ожидаем распаковку
     final dir = await c.completer.future;
+    if (dir is Directory) {
+      // Если успешно распокавали
+      final tasks = <Future>[];
+
+      await dir
+          .list(recursive: true, followLinks: false)
+          .listen((entity) {
+            if (funcEntity != null) {
+              tasks.add(
+                  funcEntity(entity, entity.path.substring(dir.path.length)));
+            }
+          })
+          .asFuture(tasks)
+          .then((taskList) => Future.wait(taskList).then((taskListEnded) =>
+              funcEnd != null
+                  ? funcEnd(taskListEnded)
+                      .then((_) => dir.delete(recursive: true))
+                  : dir.delete(recursive: true)));
+    } else {
+      await handleErrorCatcher(dir);
+    }
   }
 
   KncTask.fromSettings(final KncSettingsInternal ss) {
@@ -152,7 +316,7 @@ class KncTask extends KncSettingsInternal {
   /// открывает файл с ошибками для записи
   Future<void> initializing() async {
     if (ssPathOut == null || ssPathOut.isEmpty) {
-      ssPathOut = (await Directory('temp').createTemp()).absolute.path;
+      ssPathOut = (await Directory('temp').createTemp('task')).absolute.path;
     } else {
       final dirOut = Directory(ssPathOut).absolute;
       if (await dirOut.exists()) {
@@ -166,15 +330,19 @@ class KncTask extends KncSettingsInternal {
 
     pathOutLas = p.join(ssPathOut, 'las');
     pathOutInk = p.join(ssPathOut, 'ink');
-    pathOutErrors = p.join(ssPathOut, 'errors');
+    pathOutErr = p.join(ssPathOut, 'errors');
 
     await Future.wait([
       Directory(pathOutLas).create(recursive: true),
       Directory(pathOutInk).create(recursive: true),
-      Directory(pathOutErrors).create(recursive: true)
+      Directory(pathOutErr).create(recursive: true)
     ]);
 
-    errorsOut = File(p.join(pathOutErrors, '.errors.txt'))
+    newerOutLas = PathNewer(pathOutLas);
+    newerOutInk = PathNewer(pathOutInk);
+    newerOutErr = PathNewer(pathOutErr);
+
+    errorsOut = File(p.join(pathOutErr, '.errors.txt'))
         .openWrite(encoding: utf8, mode: FileMode.writeOnly);
     errorsOut.writeCharCode(unicodeBomCharacterRune);
   }
@@ -276,7 +444,7 @@ class KncTask extends KncSettingsInternal {
                 if (await entity.length() < ssArMaxSize &&
                     (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth)) {
                   // вскрываем архив если он соотвествует размеру и мы не привысили глубину вложенности
-                  await unzipper.unzip(
+                  await unzip(
                       entity.path,
                       listFilesGet(iArchDepth + 1, pathToArch + relPath,
                           handleErrorCatcher: handleErrorCatcher,
@@ -291,7 +459,7 @@ class KncTask extends KncSettingsInternal {
                 }
               } else if (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth) {
                 // если не указан размер, и мы не превысили вложенность
-                await unzipper.unzip(
+                await unzip(
                     entity.path,
                     listFilesGet(iArchDepth + 1, pathToArch + relPath,
                         handleErrorCatcher: handleErrorCatcher,
@@ -322,8 +490,8 @@ class KncTask extends KncSettingsInternal {
               las.origin = pathToArch + relPath;
               if (las.listOfErrors.isEmpty) {
                 // Данные корректны
-                final newPath = await getOutPathNew(
-                    pathOutLas, las.wWell + '___' + p.basename(entity.path));
+                final newPath = await newerOutLas
+                    .lock(las.wWell + '___' + p.basename(entity.path));
                 final originals = lasDB.addLasData(las);
                 for (var i = 1; i < las.curves.length; i++) {
                   final item = las.curves[i];
@@ -334,16 +502,15 @@ class KncTask extends KncSettingsInternal {
                 if (handleOkLas != null) {
                   await handleOkLas(las, entity, newPath, originals);
                 }
-                await getOutPathNew(newPath);
+                await newerOutLas.unlock(newPath);
               } else {
                 // Ошибка в данных файла
-                final newPath =
-                    await getOutPathNew(pathOutErrors, p.basename(entity.path));
+                final newPath = await newerOutErr.lock(p.basename(entity.path));
                 if (handleErrorLas != null) {
                   await handleErrorLas(las, entity, newPath);
                 }
 
-                await getOutPathNew(newPath);
+                await newerOutErr.unlock(newPath);
               }
             } catch (e) {
               if (handleErrorCatcher != null) {
@@ -364,25 +531,23 @@ class KncTask extends KncSettingsInternal {
                     ink.origin = pathToArch + relPath;
                     if (ink.listOfErrors.isEmpty) {
                       // Данные корректны
-                      final newPath = await getOutPathNew(
-                          pathOutInk,
-                          ink.well +
-                              '___' +
-                              p.basenameWithoutExtension(entity.path) +
-                              '.txt');
+                      final newPath = await newerOutInk.lock(ink.well +
+                          '___' +
+                          p.basenameWithoutExtension(entity.path) +
+                          '.txt');
                       final original = inkDB.addInkData(ink);
                       if (handleOkInk != null) {
                         await handleOkInk(ink, entity, newPath, original);
                       }
-                      await getOutPathNew(newPath);
+                      await newerOutInk.unlock(newPath);
                     } else {
                       // Ошибка в данных файла
-                      final newPath = await getOutPathNew(
-                          pathOutErrors, p.basename(entity.path));
+                      final newPath =
+                          await newerOutErr.lock(p.basename(entity.path));
                       if (handleErrorInk != null) {
                         await handleErrorInk(ink, entity, newPath);
                       }
-                      await getOutPathNew(newPath);
+                      await newerOutErr.unlock(newPath);
                     }
                   }
                 }
@@ -397,19 +562,15 @@ class KncTask extends KncSettingsInternal {
         }
       };
 
-  /// Создаёт конечную таблицу XLSX в папке `web` и возвращает путь к файлу таблицы
+  /// Создаёт конечную таблицу XLSX и возвращает путь к файлу таблицы
   Future<String> createXlTable() async {
-    final dir = (await Directory('web').createTemp()).absolute;
+    final dir = Directory(ssPathOut);
     final o = p.join(dir.path, 'table.xlsx');
     final xls =
         await KncXlsBuilder.start(Directory(p.join(dir.path, 'xlsx')), true);
     xls.addDataBases(lasDB, inkDB);
     await Future.wait([xls.rewriteSharedStrings(), xls.rewriteSheet1()]);
-    await unzipper.zip(xls.dir.path, o);
+    await zip(xls.dir.path, o);
     return o;
   }
-
-  Future<ProcessResult> runDoc2X(
-          final String path2doc, final String path2out) =>
-      Process.run(ssPathWordconv, ['-oice', '-nme', path2doc, path2out]);
 }

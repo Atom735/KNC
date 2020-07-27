@@ -15,6 +15,30 @@ const wwwPathToTasks = '/task/';
 /// Путь к подключению WebSocket
 const wwwPathToWs = '/ws';
 
+/// Начало сообщения об исключении
+const wwwMsgException = '#Exception:';
+
+/// Начало сообщения об ошибке
+const wwwMsgError = '#Error:';
+
+/// Начало сообщения о начале секции LAS
+const wwwMsgLasBegin = '#Las:+';
+
+/// Начало сообщения о секции LAS
+const wwwMsgLas = '#Las:\t';
+
+/// Начало сообщения о конце секции LAS
+const wwwMsgLasEnd = '#Las:\$';
+
+/// Начало сообщения о начале секции INK
+const wwwMsgInkBegin = '#Ink:+';
+
+/// Начало сообщения о секции INK
+const wwwMsgInk = '#Ink:\t';
+
+/// Начало сообщения о конце секции INK
+const wwwMsgInkEnd = '#Ink:\$';
+
 enum KncTaskState { initializing, synced, work, end }
 
 class KncSettingsInternal {
@@ -22,6 +46,9 @@ class KncSettingsInternal {
 
   /// Состояние задачи
   KncTaskState iState = KncTaskState.initializing;
+
+  /// Последнее сообщение от сокета
+  String lastWsMsg;
 
   /// Уникальный идентификатор
   int uID;
@@ -68,6 +95,7 @@ class KncSettingsInternal {
     final s = StringBuffer();
     s.write('{');
     s.write('"uID":"$uID"');
+    s.write('"lastWsMsg":"${_enc(lastWsMsg)}"');
     s.write('"ssTaskName":"${_enc(ssTaskName)}"');
     s.write(',"ssPathOut":"${_enc(ssPathOut)}"');
     s.write(',"ssFileExtAr":[');
@@ -113,6 +141,9 @@ class KncSettingsInternal {
       } else if (map['uID'] is String) {
         uID = int.tryParse(map['uID'] as String);
       }
+    }
+    if (map['lastWsMsg'] != null && map['lastWsMsg'] is String) {
+      lastWsMsg = map['lastWsMsg'];
     }
     if (map['ssTaskName'] != null && map['ssTaskName'] is String) {
       ssTaskName = map['ssTaskName'];
@@ -188,6 +219,9 @@ class KncSettingsInternal {
       switch (name) {
         case 'uID':
           out.write(uID);
+          break;
+        case 'lastWsMsg':
+          out.write(lastWsMsg);
           break;
         case 'ssTaskName':
           out.write(ssTaskName);

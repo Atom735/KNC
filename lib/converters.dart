@@ -17,14 +17,13 @@ class MyConverters extends Archiver {
   final Map<String, List<String>> ssCharMaps;
 
   MyConverters(
-      this.ssPath7z, this.ssPathWordconv, this.ssCharMaps, final Directory dir)
-      : super(ssPath7z, dir, AsyncTaskQueue(10, false));
+      this.ssPath7z, this.ssPathWordconv, this.ssCharMaps, final Directory dir,
+      [final AsyncTaskQueue queue])
+      : super(ssPath7z, dir, queue);
 
-  static Future<MyConverters> init() async => MyConverters(
-      await searchProgram_7Zip(),
-      await searchProgram_WordConv(),
-      await loadCharMaps(),
-      Directory('temp').absolute);
+  static Future<MyConverters> init([final AsyncTaskQueue queue]) async =>
+      MyConverters(await searchProgram_7Zip(), await searchProgram_WordConv(),
+          await loadCharMaps(), Directory('temp').absolute, queue);
 
   static Future<Map<String, List<String>>> loadCharMaps() =>
       loadMappings('mappings').then((charmap) => charmap);
@@ -58,7 +57,7 @@ class MyConverters extends Archiver {
           .then((list) => list.firstWhere((element) => element != null, orElse: () => null))
           .then((entity) => entity != null ? entity.path : null);
 
-  Future<ProcessResult> runDoc2X(
-          final String path2doc, final String path2out) =>
-      queue.addTask(() =>Process.run(ssPathWordconv, ['-oice', '-nme', path2doc, path2out]));
+  Future<ProcessResult> doc2x(final String path2doc, final String path2out) =>
+      queue.addTask(() =>
+          Process.run(ssPathWordconv, ['-oice', '-nme', path2doc, path2out]));
 }

@@ -1,6 +1,5 @@
 ﻿import 'dart:async';
 import 'dart:cli';
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -8,11 +7,8 @@ import 'dart:typed_data';
 import 'package:knc/async.dart';
 import 'package:knc/dbf.dart';
 import 'package:knc/ink.dart';
-import 'package:knc/knc.dart';
 import 'package:knc/las.dart';
 import 'package:knc/mapping.dart';
-import 'package:knc/unzipper.dart';
-import 'package:knc/xls.dart';
 import 'package:test/test.dart';
 
 import 'package:path/path.dart' as p;
@@ -35,86 +31,6 @@ void main() {
     await Future.wait(list);
     sw.stop();
   }, timeout: Timeout.factor(10));
-
-  test('WordConv returncode', () async {
-    final ss = KncTask();
-    await Future.wait(
-        [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
-
-    var a = await ss.runDoc2X(
-        r'test\ink\Пример_инклинометра_1240_1_239.doc', r'.ignore\1.docx');
-    print('${a.exitCode}');
-    a = await ss.runDoc2X(
-        r'test\ink\Пример_инклинометра_1240_1_239.doc', r'.ignore\1.docx');
-    print('${a.exitCode}');
-    a = await ss.runDoc2X(
-        r'test\ink\Пример_инклинометра_1240_1_239.docx', r'.ignore\2.docx');
-    print('${a.exitCode}');
-    a = await ss.runDoc2X(
-        r'test\ink\Пример_инклинометра_1240_1_239.docx', r'.ignore\2.docx');
-    print('${a.exitCode}');
-    a = await ss.runDoc2X(
-        r'test\ink\Пример_инклинометра_1240_1_239.s', r'.ignore\3.docx');
-    print('${a.exitCode}');
-    a = await ss.runDoc2X(
-        r'test\ink\Пример инклинометра_2255_1_141.txt', r'.ignore\3.docx');
-    print('${a.exitCode}');
-    a = await ss.runDoc2X(r'test\ink\Пример_инклинометра_1240_1_239.doc',
-        r'.ignore\notFolder\1.docx');
-    print('${a.exitCode}');
-  });
-
-  test('KncXls las test', () async {
-    final ss = KncTask();
-    await Future.wait(
-        [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
-
-    ss.pathInList = [r'\\NAS\Public\common\Gilyazeev\ГИС\Искринское м-е\2003г'];
-    await ss.initializing();
-
-    await ss.startWork(
-      handleErrorCatcher: (e) async {
-        print(e);
-      },
-      handleOkLas: (las, file, newPath, originals) async {
-        print('OK: $originals $file');
-      },
-      handleErrorLas: (las, file, newPath) async {
-        print('ERROR: $file');
-      },
-    );
-
-    for (var a in ss.lasCurvesNameOriginals) {
-      print(a);
-    }
-
-    final dir = Directory(p.join('test', 'xls', 'zzz')).absolute;
-    final xls = await KncXlsBuilder.start(dir, true);
-    xls.addDataBases(ss.lasDB);
-    await xls.rewriteSharedStrings();
-    await xls.rewriteSheet1();
-    final outPath = dir.path + '.xlsx';
-    if (await File(outPath).exists()) {
-      await File(outPath).delete();
-    }
-    await ss.unzipper.zip(dir.path, dir.path + '.xlsx');
-  }, timeout: Timeout.factor(10));
-  test('KncXls start test', () async {
-    final ss = KncTask();
-    await Future.wait(
-        [ss.loadCharMaps(), ss.loadLasIgnore(), ss.serchPrograms()]);
-    await ss.initializing();
-    final dir = Directory(p.join('test', 'xls', 'zzz')).absolute;
-    final xls = await KncXlsBuilder.start(dir, true);
-    xls.sharedStrings.add('<hehe>&to4ka! "C:/path" \'or not=!@\$#\'');
-    await xls.rewriteSharedStrings();
-    await xls.rewriteSheet1();
-    final outPath = dir.path + '.xlsx';
-    if (await File(outPath).exists()) {
-      await File(outPath).delete();
-    }
-    await ss.unzipper.zip(dir.path, dir.path + '.xlsx');
-  });
 
   test('dbf parse', () async {
     await for (var file in Directory(r'.ignore/dbf').list()) {
@@ -234,10 +150,6 @@ void main() {
     final db = LasDataBase();
     print(db.addLasData(las1));
     print(db.addLasData(las2));
-  });
-
-  test('calculate', () {
-    expect(calculate(), 42);
   });
 
   test('string split', () {
@@ -497,55 +409,6 @@ void main() {
         }
       });
     });
-  });
-
-  test('Unzzipper Lib', () async {
-    var unzipper = Unzipper(r'test/zip', r'C:\Program Files\7-Zip\7z.exe');
-
-    Future listFiles(FileSystemEntity entity, String relPath) async {
-      if (entity is File) {
-        print(entity);
-        final ext = p.extension(entity.path).toLowerCase();
-        if (ext == '.zip') {
-          return unzipper.unzip(entity.path, listFiles, (list) async {
-            print(list);
-          });
-        }
-      }
-    }
-
-    await unzipper.clear();
-    print(await unzipper.unzip(r'test/zip.zip', listFiles, (list) async {
-      print(list);
-    }));
-  });
-
-  test('Unzzipper Lib Debug', () async {
-    var unzipper = Unzipper(r'test/zip', r'C:\Program Files\7-Zip\7z.exe');
-
-    Future Function(FileSystemEntity entity, String relPath) listFilesGet(
-            int i, String path) =>
-        (FileSystemEntity entity, String relPath) async {
-          if (entity is File) {
-            print('$i: $entity');
-            print('\t$relPath');
-            print('\t$path');
-            final ext = p.extension(entity.path).toLowerCase();
-            if (ext == '.zip') {
-              return unzipper
-                  .unzip(entity.path, listFilesGet(i + 1, path + relPath),
-                      (list) async {
-                print('$i: $list');
-              });
-            }
-          }
-        };
-
-    await unzipper.clear();
-    print(await unzipper
-        .unzip(r'test/zip.zip', listFilesGet(1, r'test/zip.zip'), (list) async {
-      print(list);
-    }));
   });
 
   test('Las ignore', () async {
