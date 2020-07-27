@@ -109,7 +109,8 @@ Future main(List<String> args) async {
           case 'unzip':
             if (data[2] is int) {
               printDebug('<<<msg[$uID]: ${data[1]}(${data[2]}): ${data[3]}');
-              final err = await converters.unzip(data[3]);
+              final err =
+                  await converters.unzip(data[3], null, converters.ssCharMaps);
               task.sendPort.send(['${data[1]}', data[2], err]);
               printDebug('>>>msg[$uID]: ${data[1]}(${data[2]}): $err');
               return;
@@ -119,7 +120,8 @@ Future main(List<String> args) async {
             if (data[2] is int) {
               printDebug(
                   '<<<msg[$uID]: ${data[1]}(${data[2]}): ${data[3]} => ${data[4]}');
-              final err = await converters.zip(data[3], data[4]);
+              final err =
+                  await converters.zip(data[3], data[4], converters.ssCharMaps);
               task.sendPort.send(['${data[1]}', data[2], err]);
               printDebug('>>>msg[$uID]: ${data[1]}(${data[2]}): $err');
               return;

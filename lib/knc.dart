@@ -329,7 +329,7 @@ class KncTask extends KncSettingsInternal {
   /// открывает файл с ошибками для записи
   Future<void> initializing() async {
     if (ssPathOut == null || ssPathOut.isEmpty) {
-      ssPathOut = (await Directory('temp').createTemp('task')).absolute.path;
+      ssPathOut = (await Directory('temp').createTemp('task.')).absolute.path;
     } else {
       final dirOut = Directory(ssPathOut).absolute;
       if (await dirOut.exists()) {

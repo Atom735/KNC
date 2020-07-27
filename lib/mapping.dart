@@ -40,8 +40,8 @@ Future<Map<String, List<String>>> loadMappings(final String path) async {
 }
 
 /// Возвращает актуальность той или иной кодировки
-Map<String, int> getMappingRaitings(final Map<String, List<String>> map,
-    final UnmodifiableUint8ListView bytes) {
+Map<String, int> getMappingRaitings(
+    final Map<String, List<String>> map, final List<int> bytes) {
   final r = <String, int>{};
   map.forEach((k, v) {
     r[k] = 0;
