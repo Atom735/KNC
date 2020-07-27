@@ -27,6 +27,7 @@
             </fieldset>
             <p><input type="submit" value="Начать обработку"></p>
             <hr>
+            <!--
             <fieldset id="fsSettingsPath">
                 <legend>Настройки путей</legend>
                 <label for="ssPathOut">Путь для конечных данных</label>
@@ -43,6 +44,7 @@
                     value="${{ssPathWordconv}}">
 
             </fieldset>
+            -->
 
             <fieldset id="fsSettingsExt">
                 <legend>Настройки расширений файлов (разделяются точкой с
@@ -100,11 +102,6 @@
 
             </fieldset>
         </form>
-        <h2>Доступные кодировки</h2>
-        <ul>
-            ${{ssCharMaps}}
-        </ul>
-
 
         <script>
             var ff = document.getElementById('fsPath');

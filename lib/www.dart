@@ -61,7 +61,7 @@ class KncSettingsInternal {
   String ssTaskName = 'name';
 
   /// Путь к конечным данным
-  String ssPathOut = 'out';
+  String ssPathOut = '';
 
   /// Настройки расширения для архивных файлов
   List<String> ssFileExtAr = ['.zip', '.rar'];
