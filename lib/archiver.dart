@@ -88,14 +88,14 @@ class Archiver {
     var sErr = '';
     if(stdOut != null) {
       if(stdOut is List<int>) {
-        sOut = ascii.decode(stdOut, allowInvalid: true);
+        sOut = utf8.decode(stdOut, allowMalformed: true);
       } else if(stdOut is String) {
         sOut = stdOut;
       }
     }
     if(stdErr != null) {
       if(stdErr is List<int>) {
-        sErr = ascii.decode(stdErr, allowInvalid: true);
+        sErr = utf8.decode(stdErr, allowMalformed: true);
       } else if(stdErr is String) {
         sErr = stdErr;
       }

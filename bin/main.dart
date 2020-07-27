@@ -42,8 +42,10 @@ class KncSettingsOnMain extends KncSettingsInternal {
   }
 }
 
+void nullProc(obj) => null;
+
 Future main(List<String> args) async {
-  const printDebug = print;
+  const printDebug = nullProc;
 
   /// Настройки работы
   final ss = KncSettingsInternal();
@@ -127,7 +129,7 @@ Future main(List<String> args) async {
             if (data[2] is int) {
               printDebug(
                   '<<<msg[$uID]: ${data[1]}(${data[2]}): ${data[3]} => ${data[4]}');
-              final err = (await converters.doc2x(data[3], data[4])).exitCode;
+              final err = await converters.doc2x(data[3], data[4]);
               task.sendPort.send(['doc2x', data[2], err]);
               printDebug('>>>msg[$uID]: ${data[1]}(${data[2]}): $err');
               return;
@@ -159,9 +161,19 @@ Future main(List<String> args) async {
       (final WebSocket socket, final String msg, final MyServer serv) async {
     if (msg[0] == '^') {
       final uri = Uri.parse(msg, 1);
-      final n = uri.pathSegments.last;
+      final ps = uri.pathSegments;
+      if (ps.isEmpty || ps.first != wwwPathToTasks.replaceAll('/', '')) {
+        return;
+      }
+      final n = ps.last;
       final uID = int.tryParse(n);
+      if (uID == null) {
+        return;
+      }
       final task = listOfTasks.singleWhere((e) => e.uID == uID);
+      if (task == null) {
+        return;
+      }
       task.wsList.add(socket);
       for (var msg in task.wsMsgs) {
         socket.add(msg);
@@ -171,7 +183,7 @@ Future main(List<String> args) async {
 
   server.handleRequest =
       (HttpRequest req, String content, MyServer serv) async {
-    if (req.uri.path == '/') {
+    Future<bool> _sendSettings() async {
       final response = req.response;
       response.headers.contentType = ContentType.html;
       response.statusCode = HttpStatus.ok;
@@ -181,6 +193,10 @@ Future main(List<String> args) async {
       await response.flush();
       await response.close();
       return true;
+    }
+
+    if (req.uri.path == '/') {
+      return _sendSettings();
     } else if (req.uri.path.startsWith(wwwPathToTasks)) {
       final taskUID =
           int.tryParse(req.uri.path.substring(wwwPathToTasks.length));
@@ -192,20 +208,24 @@ Future main(List<String> args) async {
             break;
           }
         }
-        if (bNew && content.isNotEmpty) {
-          ss.updateByMultiPartFormData(parseMultiPartFormData(content));
-          ss.uID = taskUID;
-          final newTask = KncSettingsOnMain(ss);
-          listOfTasks.add(newTask);
-          newTaskUID += 1;
-          final newTaskSettigs = KncTask.fromSettings(ss);
-          newTaskSettigs.sendPort = receivePort.sendPort;
-          newTask.isolate = await Isolate.spawn(
-              KncTask.isolateEntryPoint, newTaskSettigs,
-              debugName:
-                  'task[${newTaskSettigs.uID}]: "${newTaskSettigs.ssTaskName}"');
-          for (final socket in serv.ws) {
-            socket.add('${wwwKncTaskAdd}${newTask.json}');
+        if (bNew) {
+          if (content.isNotEmpty) {
+            ss.updateByMultiPartFormData(parseMultiPartFormData(content));
+            ss.uID = taskUID;
+            final newTask = KncSettingsOnMain(ss);
+            listOfTasks.add(newTask);
+            newTaskUID += 1;
+            final newTaskSettigs = KncTask.fromSettings(ss);
+            newTaskSettigs.sendPort = receivePort.sendPort;
+            newTask.isolate = await Isolate.spawn(
+                KncTask.isolateEntryPoint, newTaskSettigs,
+                debugName:
+                    'task[${newTaskSettigs.uID}]: "${newTaskSettigs.ssTaskName}"');
+            for (final socket in serv.ws) {
+              socket.add('${wwwKncTaskAdd}${newTask.json}');
+            }
+          } else {
+            return _sendSettings();
           }
         }
         final response = req.response;

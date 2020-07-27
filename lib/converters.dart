@@ -57,7 +57,8 @@ class MyConverters extends Archiver {
           .then((list) => list.firstWhere((element) => element != null, orElse: () => null))
           .then((entity) => entity != null ? entity.path : null);
 
-  Future<ProcessResult> doc2x(final String path2doc, final String path2out) =>
+  Future<int> doc2x(final String path2doc, final String path2out) =>
       queue.addTask(() =>
-          Process.run(ssPathWordconv, ['-oice', '-nme', path2doc, path2out]));
+          Process.run(ssPathWordconv, ['-oice', '-nme', path2doc, path2out])
+              .then((e) => e.exitCode));
 }

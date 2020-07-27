@@ -53,8 +53,9 @@ class PathNewer {
 class CompleterWithUID<T> {
   final Completer<T> completer;
   final int uID;
+  final String desc;
 
-  CompleterWithUID(this.completer, this.uID);
+  CompleterWithUID(this.completer, this.uID, [this.desc]);
 }
 
 class KncTask extends KncSettingsInternal {
@@ -87,8 +88,8 @@ class KncTask extends KncSettingsInternal {
   var _completersNewUID = 0;
   final _completers = <CompleterWithUID>[];
 
-  CompleterWithUID<T> completerAdd<T>() {
-    final o = CompleterWithUID<T>(Completer(), _completersNewUID += 1);
+  CompleterWithUID<T> completerAdd<T>([final String desc]) {
+    final o = CompleterWithUID<T>(Completer(), _completersNewUID += 1, desc);
     _completers.add(o);
     return o;
   }
@@ -141,7 +142,7 @@ class KncTask extends KncSettingsInternal {
     } catch (e) {
       await handleErrorCatcher(e);
     }
-    errorAdd('${wwwMsgLasBegin}${las.origin}');
+    errorAdd('+${wwwMsgLasBegin}${las.origin}');
     errorAdd('\t"${file.path}" => "${newPath}"');
     for (final err in las.listOfErrors) {
       errorAdd('\tСтрока ${err.line}: ${kncErrorStrings[err.err]}');
@@ -180,7 +181,7 @@ class KncTask extends KncSettingsInternal {
     } catch (e) {
       await handleErrorCatcher(e);
     }
-    errorAdd('${wwwMsgInkBegin}${ink.origin}');
+    errorAdd('+${wwwMsgInkBegin}${ink.origin}');
     errorAdd('\t"${file.path}" => "${newPath}"');
     for (final err in ink.listOfErrors) {
       errorAdd('\tСтрока ${err.line}: ${kncErrorStrings[err.err]}');
@@ -194,7 +195,7 @@ class KncTask extends KncSettingsInternal {
   void isolateEntryPointThis() async {
     receivePort = ReceivePort();
 
-    final cCharmMaps = completerAdd();
+    final cCharmMaps = completerAdd('charMaps');
 
     receivePort.listen((final msg) {
       // Прослушивание сообщений полученных от главного изолята
@@ -206,12 +207,7 @@ class KncTask extends KncSettingsInternal {
               completerComplite(msg[1], msg[2] as String);
               return;
             case 'doc2x':
-              if (msg[2] is ProcessResult) {
-                completerComplite(msg[1], msg[2] as ProcessResult);
-              } else {
-                handleErrorCatcher(msg[2]);
-                completerComplite(msg[1], null);
-              }
+              completerComplite(msg[1], msg[2] as int);
               return;
             case 'charMaps':
               ssCharMaps = msg[1];
@@ -237,11 +233,13 @@ class KncTask extends KncSettingsInternal {
         handleErrorLas: handleErrorLas,
         handleOkInk: handleOkInk,
         handleErrorInk: handleErrorInk);
+
+    print('task[$uID]: Work End');
   }
 
   /// Преобразует данные
-  Future<ProcessResult> doc2x(final String path2doc, final String path2out) {
-    final c = completerAdd<ProcessResult>();
+  Future<int> doc2x(final String path2doc, final String path2out) {
+    final c = completerAdd<int>('doc2x $path2doc => $path2out');
     // отправляем запрос на распаковку
     sendPort.send([uID, 'doc2x', c.uID, path2doc, path2out]);
     return c.completer.future;
@@ -249,7 +247,7 @@ class KncTask extends KncSettingsInternal {
 
   /// Запекает данные в zip архиф с помощью 7zip
   Future<String> zip(final String pathToData, final String pathToOutput) {
-    final c = completerAdd<String>();
+    final c = completerAdd<String>('zip $pathToData => $pathToOutput');
     // отправляем запрос на распаковку
     sendPort.send([uID, 'zip', c.uID, pathToData, pathToOutput]);
     return c.completer.future;
@@ -260,7 +258,7 @@ class KncTask extends KncSettingsInternal {
   Future unzip(String pathToArchive,
       [Future Function(FileSystemEntity entity, String relPath) funcEntity,
       Future Function(dynamic taskListEnded) funcEnd]) async {
-    final c = completerAdd<String>();
+    final c = completerAdd<String>('unzip $pathToArchive => ???');
     // отправляем запрос на распаковку
     sendPort.send([uID, 'unzip', c.uID, pathToArchive]);
     // Ожидаем распаковку
@@ -270,8 +268,8 @@ class KncTask extends KncSettingsInternal {
     final i2 = err.indexOf('"', i1 + 1);
     final i3 = err.indexOf('"', i2 + 1);
     // final i4 = err.indexOf('^!@#\$', i3 + 1);
-    // final eCode = err.substring(i0, i1);
-    final eOutPut = err.substring(i2, i3);
+    // final eCode = err.substring(i0+1, i1);
+    final eOutPut = err.substring(i2 + 1, i3);
     // final eStdOut = err.substring(i3 + 1, i4);
     // final eStdErr = err.substring(i4 + 5);
     if (err[0] == 'O') {

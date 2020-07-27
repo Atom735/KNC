@@ -1092,7 +1092,7 @@ class InkData {
       final newPath =
           await ss.newerOutInk.lock(p.basename(entity.path) + '.docx');
       final procRes = await ss.doc2x(entity.path, newPath);
-      if (procRes.exitCode != 0) {
+      if (procRes != 0) {
         await ss.newerOutInk.unlock(newPath);
         return null;
       }
