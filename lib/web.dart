@@ -134,6 +134,48 @@ class MyServer {
     });
   }
 
+  /// Отправляет файл клиенту,
+  /// возвращает `true` в случае удачи
+  Future<bool> serveFile(final File file, HttpResponse response) async {
+    if (await file.exists()) {
+      print('serve: $file');
+      switch (p.extension(file.path)) {
+        case '.js':
+          response.headers.contentType = ct_JS;
+          break;
+        case '.dart':
+          response.headers.contentType = ct_Dart;
+          break;
+        case '.xlsx':
+          response.headers.contentType = ct_Xlsx;
+          break;
+        case '.css':
+          response.headers.contentType = ct_Css;
+          break;
+        case '.html':
+          response.headers.contentType = ContentType.html;
+          break;
+        case '.bin':
+          response.headers.contentType = ContentType.binary;
+          break;
+        case '.json':
+        case '.map':
+          response.headers.contentType = ContentType.json;
+          break;
+        default:
+          response.headers.contentType = ContentType.text;
+      }
+      response.statusCode = HttpStatus.ok;
+
+      await response.addStream(file.openRead());
+      await response.flush();
+      await response.close();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   /// Подключить сервер на прослушку порта [port]
   ///
   /// Изначально необходимо установить функции обработчики запросов [handleRequest],

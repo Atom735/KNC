@@ -234,13 +234,22 @@ Future main(List<String> args) async {
     if (req.uri.path == '/') {
       return _sendSettings();
     } else if (req.uri.path.startsWith(wwwPathToTasks)) {
-      final taskUID =
-          int.tryParse(req.uri.path.substring(wwwPathToTasks.length));
+      final uri = Uri.tryParse(req.uri.path, wwwPathToTasks.length);
+      if (uri == null) {
+        return false;
+      }
+      final ps = uri.pathSegments;
+      if (ps.isEmpty) {
+        return false;
+      }
+      final taskUID = int.tryParse(ps.first);
+      KncSettingsOnMain task;
       if (taskUID != null) {
         var bNew = true;
-        for (var task in listOfTasks) {
-          if (task.uID == taskUID) {
+        for (var task1 in listOfTasks) {
+          if (task1.uID == taskUID) {
             bNew = false;
+            task = task1;
             break;
           }
         }
@@ -264,13 +273,19 @@ Future main(List<String> args) async {
             return _sendSettings();
           }
         }
-        final response = req.response;
-        response.headers.contentType = ContentType.html;
-        response.statusCode = HttpStatus.ok;
-        await response.addStream(File(r'web/action.html').openRead());
-        await response.flush();
-        await response.close();
-        return true;
+        if (ps.length == 1) {
+          final response = req.response;
+          response.headers.contentType = ContentType.html;
+          response.statusCode = HttpStatus.ok;
+          await response.addStream(File(r'web/action.html').openRead());
+          await response.flush();
+          await response.close();
+          return true;
+        } else {
+          return await server.serveFile(
+              File('${task.ssPathOut}/${ps.sublist(1).join('/')}'),
+              req.response);
+        }
       }
     } else if (req.uri.path == '/lib/www.dart') {
       final response = req.response;
