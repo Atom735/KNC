@@ -12,10 +12,15 @@ class KncSettingsStateWeb extends KncSettingsInternal {
   final List<ParagraphElement> pStateInList = [];
   final ParagraphElement pStateLastMsg = document.createElement('p')
     ..classes.add('msg');
+  final AnchorElement pStateAnchorToTask = document.createElement('a')
+    ..classes.add('hrefbtn');
+  final AnchorElement pStateAnchorToXls = document.createElement('a')
+    ..classes.add('hrefbtn')
+    ..innerText = 'ссылка на таблицу';
 
   void webInit() {
     pStateName.innerText = '($uID)' + ssTaskName;
-    pStateText.innerText = 'В процессе';
+    pStateText.innerText = '...';
     pStateOutPath.innerText = ssPathOut;
     for (final item in pathInList) {
       pStateInList.add(document.createElement('p')
@@ -23,8 +28,11 @@ class KncSettingsStateWeb extends KncSettingsInternal {
         ..innerText = item);
     }
     pStateLastMsg.innerText = lastWsMsg;
+    pStateAnchorToTask.innerText = 'ссылка на задачу';
+    pStateAnchorToTask.href = '$wwwPathToTasks$uID';
 
     pStateBlock.append(pStateName);
+    pStateBlock.append(pStateAnchorToTask);
     pStateBlock.append(pStateText);
     pStateBlock.append(pStateOutPath);
     for (final item in pStateInList) {
@@ -34,9 +42,54 @@ class KncSettingsStateWeb extends KncSettingsInternal {
   }
 
   @override
+  set pathToTable(final String path) {
+    super.pathToTable = path;
+    pStateAnchorToXls.href = path;
+    pStateBlock.insertBefore(pStateAnchorToXls, pStateText);
+  }
+
+  @override
   set lastWsMsg(final String txt) {
     super.lastWsMsg = txt;
     pStateLastMsg.innerText = lastWsMsg;
+  }
+
+  @override
+  set iState(KncTaskState state) {
+    super.iState = state;
+    switch (iState) {
+      case KncTaskState.initializing:
+        pStateText
+          ..innerText = 'Инициализация...'
+          ..classes.clear()
+          ..classes.addAll(['state', 'init']);
+        break;
+      case KncTaskState.work:
+        pStateText
+          ..innerText = 'Обработка файлов...'
+          ..classes.clear()
+          ..classes.addAll(['state', 'work']);
+        break;
+      case KncTaskState.savesDatas:
+        pStateText
+          ..innerText = 'Сохранение данных...'
+          ..classes.clear()
+          ..classes.addAll(['state', 'save']);
+        break;
+      case KncTaskState.generateTable:
+        pStateText
+          ..innerText = 'Генерация таблицы...'
+          ..classes.clear()
+          ..classes.addAll(['state', 'genxls']);
+        break;
+      case KncTaskState.end:
+        pStateText
+          ..innerText = 'Работа завершена...'
+          ..classes.clear()
+          ..classes.addAll(['state', 'end']);
+        break;
+      default:
+    }
   }
 }
 
@@ -87,11 +140,25 @@ class MyWeb {
             ss.add(s);
             s.webInit();
             pStatusServer.append(s.pStateBlock);
-          } else if (txt[0] == '^') {
-            final i0 = txt.indexOf('#');
-            final uID = int.tryParse(txt.substring(1, i0));
+          } else if (txt.startsWith(wwwKncTaskLastMsg)) {
+            final i0 = txt.indexOf(':', wwwKncTaskLastMsg.length);
+            final uID =
+                int.tryParse(txt.substring(wwwKncTaskLastMsg.length, i0));
             final task = ss.singleWhere((e) => e.uID == uID);
-            task.lastWsMsg = txt.substring(i0);
+            task.lastWsMsg = txt.substring(i0 + 1);
+          } else if (txt.startsWith(wwwKncTaskUpdateState)) {
+            final i0 = txt.indexOf(':', wwwKncTaskUpdateState.length);
+            final uID =
+                int.tryParse(txt.substring(wwwKncTaskUpdateState.length, i0));
+            final task = ss.singleWhere((e) => e.uID == uID);
+            task.iState =
+                KncTaskState.values[int.tryParse(txt.substring(i0 + 1))];
+          } else if (txt.startsWith(wwwKncTaskUpdateXlsTable)) {
+            final i0 = txt.indexOf(':', wwwKncTaskUpdateXlsTable.length);
+            final uID = int.tryParse(
+                txt.substring(wwwKncTaskUpdateXlsTable.length, i0));
+            final task = ss.singleWhere((e) => e.uID == uID);
+            task.pathToTable = txt.substring(i0 + 1);
           }
         }
       });

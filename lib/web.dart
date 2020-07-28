@@ -110,8 +110,11 @@ class MyServer {
   Future<void> Function(WebSocket socket, String content, MyServer serv)
       handleRequestWS;
 
+  /// Функция обработчик закрытия _WebSocket_.
+  void Function(WebSocket socket, MyServer serv) handleCloseWS;
+
   /// Функция обработчик новго подключения _WebSocket_.
-  Future<void> Function(WebSocket socket, MyServer serv) handleWebSocketNew;
+  void Function(WebSocket socket, MyServer serv) handleWebSocketNew;
 
   MyServer(this.dir);
 
@@ -158,10 +161,13 @@ class MyServer {
           }
         }, onDone: () {
           print('WS: socket(${socket.hashCode}) closed');
+          if (handleCloseWS != null) {
+            handleCloseWS(socket, this);
+          }
           ws.remove(socket);
         });
         if (handleWebSocketNew != null) {
-          await handleWebSocketNew(socket, this);
+          handleWebSocketNew(socket, this);
         }
       } else {
         final file = File(p.join(dir.absolute.path, req.uri.path.substring(1)));

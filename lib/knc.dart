@@ -100,6 +100,18 @@ class KncTask extends KncSettingsInternal {
 
   KncTask();
 
+  @override
+  set iState(KncTaskState state) {
+    super.iState = state;
+    sendMsg('$wwwKncTaskUpdateState${iState.index}');
+  }
+
+  @override
+  set pathToTable(String path) {
+    super.pathToTable = path;
+    sendMsg('$wwwKncTaskUpdateXlsTable${pathToTable}');
+  }
+
   void sendMsg(final String txt) {
     lastWsMsg = txt;
     sendPort.send([uID, txt]);
@@ -196,7 +208,7 @@ class KncTask extends KncSettingsInternal {
   void isolateEntryPointThis() async {
     receivePort = ReceivePort();
 
-    final cCharmMaps = completerAdd('charMaps');
+    final cCharmMaps = completerAdd<void>('charMaps');
 
     receivePort.listen((final msg) {
       // Прослушивание сообщений полученных от главного изолята
@@ -213,6 +225,9 @@ class KncTask extends KncSettingsInternal {
             case 'charMaps':
               ssCharMaps = msg[1];
               completerComplite(cCharmMaps.uID, null);
+              return;
+            case 'ssPathOut':
+              completerComplite(msg[1], null);
               return;
             default:
           }
@@ -341,6 +356,10 @@ class KncTask extends KncSettingsInternal {
       }
     }
 
+    final c = completerAdd<void>('ssPathOut');
+
+    sendPort.send([uID, 'ssPathOut', c.uID, ssPathOut]);
+
     pathOutLas = p.join(ssPathOut, 'las');
     pathOutInk = p.join(ssPathOut, 'ink');
     pathOutErr = p.join(ssPathOut, 'errors');
@@ -358,6 +377,8 @@ class KncTask extends KncSettingsInternal {
     errorsOut = File(p.join(pathOutErr, '.errors.txt'))
         .openWrite(encoding: utf8, mode: FileMode.writeOnly);
     errorsOut.writeCharCode(unicodeBomCharacterRune);
+
+    await c.completer.future;
   }
 
   /// Начинает обработку файлов с настоящими настройками
@@ -406,6 +427,7 @@ class KncTask extends KncSettingsInternal {
       }
     });
     await Future.wait(tasks).then((_) => Future.wait(tasks2)).then((_) async {
+      iState = KncTaskState.savesDatas;
       lasCurvesNameOriginals.sort((a, b) => a.compareTo(b));
       await Future.wait([
         File(p.join(pathOutLas, '.cs.txt'))
@@ -418,7 +440,9 @@ class KncTask extends KncSettingsInternal {
         await errorsOut.close();
         errorsOut = null;
       }
-      print('task[$uID]: Work Ended');
+      iState = KncTaskState.generateTable;
+      pathToTable = await createXlTable();
+      iState = KncTaskState.end;
     });
   }
 

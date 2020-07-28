@@ -10,8 +10,14 @@ String _enc(final String str) => str != null
 /// Начало сообщения о начале выполнения KncTask
 const wwwKncTaskAdd = '#SS.A:';
 
-/// Начало сообщения о обновлении состояния задачи :{uID}:{iState}
+/// Начало сообщения о последнем сообщении
+const wwwKncTaskLastMsg = '#LastMsg';
+
+/// Начало сообщения о обновлении состояния задачи {uID}:{iState}
 const wwwKncTaskUpdateState = '#SS.US:';
+
+/// Начало сообщения о обновлении ссылки на документ XML {uID}:{path}
+const wwwKncTaskUpdateXlsTable = '#XLS:';
 
 /// Путь к задачам
 const wwwPathToTasks = '/task/';
@@ -43,7 +49,7 @@ const wwwMsgInk = '#Ink:\t';
 /// Начало сообщения о конце секции INK
 const wwwMsgInkEnd = '#Ink:\$';
 
-enum KncTaskState { initializing, synced, work, end }
+enum KncTaskState { initializing, work, savesDatas, generateTable, end }
 
 class KncSettingsInternal {
   String get wsUpdateState => '$wwwKncTaskUpdateState${uID}:${iState.index}';
@@ -62,6 +68,9 @@ class KncSettingsInternal {
 
   /// Путь к конечным данным
   String ssPathOut = '';
+
+  /// Путь к XSL таблице
+  String pathToTable;
 
   /// Настройки расширения для архивных файлов
   List<String> ssFileExtAr = ['.zip', '.rar'];
