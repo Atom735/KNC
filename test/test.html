@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+
+    <body>
+        <input id="myId" class="button" name="myFile" type="file"
+            onchange="getName()">
+
+
+        <script>
+            function getName() {
+                alert(document.getElementById("myId").value);
+            }
+        </script>
+    </body>
+
+</html>

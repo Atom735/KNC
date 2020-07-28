@@ -163,6 +163,7 @@ Future main(List<String> args) async {
                 task.pathToTable =
                     dataStr.substring(wwwKncTaskUpdateXlsTable.length);
 
+                task.sendMsg(dataStr);
                 server.sendMsgToAll(
                     '$wwwKncTaskUpdateXlsTable${uID}:${wwwPathToTasks}${uID}/${task.pathToTable.substring(task.ssPathOut.length)}');
                 return;
