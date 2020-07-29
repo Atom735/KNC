@@ -16,37 +16,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-
+@import "package:m4d_components/assets/themes/teal-indigo/material-design-lite";
 @import "package:m4d_components/assets/styles/material-design-lite";
 @import "_app";
-
-.demo-page--accordion,
-.demo-section--accordion {
-    .demo-preview-block {
-        margin-bottom: 24px;
-
-        .mdl-accordion__label--stretch {
-            text-align  : right;
-            margin-right: 12px;
-
-            .material-icons {
-                font-size   : 18px;
-                margin-right: 8px;
-            }
-        }
-
-        .mdl-accordion__label {
-
-            &.with-toolbar {
-                .indicator {
-                    margin-right: 12px;
-                }
-            }
-
-            .sample {
-                padding    : 0 1em;
-                font-weight: bold;
-            }
-        }
-    }
-}
