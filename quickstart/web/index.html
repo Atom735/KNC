@@ -148,11 +148,6 @@
     </div>
 
 
-    <a href="#add-new-task" id="add-task-btn">
-      <button
-        class="mdl-button mdl-button--fab mdl-ripple-effect mdl-button--accent"><i
-          class="material-icons">addchart</i></button>
-    </a>
 
     <dialog class="mdl-dialog mdl-shadow--2dp" id="task-details">
       <h4 class="mdl-dialog__title">{{TaskName}}</h4>
@@ -169,33 +164,41 @@
       </div>
     </dialog>
 
-    <dialog class="mdl-dialog mdl-shadow--2dp" id="new-task-sets">
+    <dialog id="task-sets-dialog" class="mdl-dialog mdl-shadow--2dp">
       <h4 class="mdl-dialog__title">Настройка новой задачи</h4>
       <div class="mdl-dialog__content">
         <form action="#">
-          <div class="mdl-textfield mdl-textfield--floating-label"
-            id="new-task-name-div">
-            <input class="mdl-textfield__input" type="text" id="new-task-name"
+          <div id="task-sets-name-div"
+            class="mdl-textfield mdl-textfield--floating-label">
+            <input id="task-sets-name" class="mdl-textfield__input" type="text"
               required>
-            <label class="mdl-textfield__label" for="new-task-name">Название
-              задачи...</label>
+            <label for="task-sets-name" class="mdl-textfield__label">
+              Название задачи...
+            </label>
           </div>
-          <table class="container textfield-with-button"
-            id="new-task-path-table">
+          <table id="task-sets-table" class="container textfield-with-button">
           </table>
-          <button class="mdl-button mdl-button--icon mdl-button--colored"
-            id="new-task-path-add">
+          <button id="task-sets-path"
+            class="mdl-button mdl-button--icon mdl-button--colored">
             <i class="material-icons">add</i>
           </button>
         </form>
       </div>
       <div class="mdl-dialog__actions">
-        <button class="mdl-button mdl-button--raised close"
-          id="new-task-sets-btn-close">Отмена</button>
-        <button class="mdl-button mdl-button--raised mdl-button--accent"
-          id="new-task-sets-btn-start" disabled>Запустить</button>
+        <button id="task-sets-close"
+          class="mdl-button mdl-button--raised close">
+          Отмена
+        </button>
+        <button id="task-sets-start"
+          class="mdl-button mdl-button--raised mdl-button--accent" disabled>
+          Запустить
+        </button>
       </div>
     </dialog>
+
+    <button id="task-sets-open"
+      class="mdl-button mdl-button--fab mdl-ripple-effect mdl-button--colored add-task-btn"><i
+        class="material-icons">addchart</i></button>
 
     <script defer src="main.dart.js"></script>
   </body>
