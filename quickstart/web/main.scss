@@ -36,3 +36,17 @@
 .tasks-state {
     width: 100%;
 }
+
+@keyframes animation-task-view-card {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+#task-view-section>.mdl-card {
+    animation: animation-task-view-card 500ms ease-in;
+}

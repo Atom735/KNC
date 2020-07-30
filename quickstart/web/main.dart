@@ -1,9 +1,16 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:html';
 
 import 'package:m4d_core/m4d_ioc.dart' as ioc;
 import 'package:m4d_components/m4d_components.dart';
 
+import 'main.fictive.dart';
+
 /// webdev serve --auto refresh --debug --launch-in-chrome --log-requests
+///
+/// @{{uID клиента}}
+/// {{uID запроса}};{{msg}}
 
 final uri = Uri.tryParse(document.baseUri);
 
@@ -11,6 +18,10 @@ Element eGetById(final String id) => document.getElementById(id);
 
 final _htmlValidator = NodeValidatorBuilder.common()
   ..allowElement('button', attributes: ['data-badge']);
+
+const wwwTaskViewUpdate = 'taskview;';
+const wwwTaskNew = 'tasknew;';
+const wwwClientId = '@';
 
 class TaskSetsPath {
   final int id;
@@ -94,7 +105,7 @@ class TaskSetsDialog {
 
   final list = <TaskSetsPath>[];
 
-  reset() {
+  void reset() {
     eDialog.close();
     for (final path in list) {
       if (path != null) {
@@ -106,10 +117,19 @@ class TaskSetsDialog {
     loading = false;
   }
 
-  start() {
+  void start() {
     loading = true;
-    Future.delayed(Duration(milliseconds: 1000)).then((_) => reset());
-    // TODO: отправка данных
+    final value = {
+      'name': eName.value,
+      'path': list
+          .where((e) => e != null)
+          .map((e) => e.eInput.value)
+          .where((e) => e.isNotEmpty)
+          .toList()
+    };
+    App().requestOnce('${wwwTaskNew}${json.encode(value)}').then((msg) {
+      reset();
+    });
   }
 
   void validate() {
@@ -190,17 +210,82 @@ class TaskCard {
   final ButtonElement eFiles;
   final ButtonElement eLaunch;
   final ButtonElement eClose;
-  int iState = 0;
-  int iErrors = 0;
-  int iFiles = 0;
+  int _iState = 0;
+  int _iErrors = 0;
+  int _iFiles = 0;
   bool _hiden = true;
-  set hiden(final bool b) {
+  set hidden(final bool b) {
     if (_hiden == b) {
       return;
     }
     _hiden = b;
     eCard.hidden = _hiden;
   }
+
+  set iState(final int i) {
+    if (_iState == i) {
+      return;
+    }
+    _iState = i;
+    switch (_iState) {
+      case 0:
+        eState
+          ..innerText = 'Запускается'
+          ..classes.clear()
+          ..classes.add('task-state-init');
+        break;
+      case 1:
+        eState
+          ..innerText = 'Выполняется'
+          ..classes.clear()
+          ..classes.add('task-state-work');
+        break;
+      case 2:
+        eState
+          ..innerText = 'Генерируется таблица'
+          ..classes.clear()
+          ..classes.add('task-state-table');
+        break;
+      case 3:
+        eState
+          ..innerText = 'Завершена'
+          ..classes.clear()
+          ..classes.add('task-state-end');
+        eReport.disabled = false;
+        break;
+      default:
+    }
+  }
+
+  set iErrors(final int i) {
+    if (_iErrors == i) {
+      return;
+    }
+    _iErrors = i;
+    if (_iErrors <= 0) {
+      eErrors.attributes.remove('data-badge');
+    } else if (_iErrors >= 1000) {
+      eErrors.attributes['data-badge'] = '...';
+    } else {
+      eErrors.attributes['data-badge'] = _iErrors.toString();
+    }
+  }
+
+  set iFiles(final int i) {
+    if (_iFiles == i) {
+      return;
+    }
+    _iFiles = i;
+    if (_iFiles <= 0) {
+      eFiles.attributes.remove('data-badge');
+    } else if (_iFiles >= 1000) {
+      eFiles.attributes['data-badge'] = '...';
+    } else {
+      eFiles.attributes['data-badge'] = _iFiles.toString();
+    }
+  }
+
+  void update() {}
 
   TaskCard(this.id, final TaskViewSection section)
       : eCard = eGetById('task-${id}-card'),
@@ -277,20 +362,30 @@ class TaskViewSection {
     eLoader.hidden = !_loading;
   }
 
-  void add(final int id) {
+  TaskCard add(final int id) {
     eSection.appendHtml(TaskCard.html(id), validator: _htmlValidator);
-    list[id] = TaskCard(id, this);
+    return list[id] = TaskCard(id, this);
   }
 
   void update() {
-    add(1);
-    list[1].hiden = false;
+    list.forEach((k, v) => v.hidden = false);
     loading = false;
   }
 
   TaskViewSection._init() {
-    /// TODO: получение данных о задачах
-    Future.delayed(Duration(milliseconds: 1000)).then((_) => update());
+    Future(() => App().requestOnce(wwwTaskViewUpdate)).then((msg) {
+      final items = json.decode(msg);
+      for (final item in items) {
+        final t = add(item['id']);
+        t.eName.innerText = item['name'];
+        t.iState = item['state'];
+        t.iErrors = item['errors'];
+        t.iFiles = item['files'];
+      }
+      update();
+
+      /// TODO: получение данных о задачах
+    });
   }
 
   static TaskViewSection _instance;
@@ -299,32 +394,81 @@ class TaskViewSection {
 }
 
 class App {
-  final WebSocket socket = WebSocket('ws://${uri.host}:${uri.port}');
+  /// Уникальный айди клиента
+  int uID;
+  final uIDCompleter = Completer<int>();
+
+  /// Сокет для связи с сервером
+  final socket = WebSocket('ws://${uri.host}:${uri.port}');
+
   final DivElement eTitleSpinner = eGetById('page-title-spinner');
   final SpanElement eTitleText = eGetById('page-title-text');
 
-  void onOpen() {
-    eTitleText.innerText = 'Пункт приёма стеклотары';
-    eTitleSpinner.hidden = true;
+  final listOfRequest = <int, Completer<String>>{};
+
+  final taskSets = TaskSetsDialog();
+  final TaskViewSection taskView = TaskViewSection();
+
+  /// Отправить данные на сервер
+  void send(final String msg) => socket.sendString(msg);
+
+  /// Айди предыдущего реквеста
+  int requestID = 0;
+
+  /// Отправить запрос и получить на него ответ
+  Future<String> requestOnce(final String msg) {
+    if (uID == null) {
+      return uIDCompleter.future.then((_) => requestOnce(msg));
+    } else {
+      requestID += 1;
+      final i = requestID;
+      final c = Completer<String>();
+      send('$uID;$i;$msg');
+      listOfRequest[i] = c;
+      c.future.then((_) => listOfRequest.remove(i));
+      return c.future;
+    }
   }
 
-  void onClose() {}
-  void onMessage(final String msg) {}
+  void onOpen() {
+    eTitleText.innerText = 'Ждём ответа...';
+    uIDCompleter.future.then((_) {
+      eTitleText.innerText = 'Пункт приёма стеклотары №$uID';
+      eTitleSpinner.hidden = true;
+    });
+  }
 
-  App._init() {
+  void onClose() {
+    eTitleText.innerText = 'Меня отключили и потеряли...';
+  }
+
+  void onMessage(final String msg) {
+    if (msg.startsWith(wwwClientId)) {
+      uID = int.tryParse(msg.substring(wwwClientId.length));
+      uIDCompleter.complete(uID);
+      return;
+    }
+    final i0 = msg.indexOf(';');
+    if (i0 != -1) {
+      final id = int.tryParse(msg.substring(0, i0));
+      if (id != null && listOfRequest[id] != null) {
+        listOfRequest[id].complete(msg.substring(i0 + 1));
+      }
+    }
+  }
+
+  App.init() {
     socket.onOpen.listen((_) => onOpen());
     socket.onClose.listen((_) => onClose());
     socket.onMessage.listen((_) => onMessage(_.data));
-
-    /// TODO: remove debug
-    Future.delayed(Duration(milliseconds: 100)).then((_) => onOpen());
   }
-
-  static App _instance;
-  factory App() => (_instance) ?? (_instance = App._init());
+  static App instance;
+  factory App() => (instance) ?? (instance = App.init());
 }
 
 Future main() async {
+  FictiveApp();
+
   ioc.Container.bindModules([CoreComponentsModule()]);
   await componentHandler().upgrade();
 
@@ -336,9 +480,4 @@ Future main() async {
       td.eDialog.showModal();
     });
   }
-
-  TaskSetsDialog();
-  TaskViewSection();
-
-  App();
 }
