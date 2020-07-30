@@ -4,12 +4,6 @@ body {
   padding: 0;
 }
 
-h1,
-h2 {
-  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-  font-weight: 400;
-}
-
 
 .ribbon {
   width : 100%;
@@ -76,24 +70,12 @@ body>.mdl-layout__container>.mdl-layout>main.mdl-layout__content.mdl-layout__con
   min-height: 20vh;
 }
 
-#new-task-name-div {
-  display: block;
-}
-
 .mdl-mini-footer {
   padding-top   : 12px;
   padding-bottom: 12px;
   font-size     : 12px;
 }
 
-#add-task-btn {
-  position    : fixed;
-  display     : block;
-  right       : 0;
-  bottom      : 37px;
-  margin-right: 40px;
-  z-index     : 900;
-}
 
 .textfield-with-button {
 
@@ -107,9 +89,6 @@ body>.mdl-layout__container>.mdl-layout>main.mdl-layout__content.mdl-layout__con
   }
 }
 
-.tasks-state {
-  width: 100%;
-}
 
 .sitegen-link,
 .mm-link {
@@ -150,4 +129,20 @@ body>.mdl-layout__container>.mdl-layout>main.mdl-layout__content.mdl-layout__con
   #view-source {
     bottom: 29px;
   }
+}
+
+.mdl-card__actions {
+  line-height: 38px;
+
+  .mdl-button {
+    margin: 0;
+  }
+}
+
+.mdl-button.mdl-badge.mdl-badge--overlap {
+  overflow: visible;
+}
+
+.mdl-progress {
+  width: 100%;
 }

@@ -19,3 +19,20 @@
 @import "package:m4d_components/assets/themes/teal-indigo/material-design-lite";
 @import "package:m4d_components/assets/styles/material-design-lite";
 @import "_app";
+
+#task-sets-name-div {
+    display: block;
+}
+
+#task-sets-open {
+    position    : fixed;
+    display     : block;
+    right       : 0;
+    bottom      : 37px;
+    margin-right: 40px;
+    z-index     : 900;
+}
+
+.tasks-state {
+    width: 100%;
+}
