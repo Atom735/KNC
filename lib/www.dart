@@ -49,7 +49,7 @@ const wwwMsgInk = '#Ink:\t';
 /// Начало сообщения о конце секции INK
 const wwwMsgInkEnd = '#Ink:\$';
 
-enum KncTaskState { initializing, work, savesDatas, generateTable, end }
+enum KncTaskState { initializing, work, generateTable, end }
 
 class KncSettingsInternal {
   String get wsUpdateState => '$wwwKncTaskUpdateState${uID}:${iState.index}';

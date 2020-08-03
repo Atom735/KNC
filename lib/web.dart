@@ -19,6 +19,48 @@ final ct_Xlsx = ContentType.parse(
 /// ContentType mime = text/css
 final ct_Css = ContentType.parse('text/css');
 
+/// Отправляет файл клиенту,
+/// возвращает `true` в случае удачи
+Future<bool> serveFile(final File file, final HttpResponse response) async {
+  if (await file.exists()) {
+    print('serve: $file');
+    switch (p.extension(file.path)) {
+      case '.js':
+        response.headers.contentType = ct_JS;
+        break;
+      case '.dart':
+        response.headers.contentType = ct_Dart;
+        break;
+      case '.xlsx':
+        response.headers.contentType = ct_Xlsx;
+        break;
+      case '.css':
+        response.headers.contentType = ct_Css;
+        break;
+      case '.html':
+        response.headers.contentType = ContentType.html;
+        break;
+      case '.bin':
+        response.headers.contentType = ContentType.binary;
+        break;
+      case '.json':
+      case '.map':
+        response.headers.contentType = ContentType.json;
+        break;
+      default:
+        response.headers.contentType = ContentType.text;
+    }
+    response.statusCode = HttpStatus.ok;
+
+    await response.addStream(file.openRead());
+    await response.flush();
+    await response.close();
+    return true;
+  } else {
+    return false;
+  }
+}
+
 String getRequestDebugData(final HttpRequest request) {
   final string = StringBuffer();
   string.writeln('Received request ${request.method}: ${request.uri.path}');
@@ -114,7 +156,7 @@ class MyServer {
   void Function(WebSocket socket, MyServer serv) handleCloseWS;
 
   /// Функция обработчик новго подключения _WebSocket_.
-  void Function(WebSocket socket, MyServer serv) handleWebSocketNew;
+  bool Function(WebSocket socket, MyServer serv) handleWebSocketNew;
 
   MyServer(this.dir);
 
@@ -134,48 +176,6 @@ class MyServer {
     });
   }
 
-  /// Отправляет файл клиенту,
-  /// возвращает `true` в случае удачи
-  Future<bool> serveFile(final File file, HttpResponse response) async {
-    if (await file.exists()) {
-      print('serve: $file');
-      switch (p.extension(file.path)) {
-        case '.js':
-          response.headers.contentType = ct_JS;
-          break;
-        case '.dart':
-          response.headers.contentType = ct_Dart;
-          break;
-        case '.xlsx':
-          response.headers.contentType = ct_Xlsx;
-          break;
-        case '.css':
-          response.headers.contentType = ct_Css;
-          break;
-        case '.html':
-          response.headers.contentType = ContentType.html;
-          break;
-        case '.bin':
-          response.headers.contentType = ContentType.binary;
-          break;
-        case '.json':
-        case '.map':
-          response.headers.contentType = ContentType.json;
-          break;
-        default:
-          response.headers.contentType = ContentType.text;
-      }
-      response.statusCode = HttpStatus.ok;
-
-      await response.addStream(file.openRead());
-      await response.flush();
-      await response.close();
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   /// Подключить сервер на прослушку порта [port]
   ///
   /// Изначально необходимо установить функции обработчики запросов [handleRequest],
@@ -191,25 +191,25 @@ class MyServer {
         final socket = await WebSocketTransformer.upgrade(req);
         ws.add(socket);
         print('WS: socket(${socket.hashCode}) opened ');
-        socket.listen((event) async {
-          print('WS: $event');
-          if (event is String) {
-            if (event == '#STOP!') {
-              server.close(); // ignore: unawaited_futures
+        if (handleWebSocketNew != null && handleWebSocketNew(socket, this)) {
+        } else {
+          socket.listen((event) async {
+            print('WS: $event');
+            if (event is String) {
+              if (event == '#STOP!') {
+                server.close(); // ignore: unawaited_futures
+              }
+              if (handleRequestWS != null) {
+                await handleRequestWS(socket, event, this);
+              }
             }
-            if (handleRequestWS != null) {
-              await handleRequestWS(socket, event, this);
+          }, onDone: () {
+            print('WS: socket(${socket.hashCode}) closed');
+            if (handleCloseWS != null) {
+              handleCloseWS(socket, this);
             }
-          }
-        }, onDone: () {
-          print('WS: socket(${socket.hashCode}) closed');
-          if (handleCloseWS != null) {
-            handleCloseWS(socket, this);
-          }
-          ws.remove(socket);
-        });
-        if (handleWebSocketNew != null) {
-          handleWebSocketNew(socket, this);
+            ws.remove(socket);
+          });
         }
       } else {
         final file = File(p.join(dir.absolute.path, req.uri.path.substring(1)));

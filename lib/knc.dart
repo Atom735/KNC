@@ -427,7 +427,7 @@ class KncTask extends KncSettingsInternal {
       }
     });
     await Future.wait(tasks).then((_) => Future.wait(tasks2)).then((_) async {
-      iState = KncTaskState.savesDatas;
+      // iState = KncTaskState.savesDatas;
       lasCurvesNameOriginals.sort((a, b) => a.compareTo(b));
       await Future.wait([
         File(p.join(pathOutLas, '.cs.txt'))
