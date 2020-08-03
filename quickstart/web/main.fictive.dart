@@ -2,7 +2,20 @@ import 'dart:convert';
 
 import 'main.dart';
 
+class FictiveTask {
+  final int id;
+  final String name;
+  final List<String> paths;
+
+  FictiveTask(this.id, this.name, this.paths);
+}
+
 class FictiveApp extends App {
+  /// Уникальный Айди задачи
+  int _uTaskID = 0;
+
+  final _taskList = <int, FictiveTask>{};
+
   /// Отправить данные на сервер
   @override
   void send(final String msgRAW) {
@@ -50,7 +63,19 @@ class FictiveApp extends App {
 
         break;
       default:
-        if (msg.startsWith(wwwTaskNew)) {}
+        if (msg.startsWith(wwwTaskNew)) {
+          final map = json.decode(msg.substring(wwwTaskNew.length));
+          _uTaskID += 1;
+          final taskID = _uTaskID;
+          final list = List<String>((map['path'] as List).length);
+          for (var i = 0; i < list.length; i++) {
+            list[i] = (map['path'] as List)[i];
+          }
+          _taskList[taskID] = (FictiveTask(taskID, map['name'], list));
+          Future.delayed(Duration(milliseconds: 333)).then((_) {
+            onMessage('$rUID;$taskID');
+          });
+        }
     }
   }
 

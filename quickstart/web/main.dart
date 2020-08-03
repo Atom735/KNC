@@ -19,9 +19,20 @@ Element eGetById(final String id) => document.getElementById(id);
 final _htmlValidator = NodeValidatorBuilder.common()
   ..allowElement('button', attributes: ['data-badge']);
 
+/// Клиент отправляет серверу запрос на обновление данных всех задач
 const wwwTaskViewUpdate = 'taskview;';
+
+/// Клиент отправляет серверу запрос на новую задачу
 const wwwTaskNew = 'tasknew;';
+
+/// Первое сообщение от сервера с уникальным айди для клиента
 const wwwClientId = '@';
+
+/// Подписка на обновления состояния задачи, далее идёт айди задачи
+const wwwTaskUpdates = 'taskupdates;';
+
+/// Закрыть подписку на обновления
+const wwwStreamClose = 'streamclose;';
 
 class TaskSetsPath {
   final int id;
@@ -128,7 +139,13 @@ class TaskSetsDialog {
           .toList()
     };
     App().requestOnce('${wwwTaskNew}${json.encode(value)}').then((msg) {
+      final t = App().taskView.add(int.tryParse(msg));
+      t.eName.innerText = value['name'];
+      t.iState = 0;
+      t.iErrors = 0;
+      t.iFiles = 0;
       reset();
+      App().taskView.update();
     });
   }
 
@@ -210,9 +227,9 @@ class TaskCard {
   final ButtonElement eFiles;
   final ButtonElement eLaunch;
   final ButtonElement eClose;
-  int _iState = 0;
-  int _iErrors = 0;
-  int _iFiles = 0;
+  int _iState = -1;
+  int _iErrors = -1;
+  int _iFiles = -1;
   bool _hiden = true;
   set hidden(final bool b) {
     if (_hiden == b) {
@@ -399,12 +416,14 @@ class App {
   final uIDCompleter = Completer<int>();
 
   /// Сокет для связи с сервером
-  final socket = WebSocket('ws://${uri.host}:${uri.port}');
+  final socket = WebSocket('ws://${uri.host}:80/ws');
+  // WebSocket('ws://${uri.host}:${uri.port}');
 
   final DivElement eTitleSpinner = eGetById('page-title-spinner');
   final SpanElement eTitleText = eGetById('page-title-text');
 
   final listOfRequest = <int, Completer<String>>{};
+  final listOfSubscribers = <int, StreamController<String>>{};
 
   final taskSets = TaskSetsDialog();
   final TaskViewSection taskView = TaskViewSection();
@@ -430,6 +449,17 @@ class App {
     }
   }
 
+  /// Отправить запрос на подписку к событиям
+  Stream<String> requestSubscribe(final String msg) {
+    requestID += 1;
+    final i = requestID;
+    final c = StreamController<String>(
+        onCancel: () => send('$uID;$i;$wwwStreamClose'));
+    send('$uID;$i;$msg');
+    listOfSubscribers[i] = c;
+    return c.stream;
+  }
+
   void onOpen() {
     eTitleText.innerText = 'Ждём ответа...';
     uIDCompleter.future.then((_) {
@@ -451,8 +481,18 @@ class App {
     final i0 = msg.indexOf(';');
     if (i0 != -1) {
       final id = int.tryParse(msg.substring(0, i0));
-      if (id != null && listOfRequest[id] != null) {
-        listOfRequest[id].complete(msg.substring(i0 + 1));
+      if (id != null) {
+        if (listOfRequest[id] != null) {
+          listOfRequest[id].complete(msg.substring(i0 + 1));
+        } else if (listOfSubscribers[id] != null) {
+          final data = msg.substring(i0 + 1);
+          if (data == wwwStreamClose) {
+            listOfSubscribers[id].close();
+            listOfSubscribers.remove(id);
+          } else {
+            listOfSubscribers[id].add(data);
+          }
+        }
       }
     }
   }
