@@ -35,7 +35,18 @@ class WebClient {
         wrapper.recv(event);
       }
     }, onError: getErrorFunc('Ошибка в прослушке WebSocket:'));
+    waitMsgAll(wwwTaskViewUpdate).listen((msg) {
+      wrapper.send(msg.i, ServerApp().getWwwTaskViewUpdate());
+    });
   }
+
+  Future<SocketWrapperResponse> Function(String msgBegin) get waitMsg =>
+      wrapper.waitMsg;
+  Stream<SocketWrapperResponse> Function(String msgBegin) get waitMsgAll =>
+      wrapper.waitMsgAll;
+  Future<String> Function(String msg) get requestOnce => wrapper.requestOnce;
+  Stream<String> Function(String msg) get requestSubscribe =>
+      wrapper.requestSubscribe;
 }
 
 void Function(dynamic error, StackTrace stackTrace) getErrorFunc(
@@ -72,6 +83,11 @@ class ServerApp {
 
   /// Конвертер WordConv и архивтор 7zip
   MyConverters converters;
+
+  /// Получить данные для формы TaskView
+  String getWwwTaskViewUpdate() {
+    return '{}';
+  }
 
   Future<void> run(final int port) async {
     converters = await MyConverters.init(queueProc);

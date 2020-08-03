@@ -70,12 +70,6 @@ class KncSettingsStateWeb extends KncSettingsInternal {
           ..classes.clear()
           ..classes.addAll(['state', 'work']);
         break;
-      case KncTaskState.savesDatas:
-        pStateText
-          ..innerText = 'Сохранение данных...'
-          ..classes.clear()
-          ..classes.addAll(['state', 'save']);
-        break;
       case KncTaskState.generateTable:
         pStateText
           ..innerText = 'Генерация таблицы...'
