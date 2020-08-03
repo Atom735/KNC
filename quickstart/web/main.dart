@@ -6,6 +6,7 @@ import 'package:m4d_core/m4d_ioc.dart' as ioc;
 import 'package:m4d_components/m4d_components.dart';
 
 import 'main.fictive.dart';
+import 'www.dart';
 
 /// webdev serve --auto refresh --debug --launch-in-chrome --log-requests
 ///
@@ -18,21 +19,6 @@ Element eGetById(final String id) => document.getElementById(id);
 
 final _htmlValidator = NodeValidatorBuilder.common()
   ..allowElement('button', attributes: ['data-badge']);
-
-/// Клиент отправляет серверу запрос на обновление данных всех задач
-const wwwTaskViewUpdate = 'taskview;';
-
-/// Клиент отправляет серверу запрос на новую задачу
-const wwwTaskNew = 'tasknew;';
-
-/// Первое сообщение от сервера с уникальным айди для клиента
-const wwwClientId = '@';
-
-/// Подписка на обновления состояния задачи, далее идёт айди задачи
-const wwwTaskUpdates = 'taskupdates;';
-
-/// Закрыть подписку на обновления
-const wwwStreamClose = 'streamclose;';
 
 class TaskSetsPath {
   final int id;
@@ -507,7 +493,8 @@ class App {
 }
 
 Future main() async {
-  FictiveApp();
+  // FictiveApp();
+  App();
 
   ioc.Container.bindModules([CoreComponentsModule()]);
   await componentHandler().upgrade();
