@@ -6,6 +6,7 @@ import 'package:m4d_core/m4d_ioc.dart' as ioc;
 import 'package:m4d_components/m4d_components.dart';
 
 import 'main.fictive.dart';
+import 'socketWrapper.dart';
 import 'www.dart';
 
 /// webdev serve --auto refresh --debug --launch-in-chrome --log-requests
@@ -397,61 +398,22 @@ class TaskViewSection {
 }
 
 class App {
-  /// Уникальный айди клиента
-  int uID;
-  final uIDCompleter = Completer<int>();
-
   /// Сокет для связи с сервером
   final socket = WebSocket('ws://${uri.host}:80/ws');
+  final socketCompleter = Completer();
   // WebSocket('ws://${uri.host}:${uri.port}');
+  SocketWrapper wrapper;
 
   final DivElement eTitleSpinner = eGetById('page-title-spinner');
   final SpanElement eTitleText = eGetById('page-title-text');
 
-  final listOfRequest = <int, Completer<String>>{};
-  final listOfSubscribers = <int, StreamController<String>>{};
-
   final taskSets = TaskSetsDialog();
   final TaskViewSection taskView = TaskViewSection();
 
-  /// Отправить данные на сервер
-  void send(final String msg) => socket.sendString(msg);
-
-  /// Айди предыдущего реквеста
-  int requestID = 0;
-
-  /// Отправить запрос и получить на него ответ
-  Future<String> requestOnce(final String msg) {
-    if (uID == null) {
-      return uIDCompleter.future.then((_) => requestOnce(msg));
-    } else {
-      requestID += 1;
-      final i = requestID;
-      final c = Completer<String>();
-      send('$uID;$i;$msg');
-      listOfRequest[i] = c;
-      c.future.then((_) => listOfRequest.remove(i));
-      return c.future;
-    }
-  }
-
-  /// Отправить запрос на подписку к событиям
-  Stream<String> requestSubscribe(final String msg) {
-    requestID += 1;
-    final i = requestID;
-    final c = StreamController<String>(
-        onCancel: () => send('$uID;$i;$wwwStreamClose'));
-    send('$uID;$i;$msg');
-    listOfSubscribers[i] = c;
-    return c.stream;
-  }
-
   void onOpen() {
-    eTitleText.innerText = 'Ждём ответа...';
-    uIDCompleter.future.then((_) {
-      eTitleText.innerText = 'Пункт приёма стеклотары №$uID';
-      eTitleSpinner.hidden = true;
-    });
+    eTitleText.innerText = 'Пункт приёма стеклотары.';
+    eTitleSpinner.hidden = true;
+    socketCompleter.complete();
   }
 
   void onClose() {
@@ -459,31 +421,21 @@ class App {
   }
 
   void onMessage(final String msg) {
-    if (msg.startsWith(wwwClientId)) {
-      uID = int.tryParse(msg.substring(wwwClientId.length));
-      uIDCompleter.complete(uID);
-      return;
-    }
-    final i0 = msg.indexOf(';');
-    if (i0 != -1) {
-      final id = int.tryParse(msg.substring(0, i0));
-      if (id != null) {
-        if (listOfRequest[id] != null) {
-          listOfRequest[id].complete(msg.substring(i0 + 1));
-        } else if (listOfSubscribers[id] != null) {
-          final data = msg.substring(i0 + 1);
-          if (data == wwwStreamClose) {
-            listOfSubscribers[id].close();
-            listOfSubscribers.remove(id);
-          } else {
-            listOfSubscribers[id].add(data);
-          }
-        }
-      }
-    }
+    print('recv: $msg');
+    wrapper.recv(msg);
   }
 
+  Future<SocketWrapperResponse> Function(String msgBegin) get waitMsg =>
+      wrapper.waitMsg;
+  Stream<SocketWrapperResponse> Function(String msgBegin) get waitMsgAll =>
+      wrapper.waitMsgAll;
+  Future<String> Function(String msg) get requestOnce => wrapper.requestOnce;
+  Stream<String> Function(String msg) get requestSubscribe =>
+      wrapper.requestSubscribe;
+
   App.init() {
+    wrapper = SocketWrapper((final String msg) => socket.sendString(msg),
+        signal: socketCompleter.future);
     socket.onOpen.listen((_) => onOpen());
     socket.onClose.listen((_) => onClose());
     socket.onMessage.listen((_) => onMessage(_.data));
