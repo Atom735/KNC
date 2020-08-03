@@ -14,11 +14,14 @@ class SocketWrapper {
   final _listOfRequest = <int, Completer<String>>{};
   int _subscribersID = 0;
   final _listOfSubscribers = <int, StreamController<String>>{};
+
   final _listOfResponses = <String, Completer<String>>{};
   final _listOfRespSubers = <String, StreamController<String>>{};
 
   SocketWrapper(this.send,
-      [this.streamCloseMsg, this.msgIdBegin, this.msgIdEnd]);
+      {this.streamCloseMsg = 'streamclose',
+      this.msgIdBegin = '\u{1}',
+      this.msgIdEnd = '\u{2}'});
 
   void recv(final String msgRaw) {
     if (msgRaw[0] == msgIdBegin) {

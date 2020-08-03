@@ -8,6 +8,7 @@ import 'package:knc/knc.dart';
 import 'package:knc/web.dart';
 import 'package:knc/www.dart';
 import '../quickstart/web/www.dart';
+import '../quickstart/web/socketWrapper.dart';
 
 class KncSettingsOnMain extends KncSettingsInternal {
   /// Уникальный номер выполняемой задачи
@@ -23,11 +24,18 @@ class KncSettingsOnMain extends KncSettingsInternal {
 class WebClient {
   /// Сокет для связи с клиентом
   final WebSocket socket;
+  final SocketWrapper wrapper;
+  StreamSubscription socketSubscription;
 
-  void handleRequestWS(
-      final WebSocket socket, final String msg, final MyServer serv) {}
-
-  WebClient(this.socket);
+  WebClient(this.socket)
+      : wrapper = SocketWrapper((final String msg) => socket.add(msg)) {
+    socketSubscription = socket.listen((event) {
+      if (event is String) {
+        print('WS_RECV: $event');
+        wrapper.recv(event);
+      }
+    }, onError: getErrorFunc('Ошибка в прослушке WebSocket:'));
+  }
 }
 
 void Function(dynamic error, StackTrace stackTrace) getErrorFunc(
@@ -74,8 +82,10 @@ class ServerApp {
     httpSubscription = http.listen((request) async {
       if (request.uri.path == '/ws') {
         // ignore: unawaited_futures
-        WebSocketTransformer.upgrade(request).then((socket) {},
-            onError: getErrorFunc('Ошибка в подключении сокета'));
+        WebSocketTransformer.upgrade(request).then((socket) {
+          final c = WebClient(socket);
+          listOfClients.add(c);
+        }, onError: getErrorFunc('Ошибка в подключении WebSocket'));
       } else {
         final response = request.response;
         response.statusCode = HttpStatus.internalServerError;
@@ -83,10 +93,10 @@ class ServerApp {
         await response.flush();
         await response.close();
       }
-    }, onError: getErrorFunc('Ошибка в прослушке http порта:'));
+    }, onError: getErrorFunc('Ошибка в прослушке HttpRequest:'));
 
     receivePortSubscription = receivePort.listen((msg) {},
-        onError: getErrorFunc('Ошибка в прослушке внутреннего порта:'));
+        onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
   }
 
   ServerApp._init(this.dir) {
@@ -99,140 +109,4 @@ class ServerApp {
 
 void main(List<String> args) {
   ServerApp(Directory(r'web')).run(80);
-}
-
-Future mainOld(List<String> args) async {
-  /// Поднятый сервер
-  final server = MyServer(Directory(r'web'));
-
-  /// Порт прослушиваемый главным изолятом
-  final receivePort = ReceivePort();
-
-  /// Список запущенных задач
-  final listOfTasks = <KncSettingsOnMain>[];
-
-  /// Очередь выполнения субпроцессов
-  final queueProc = AsyncTaskQueue(8, false);
-
-  /// Конвертер WordConv и архивтор 7zip
-  final converters = await MyConverters.init(queueProc);
-  var _clientUID = 0;
-  final clients = <int, WebClient>{};
-
-  /// Обработка новых подключений ВебСокета
-  server.handleWebSocketNew = (final WebSocket socket, final MyServer serv) {
-    _clientUID += 1;
-    final c = WebClient(socket);
-    // clients[c.id] = c;
-    socket.listen((event) async {
-      print('WS: $event');
-      if (event is String) {
-        if (event == wwwTaskViewUpdate) {
-          final value = [];
-          for (var item in listOfTasks) {
-            value.add({
-              'id': item.uID,
-              'name': item.ssTaskName,
-              'state': item.iState.index,
-              'errors': 0,
-              'files': 0,
-            });
-          }
-        } else {
-          await c.handleRequestWS(socket, event, serv);
-        }
-      }
-    }, onDone: () {
-      print('WS: socket(${socket.hashCode}) closed');
-      // clients.remove(c.id);
-    });
-
-    // socket.add('${wwwClientId}${c.id}');
-    return true;
-  };
-
-  /// - in 0`{task.uID}` -
-  /// Уникальный номер изолята
-  ///
-  /// - in 1`{SendPort}` -
-  /// Порт для общения с субизолятом с номером uID
-  /// - in 1`unzip`, 2`{unzip.uID}`, 3`{pathToArchive}` -
-  /// Просьба разархивировать от субизолята
-  /// - in 1`zip`, 2`{zip.uID}`, 3`{pathToData}`, 4`{pathToOutput}` -
-  /// Просьба запаковать данные в Zip
-  /// - in 1`doc2x`, 2`{doc2x.uID}`, 3`{path2doc}`, 4`{path2out}` -
-  /// Просьба переконвертировать doc в docx
-  /// - in 1`ssPathOut`, 2`{ssPathOut.uID}`, 3`{ssPathOut}` -
-  /// Просьба обновить конечный путь
-  ///
-  /// - out 0`unzip`, 1`{unzip.uID}`, 2`{outputString}` -
-  /// Ответ на прозьбу распаковки
-  /// - out 0`zip`, 1`{zip.uID}`, 2`{outputString}` -
-  /// Ответ на прозьбу запаковать
-  /// - out 0`doc2x`, 1`{doc2x.uID}`, 2`{exitCode}` -
-  /// Ответ на прозьбу запаковать
-  /// - out 0`charMaps`, 1`{ssCharMaps}` -
-  /// Данные о кодировках
-  /// - out 0`ssPathOut`, 2`{ssPathOut.uID}` -
-  /// Ответ на обновление конечного пути
-  ///
-  /// - in 1`#...` -
-  /// Сообщение передаваемое сокету
-  ///
-  receivePort.listen((final data) async {
-    if (data is List && data[0] is int) {
-      final uID = data[0] as int;
-      var task = listOfTasks.singleWhere((element) => element.uID == uID);
-      if (data[1] is SendPort) {
-        task.sendPort = data[1];
-        task.iState = KncTaskState.work;
-        server.sendMsgToAll(task.wsUpdateState);
-        task.sendPort.send(['charMaps', converters.ssCharMaps]);
-        return;
-      } else if (data[1] is String) {
-        final String dataStr = data[1];
-        switch (dataStr) {
-          case 'unzip':
-            if (data[2] is int) {
-              final err =
-                  await converters.unzip(data[3], null, converters.ssCharMaps);
-              task.sendPort.send([dataStr, data[2], err]);
-              return;
-            }
-            break;
-          case 'zip':
-            if (data[2] is int) {
-              final err =
-                  await converters.zip(data[3], data[4], converters.ssCharMaps);
-              task.sendPort.send([dataStr, data[2], err]);
-              return;
-            }
-            break;
-          case 'doc2x':
-            if (data[2] is int) {
-              final err = await converters.doc2x(data[3], data[4]);
-              task.sendPort.send([dataStr, data[2], err]);
-              return;
-            }
-            break;
-          case 'ssPathOut':
-            if (data[2] is int) {
-              task.ssPathOut = data[3];
-              task.sendPort.send([dataStr, data[2]]);
-              return;
-            }
-            break;
-          default:
-        }
-      }
-    }
-    print('main: recieved unknown msg {$data}');
-  });
-
-  server.handleRequest =
-      (HttpRequest req, String content, MyServer serv) async {
-    return false;
-  };
-
-  await server.bind(80);
 }
