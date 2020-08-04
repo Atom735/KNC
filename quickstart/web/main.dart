@@ -434,7 +434,7 @@ class App {
       wrapper.requestSubscribe;
 
   App.init() {
-    wrapper = SocketWrapper((final String msg) => socket.sendString(msg),
+    wrapper = SocketWrapper((msg) => socket.sendString(msg),
         signal: socketCompleter.future);
     socket.onOpen.listen((_) => onOpen());
     socket.onClose.listen((_) => onClose());

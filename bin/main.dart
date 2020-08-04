@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -19,6 +20,7 @@ class KncSettingsOnMain extends KncSettingsInternal {
 
   /// Порт задачи
   SendPort sendPort;
+  SocketWrapper wrapper;
 }
 
 class WebClient {
@@ -27,8 +29,7 @@ class WebClient {
   final SocketWrapper wrapper;
   StreamSubscription socketSubscription;
 
-  WebClient(this.socket)
-      : wrapper = SocketWrapper((final String msg) => socket.add(msg)) {
+  WebClient(this.socket) : wrapper = SocketWrapper((msg) => socket.add(msg)) {
     socketSubscription = socket.listen((event) {
       if (event is String) {
         print('WS_RECV: $event');
@@ -37,6 +38,9 @@ class WebClient {
     }, onError: getErrorFunc('Ошибка в прослушке WebSocket:'));
     waitMsgAll(wwwTaskViewUpdate).listen((msg) {
       wrapper.send(msg.i, ServerApp().getWwwTaskViewUpdate());
+    });
+    waitMsgAll(wwwTaskNew).listen((msg) {
+      wrapper.send(msg.i, ServerApp().getWwwTaskNew(msg.s));
     });
   }
 
@@ -74,6 +78,7 @@ class ServerApp {
 
   /// Список запущенных задач
   final listOfTasks = <int, KncSettingsOnMain>{};
+  var _uTaskNewId = 0;
 
   /// Список подключенных клиентов
   final listOfClients = <WebClient>[];
@@ -86,7 +91,8 @@ class ServerApp {
 
   /// Получить данные для формы TaskView
   String getWwwTaskViewUpdate() {
-    return '{}';
+    final list = [];
+    return json.encode(list);
   }
 
   Future<void> run(final int port) async {
@@ -111,8 +117,21 @@ class ServerApp {
       }
     }, onError: getErrorFunc('Ошибка в прослушке HttpRequest:'));
 
-    receivePortSubscription = receivePort.listen((msg) {},
-        onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
+    receivePortSubscription = receivePort.listen((msg) {
+      if (msg is List) {
+        if (msg.length == 2 && msg[0] is int && msg[1] is SendPort) {
+          final kncTask = listOfTasks[msg[0]];
+          kncTask.sendPort = msg[1];
+          kncTask.wrapper = SocketWrapper((str) => kncTask.sendPort.send(str));
+        }
+        if (msg.length == 2 && msg[0] is int && msg[1] is String) {
+          final kncTask = listOfTasks[msg[0]];
+          if (kncTask.wrapper != null) {
+            kncTask.wrapper.recv(msg[1]);
+          }
+        }
+      }
+    }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
   }
 
   ServerApp._init(this.dir) {
@@ -121,6 +140,34 @@ class ServerApp {
   static ServerApp _instance;
   factory ServerApp([Directory dir]) =>
       _instance ?? (_instance = ServerApp._init(dir));
+
+  String getWwwTaskNew(final String s) {
+    final value = json.decode(s);
+    if (value['name'] == null || value['path'] == null) {
+      return '';
+    }
+    _uTaskNewId += 1;
+    final kncTask = KncSettingsOnMain();
+    kncTask.uID = _uTaskNewId;
+    kncTask.ssTaskName = value['name'];
+    kncTask.pathInList.addAll(value['path']);
+    listOfTasks[kncTask.uID] = kncTask;
+
+    final kncTaskA = KncTask();
+    kncTaskA.uID = _uTaskNewId;
+    kncTaskA.ssTaskName = value['name'];
+    kncTaskA.pathInList.addAll(value['path']);
+    kncTaskA.sendPort = receivePort.sendPort;
+    kncTaskA.ssCharMaps = converters.ssCharMaps;
+
+    Isolate.spawn(KncTask.isolateEntryPoint, kncTaskA,
+            debugName: 'task[${kncTaskA.uID}]: "${kncTaskA.ssTaskName}"')
+        .then((isolate) {
+      kncTask.isolate = isolate;
+    });
+
+    return '${kncTask.uID}';
+  }
 }
 
 void main(List<String> args) {
