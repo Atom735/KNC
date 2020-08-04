@@ -28,6 +28,21 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "webdev start",
+            "type": "shell",
+            "command": "webdev",
+            "args": [
+                "serve",
+                "--auto",
+                "refresh",
+                "--debug",
+                "--launch-in-chrome",
+                "--log-requests"
+            ],
+            "problemMatcher": [],
+            "group": "build"
         }
     ]
 }
