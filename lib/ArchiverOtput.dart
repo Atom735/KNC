@@ -3,10 +3,12 @@ import 'package:knc/SocketWrapper.dart';
 class ArchiverOutput {
   /// Имя выходного файла
   final int exitCode;
+  final String pathIn;
   final String pathOut;
   final String stdOut;
-  final String stdIn;
-  ArchiverOutput(this.exitCode, this.pathOut, [this.stdOut, this.stdIn]);
+  final String stdErr;
+  ArchiverOutput(
+      {this.exitCode, this.pathIn, this.pathOut, this.stdOut, this.stdErr});
 
   String get resultString {
     switch (exitCode) {
@@ -29,21 +31,25 @@ class ArchiverOutput {
 
   factory ArchiverOutput.fromWrapperMsg(final String msg) {
     final i0 = msg.indexOf(msgRecordSeparator);
+    final i1 = msg.indexOf(msgRecordSeparator, i0 + msgRecordSeparator.length);
     final exitCode = int.tryParse(msg.substring(0, i0));
     if (exitCode == 0) {
       return ArchiverOutput(
-          exitCode, msg.substring(i0 + msgRecordSeparator.length));
+          exitCode: exitCode,
+          pathIn: msg.substring(i0 + msgRecordSeparator.length, i1),
+          pathOut: msg.substring(i1 + msgRecordSeparator.length));
     } else {
+      final i2 =
+          msg.indexOf(msgRecordSeparator, i1 + msgRecordSeparator.length);
       return ArchiverOutput(
-          exitCode,
-          null,
-          msg.substring(0, i0),
-          msg.substring(i0 + msgRecordSeparator.length,
-              msg.indexOf(msgRecordSeparator, i0 + msgRecordSeparator.length)));
+          exitCode: exitCode,
+          pathIn: msg.substring(i0 + msgRecordSeparator.length, i1),
+          stdOut: msg.substring(i1 + msgRecordSeparator.length, i2),
+          stdErr: msg.substring(i2 + msgRecordSeparator.length));
     }
   }
 
   String toWrapperMsg() => exitCode == 0
-      ? '$exitCode$msgRecordSeparator$pathOut'
-      : '$exitCode$msgRecordSeparator$stdOut$msgRecordSeparator$stdIn';
+      ? '$exitCode$msgRecordSeparator$pathIn$msgRecordSeparator$pathOut'
+      : '$exitCode$msgRecordSeparator$pathIn$msgRecordSeparator$stdOut$msgRecordSeparator$stdErr';
 }
