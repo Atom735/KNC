@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'www.dart';
 
+const msgRecordSeparator = '\u001E';
+
 class SocketWrapperResponse {
   final String s;
   final int i;
@@ -29,8 +31,8 @@ class SocketWrapper {
 
   SocketWrapper(this.sender,
       {this.streamCloseMsg = wwwStreamClose,
-      this.msgIdBegin = '\u{1}',
-      this.msgIdEnd = '\u{2}',
+      this.msgIdBegin = '\u0001',
+      this.msgIdEnd = '\u0002',
       this.signal}) {
     if (signal != null) {
       signal.then((_) => signal = null);

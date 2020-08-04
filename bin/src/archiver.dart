@@ -4,7 +4,6 @@ import 'package:knc/ArchiverOtput.dart';
 import 'package:knc/async.dart';
 import 'mapping.dart';
 
-
 /// Архиватор
 class Archiver {
   /// Путь к программе архиватору
@@ -44,20 +43,18 @@ class Archiver {
   Future<ArchiverOutput> zip(final String pathToData, final String pathToOutput,
           [final Map<String, List<String>> charMaps]) =>
       queue != null
-          ? queue.addTask(() => Process.run(p7z, ['a', '-tzip', pathToOutput, '*', '-scsUTF-8'], workingDirectory: pathToData, stdoutEncoding: null, stderrEncoding: null).then((result) => results(
-              result.exitCode,
-              result.stdout,
-              result.stderr,
-              pathToOutput,
-              charMaps)))
-          : Process.run(p7z, ['a', '-tzip', pathToOutput, '*', '-scsUTF-8'],
-                  workingDirectory: pathToData,
-                  stdoutEncoding: null,
-                  stderrEncoding: null)
+          ? queue.addTask(() =>
+              Process.run(p7z, ['a', '-tzip', pathToOutput, '*', '-scsUTF-8'], workingDirectory: pathToData, stdoutEncoding: null, stderrEncoding: null)
+                  .then((result) => results(result.exitCode, result.stdout,
+                      result.stderr, pathToOutput, charMaps)))
+          : Process.run(p7z, ['a', '-tzip', pathToOutput, '*', '-scsUTF-8'], workingDirectory: pathToData, stdoutEncoding: null, stderrEncoding: null)
               .then((result) => results(result.exitCode, result.stdout, result.stderr, pathToOutput, charMaps));
 
   static ArchiverOutput results(final int exitCode, final stdOut, final stdErr,
       final String pathToOutput, final Map<String, List<String>> charMaps) {
+    if (exitCode == 0) {
+      return ArchiverOutput(exitCode, pathToOutput);
+    }
     String sOut;
     String sErr;
     if (stdOut != null) {
@@ -84,6 +81,6 @@ class Archiver {
         sErr = stdErr;
       }
     }
-    return ArchiverOutput(pathToOutput, exitCode, sOut, sErr);
+    return ArchiverOutput(exitCode, null, sOut, sErr);
   }
 }

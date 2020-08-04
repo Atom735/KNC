@@ -14,7 +14,6 @@ const msgTaskUpdateState = 'taskstate;';
 const msgDoc2x = 'doc2x;';
 const msgZip = 'zip;';
 const msgUnzip = 'unzip;';
-const msgRecordSeparator = '\u001E';
 
 class PathNewer {
   /// Путь именно к существующей папке, в которой будет подбираться имя
