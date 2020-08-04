@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'main.dart';
-import 'www.dart';
+import 'package:knc/www.dart';
 
 class FictiveTask {
   final int id;

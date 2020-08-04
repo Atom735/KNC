@@ -2,9 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-import 'dart:typed_data';
-
-import 'freq_2letters.dart';
+import 'package:knc/freq_2letters.dart';
 
 /// Поиск кодировок
 Future<Map<String, List<String>>> loadMappings(final String path) async {

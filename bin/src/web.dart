@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:path/path.dart' as p;
 
-import 'www.dart';
+import 'package:path/path.dart' as p;
+import 'package:knc/www.dart';
 
 /// https://developer.mozilla.org/ru/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 

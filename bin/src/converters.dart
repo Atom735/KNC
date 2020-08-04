@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'archiver.dart';
-import 'async.dart';
 import 'mapping.dart';
 
 import 'package:path/path.dart' as p;
+import 'package:knc/async.dart';
 
 class MyConverters extends Archiver {
   /// Путь к программе 7Zip

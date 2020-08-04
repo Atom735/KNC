@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'errors.dart';
+import 'package:knc/errors.dart';
+
 import 'mapping.dart';
 
 /// Конечные данные одной кривой (хранятся в базе данных LAS)

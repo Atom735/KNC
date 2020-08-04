@@ -4,10 +4,10 @@ import 'dart:html';
 
 import 'package:m4d_core/m4d_ioc.dart' as ioc;
 import 'package:m4d_components/m4d_components.dart';
+import 'package:knc/socketWrapper.dart';
+import 'package:knc/www.dart';
 
 import 'main.fictive.dart';
-import 'socketWrapper.dart';
-import 'www.dart';
 
 /// webdev serve --auto refresh --debug --launch-in-chrome --log-requests
 ///

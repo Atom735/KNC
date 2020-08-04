@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'dart:io';
 
-import 'async.dart';
+import 'package:knc/async.dart';
 import 'mapping.dart';
 
 /// Архиватор

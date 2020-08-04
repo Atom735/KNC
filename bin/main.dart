@@ -4,12 +4,12 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:knc/async.dart';
-import 'package:knc/converters.dart';
-import '../lib/knc.dart';
-import 'package:knc/web.dart';
 import 'package:knc/www.dart';
-import '../quickstart/web/www.dart';
-import '../quickstart/web/socketWrapper.dart';
+import 'package:knc/socketWrapper.dart';
+
+import 'src/converters.dart';
+import 'src/knc.dart';
+import 'src/web.dart';
 
 class KncSettingsOnMain extends KncSettingsInternal {
   /// Изолят выоплнения задачи

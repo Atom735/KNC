@@ -32,3 +32,5 @@ out
 release
 web/*/
 temp
+
+web/*.css

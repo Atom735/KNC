@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:knc/dbf.dart';
-import 'package:knc/knc.dart';
 import 'package:xml/xml_events.dart';
 
-import 'errors.dart';
+import 'package:knc/errors.dart';
 import 'mapping.dart';
+import 'dbf.dart';
+import 'knc.dart';
 
 import 'package:path/path.dart' as p;
 
