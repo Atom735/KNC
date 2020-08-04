@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:knc/ArchiverOtput.dart';
 import 'package:path/path.dart' as p;
@@ -139,6 +140,68 @@ class KncTask extends KncTaskSpawnSets {
   }
 
   Future handleFile(final File file, final String origin) async {
+    final ext = p.extension(file.path).toLowerCase();
+    try {
+      if (ssFileExtLas.contains(ext)) {
+        // == LAS FILES == Begin
+        final las = LasData(UnmodifiableUint8ListView(await file.readAsBytes()),
+            charMaps, lasIgnore);
+        las.origin = origin;
+        if (las.listOfErrors.isEmpty) {
+          // Данные корректны
+          final newPath =
+              await newerOutLas.lock(las.wWell + '___' + p.basename(file.path));
+          final originals = lasDB.addLasData(las);
+          for (var i = 1; i < las.curves.length; i++) {
+            final item = las.curves[i];
+            if (!lasCurvesNameOriginals.contains(item.mnem)) {
+              lasCurvesNameOriginals.add(item.mnem);
+            }
+          }
+          files = _files + 1;
+          // TODO: обработка LAS файла
+          await newerOutLas.unlock(newPath);
+        } else {
+          // Ошибка в данных файла
+          final newPath = await newerOutErr.lock(p.basename(file.path));
+          errors = _errors + 1;
+          // TODO: обработка ошибок LAS файла
+          await newerOutErr.unlock(newPath);
+        }
+      } // == LAS FILES == End
+      else if (ssFileExtInk.contains(ext)) {
+        // == INK FILES == Begin
+        final inks = await InkData.loadFile(file, this);
+        if (inks != null) {
+          for (final ink in inks) {
+            if (ink != null) {
+              ink.origin = origin;
+              if (ink.listOfErrors.isEmpty) {
+                // Данные корректны
+                final newPath = await newerOutInk.lock(ink.well +
+                    '___' +
+                    p.basenameWithoutExtension(file.path) +
+                    '.txt');
+                final original = inkDB.addInkData(ink);
+                files = _files + 1;
+                // TODO: обработка INK файла
+                await newerOutInk.unlock(newPath);
+              } else {
+                // Ошибка в данных файла
+                final newPath = await newerOutErr.lock(p.basename(file.path));
+                errors = _errors + 1;
+                // TODO: бработка ошибок INK файла
+                await newerOutErr.unlock(newPath);
+              }
+            }
+          }
+        }
+        return;
+      } // == INK FILES == End
+    } catch (e) {
+      // TODO: обработка исключений
+    }
+
     // TODO: обработка файла
   }
 
@@ -158,30 +221,22 @@ class KncTask extends KncTaskSpawnSets {
           final ext = p.extension(entity.path).toLowerCase();
           // == UNZIPPER == Begin
           if (ssFileExtAr.contains(ext)) {
-            ArchiverOutput arch;
-            if (ssArMaxSize > 0) {
-              // если максимальный размер архива установлен
-              if (await entity.length() < ssArMaxSize &&
-                  (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth)) {
-                // вскрываем архив если он соотвествует размеру и мы не привысили глубину вложенности
-                arch = await unzip(entity.path);
+            if ((ssArMaxSize <= 0 || await entity.length() < ssArMaxSize) &&
+                (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth)) {
+              // вскрываем архив если он соотвествует размеру если он установлен и мы не привысили глубину вложенности
+              final arch = await unzip(entity.path);
+              if (arch.exitCode == 0) {
+                await listFilesGet(iArchDepth + 1, pathToArch + relPath)(
+                    Directory(arch.pathOut), '');
+                // TODO: удалить вскрытый архив
               } else {
-                // отбрасываем большой архив
-                return;
+                // TODO: обработка ошибки
+                errors = _errors + 1;
               }
-            } else if (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth) {
-              // если не указан размер, и мы не превысили вложенность
-              arch = await unzip(entity.path);
             } else {
-              // игнорируем из за вложенности
+              // отбрасываем большой архив или бОльшую глубину вложенности
               return;
             }
-            if (arch.exitCode == 0) {
-              await listFilesGet(iArchDepth + 1, pathToArch + relPath)(
-                  Directory(arch.pathOut), '');
-              // TODO: удалить вскрытый архив
-            }
-            return;
           } // == UNZIPPER == End
           return handleFile(entity, pathToArch + relPath);
         } // entity is File
