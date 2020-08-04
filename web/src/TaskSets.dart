@@ -58,6 +58,7 @@ class TaskSetsDialog {
   final TableElement eTable = eGetById('task-sets-table');
   final ButtonElement ePath = eGetById('task-sets-path');
   final DivElement eLoader = eGetById('task-sets-loader');
+  final ButtonElement eFastSet = eGetById('task-sets-fast-set');
 
   bool _loading = false;
   set loading(final bool b) {
@@ -149,6 +150,16 @@ class TaskSetsDialog {
     eOpen.onClick.listen((_) => eDialog.showModal());
     ePath.onClick.listen((_) => pathAdd());
     eName.onInput.listen((_) => validate());
+    if (eFastSet != null) {
+      eFastSet.onClick.listen((_) {
+        eName.value = r'Искринское м-е';
+        componentHandler().upgradeElement(eName);
+        componentHandler().upgradeElement(
+            list.firstWhere((element) => element != null).eInput
+              ..value = r'D:\Искринское м-е');
+        validate();
+      });
+    }
     pathAdd();
   }
 
