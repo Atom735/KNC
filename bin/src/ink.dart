@@ -1099,14 +1099,14 @@ class InkData {
       if (await File(newPath).exists()) {
         InkData ink;
         try {
-          await ss.unzip(newPath,
-              (final FileSystemEntity entity2, final String relPath) async {
-            if (entity2 is File &&
-                p.dirname(entity2.path) == 'word' &&
-                p.basename(entity2.path) == 'document.xml') {
-              ink = await getByDocx(entity2.openRead());
-            }
-          });
+          // await ss.unzip(newPath,
+          //     (final FileSystemEntity entity2, final String relPath) async {
+          //   if (entity2 is File &&
+          //       p.dirname(entity2.path) == 'word' &&
+          //       p.basename(entity2.path) == 'document.xml') {
+          //     ink = await getByDocx(entity2.openRead());
+          //   }
+          // });
         } catch (e) {
           if (handleErrorCatcher != null) {
             await handleErrorCatcher(e);
@@ -1139,14 +1139,14 @@ class InkData {
         // Docx file
         InkData ink;
         try {
-          await ss.unzip(entity.path,
-              (final FileSystemEntity entity2, final String relPath) async {
-            if (entity2 is File &&
-                p.dirname(entity2.path) == 'word' &&
-                p.basename(entity2.path) == 'document.xml') {
-              ink = await getByDocx(entity2.openRead());
-            }
-          });
+          // await ss.unzip(entity.path,
+          //     (final FileSystemEntity entity2, final String relPath) async {
+          //   if (entity2 is File &&
+          //       p.dirname(entity2.path) == 'word' &&
+          //       p.basename(entity2.path) == 'document.xml') {
+          //     ink = await getByDocx(entity2.openRead());
+          //   }
+          // });
         } catch (e) {
           if (handleErrorCatcher != null) {
             await handleErrorCatcher(e);
@@ -1170,7 +1170,7 @@ class InkData {
       }
     }
 
-    return [InkData.txt(bytes, ss.ssCharMaps)];
+    return [InkData.txt(bytes, ss.charMaps)];
   }
 }
 

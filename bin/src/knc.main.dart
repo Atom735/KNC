@@ -27,7 +27,7 @@ class KncTaskSpawnSets {
         charMaps = t.charMaps,
         sendPort = t.sendPort;
 
-  Future<Isolate> spawn() => Isolate.spawn(KncTask.isolateEntryPoint, this,
+  Future<Isolate> spawn() => Isolate.spawn(KncTask.entryPoint, this,
       debugName: 'task[${id}]: "${name}"');
 }
 
@@ -85,10 +85,6 @@ class KncTaskOnMain {
 
   void initWrapper() {
     wrapper = SocketWrapper((str) => sendPort.send(str));
-    wrapper.waitMsg(msgTaskPathOutSets).then((msg) {
-      pathOut = msg.s;
-      wrapper.send(msg.i, '');
-    });
     wrapper.waitMsgAll(msgTaskUpdateState).listen((msg) {
       iState = int.tryParse(msg.s);
     });

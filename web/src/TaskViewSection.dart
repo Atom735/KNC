@@ -44,8 +44,6 @@ class TaskViewSection {
           t.iFiles = item['files'];
         }
         update();
-
-        /// TODO: получение данных о задачах
       });
       App().waitMsgAll(wwwTaskUpdates).listen((msg) {
         final items = json.decode(msg.s);

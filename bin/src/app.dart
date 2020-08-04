@@ -8,7 +8,6 @@ import 'package:knc/async.dart';
 import 'package:knc/errors.dart';
 
 import 'converters.dart';
-import 'knc.dart';
 import 'knc.main.dart';
 import 'webclient.dart';
 
@@ -75,9 +74,10 @@ class App {
 
     receivePortSubscription = receivePort.listen((msg) {
       if (msg is List) {
-        if (msg.length == 2 && msg[0] is int && msg[1] is SendPort) {
+        if (msg.length == 3 && msg[0] is int && msg[1] is SendPort) {
           final kncTask = listOfTasks[msg[0]];
           kncTask.sendPort = msg[1];
+          kncTask.pathOut = msg[2];
           kncTask.initWrapper();
         }
         if (msg.length == 2 && msg[0] is int && msg[1] is String) {
@@ -107,12 +107,12 @@ class App {
 
     KncTaskSpawnSets(kncTask, converters.ssCharMaps, receivePort.sendPort)
         .spawn()
-        .then((isolate) => kncTask.isolate = isolate);\
+        .then((isolate) => kncTask.isolate = isolate);
     return '${kncTask.id}';
   }
 
   App._init(this.dir) {
-    print('Server App created: $this');
+    print('App created: $hashCode');
   }
   static App _instance;
   factory App() => _instance ?? (_instance = App._init(Directory(r'web')));
