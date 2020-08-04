@@ -41,6 +41,9 @@ class App {
   /// Получить данные для формы TaskView
   String getWwwTaskViewUpdate() {
     final list = [];
+    listOfTasks.forEach((key, task) {
+      list.add(task.json);
+    });
     return json.encode(list);
   }
 
@@ -108,7 +111,7 @@ class App {
     KncTaskSpawnSets(kncTask, converters.ssCharMaps, receivePort.sendPort)
         .spawn()
         .then((isolate) => kncTask.isolate = isolate);
-    return '${kncTask.id}';
+    return json.encode(kncTask.json);
   }
 
   App._init(this.dir) {

@@ -45,7 +45,6 @@ class App {
   App._init(this.socket, this.socketCompleter)
       : wrapper = SocketWrapper((msg) => socket.sendString(msg),
             signal: socketCompleter.future) {
-    ;
     socket.onOpen.listen((_) => onOpen());
     socket.onClose.listen((_) => onClose());
     socket.onMessage.listen((_) => onMessage(_.data));

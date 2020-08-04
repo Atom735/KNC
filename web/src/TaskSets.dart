@@ -3,6 +3,7 @@ import 'dart:html';
 
 import 'package:knc/www.dart';
 import 'package:m4d_components/m4d_components.dart';
+import 'package:sass/sass.dart';
 
 import 'App.dart';
 import 'misc.dart';
@@ -112,11 +113,6 @@ class TaskSetsDialog {
           .toList()
     };
     App().requestOnce('${wwwTaskNew}${json.encode(value)}').then((msg) {
-      final t = App().taskView.add(int.tryParse(msg));
-      t.eName.innerText = value['name'];
-      t.iState = 0;
-      t.iErrors = 0;
-      t.iFiles = 0;
       reset();
       App().taskView.update();
     });

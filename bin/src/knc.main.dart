@@ -37,9 +37,9 @@ class KncTaskOnMain {
   final List<String> path;
 
   String pathOut;
-  int _iState = -1;
-  int _iErrors = -1;
-  int _iFiles = -1;
+  int _state = 0;
+  int _errors = 0;
+  int _files = 0;
 
   /// Изолят выоплнения задачи
   Isolate isolate;
@@ -50,43 +50,51 @@ class KncTaskOnMain {
 
   KncTaskOnMain(this.id, this.name, this.path);
 
-  set iState(final int i) {
-    if (i == null || _iState == i) {
+  dynamic get json => {
+        'id': id,
+        'name': name,
+        'state': _state,
+        'errors': _errors,
+        'files': _files
+      };
+
+  set state(final int i) {
+    if (i == null || _state == i) {
       return;
     }
-    _iState = i;
+    _state = i;
     App().sendForAllClients(wwwTaskUpdates +
         json.encode([
-          {'id': id, 'state': _iState}
+          {'id': id, 'state': _state}
         ]));
   }
 
-  set iErrors(final int i) {
-    if (i == null || _iErrors == i) {
+  set errors(final int i) {
+    if (i == null || _errors == i) {
       return;
     }
-    _iErrors = i;
+    _errors = i;
     App().sendForAllClients(wwwTaskUpdates +
         json.encode([
-          {'id': id, 'errors': _iState}
+          {'id': id, 'errors': _state}
         ]));
   }
 
-  set iFiles(final int i) {
-    if (i == null || _iFiles == i) {
+  set files(final int i) {
+    if (i == null || _files == i) {
       return;
     }
-    _iFiles = i;
+    _files = i;
     App().sendForAllClients(wwwTaskUpdates +
         json.encode([
-          {'id': id, 'files': _iFiles}
+          {'id': id, 'files': _files}
         ]));
   }
 
   void initWrapper() {
     wrapper = SocketWrapper((str) => sendPort.send(str));
     wrapper.waitMsgAll(msgTaskUpdateState).listen((msg) {
-      iState = int.tryParse(msg.s);
+      state = int.tryParse(msg.s);
     });
     wrapper.waitMsgAll(msgDoc2x).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);

@@ -56,6 +56,14 @@ class TaskViewSection {
           }
         }
       });
+      App().waitMsgAll(wwwTaskNew).listen((msg) {
+        final v = json.decode(msg.s);
+        final t = App().taskView.add(v['id']);
+        t.eName.innerText = v['name'];
+        t.iState = v['state'];
+        t.iErrors = v['errors'];
+        t.iFiles = v['files'];
+      });
     });
   }
 
