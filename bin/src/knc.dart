@@ -123,14 +123,80 @@ class KncTask extends KncTaskSpawnSets {
       Directory(pathOutErr).create(recursive: true)
     ]);
     state = 1;
-    final tasks = <Future>[];
-    final tasks2 = <Future>[];
+    final fs = <Future>[];
+    final func = listFilesGet(0, '');
     path.forEach((element) {
       if (element.isNotEmpty) {
         print('task[$id] scan $element');
+        fs.add(FileSystemEntity.type(element).then((value) =>
+            value == FileSystemEntityType.file
+                ? func(File(element), element)
+                : value == FileSystemEntityType.directory
+                    ? func(Directory(element), element)
+                    : null));
       }
     });
   }
+
+  Future handleFile(final File file, final String origin) async {
+    // TODO: обработка файла
+  }
+
+  /// Получает новый экземляр функции для обхода по файлам
+  /// с настоящими настройками
+  /// [pathToArch] - путь к вскрытому архиву или папке
+  /// [relPath] - путь относительный архива или папки
+  /// Вне архива или папки, [relPath] - содержит полный путь
+  /// а [pathToArch] - пустая строка, но не `null`
+  Future Function(FileSystemEntity entity, String relPath) listFilesGet(
+          final int iArchDepth, final String pathToArch) =>
+      (final FileSystemEntity entity, final String relPath) async {
+        if (entity is File) {
+          if (p.basename(entity.path).toLowerCase().startsWith(r'~$')) {
+            return;
+          }
+          final ext = p.extension(entity.path).toLowerCase();
+          // == UNZIPPER == Begin
+          if (ssFileExtAr.contains(ext)) {
+            ArchiverOutput arch;
+            if (ssArMaxSize > 0) {
+              // если максимальный размер архива установлен
+              if (await entity.length() < ssArMaxSize &&
+                  (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth)) {
+                // вскрываем архив если он соотвествует размеру и мы не привысили глубину вложенности
+                arch = await unzip(entity.path);
+              } else {
+                // отбрасываем большой архив
+                return;
+              }
+            } else if (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth) {
+              // если не указан размер, и мы не превысили вложенность
+              arch = await unzip(entity.path);
+            } else {
+              // игнорируем из за вложенности
+              return;
+            }
+            if (arch.exitCode == 0) {
+              await listFilesGet(iArchDepth + 1, pathToArch + relPath)(
+                  Directory(arch.pathOut), '');
+              // TODO: удалить вскрытый архив
+            }
+            return;
+          } // == UNZIPPER == End
+          return handleFile(entity, pathToArch + relPath);
+        } // entity is File
+        else if (entity is Directory) {
+          final func = listFilesGet(iArchDepth, pathToArch + relPath);
+          final fs = <Future>[];
+          final pl = entity.path.length;
+          await entity.list(recursive: true).listen((event) {
+            if (event is File) {
+              fs.add(func(event, event.path.substring(pl)));
+            }
+          }).asFuture();
+          await Future.wait(fs);
+        }
+      };
 
   /// Преобразует данные
   Future<int> doc2x(final String path2doc, final String path2out) => wrapper
