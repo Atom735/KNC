@@ -102,7 +102,7 @@ class KncTaskOnMain {
     _errors = i;
     App().sendForAllClients(wwwTaskUpdates +
         c.json.encode([
-          {'id': id, 'errors': _state}
+          {'id': id, 'errors': _errors}
         ]));
   }
 
