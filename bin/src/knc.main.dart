@@ -120,15 +120,16 @@ class KncTaskOnMain {
 
   void initWrapper() {
     wrapper = SocketWrapper((str) => sendPort.send(str));
-    wrapper.waitMsgAll(msgTaskUpdateState).listen((msg) {
-      state = int.tryParse(msg.s);
-    });
-    wrapper.waitMsgAll(msgTaskUpdateErrors).listen((msg) {
-      errors = int.tryParse(msg.s);
-    });
-    wrapper.waitMsgAll(msgTaskUpdateFiles).listen((msg) {
-      files = int.tryParse(msg.s);
-    });
+    wrapper
+        .waitMsgAll(msgTaskUpdateState)
+        .listen((msg) => state = int.tryParse(msg.s));
+    wrapper
+        .waitMsgAll(msgTaskUpdateErrors)
+        .listen((msg) => errors = int.tryParse(msg.s));
+    wrapper
+        .waitMsgAll(msgTaskUpdateFiles)
+        .listen((msg) => files = int.tryParse(msg.s));
+
     wrapper.waitMsgAll(msgDoc2x).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
       App()
@@ -137,6 +138,7 @@ class KncTaskOnMain {
               msg.s.substring(i0 + msgRecordSeparator.length))
           .then((value) => wrapper.send(msg.i, value.toString()));
     });
+
     wrapper.waitMsgAll(msgZip).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
       App()
@@ -145,6 +147,7 @@ class KncTaskOnMain {
               msg.s.substring(i0 + msgRecordSeparator.length))
           .then((value) => wrapper.send(msg.i, value.toWrapperMsg()));
     });
+
     wrapper.waitMsgAll(msgUnzip).listen((msg) {
       App()
           .converters
