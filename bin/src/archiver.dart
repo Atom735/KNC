@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:knc/ArchiverOtput.dart';
 import 'package:knc/async.dart';
 import 'mapping.dart';
+
 
 /// Архиватор
 class Archiver {
@@ -24,19 +26,7 @@ class Archiver {
   /// Распаковывает архив [pathToArchive] в папку [pathToOutDir] если она указана.
   /// Если папка [pathToOutDir] не задана, то будет создана
   /// внутреняя временная папка, которая будет удалена по завершению работ
-  ///
-  /// Возвращает строку ошибки
-  /// - первый символ означает тип ошибки
-  /// - тело сообщения между `:` и `#`
-  /// - следом между кавычками идёт имя выходной папки
-  /// - следом до символов `^!@#$` идёт строка стандартного вывода идёт
-  /// - следом идёт строка вывода ошибок идёт
-  ///
-  /// Первый символ:
-  /// - `O` - нет ошибки
-  /// - `W` - предупреждение
-  /// - `E` - ошибка
-  Future<String> unzip(String pathToArchive,
+  Future<ArchiverOutput> unzip(String pathToArchive,
           [String pathToOutDir, final Map<String, List<String>> charMaps]) =>
       pathToOutDir == null
           ? (dir
@@ -51,19 +41,7 @@ class Archiver {
 
   /// Запаковывает данные внутри папки [pathToData] в zip архиф [pathToOutput]
   /// с помощью 7zip
-  ///
-  /// Возвращает строку ошибки
-  /// - первый символ означает тип ошибки
-  /// - тело сообщения между `:` и `#`
-  /// - следом между кавычками идёт имя выходной папки
-  /// - следом до символов `^!@#$` идёт строка стандартного вывода идёт
-  /// - следом идёт строка вывода ошибок идёт
-  ///
-  /// Первый символ:
-  /// - `O` - нет ошибки
-  /// - `W` - предупреждение
-  /// - `E` - ошибка
-  Future<String> zip(final String pathToData, final String pathToOutput,
+  Future<ArchiverOutput> zip(final String pathToData, final String pathToOutput,
           [final Map<String, List<String>> charMaps]) =>
       queue != null
           ? queue.addTask(() => Process.run(p7z, ['a', '-tzip', pathToOutput, '*', '-scsUTF-8'], workingDirectory: pathToData, stdoutEncoding: null, stderrEncoding: null).then((result) => results(
@@ -78,21 +56,10 @@ class Archiver {
                   stderrEncoding: null)
               .then((result) => results(result.exitCode, result.stdout, result.stderr, pathToOutput, charMaps));
 
-  /// Возвращает строку ошибки
-  /// - первый символ означает тип ошибки
-  /// - тело сообщения между `:` и `#`
-  /// - следом между кавычками идёт имя выходной папки
-  /// - следом до символов `^!@#$` идёт строка стандартного вывода идёт
-  /// - следом идёт строка вывода ошибок идёт
-  ///
-  /// Первый символ:
-  /// - `O` - нет ошибки
-  /// - `W` - предупреждение
-  /// - `E` - ошибка
-  static String results(final int exitCode, final stdOut, final stdErr,
+  static ArchiverOutput results(final int exitCode, final stdOut, final stdErr,
       final String pathToOutput, final Map<String, List<String>> charMaps) {
-    var sOut = '';
-    var sErr = '';
+    String sOut;
+    String sErr;
     if (stdOut != null) {
       if (stdOut is List<int> && charMaps != null) {
         final encodesRaiting = getMappingRaitings(charMaps, stdOut);
@@ -117,30 +84,6 @@ class Archiver {
         sErr = stdErr;
       }
     }
-    var sCode = '';
-    switch (exitCode) {
-      case 0:
-        sCode = 'O:';
-        break;
-      case 1:
-        sCode =
-            r'W:(Non fatal error(s)). For example, one or more files were locked by some other application, so they were not compressed.';
-        break;
-      case 2:
-        sCode = r'E:Fatal error';
-        break;
-      case 7:
-        sCode = r'E:Command line error';
-        break;
-      case 8:
-        sCode = r'E:Not enough memory for operation';
-        break;
-      case 255:
-        sCode = r'E:User stopped the process';
-        break;
-      default:
-        sCode = r'E:Unknown error';
-    }
-    return '${sCode}#"${pathToOutput}"${sOut}^!@#\$${sErr}';
+    return ArchiverOutput(pathToOutput, exitCode, sOut, sErr);
   }
 }

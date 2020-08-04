@@ -141,7 +141,7 @@ class KncTask extends KncTaskSpawnSets {
   ///
   /// Возвращает либо путь к разархивированной папке, либо данные об архивации
   Future<String> unzip(final String pathToArchive) =>
-      wrapper.requestOnce('$msgZip$pathToArchive');
+      wrapper.requestOnce('$msgUnzip$pathToArchive');
 
   KncTask._init(final KncTaskSpawnSets sets, this.pathOut)
       : pathOutLas = p.join(pathOut, 'las'),
