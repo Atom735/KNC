@@ -88,5 +88,32 @@ class KncTaskOnMain {
     wrapper.waitMsgAll(msgTaskUpdateState).listen((msg) {
       iState = int.tryParse(msg.s);
     });
+    wrapper.waitMsgAll(msgDoc2x).listen((msg) {
+      final i0 = msg.s.indexOf(msgRecordSeparator);
+      App()
+          .converters
+          .doc2x(msg.s.substring(0, i0),
+              msg.s.substring(i0 + msgRecordSeparator.length))
+          .then((value) => wrapper.send(msg.i, value.toString()));
+    });
+    wrapper.waitMsgAll(msgZip).listen((msg) {
+      final i0 = msg.s.indexOf(msgRecordSeparator);
+      App()
+          .converters
+          .zip(msg.s.substring(0, i0),
+              msg.s.substring(i0 + msgRecordSeparator.length))
+          .then((value) => wrapper.send(msg.i, value.toWrapperMsg()));
+    });
+    wrapper.waitMsgAll(msgUnzip).listen((msg) {
+      App()
+          .converters
+          .unzip(msg.s)
+          .then((value) => wrapper.send(msg.i, value.toWrapperMsg()));
+    });
   }
 }
+
+// const msgTaskUpdateState = 'taskstate;';
+// const msgDoc2x = 'doc2x;';
+// const msgZip = 'zip;';
+// const msgUnzip = 'unzip;'

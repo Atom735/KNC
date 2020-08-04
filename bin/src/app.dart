@@ -9,7 +9,7 @@ import 'package:knc/errors.dart';
 
 import 'converters.dart';
 import 'knc.main.dart';
-import 'webclient.dart';
+import 'WebClient.dart';
 
 class App {
   /// Собсна сам сервер

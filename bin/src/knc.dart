@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
 
+import 'package:knc/ArchiverOtput.dart';
 import 'package:path/path.dart' as p;
 import 'package:knc/SocketWrapper.dart';
 
@@ -122,25 +123,21 @@ class KncTask extends KncTaskSpawnSets {
   }
 
   /// Преобразует данные
-  ///
-  /// Возвращает число вернувшиеся программой wordconv
   Future<int> doc2x(final String path2doc, final String path2out) => wrapper
       .requestOnce('$msgDoc2x$path2doc$msgRecordSeparator$path2out')
       .then((msg) => int.tryParse(msg));
 
   /// Запекает данные в zip архиф с помощью 7zip
-  ///
-  /// Возвращает данные об архивации
-  Future<String> zip(final String pathToData, final String pathToOutput) =>
-      wrapper.requestOnce('$msgZip$pathToData$msgRecordSeparator$pathToOutput');
+  Future<ArchiverOutput> zip(
+          final String pathToData, final String pathToOutput) =>
+      wrapper
+          .requestOnce('$msgZip$pathToData$msgRecordSeparator$pathToOutput')
+          .then((value) => ArchiverOutput.fromWrapperMsg(value));
 
   /// Распаковывает архив [pathToArchive]
-  ///
-  /// Отправляет сообщение главному потоку который как раз и занимается разархивированием
-  ///
-  /// Возвращает либо путь к разархивированной папке, либо данные об архивации
-  Future<String> unzip(final String pathToArchive) =>
-      wrapper.requestOnce('$msgUnzip$pathToArchive');
+  Future<ArchiverOutput> unzip(final String pathToArchive) => wrapper
+      .requestOnce('$msgUnzip$pathToArchive')
+      .then((value) => ArchiverOutput.fromWrapperMsg(value));
 
   KncTask._init(final KncTaskSpawnSets sets, this.pathOut)
       : pathOutLas = p.join(pathOut, 'las'),
