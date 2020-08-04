@@ -227,7 +227,7 @@ class TaskCard {
   }
 
   set iState(final int i) {
-    if (_iState == i) {
+    if (i == null || _iState == i) {
       return;
     }
     _iState = i;
@@ -262,7 +262,7 @@ class TaskCard {
   }
 
   set iErrors(final int i) {
-    if (_iErrors == i) {
+    if (i == null || _iErrors == i) {
       return;
     }
     _iErrors = i;
@@ -276,7 +276,7 @@ class TaskCard {
   }
 
   set iFiles(final int i) {
-    if (_iFiles == i) {
+    if (i == null || _iFiles == i) {
       return;
     }
     _iFiles = i;
@@ -377,18 +377,31 @@ class TaskViewSection {
   }
 
   TaskViewSection._init() {
-    Future(() => App().requestOnce(wwwTaskViewUpdate)).then((msg) {
-      final items = json.decode(msg);
-      for (final item in items) {
-        final t = add(item['id']);
-        t.eName.innerText = item['name'];
-        t.iState = item['state'];
-        t.iErrors = item['errors'];
-        t.iFiles = item['files'];
-      }
-      update();
+    Future(() {
+      App().requestOnce(wwwTaskViewUpdate).then((msg) {
+        final items = json.decode(msg);
+        for (final item in items) {
+          final t = add(item['id']);
+          t.eName.innerText = item['name'];
+          t.iState = item['state'];
+          t.iErrors = item['errors'];
+          t.iFiles = item['files'];
+        }
+        update();
 
-      /// TODO: получение данных о задачах
+        /// TODO: получение данных о задачах
+      });
+      App().waitMsgAll(wwwTaskUpdates).listen((msg) {
+        final items = json.decode(msg.s);
+        for (final item in items) {
+          final t = list[item['id']];
+          if (t != null) {
+            t.iState = item['state'];
+            t.iErrors = item['errors'];
+            t.iFiles = item['files'];
+          }
+        }
+      });
     });
   }
 

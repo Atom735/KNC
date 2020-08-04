@@ -5,22 +5,36 @@ import 'dart:isolate';
 
 import 'package:knc/async.dart';
 import 'package:knc/converters.dart';
-import 'package:knc/knc.dart';
+import '../lib/knc.dart';
 import 'package:knc/web.dart';
 import 'package:knc/www.dart';
 import '../quickstart/web/www.dart';
 import '../quickstart/web/socketWrapper.dart';
 
 class KncSettingsOnMain extends KncSettingsInternal {
-  /// Уникальный номер выполняемой задачи
-  int id;
-
   /// Изолят выоплнения задачи
   Isolate isolate;
 
   /// Порт задачи
   SendPort sendPort;
   SocketWrapper wrapper;
+
+  void initWrapper() {
+    wrapper = SocketWrapper((str) => sendPort.send(str));
+    wrapper.waitMsg(msgTaskPathOutSets).then((msg) {
+      ssPathOut = msg.s;
+      wrapper.send(msg.i, '');
+    });
+    wrapper.waitMsgAll(msgTaskUpdateState).listen((msg) {
+      iState = KncTaskState.values[int.tryParse(msg.s)];
+      ServerApp().listOfClients.forEach((client) {
+        final value = [
+          {'id': uID, 'state': iState.index}
+        ];
+        client.wrapper.send(0, '$wwwTaskUpdates${json.encode(value)}');
+      });
+    });
+  }
 }
 
 class WebClient {
@@ -122,10 +136,11 @@ class ServerApp {
         if (msg.length == 2 && msg[0] is int && msg[1] is SendPort) {
           final kncTask = listOfTasks[msg[0]];
           kncTask.sendPort = msg[1];
-          kncTask.wrapper = SocketWrapper((str) => kncTask.sendPort.send(str));
+          kncTask.initWrapper();
         }
         if (msg.length == 2 && msg[0] is int && msg[1] is String) {
           final kncTask = listOfTasks[msg[0]];
+          print('SERV_RECV: ${msg[0]}; ${msg[1]}');
           if (kncTask.wrapper != null) {
             kncTask.wrapper.recv(msg[1]);
           }
@@ -150,13 +165,17 @@ class ServerApp {
     final kncTask = KncSettingsOnMain();
     kncTask.uID = _uTaskNewId;
     kncTask.ssTaskName = value['name'];
-    kncTask.pathInList.addAll(value['path']);
+    for (String item in value['path']) {
+      kncTask.pathInList.add(item);
+    }
     listOfTasks[kncTask.uID] = kncTask;
 
     final kncTaskA = KncTask();
     kncTaskA.uID = _uTaskNewId;
     kncTaskA.ssTaskName = value['name'];
-    kncTaskA.pathInList.addAll(value['path']);
+    for (String item in value['path']) {
+      kncTaskA.pathInList.add(item);
+    }
     kncTaskA.sendPort = receivePort.sendPort;
     kncTaskA.ssCharMaps = converters.ssCharMaps;
 

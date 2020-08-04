@@ -12,6 +12,11 @@ import 'las.dart';
 import 'www.dart';
 import 'xls.dart';
 
+import 'file:///D:/ARGilyazeev/github/KNC/quickstart/web/socketWrapper.dart';
+
+const msgTaskPathOutSets = 'pathout;';
+const msgTaskUpdateState = 'taskstate;';
+
 class PathNewer {
   /// Путь именно к существующей папке, в которой будет подбираться имя
   final String prePath;
@@ -75,6 +80,8 @@ class KncTask extends KncSettingsInternal {
   PathNewer newerOutInk;
   PathNewer newerOutErr;
 
+  SocketWrapper wrapper;
+
   /// Кодировки
   Map<String, List<String>> ssCharMaps;
 
@@ -102,8 +109,12 @@ class KncTask extends KncSettingsInternal {
 
   @override
   set iState(KncTaskState state) {
+    if (super.iState == state) {
+      return;
+    }
+
     super.iState = state;
-    sendMsg('$wwwKncTaskUpdateState${iState.index}');
+    wrapper.send(0, '$msgTaskUpdateState${super.iState.index}');
   }
 
   @override
@@ -207,10 +218,13 @@ class KncTask extends KncSettingsInternal {
 
   void isolateEntryPointThis() async {
     receivePort = ReceivePort();
-
-    final cCharmMaps = completerAdd<void>('charMaps');
+    wrapper = SocketWrapper((msg) => sendPort.send([uID, msg]));
 
     receivePort.listen((final msg) {
+      if (msg is String) {
+        wrapper.recv(msg);
+        return;
+      }
       // Прослушивание сообщений полученных от главного изолята
       if (msg is List) {
         if (msg[0] is String) {
@@ -222,14 +236,6 @@ class KncTask extends KncSettingsInternal {
             case 'doc2x':
               completerComplite(msg[1], msg[2] as int);
               return;
-            case 'charMaps':
-              ssCharMaps = msg[1];
-              completerComplite(cCharmMaps.uID, null);
-              return;
-            case 'ssPathOut':
-              completerComplite(msg[1], null);
-              return;
-            default:
           }
         }
       }
@@ -239,7 +245,6 @@ class KncTask extends KncSettingsInternal {
     sendPort.send([uID, receivePort.sendPort]);
 
     print('task[$uID]: Work Init');
-    await cCharmMaps.completer.future;
     await initializing();
     print('task[$uID]: Work Begin');
 
@@ -356,9 +361,7 @@ class KncTask extends KncSettingsInternal {
       }
     }
 
-    final c = completerAdd<void>('ssPathOut');
-
-    sendPort.send([uID, 'ssPathOut', c.uID, ssPathOut]);
+    Future f = wrapper.requestOnce('$msgTaskPathOutSets$ssPathOut');
 
     pathOutLas = p.join(ssPathOut, 'las');
     pathOutInk = p.join(ssPathOut, 'ink');
@@ -378,7 +381,7 @@ class KncTask extends KncSettingsInternal {
         .openWrite(encoding: utf8, mode: FileMode.writeOnly);
     errorsOut.writeCharCode(unicodeBomCharacterRune);
 
-    await c.completer.future;
+    return f;
   }
 
   /// Начинает обработку файлов с настоящими настройками
@@ -400,6 +403,7 @@ class KncTask extends KncSettingsInternal {
     final Future Function(InkData ink, File file, String newPath)
         handleErrorInk,
   }) async {
+    iState = KncTaskState.work;
     final tasks = <Future>[];
     final tasks2 = <Future>[];
     pathInList.forEach((element) {
@@ -561,44 +565,44 @@ class KncTask extends KncSettingsInternal {
           } // == LAS FILES == End
 
           // == INK FILES == Begin
-          if (ssFileExtInk.contains(ext)) {
-            try {
-              final inks = await InkData.loadFile(entity, this,
-                  handleErrorCatcher: handleErrorCatcher);
-              if (inks != null) {
-                for (final ink in inks) {
-                  if (ink != null) {
-                    ink.origin = pathToArch + relPath;
-                    if (ink.listOfErrors.isEmpty) {
-                      // Данные корректны
-                      final newPath = await newerOutInk.lock(ink.well +
-                          '___' +
-                          p.basenameWithoutExtension(entity.path) +
-                          '.txt');
-                      final original = inkDB.addInkData(ink);
-                      if (handleOkInk != null) {
-                        await handleOkInk(ink, entity, newPath, original);
-                      }
-                      await newerOutInk.unlock(newPath);
-                    } else {
-                      // Ошибка в данных файла
-                      final newPath =
-                          await newerOutErr.lock(p.basename(entity.path));
-                      if (handleErrorInk != null) {
-                        await handleErrorInk(ink, entity, newPath);
-                      }
-                      await newerOutErr.unlock(newPath);
-                    }
-                  }
-                }
-              }
-            } catch (e) {
-              if (handleErrorCatcher != null) {
-                await handleErrorCatcher(e);
-              }
-            }
-            return;
-          } // == INK FILES == End
+          // if (ssFileExtInk.contains(ext)) {
+          //   try {
+          //     final inks = await InkData.loadFile(entity, this,
+          //         handleErrorCatcher: handleErrorCatcher);
+          //     if (inks != null) {
+          //       for (final ink in inks) {
+          //         if (ink != null) {
+          //           ink.origin = pathToArch + relPath;
+          //           if (ink.listOfErrors.isEmpty) {
+          //             // Данные корректны
+          //             final newPath = await newerOutInk.lock(ink.well +
+          //                 '___' +
+          //                 p.basenameWithoutExtension(entity.path) +
+          //                 '.txt');
+          //             final original = inkDB.addInkData(ink);
+          //             if (handleOkInk != null) {
+          //               await handleOkInk(ink, entity, newPath, original);
+          //             }
+          //             await newerOutInk.unlock(newPath);
+          //           } else {
+          //             // Ошибка в данных файла
+          //             final newPath =
+          //                 await newerOutErr.lock(p.basename(entity.path));
+          //             if (handleErrorInk != null) {
+          //               await handleErrorInk(ink, entity, newPath);
+          //             }
+          //             await newerOutErr.unlock(newPath);
+          //           }
+          //         }
+          //       }
+          //     }
+          //   } catch (e) {
+          //     if (handleErrorCatcher != null) {
+          //       await handleErrorCatcher(e);
+          //     }
+          //   }
+          //   return;
+          // } // == INK FILES == End
         }
       };
 

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'www.dart';
+
 class SocketWrapperResponse {
   final String s;
   final int i;
@@ -26,7 +28,7 @@ class SocketWrapper {
   final _listOfRespSubers = <String, StreamController<SocketWrapperResponse>>{};
 
   SocketWrapper(this.sender,
-      {this.streamCloseMsg = 'streamclose',
+      {this.streamCloseMsg = wwwStreamClose,
       this.msgIdBegin = '\u{1}',
       this.msgIdEnd = '\u{2}',
       this.signal}) {
