@@ -90,8 +90,6 @@ class TaskCard {
     }
   }
 
-  void update() {}
-
   TaskCard(this.id)
       : eCard = eGetById('task-${id}-card'),
         eName = eGetById('task-${id}-name'),
