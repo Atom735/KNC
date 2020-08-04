@@ -12,6 +12,8 @@ import 'knc.main.dart';
 import 'las.dart';
 
 const msgTaskUpdateState = 'taskstate;';
+const msgTaskUpdateErrors = 'taskerrors;';
+const msgTaskUpdateFiles = 'taskfiles;';
 const msgDoc2x = 'doc2x;';
 const msgZip = 'zip;';
 const msgUnzip = 'unzip;';
@@ -82,6 +84,33 @@ class KncTask extends KncTaskSpawnSets {
 
   final lasCurvesNameOriginals = <String>[];
 
+  int _state = 0;
+  set state(final int i) {
+    if (i == null || _state == i) {
+      return;
+    }
+    _state = i;
+    wrapper.send(0, '$msgTaskUpdateState$_state');
+  }
+
+  int _errors = 0;
+  set errors(final int i) {
+    if (i == null || _errors == i) {
+      return;
+    }
+    _errors = i;
+    wrapper.send(0, '$msgTaskUpdateErrors$_errors');
+  }
+
+  int _files = 0;
+  set files(final int i) {
+    if (i == null || _files == i) {
+      return;
+    }
+    _files = i;
+    wrapper.send(0, '$msgTaskUpdateFiles$_files');
+  }
+
   static void entryPoint(final KncTaskSpawnSets sets) async {
     final pathOut = (await Directory('temp').createTemp('task.')).absolute.path;
     await KncTask(sets, pathOut).entryPointInClass();
@@ -93,6 +122,14 @@ class KncTask extends KncTaskSpawnSets {
       Directory(pathOutInk).create(recursive: true),
       Directory(pathOutErr).create(recursive: true)
     ]);
+    state = 1;
+    final tasks = <Future>[];
+    final tasks2 = <Future>[];
+    path.forEach((element) {
+      if (element.isNotEmpty) {
+        print('task[$id] scan $element');
+      }
+    });
   }
 
   /// Преобразует данные

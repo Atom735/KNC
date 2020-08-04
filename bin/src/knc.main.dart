@@ -64,9 +64,6 @@ class KncTaskOnMain {
   final List<String> path;
 
   String pathOut;
-  int _state = 0;
-  int _errors = 0;
-  int _files = 0;
 
   /// Изолят выоплнения задачи
   Isolate isolate;
@@ -85,6 +82,7 @@ class KncTaskOnMain {
         'files': _files
       };
 
+  int _state = 0;
   set state(final int i) {
     if (i == null || _state == i) {
       return;
@@ -96,6 +94,7 @@ class KncTaskOnMain {
         ]));
   }
 
+  int _errors = 0;
   set errors(final int i) {
     if (i == null || _errors == i) {
       return;
@@ -107,6 +106,7 @@ class KncTaskOnMain {
         ]));
   }
 
+  int _files = 0;
   set files(final int i) {
     if (i == null || _files == i) {
       return;
@@ -122,6 +122,12 @@ class KncTaskOnMain {
     wrapper = SocketWrapper((str) => sendPort.send(str));
     wrapper.waitMsgAll(msgTaskUpdateState).listen((msg) {
       state = int.tryParse(msg.s);
+    });
+    wrapper.waitMsgAll(msgTaskUpdateErrors).listen((msg) {
+      errors = int.tryParse(msg.s);
+    });
+    wrapper.waitMsgAll(msgTaskUpdateFiles).listen((msg) {
+      files = int.tryParse(msg.s);
     });
     wrapper.waitMsgAll(msgDoc2x).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
