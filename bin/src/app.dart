@@ -27,7 +27,7 @@ class App {
   StreamSubscription receivePortSubscription;
 
   /// Список запущенных задач
-  final listOfTasks = <int, KncSettingsOnMain>{};
+  final listOfTasks = <int, KncTaskOnMain>{};
   var _uTaskNewId = 0;
 
   /// Список подключенных клиентов
@@ -43,6 +43,12 @@ class App {
   String getWwwTaskViewUpdate() {
     final list = [];
     return json.encode(list);
+  }
+
+  void sendForAllClients(final String str) {
+    listOfClients.forEach((client) {
+      client.wrapper.send(0, str);
+    });
   }
 
   Future<void> run(final int port) async {
@@ -91,30 +97,18 @@ class App {
       return '';
     }
     _uTaskNewId += 1;
-    final kncTask = KncSettingsOnMain();
-    kncTask.uID = _uTaskNewId;
-    kncTask.ssTaskName = value['name'];
+    final path = <String>[];
     for (String item in value['path']) {
-      kncTask.pathInList.add(item);
+      path.add(item);
     }
-    listOfTasks[kncTask.uID] = kncTask;
+    final kncTask =
+        KncTaskOnMain(_uTaskNewId, value['name'], path.toList(growable: false));
+    listOfTasks[kncTask.id] = kncTask;
 
-    final kncTaskA = KncTask();
-    kncTaskA.uID = _uTaskNewId;
-    kncTaskA.ssTaskName = value['name'];
-    for (String item in value['path']) {
-      kncTaskA.pathInList.add(item);
-    }
-    kncTaskA.sendPort = receivePort.sendPort;
-    kncTaskA.ssCharMaps = converters.ssCharMaps;
-
-    Isolate.spawn(KncTask.isolateEntryPoint, kncTaskA,
-            debugName: 'task[${kncTaskA.uID}]: "${kncTaskA.ssTaskName}"')
-        .then((isolate) {
-      kncTask.isolate = isolate;
-    });
-
-    return '${kncTask.uID}';
+    KncTaskSpawnSets(kncTask, converters.ssCharMaps, receivePort.sendPort)
+        .spawn()
+        .then((isolate) => kncTask.isolate = isolate);\
+    return '${kncTask.id}';
   }
 
   App._init(this.dir) {

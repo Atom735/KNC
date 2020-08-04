@@ -10,6 +10,7 @@ import 'package:knc/www.dart';
 import 'package:knc/SocketWrapper.dart';
 
 import 'ink.dart';
+import 'knc.main.dart';
 import 'las.dart';
 import 'xls.dart';
 
@@ -63,26 +64,59 @@ class CompleterWithUID<T> {
   CompleterWithUID(this.completer, this.uID, [this.desc]);
 }
 
-class KncTask extends KncSettingsInternal {
-  /// Порт для передачи данных главному изоляту
-  SendPort sendPort;
+class KncTask extends KncTaskSpawnSets {
+  /// Состояние задачи
+  int state = 0;
+
+  /// Настройки расширения для архивных файлов
+  List<String> ssFileExtAr = ['.zip', '.rar'];
+
+  /// Настройки расширения для файлов LAS
+  List<String> ssFileExtLas = ['.las'];
+
+  /// Настройки расширения для файлов с инклинометрией
+  List<String> ssFileExtInk = ['.doc', '.docx', '.txt', '.dbf'];
+
+  /// Максимальный размер вскрываемого архива в байтах
+  ///
+  /// Для задания значения можно использовать постфиксы:
+  /// * `k` = КилоБайты
+  /// * `m` = МегаБайты = `kk`
+  /// * `g` = ГигаБайты = `kkk`
+  ///
+  /// `0` - для всех архивов
+  ///
+  /// По умолчанию 1Gb
+  int ssArMaxSize = 1024 * 1024 * 1024;
+
+  /// Максимальный глубина прохода по архивам
+  /// * `-1` - для бесконечной вложенности (По умолчанию)
+  /// * `0` - для отбрасывания всех архивов
+  /// * `1` - для входа на один уровень архива
+  int ssArMaxDepth = -1;
 
   /// Порт для получение сообщений этим изолятом
   ReceivePort receivePort;
-
-  String pathOutLas;
-  String pathOutInk;
-  String pathOutErr;
-  IOSink errorsOut;
-
-  PathNewer newerOutLas;
-  PathNewer newerOutInk;
-  PathNewer newerOutErr;
-
   SocketWrapper wrapper;
 
-  /// Кодировки
-  Map<String, List<String>> ssCharMaps;
+  /// Путь к конечным данным
+  final String pathOut;
+
+  final String pathOutLas;
+  final PathNewer newerOutLas;
+
+  final String pathOutInk;
+  final PathNewer newerOutInk;
+
+  final String pathOutErr;
+  final PathNewer newerOutErr;
+
+  final IOSink errorsOut;
+
+  //////////////////////
+
+
+
 
   final lasDB = LasDataBase();
   dynamic lasIgnore;
@@ -104,7 +138,52 @@ class KncTask extends KncSettingsInternal {
   void completerComplite<T>(final int uID, final T value) => _completers.remove(
       _completers.singleWhere((e) => e.uID == uID)..completer.complete(value));
 
-  KncTask();
+  KncTask(final KncTaskSpawnSets sets, this.pathOut) :
+    pathOutLas = p.join(pathOut, 'las'),
+    newerOutLas = PathNewer(p.join(pathOut, 'las')),
+    pathOutInk = p.join(pathOut, 'ink'),
+    newerOutInk = PathNewer(p.join(pathOut, 'ink')),
+    pathOutErr = p.join(pathOut, 'errors'),
+    newerOutErr = PathNewer(p.join(pathOut, 'errors')),
+    errorsOut = File(p.join(pathOut, 'errors.txt'))
+        .openWrite(encoding: utf8, mode: FileMode.writeOnly)..
+    writeCharCode(unicodeBomCharacterRune),
+    super.clone(sets) {}
+
+
+{
+    if (ssPathOut == null || ssPathOut.isEmpty) {
+      ssPathOut = (await Directory('temp').createTemp('task.')).absolute.path;
+    } else {
+      final dirOut = Directory(ssPathOut).absolute;
+      if (await dirOut.exists()) {
+        await dirOut.delete(recursive: true);
+      }
+      await dirOut.create(recursive: true);
+      if (dirOut.isAbsolute == false) {
+        ssPathOut = dirOut.absolute.path;
+      }
+    }
+
+    Future f = wrapper.requestOnce('$msgTaskPathOutSets$ssPathOut');
+
+    pathOutLas = p.join(ssPathOut, 'las');
+    pathOutInk = p.join(ssPathOut, 'ink');
+    pathOutErr = p.join(ssPathOut, 'errors');
+
+    await Future.wait([
+      Directory(pathOutLas).create(recursive: true),
+      Directory(pathOutInk).create(recursive: true),
+      Directory(pathOutErr).create(recursive: true)
+    ]);
+
+    ;
+    ;
+    ;
+
+    errorsOut = File(p.join(pathOutErr, '.errors.txt'))
+        .openWrite(encoding: utf8, mode: FileMode.writeOnly);
+    errorsOut.writeCharCode(unicodeBomCharacterRune);}
 
   @override
   set iState(KncTaskState state) {
@@ -213,7 +292,8 @@ class KncTask extends KncSettingsInternal {
   }
 
   /// Точка входа для нового изолята
-  static void isolateEntryPoint(KncTask task) => task.isolateEntryPointThis();
+  static void isolateEntryPoint(final KncTaskSpawnSets sets) =>
+      KncTask(sets).isolateEntryPointThis();
 
   void isolateEntryPointThis() async {
     receivePort = ReceivePort();
@@ -313,22 +393,6 @@ class KncTask extends KncSettingsInternal {
     } else {
       await handleErrorCatcher(err);
     }
-  }
-
-  KncTask.fromSettings(final KncSettingsInternal ss) {
-    uID = ss.uID;
-    ssTaskName = ss.ssTaskName;
-    ssPathOut = ss.ssPathOut;
-    ssFileExtAr = [];
-    ssFileExtAr.addAll(ss.ssFileExtAr);
-    ssFileExtLas = [];
-    ssFileExtLas.addAll(ss.ssFileExtLas);
-    ssFileExtInk = [];
-    ssFileExtInk.addAll(ss.ssFileExtInk);
-    pathInList = [];
-    pathInList.addAll(ss.pathInList);
-    ssArMaxSize = ss.ssArMaxSize;
-    ssArMaxDepth = ss.ssArMaxDepth;
   }
 
   /// Загрузкить все данные
