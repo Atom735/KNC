@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:knc/errors.dart';
-import 'package:knc/socketWrapper.dart';
+import 'package:knc/SocketWrapper.dart';
 import 'package:knc/www.dart';
 
-import 'app.dart';
+import 'App.dart';
 
 class WebClient {
   /// Сокет для связи с клиентом

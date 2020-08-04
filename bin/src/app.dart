@@ -85,12 +85,6 @@ class App {
     }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
   }
 
-  App._init(this.dir) {
-    print('Server App created: $this');
-  }
-  static App _instance;
-  factory App([Directory dir]) => _instance ?? (_instance = App._init(dir));
-
   String getWwwTaskNew(final String s) {
     final value = json.decode(s);
     if (value['name'] == null || value['path'] == null) {
@@ -122,4 +116,10 @@ class App {
 
     return '${kncTask.uID}';
   }
+
+  App._init(this.dir) {
+    print('Server App created: $this');
+  }
+  static App _instance;
+  factory App() => _instance ?? (_instance = App._init(Directory(r'web')));
 }

@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:knc/errors.dart';
 import 'package:knc/www.dart';
-import 'package:knc/socketWrapper.dart';
+import 'package:knc/SocketWrapper.dart';
 
 import 'ink.dart';
 import 'las.dart';

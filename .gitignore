@@ -30,7 +30,6 @@ test/ink/docx
 out
 *.exe
 release
-web/*/
 temp
 
 web/*.css

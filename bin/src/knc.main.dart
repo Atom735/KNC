@@ -1,10 +1,10 @@
 import 'dart:isolate';
 import 'dart:convert';
 
-import 'package:knc/socketWrapper.dart';
+import 'package:knc/SocketWrapper.dart';
 import 'package:knc/www.dart';
 
-import 'app.dart';
+import 'App.dart';
 import 'knc.dart';
 
 class KncSettingsOnMain extends KncSettingsInternal {

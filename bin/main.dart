@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'src/app.dart';
+import 'src/App.dart';
 
 void main(List<String> args) {
-  App(Directory(r'web')).run(80);
+  App().run(80);
 }
