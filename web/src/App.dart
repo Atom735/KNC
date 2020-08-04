@@ -29,10 +29,7 @@ class App {
     eTitleText.innerText = 'Меня отключили и потеряли...';
   }
 
-  void onMessage(final String msg) {
-    print('recv: $msg');
-    wrapper.recv(msg);
-  }
+  void onMessage(final String msg) => wrapper.recv(msg);
 
   Future<SocketWrapperResponse> Function(String msgBegin) get waitMsg =>
       wrapper.waitMsg;

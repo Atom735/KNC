@@ -86,7 +86,6 @@ class App {
         }
         if (msg.length == 2 && msg[0] is int && msg[1] is String) {
           final kncTask = listOfTasks[msg[0]];
-          print('SERV_RECV: ${msg[0]}; ${msg[1]}');
           if (kncTask.wrapper != null) {
             kncTask.wrapper.recv(msg[1]);
           }
