@@ -1,5 +1,5 @@
 import 'dart:isolate';
-import 'dart:convert';
+import 'dart:convert' as c;
 
 import 'package:knc/SocketWrapper.dart';
 import 'package:knc/www.dart';
@@ -13,6 +13,33 @@ class KncTaskSpawnSets {
   final List<String> path;
   final Map<String, List<String>> charMaps;
   final SendPort sendPort;
+
+  /// Настройки расширения для архивных файлов
+  final List<String> ssFileExtAr = ['.zip', '.rar'];
+
+  /// Настройки расширения для файлов LAS
+  final List<String> ssFileExtLas = ['.las'];
+
+  /// Настройки расширения для файлов с инклинометрией
+  final List<String> ssFileExtInk = ['.doc', '.docx', '.txt', '.dbf'];
+
+  /// Максимальный размер вскрываемого архива в байтах
+  ///
+  /// Для задания значения можно использовать постфиксы:
+  /// * `k` = КилоБайты
+  /// * `m` = МегаБайты = `kk`
+  /// * `g` = ГигаБайты = `kkk`
+  ///
+  /// `0` - для всех архивов
+  ///
+  /// По умолчанию 1Gb
+  final int ssArMaxSize = 1024 * 1024 * 1024;
+
+  /// Максимальный глубина прохода по архивам
+  /// * `-1` - для бесконечной вложенности (По умолчанию)
+  /// * `0` - для отбрасывания всех архивов
+  /// * `1` - для входа на один уровень архива
+  final int ssArMaxDepth = -1;
 
   KncTaskSpawnSets(final KncTaskOnMain t, this.charMaps, this.sendPort)
       : id = t.id,
@@ -64,7 +91,7 @@ class KncTaskOnMain {
     }
     _state = i;
     App().sendForAllClients(wwwTaskUpdates +
-        json.encode([
+        c.json.encode([
           {'id': id, 'state': _state}
         ]));
   }
@@ -75,7 +102,7 @@ class KncTaskOnMain {
     }
     _errors = i;
     App().sendForAllClients(wwwTaskUpdates +
-        json.encode([
+        c.json.encode([
           {'id': id, 'errors': _state}
         ]));
   }
@@ -86,7 +113,7 @@ class KncTaskOnMain {
     }
     _files = i;
     App().sendForAllClients(wwwTaskUpdates +
-        json.encode([
+        c.json.encode([
           {'id': id, 'files': _files}
         ]));
   }
