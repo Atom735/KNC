@@ -6,6 +6,7 @@ import 'dart:isolate';
 
 import 'package:knc/async.dart';
 import 'package:knc/errors.dart';
+import 'package:knc/www.dart';
 
 import 'converters.dart';
 import 'knc.main.dart';
@@ -111,7 +112,7 @@ class App {
     KncTaskSpawnSets(kncTask, converters.ssCharMaps, receivePort.sendPort)
         .spawn()
         .then((isolate) => kncTask.isolate = isolate);
-    return json.encode(kncTask.json);
+    return wwwTaskNew + json.encode(kncTask.json);
   }
 
   App._init(this.dir) {

@@ -24,7 +24,8 @@ class WebClient {
       wrapper.send(msg.i, App().getWwwTaskViewUpdate());
     });
     waitMsgAll(wwwTaskNew).listen((msg) {
-      wrapper.send(msg.i, App().getWwwTaskNew(msg.s));
+      App().sendForAllClients(App().getWwwTaskNew(msg.s));
+      wrapper.send(msg.i, '');
     });
   }
 
