@@ -64,7 +64,7 @@ abstract class C_File {
       return v
           .map<C_File>((e) => e['type'] == 'las'
               ? CLasFile.fromJson(e)
-              : e['type'] == 'ink' ? CInkFile.fromJson(v) : null)
+              : e['type'] == 'ink' ? CInkFile.fromJson(e) : null)
           .toList(growable: false);
     }
     return [];
