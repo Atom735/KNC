@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:knc/ArchiverOtput.dart';
+import 'package:knc/errors.dart';
+import 'package:knc/www.dart';
 import 'package:path/path.dart' as p;
 import 'package:knc/SocketWrapper.dart';
 
@@ -112,6 +114,9 @@ class KncTask extends KncTaskSpawnSets {
     wrapper.send(0, '$msgTaskUpdateFiles$_files');
   }
 
+  final listOfErrors = <CErrorOnLine>[];
+  final listOfFiles = <C_File>[];
+
   static void entryPoint(final KncTaskSpawnSets sets) async {
     final pathOut = (await Directory('temp').createTemp('task.')).absolute.path;
     await KncTask(sets, pathOut).entryPointInClass();
@@ -158,13 +163,33 @@ class KncTask extends KncTaskSpawnSets {
               lasCurvesNameOriginals.add(item.mnem);
             }
           }
-          files = _files + 1;
+          try {
+            if (originals.any((e) => e.added)) {
+              await file.copy(newPath);
+            }
+          } catch (e) {
+            listOfErrors.add(CErrorOnLine(
+                origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
+            errors = listOfErrors.length;
+            print(e);
+          }
+          listOfFiles.add(CLasFile(origin, newPath, las.wWell, originals));
+          files = listOfFiles.length;
           // TODO: обработка LAS файла
           await newerOutLas.unlock(newPath);
         } else {
           // Ошибка в данных файла
           final newPath = await newerOutErr.lock(p.basename(file.path));
-          errors = _errors + 1;
+          listOfErrors.add(CErrorOnLine(origin, newPath, las.listOfErrors));
+          errors = listOfErrors.length;
+          try {
+            await file.copy(newPath);
+          } catch (e) {
+            listOfErrors.add(CErrorOnLine(
+                origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
+            errors = listOfErrors.length;
+            print(e);
+          }
           // TODO: обработка ошибок LAS файла
           await newerOutErr.unlock(newPath);
         }
@@ -183,13 +208,45 @@ class KncTask extends KncTaskSpawnSets {
                     p.basenameWithoutExtension(file.path) +
                     '.txt');
                 final original = inkDB.addInkData(ink);
-                files = _files + 1;
+
+                try {
+                  if (original) {
+                    final io =
+                        File(newPath).openWrite(mode: FileMode.writeOnly);
+                    io.writeln(ink.well);
+                    final dat = ink.inkData;
+                    for (final item in dat.data) {
+                      io.writeln(
+                          '${item.depth}\t${item.angle}\t${item.azimuth}');
+                    }
+                    await io.flush();
+                    await io.close();
+                  }
+                } catch (e) {
+                  listOfErrors.add(CErrorOnLine(origin, newPath,
+                      [ErrorOnLine(KncError.exception, 0, e)]));
+                  errors = listOfErrors.length;
+                  print(e);
+                }
+                listOfFiles.add(CInkFile(
+                    origin, newPath, ink.well, ink.strt, ink.stop, original));
+                files = listOfFiles.length;
                 // TODO: обработка INK файла
                 await newerOutInk.unlock(newPath);
               } else {
                 // Ошибка в данных файла
                 final newPath = await newerOutErr.lock(p.basename(file.path));
-                errors = _errors + 1;
+                try {
+                  await file.copy(newPath);
+                } catch (e) {
+                  listOfErrors.add(CErrorOnLine(origin, newPath,
+                      [ErrorOnLine(KncError.exception, 0, e)]));
+                  errors = listOfErrors.length;
+                  print(e);
+                }
+                listOfErrors
+                    .add(CErrorOnLine(origin, newPath, ink.listOfErrors));
+                errors = listOfErrors.length;
                 // TODO: бработка ошибок INK файла
                 await newerOutErr.unlock(newPath);
               }

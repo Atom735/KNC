@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:knc/errors.dart';
+import 'package:knc/www.dart';
 
 import 'mapping.dart';
 
@@ -176,31 +177,32 @@ class LasDataBase {
   /// Добавляет данные LAS файла в базу.
   ///
   /// Функция вернёт количество добавленных оригинальных кривых
-  ///
-  /// Если все кривые совпдаают вернёт `0`
-  int addLasData(final LasData las) {
+  List<CLasFileSub> addLasData(final LasData las) {
     final list = SingleCurveLasData.getByLasData(las);
     if (db[las.wWell] == null) {
       db[las.wWell] = [];
       db[las.wWell].addAll(list);
-      return 0;
+      return list
+          .map((e) => CLasFileSub(true, e.name, e.strt, e.stop))
+          .toList(growable: false);
     } else {
       /// Флаг уникальности данных
-      var b = 0;
-      for (var scld in list) {
-        var bk = true;
+      final o = List<CLasFileSub>(list.length);
+      for (var i = 0; i < list.length; i++) {
+        final e = list[i];
+        var b = true;
         for (var scdb in db[las.wWell]) {
-          if (scdb == scld) {
+          if (scdb == e) {
             // Если совпадают
-            b += 1;
-            bk = false;
+            b = false;
           }
         }
-        if (bk) {
-          db[las.wWell].add(scld);
+        if (b) {
+          db[las.wWell].add(e);
         }
+        o[i] = CLasFileSub(b, e.name, e.strt, e.stop);
       }
-      return las.curves.length - 1 - b;
+      return o;
     }
   }
 }

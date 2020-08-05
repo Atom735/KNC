@@ -9,7 +9,7 @@ void Function(dynamic error, StackTrace stackTrace) getErrorFunc(
 
 enum KncError {
   /// 0
-  ok,
+  exception,
 
   /// 1
   lasErrorsNotEmpty,
@@ -179,4 +179,14 @@ class ErrorOnLine {
   final String txt;
 
   ErrorOnLine(final KncError err, this.line, this.txt) : err = err.index;
+
+  ErrorOnLine.fromJson(final dynamic json)
+      : err = json['err'],
+        line = json['line'],
+        txt = json['txt'];
+  dynamic toJson() => {
+        'err': err,
+        'line': line,
+        'txt': txt ?? '',
+      };
 }
