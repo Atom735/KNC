@@ -1,5 +1,6 @@
 import 'dart:convert' as c;
 
+import 'ArchiverOtput.dart';
 import 'errors.dart';
 
 /// Клиент отправляет серверу запрос на обновление данных всех задач
@@ -125,7 +126,15 @@ class CErrorOnLine {
     final s = StringBuffer();
     s.write('<details><summary>$origin</summary><p>$path</p>');
     for (final err in errors) {
-      s.write('<p>${err.line}: ${kncErrorStrings[err.err]}<hr>${err.txt}</p>');
+      if (err.err == KncError.arch.index) {
+        final arch = ArchiverOutput.fromWrapperMsg(err.txt);
+        s.write('<p>${arch.exitCode}</p>');
+        s.write('<p>${arch.stdOut}</p>');
+        s.write('<p>${arch.stdErr}</p>');
+      } else {
+        s.write(
+            '<p>${err.line}: ${kncErrorStrings[err.err]}<hr>${err.txt}</p>');
+      }
     }
     s.write('</details>');
     return s.toString();
