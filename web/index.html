@@ -43,7 +43,7 @@
 
   </head>
 
-  <body class="mdl-upgrading">
+  <body class="mdl-upgrading mdl-color--grey-800">
     <div class="loading">Loading...</div>
     <div class="mdl-layout mdl-layout--fixed-header mdl-color--grey-100">
       <header
@@ -83,7 +83,7 @@
           </div>
         </div>
       </main>
-      <footer class="mdl-mini-footer">
+      <footer class="mdl-mini-footer mdl-color--grey-800">
         <div class="mdl-mini-footer--left-section">
           <div>Sample for pub-package:
             <a href="https://pub.dartlang.org/packages/m4d_components"
@@ -102,25 +102,8 @@
       </footer>
     </div>
 
-
-
-    <dialog id="task-details-dialog" class="mdl-dialog mdl-shadow--2dp">
-      <h4 class="mdl-dialog__title">{{TaskName}}</h4>
-      <div id="task-details-content" class="mdl-dialog__content">
-        <p>
-          Allowing us to collect data will let us get you the information you
-          want
-          faster.
-        </p>
-      </div>
-      <div class="mdl-dialog__actions">
-        <button id="task-details-close" type="button"
-          class="mdl-button close">Закрыть</button>
-      </div>
-    </dialog>
-
     <dialog id="task-sets-dialog" class="mdl-dialog mdl-shadow--2dp">
-      <h4 class="mdl-dialog__title">Настройка новой задачи</h4>
+      <div class="mdl-dialog__title">Настройка новой задачи</div>
       <div class="mdl-dialog__content">
         <form action="#">
           <div id="task-sets-name-div"
@@ -133,22 +116,22 @@
           </div>
           <table id="task-sets-table" class="container textfield-with-button">
           </table>
-          <button id="task-sets-path"
+          <button id="task-sets-path" type="button"
             class="mdl-button mdl-button--icon mdl-button--colored">
             <i class="material-icons">add</i>
           </button>
-          <button id="task-sets-fast-set"
+          <button id="task-sets-fast-set" type="button"
             class="mdl-button mdl-button--icon mdl-button--colored">
             <i class="material-icons">track_changes</i>
           </button>
         </form>
       </div>
       <div class="mdl-dialog__actions">
-        <button id="task-sets-close"
+        <button id="task-sets-close" type="button"
           class="mdl-button mdl-button--raised close">
           Отмена
         </button>
-        <button id="task-sets-start"
+        <button id="task-sets-start" type="button"
           class="mdl-button mdl-button--raised mdl-button--accent" disabled>
           Запустить
         </button>
@@ -158,7 +141,33 @@
       </div>
     </dialog>
 
-    <button id="task-sets-open"
+    <dialog id="task-errors-dialog"
+      class="mdl-dialog mdl-shadow--2dp fullwidth">
+      <div class="mdl-dialog__title sticky">
+        Список ошибок
+        <span id="task-errors-counter" class="right">
+          41/534
+        </span>
+      </div>
+      <div id="task-errors-content" class="mdl-dialog__content">
+
+      </div>
+      <div id="task-errors-actions" class="mdl-dialog__actions sticky">
+        <button id="task-errors-close" type="button"
+          class="mdl-button mdl-button--raised close">
+          Закрыть
+        </button>
+        <button id="task-errors-load" type="button"
+          class="mdl-button mdl-button--raised mdl-button--accent" disabled>
+          Загрузить ещё
+        </button>
+        <div id="task-errors-spinner"
+          class="mdl-spinner mdl-spinner--single-color is-active" hidden>
+        </div>
+      </div>
+    </dialog>
+
+    <button id="task-sets-open" type="button"
       class="mdl-button mdl-button--fab mdl-ripple-effect mdl-button--colored add-task-btn"><i
         class="material-icons">addchart</i></button>
 

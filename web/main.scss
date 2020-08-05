@@ -47,6 +47,32 @@
     }
 }
 
+
 #task-view-section>.mdl-card {
     animation: animation-task-view-card 500ms ease-in;
+}
+
+.mdl-dialog__actions>.mdl-spinner {
+    width: 36px;
+}
+
+.mdl-dialog.fullwidth {
+    width: calc(100% - 40px);
+}
+
+.mdl-dialog__title.sticky {
+    position        : sticky;
+    top             : 0;
+    background-color: inherit;
+}
+
+.mdl-dialog__title>.right {
+    position: absolute;
+    right   : 0;
+}
+
+.mdl-dialog__actions.sticky {
+    position        : sticky;
+    bottom          : 0;
+    background-color: inherit;
 }
