@@ -2,6 +2,7 @@ import 'dart:html';
 
 import 'package:m4d_components/m4d_components.dart';
 
+import 'TaskErrors.dart';
 import 'TaskViewSection.dart';
 import 'misc.dart';
 
@@ -15,6 +16,9 @@ class TaskCard {
   final ButtonElement eFiles;
   final ButtonElement eLaunch;
   final ButtonElement eClose;
+
+  bool errorsDialogOpend = false;
+
   int _iState = -1;
   int _iErrors = -1;
   int _iFiles = -1;
@@ -67,6 +71,9 @@ class TaskCard {
       return;
     }
     _iErrors = i;
+    if (errorsDialogOpend) {
+      TaskErrorsDialog().iErrors = _iErrors;
+    }
     if (_iErrors <= 0) {
       eErrors.attributes.remove('data-badge');
     } else if (_iErrors >= 1000) {
@@ -102,6 +109,10 @@ class TaskCard {
     eClose.onClick.listen((_) {
       eCard.remove();
       TaskViewSection().list.remove(id);
+    });
+    eErrors.onClick.listen((_) {
+      TaskErrorsDialog().openByTaskCard(this);
+      TaskErrorsDialog().iErrors = _iErrors;
     });
     componentHandler().upgradeElement(eCard);
   }

@@ -347,6 +347,17 @@ class KncTask extends KncTaskSpawnSets {
       }
       print('task[$id]: recieved unknown msg {$msg}');
     });
+
+    wrapper.waitMsgAll(wwwTaskGetErrors).listen((msg) {
+      final ic = int.tryParse(msg.s);
+      final im = listOfErrors.length - ic;
+      final v = List(im);
+      for (var i = 0; i < im; i++) {
+        v[i] = listOfErrors[i + ic].toJson();
+      }
+      wrapper.send(msg.i, json.encode(v));
+    });
+
     sendPort.send([id, receivePort.sendPort, pathOut]);
   }
   static KncTask _instance;

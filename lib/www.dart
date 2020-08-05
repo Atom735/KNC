@@ -1,3 +1,5 @@
+import 'dart:convert' as c;
+
 import 'errors.dart';
 
 /// Клиент отправляет серверу запрос на обновление данных всех задач
@@ -8,6 +10,9 @@ const wwwTaskNew = 'tasknew;';
 
 /// Подписка на обновления состояния задачи, далее идёт айди задачи
 const wwwTaskUpdates = 'taskupdates;';
+
+/// Запрос на получение ошибок
+const wwwTaskGetErrors = 'taskgeterros;';
 
 /// Закрыть подписку на обновления
 const wwwStreamClose = 'streamclose;';
@@ -102,4 +107,27 @@ class CErrorOnLine {
         'errorc': errors.length,
         'errors': errors.map((e) => e.toJson()).toList()
       };
+
+  static List<CErrorOnLine> getByJsonString(String str) {
+    final v = c.json.decode(str);
+    if (v is Map) {
+      return [CErrorOnLine.fromJson(v)];
+    } else if (v is List) {
+      return v
+          .map<CErrorOnLine>((e) => CErrorOnLine.fromJson(e))
+          .toList(growable: false);
+    } else {
+      return [];
+    }
+  }
+
+  String get html {
+    final s = StringBuffer();
+    s.write('<details><summary>$origin</summary><p>$path</p>');
+    for (final err in errors) {
+      s.write('<p>${err.line}: ${kncErrorStrings[err.err]}<hr>${err.txt}</p>');
+    }
+    s.write('</details>');
+    return s.toString();
+  }
 }
