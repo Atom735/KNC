@@ -142,6 +142,9 @@ class KncTask extends KncTaskSpawnSets {
                     : null));
       }
     });
+    await Future.wait(fs);
+    state = 2;
+    // TODO: Генерация таблицы
   }
 
   Future handleFile(final File file, final String origin) async {
@@ -288,7 +291,9 @@ class KncTask extends KncTaskSpawnSets {
                 // TODO: удалить вскрытый архив
               } else {
                 // TODO: обработка ошибки
-                errors = _errors + 1;
+                listOfErrors.add(CErrorOnLine(arch.pathIn, arch.pathOut,
+                    [ErrorOnLine(KncError.arch, 0, arch.toWrapperMsg())]));
+                errors = listOfErrors.length;
               }
             } else {
               // отбрасываем большой архив или бОльшую глубину вложенности

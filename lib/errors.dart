@@ -88,6 +88,9 @@ enum KncError {
 
   /// 26
   inkTableRowCount,
+
+  /// end
+  arch,
 }
 
 const kncErrorStrings = [
