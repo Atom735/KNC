@@ -3,6 +3,7 @@ import 'dart:html';
 import 'package:m4d_components/m4d_components.dart';
 
 import 'TaskErrors.dart';
+import 'TaskFIles.dart';
 import 'TaskViewSection.dart';
 import 'misc.dart';
 
@@ -18,6 +19,7 @@ class TaskCard {
   final ButtonElement eClose;
 
   bool errorsDialogOpend = false;
+  bool filesDialogOpend = false;
 
   int _iState = -1;
   int _iErrors = -1;
@@ -88,6 +90,9 @@ class TaskCard {
       return;
     }
     _iFiles = i;
+    if (filesDialogOpend) {
+      TaskFilesDialog().iFiles = _iFiles;
+    }
     if (_iFiles <= 0) {
       eFiles.attributes.remove('data-badge');
     } else if (_iFiles >= 1000) {
@@ -111,8 +116,12 @@ class TaskCard {
       TaskViewSection().list.remove(id);
     });
     eErrors.onClick.listen((_) {
-      TaskErrorsDialog().openByTaskCard(this);
       TaskErrorsDialog().iErrors = _iErrors;
+      TaskErrorsDialog().openByTaskCard(this);
+    });
+    eFiles.onClick.listen((_) {
+      TaskFilesDialog().iFiles = _iFiles;
+      TaskFilesDialog().openByTaskCard(this);
     });
     componentHandler().upgradeElement(eCard);
   }

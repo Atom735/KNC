@@ -363,6 +363,16 @@ class KncTask extends KncTaskSpawnSets {
       wrapper.send(msg.i, json.encode(v));
     });
 
+    wrapper.waitMsgAll(wwwTaskGetFiles).listen((msg) {
+      final ic = int.tryParse(msg.s);
+      final im = listOfFiles.length - ic;
+      final v = List(im);
+      for (var i = 0; i < im; i++) {
+        v[i] = listOfFiles[i + ic].toJson();
+      }
+      wrapper.send(msg.i, json.encode(v));
+    });
+
     sendPort.send([id, receivePort.sendPort, pathOut]);
   }
   static KncTask _instance;

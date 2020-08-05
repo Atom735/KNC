@@ -15,6 +15,9 @@ const wwwTaskUpdates = 'taskupdates;';
 /// Запрос на получение ошибок
 const wwwTaskGetErrors = 'taskgeterros;';
 
+/// Запрос на получение обработанных файлов
+const wwwTaskGetFiles = 'taskgetfiles;';
+
 /// Закрыть подписку на обновления
 const wwwStreamClose = 'streamclose;';
 
@@ -28,31 +31,74 @@ class CLasFileSub {
   CLasFileSub.fromJson(final dynamic json)
       : added = json['added'],
         mnem = json['mnem'],
-        strt = json['strt'],
-        stop = json['stop'];
+        strt = (json['strt'] as num).toDouble(),
+        stop = (json['stop'] as num).toDouble();
   dynamic toJson() =>
       {'added': added, 'mnem': mnem, 'strt': strt, 'stop': stop};
 }
 
-abstract class C_File {}
-
-class CLasFile extends C_File {
+abstract class C_File {
   final String origin;
   final String path;
   final String well;
-  final List<CLasFileSub> subs;
 
-  CLasFile(this.origin, this.path, this.well, this.subs);
-  CLasFile.fromJson(final dynamic json)
+  dynamic toJson();
+
+  C_File(this.origin, this.path, this.well);
+  C_File.fromJson(final dynamic json)
       : origin = json['origin'],
         path = json['path'],
-        well = json['well'],
-        subs = List(json['subc']) {
+        well = json['well'];
+
+  static List<C_File> getByJsonString(String str) {
+    final v = c.json.decode(str);
+    if (v is Map) {
+      switch (v['type']) {
+        case 'las':
+          return [CLasFile.fromJson(v)];
+        case 'ink':
+          return [CInkFile.fromJson(v)];
+        default:
+      }
+    } else if (v is List) {
+      return v
+          .map<C_File>((e) => e['type'] == 'las'
+              ? CLasFile.fromJson(e)
+              : e['type'] == 'ink' ? CInkFile.fromJson(v) : null)
+          .toList(growable: false);
+    }
+    return [];
+  }
+
+  String get html {
+    final s = StringBuffer();
+    s.write('<details><summary>[$well] $origin</summary><p>$path</p>');
+    if (this is CLasFile) {
+      s.write('<p>LAS</p>');
+    } else if (this is CInkFile) {
+      s.write('<p>LAS</p>');
+    }
+    s.write('</details>');
+    return s.toString();
+  }
+}
+
+class CLasFile extends C_File {
+  final List<CLasFileSub> subs;
+
+  CLasFile(final String origin, final String path, final String well, this.subs)
+      : super(origin, path, well);
+  CLasFile.fromJson(final dynamic json)
+      : subs = List(json['subc']),
+        super.fromJson(json) {
     for (var i = 0; i < subs.length; i++) {
       subs[i] = CLasFileSub.fromJson(json['subs'][i]);
     }
   }
+
+  @override
   dynamic toJson() => {
+        'type': 'las',
         'origin': origin,
         'path': path,
         'well': well,
@@ -62,23 +108,23 @@ class CLasFile extends C_File {
 }
 
 class CInkFile extends C_File {
-  final String origin;
-  final String path;
-  final String well;
   final double strt;
   final double stop;
   final bool added;
 
-  CInkFile(this.origin, this.path, this.well, this.strt, this.stop, this.added);
+  CInkFile(final String origin, final String path, final String well, this.strt,
+      this.stop, this.added)
+      : super(origin, path, well);
 
   CInkFile.fromJson(final dynamic json)
-      : origin = json['origin'],
-        path = json['path'],
-        well = json['well'],
-        strt = json['strt'],
-        stop = json['stop'],
-        added = json['added'];
+      : strt = (json['strt'] as num).toDouble(),
+        stop = (json['stop'] as num).toDouble(),
+        added = json['added'],
+        super.fromJson(json);
+
+  @override
   dynamic toJson() => {
+        'type': 'ink',
         'origin': origin,
         'path': path,
         'well': well,
@@ -117,9 +163,8 @@ class CErrorOnLine {
       return v
           .map<CErrorOnLine>((e) => CErrorOnLine.fromJson(e))
           .toList(growable: false);
-    } else {
-      return [];
     }
+    return [];
   }
 
   String get html {

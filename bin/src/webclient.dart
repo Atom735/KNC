@@ -36,6 +36,15 @@ class WebClient {
           .requestOnce('$wwwTaskGetErrors${msg.s.substring(i0 + 1)}')
           .then((v) => wrapper.send(msg.i, v));
     });
+    waitMsgAll(wwwTaskGetFiles).listen((msg) {
+      final i0 = msg.s.indexOf(':');
+      final id = int.tryParse(msg.s.substring(0, i0));
+      App()
+          .listOfTasks[id]
+          .wrapper
+          .requestOnce('$wwwTaskGetFiles${msg.s.substring(i0 + 1)}')
+          .then((v) => wrapper.send(msg.i, v));
+    });
   }
 
   Future<SocketWrapperResponse> Function(String msgBegin) get waitMsg =>

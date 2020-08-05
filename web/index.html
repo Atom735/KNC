@@ -167,6 +167,31 @@
       </div>
     </dialog>
 
+    <dialog id="task-files-dialog" class="mdl-dialog mdl-shadow--2dp fullwidth">
+      <div class="mdl-dialog__title sticky">
+        Список обработанных файлов
+        <span id="task-files-counter" class="right">
+          41/534
+        </span>
+      </div>
+      <div id="task-files-content" class="mdl-dialog__content">
+
+      </div>
+      <div id="task-files-actions" class="mdl-dialog__actions sticky">
+        <button id="task-files-close" type="button"
+          class="mdl-button mdl-button--raised close">
+          Закрыть
+        </button>
+        <button id="task-files-load" type="button"
+          class="mdl-button mdl-button--raised mdl-button--accent" disabled>
+          Загрузить ещё
+        </button>
+        <div id="task-files-spinner"
+          class="mdl-spinner mdl-spinner--single-color is-active" hidden>
+        </div>
+      </div>
+    </dialog>
+
     <button id="task-sets-open" type="button"
       class="mdl-button mdl-button--fab mdl-ripple-effect mdl-button--colored add-task-btn"
       disabled>
