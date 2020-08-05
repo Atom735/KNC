@@ -23,10 +23,12 @@ class App {
     eTitleText.innerText = 'Пункт приёма стеклотары.';
     eTitleSpinner.hidden = true;
     socketCompleter.complete();
+    taskSets.eOpen.disabled = false;
   }
 
   void onClose() {
     eTitleText.innerText = 'Меня отключили и потеряли...';
+    taskSets.eOpen.disabled = true;
   }
 
   void onMessage(final String msg) => wrapper.recv(msg);
@@ -46,9 +48,9 @@ class App {
     socket.onClose.listen((_) => onClose());
     socket.onMessage.listen((_) => onMessage(_.data));
   }
-  static App instance;
+  static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');
   factory App() =>
-      (instance) ??
-      (instance = App._init(WebSocket('ws://${uri.host}:80/ws'), Completer()));
+      (_instance) ??
+      (_instance = App._init(WebSocket('ws://${uri.host}:80/ws'), Completer()));
 }
