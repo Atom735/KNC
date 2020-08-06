@@ -70,17 +70,7 @@ abstract class C_File {
     return [];
   }
 
-  String get html {
-    final s = StringBuffer();
-    s.write('<details><summary>[$well] $origin</summary><p>$path</p>');
-    if (this is CLasFile) {
-      s.write('<p>LAS</p>');
-    } else if (this is CInkFile) {
-      s.write('<p>LAS</p>');
-    }
-    s.write('</details>');
-    return s.toString();
-  }
+  String get html;
 }
 
 class CLasFile extends C_File {
@@ -105,6 +95,27 @@ class CLasFile extends C_File {
         'subc': subs.length,
         'subs': subs.map((e) => e.toJson()).toList()
       };
+
+  @override
+  String get html {
+    final s = StringBuffer();
+    s.write('<details class="lasfile"><summary>[$well] $origin</summary>');
+    s.write('<span class="path">$path</span>');
+    for (final sub in subs) {
+      if (sub.added) {
+        s.write('<span class="material-icons">radio_button_checked</span>');
+      } else {
+        s.write('<span class="material-icons">radio_button_unchecked</span>');
+      }
+      s.write('<span class="mnem">${sub.mnem}</span>');
+      s.write('<span class="strt">${sub.strt}</span>');
+      s.write('<span class="stop">${sub.stop}</span>');
+    }
+    s.write(
+        '<button class="mdl-button mdl-button--icon mdl-button--colored"><i class="material-icons">launch</i></button>');
+    s.write('</details>');
+    return s.toString();
+  }
 }
 
 class CInkFile extends C_File {
@@ -132,6 +143,22 @@ class CInkFile extends C_File {
         'stop': stop,
         'added': added
       };
+  @override
+  String get html {
+    final s = StringBuffer();
+    s.write(
+        '<details class="inkfile"><summary>[$well] $origin</summary><p>$path</p>');
+    s.write('<p>');
+    s.write(
+        '<span class="material-icons">${added ? 'radio_button_checked' : 'radio_button_unchecked'}</span>');
+    s.write('<span class="strt">${strt}</span>');
+    s.write('<span class="stop">${stop}</span>');
+    s.write('</p>');
+    s.write(
+        '<button class="mdl-button mdl-button--icon mdl-button--colored"><i class="material-icons">launch</i></button>');
+    s.write('</details>');
+    return s.toString();
+  }
 }
 
 class CErrorOnLine {
@@ -180,6 +207,8 @@ class CErrorOnLine {
         s.write(
             '<p>${err.line}: ${kncErrorStrings[err.err]}<hr>${err.txt}</p>');
       }
+      s.write(
+          '<button class="mdl-button mdl-button--icon mdl-button--colored"><i class="material-icons">launch</i></button>');
     }
     s.write('</details>');
     return s.toString();

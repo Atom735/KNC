@@ -1,0 +1,18 @@
+<details class="lasfile">
+    <summary>[${well}] ${origin}</summary>
+    <span class="path">$path</span>
+
+    <gen for (sub in subs)>
+        <gen if (sub.added)>
+            <span class="material-icons">radio_button_checked</span>
+        </gen>
+        <gen else>
+            <span class="material-icons">radio_button_unchecked</span>
+        </gen>
+        <span class="mnem">${sub.mnem}</span>
+        <span class="strt">${sub.strt}</span>
+        <span class="stop">${sub.stop}</span>
+    </gen>
+    <button class="mdl-button mdl-button--icon mdl-button--colored"><i
+            class="material-icons">launch</i></button>
+</details>

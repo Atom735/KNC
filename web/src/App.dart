@@ -3,6 +3,7 @@ import 'dart:html';
 
 import 'package:knc/SocketWrapper.dart';
 
+import 'HtmlGenerator.dart';
 import 'TaskSets.dart';
 import 'TaskViewSection.dart';
 import 'misc.dart';
@@ -47,6 +48,8 @@ class App {
     socket.onOpen.listen((_) => onOpen());
     socket.onClose.listen((_) => onClose());
     socket.onMessage.listen((_) => onMessage(_.data));
+
+    generator();
   }
   static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');
