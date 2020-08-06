@@ -5,6 +5,7 @@ import 'package:knc/www.dart';
 import 'package:m4d_components/m4d_components.dart';
 
 import 'App.dart';
+import 'HtmlGenerator.dart';
 import 'misc.dart';
 
 class TaskSetsPath {
@@ -30,23 +31,12 @@ class TaskSetsPath {
 
   bool valid() => eInput.value.isNotEmpty;
 
-  static String html(final int id) => '''
-    <tr id="task-sets-path-${id}-row">
-      <td>
-        <div class="mdl-textfield">
-          <input id="task-sets-path-${id}-input" class=" mdl-textfield__input"
-            type="text">
-          <label for="task-sets-path-${id}-input" class="mdl-textfield__label">
-            Путь к папке или файлу для обработки...
-          </label>
-        </div>
-      </td>
-      <td><button id="task-sets-path-${id}-remove"
-          class="mdl-button mdl-button--icon mdl-button--colored">
-          <i class="material-icons">remove</i>
-        </button></td>
-    </tr>
-  ''';
+  static String template;
+
+  static String htmlTemplateSrc;
+
+  static String html(final int id) =>
+      htmlGenFromSrc(htmlTemplateSrc, {'id': id});
 }
 
 class TaskSetsDialog {
