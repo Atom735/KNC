@@ -1,0 +1,39 @@
+<div id="task-${id}-card" hidden
+    class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">
+    <div class="mdl-card__title">
+        <h2 class="mdl-card__title-text">Задача</h2>
+    </div>
+    <div class="mdl-card__supporting-text">
+        <p>
+            Название:
+            <strong id="task-${id}-name"></strong>
+        </p>
+        <p>
+            Состояние:
+            <strong id="task-${id}-state"></strong>
+        </p>
+    </div>
+    <div class="mdl-card__actions mdl-card--border">
+        <button id="task-${id}-report"
+            class="mdl-button mdl-button--colored mdl-button--raised" disabled>
+            Отчёт
+        </button>
+        <button id="task-${id}-errors"
+            class="mdl-button mdl-button--colored mdl-badge mdl-badge--overlap">
+            Ошибки
+        </button>
+        <button id="task-${id}-files"
+            class="mdl-button mdl-button--colored mdl-badge mdl-badge--overlap">
+            Файлы
+        </button>
+    </div>
+    <div class="mdl-card__menu">
+        <button id="task-${id}-launch"
+            class="mdl-button mdl-button--icon mdl-button--colored task-btn-details">
+            <i class="material-icons">launch</i>
+        </button>
+        <button id="task-${id}-close" class="mdl-button mdl-button--icon">
+            <i class="material-icons">close</i>
+        </button>
+    </div>
+</div>

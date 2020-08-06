@@ -59,14 +59,14 @@ class TaskFilesDialog {
 
   void openByTaskCard(final TaskCard card) {
     cCard = card;
-    cCard.errorsDialogOpend = true;
+    cCard.filesDialogOpend = true;
     update();
     eDialog.showModal();
   }
 
   void close() {
     eDialog.close();
-    cCard.errorsDialogOpend = false;
+    cCard.filesDialogOpend = false;
     cCard = null;
   }
 

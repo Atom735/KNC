@@ -48,8 +48,6 @@ class App {
     socket.onOpen.listen((_) => onOpen());
     socket.onClose.listen((_) => onClose());
     socket.onMessage.listen((_) => onMessage(_.data));
-
-    generator();
   }
   static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');
