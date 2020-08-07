@@ -1,10 +1,20 @@
 import 'dart:html';
+import 'dart:convert' as c;
 
 import 'package:knc/www.dart';
 
 import 'App.dart';
 import 'TaskCard.dart';
+import 'HtmlGenerator.dart';
 import 'misc.dart';
+
+class LasFileDetails {
+  static String htmlTemplateSrc;
+}
+
+class InkFileDetails {
+  static String htmlTemplateSrc;
+}
 
 class TaskFilesDialog {
   final DialogElement eDialog = eGetById('task-files-dialog');
@@ -15,7 +25,7 @@ class TaskFilesDialog {
   final DivElement eSpinner = eGetById('task-files-spinner');
 
   TaskCard cCard;
-  final listOfFiles = <C_File>[];
+  final listOfFiles = <dynamic>[];
 
   bool _loading = false;
   set loading(final bool b) {
@@ -27,10 +37,16 @@ class TaskFilesDialog {
     eLoad.disabled = _loading;
   }
 
-  void addAll(final List<C_File> list) {
+  void addAll(final List<dynamic> list) {
     listOfFiles.addAll(list);
     for (final item in list) {
-      eContent.appendHtml(item.html);
+      if (item['type'] == 'las') {
+        eContent
+            .appendHtml(htmlGenFromSrc(LasFileDetails.htmlTemplateSrc, item));
+      } else if (item['type'] == 'ink') {
+        eContent
+            .appendHtml(htmlGenFromSrc(InkFileDetails.htmlTemplateSrc, item));
+      }
     }
     eCounter.innerText = '${listOfFiles.length}/${_iFiles}';
     loading = false;
@@ -44,7 +60,14 @@ class TaskFilesDialog {
     loading = true;
     App()
         .requestOnce('$wwwTaskGetFiles${cCard.id}:${listOfFiles.length}')
-        .then((s) => addAll(C_File.getByJsonString(s)));
+        .then((s) {
+      final v = c.json.decode(s);
+      if (v is Map) {
+        addAll([v]);
+      } else if (v is List) {
+        addAll(v);
+      }
+    });
   }
 
   var _iFiles = 0;

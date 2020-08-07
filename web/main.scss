@@ -64,15 +64,64 @@
     position        : sticky;
     top             : 0;
     background-color: inherit;
-}
+    z-index         : 10;
+    padding-bottom  : 0.2em;
+    display         : flex;
 
-.mdl-dialog__title>.right {
-    position: absolute;
-    right   : 0;
+    >.right {
+        margin-left: auto;
+    }
 }
 
 .mdl-dialog__actions.sticky {
     position        : sticky;
     bottom          : 0;
     background-color: inherit;
+    z-index         : 10;
+
+}
+
+#task-files-content,
+#task-errors-content {
+    >details {
+        margin    : 1em 0;
+        min-height: 1em;
+        width     : 100%;
+
+        .well {
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .sub {
+            font-size: 24px;
+            margin   : 1em;
+        }
+    }
+
+    .lasfile {
+        background-color: rgba(255, 255, 0, 0.04);
+    }
+
+    .inkfile {
+        background-color: rgba(0, 0, 255, 0.04);
+    }
+
+    .errfile {
+        background-color: rgba(255, 0, 0, 0.04);
+
+        .sub {
+            .line {
+                opacity: 0.5;
+            }
+
+            .txt {
+                display    : block;
+                margin-left: 1em;
+                font-size  : 0.7em;
+                line-height: 0.7em;
+                margin-top : 0.3em;
+            }
+        }
+    }
 }

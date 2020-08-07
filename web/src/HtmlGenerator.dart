@@ -1,8 +1,5 @@
 import 'dart:html';
 
-final _htmlValidator = NodeValidatorBuilder.common()
-  ..allowElement('gen', attributes: ['for', 'in', 'if', 'else']);
-
 final _reGenerator = RegExp(
     r'<gen\s+(?:(for)(?:\s*\(([\w\.]+)\s+in\s+([\w\.]+)\s*\))|(if)\s*\(([\w\.]+)\)|(else))\s*>|\$(?:{([\w\.]+)}|(\w+))|(<\/gen>)');
 

@@ -4,9 +4,11 @@ import 'package:m4d_components/m4d_components.dart';
 
 import 'HtmlGenerator.dart';
 import 'TaskErrors.dart';
-import 'TaskFIles.dart';
+import 'TaskFiles.dart';
 import 'TaskViewSection.dart';
 import 'misc.dart';
+
+class ErrorFileDetails {}
 
 class TaskCard {
   final int id;

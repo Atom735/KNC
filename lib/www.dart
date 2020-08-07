@@ -69,8 +69,6 @@ abstract class C_File {
     }
     return [];
   }
-
-  String get html;
 }
 
 class CLasFile extends C_File {
@@ -95,27 +93,6 @@ class CLasFile extends C_File {
         'subc': subs.length,
         'subs': subs.map((e) => e.toJson()).toList()
       };
-
-  @override
-  String get html {
-    final s = StringBuffer();
-    s.write('<details class="lasfile"><summary>[$well] $origin</summary>');
-    s.write('<span class="path">$path</span>');
-    for (final sub in subs) {
-      if (sub.added) {
-        s.write('<span class="material-icons">radio_button_checked</span>');
-      } else {
-        s.write('<span class="material-icons">radio_button_unchecked</span>');
-      }
-      s.write('<span class="mnem">${sub.mnem}</span>');
-      s.write('<span class="strt">${sub.strt}</span>');
-      s.write('<span class="stop">${sub.stop}</span>');
-    }
-    s.write(
-        '<button class="mdl-button mdl-button--icon mdl-button--colored"><i class="material-icons">launch</i></button>');
-    s.write('</details>');
-    return s.toString();
-  }
 }
 
 class CInkFile extends C_File {
@@ -196,21 +173,39 @@ class CErrorOnLine {
 
   String get html {
     final s = StringBuffer();
-    s.write('<details><summary>$origin</summary><p>$path</p>');
+
+    s.write('''
+      <details class="errfile mdl-card mdl-shadow--2dp">
+        <summary class="mdl-card__title mdl-card--border">
+          <span class="origin">$origin</span>
+        </summary>
+        <div class="mdl-card__supporting-text">
+          <span class="path">$path</span>''');
     for (final err in errors) {
       if (err.err == KncError.arch.index) {
         final arch = ArchiverOutput.fromWrapperMsg(err.txt);
-        s.write('<p>${arch.exitCode}</p>');
-        s.write('<p>${arch.stdOut}</p>');
-        s.write('<p>${arch.stdErr}</p>');
+        s.write('''
+          <p class="arch">
+            <span class="eco">${arch.exitCode}</span>
+            <span class="out">${arch.stdOut}</span>
+            <span class="err">${arch.stdErr}</span>
+          </p>''');
       } else {
-        s.write(
-            '<p>${err.line}: ${kncErrorStrings[err.err]}<hr>${err.txt}</p>');
+        s.write('''
+          <p class="sub">
+            <span class="line">${err.line}</span>:
+            <span class="err">${kncErrorStrings[err.err]}</span>
+            <span class="txt">${err.txt}</span>
+          </p>''');
       }
-      s.write(
-          '<button class="mdl-button mdl-button--icon mdl-button--colored"><i class="material-icons">launch</i></button>');
     }
-    s.write('</details>');
+    s.write('''
+        </div>
+        <div class="mdl-card__actions mdl-card--border">
+          <button class="mdl-button mdl-button--icon mdl-button--colored"><i
+                class="material-icons">launch</i></button>
+        </div>
+      </details>''');
     return s.toString();
   }
 }

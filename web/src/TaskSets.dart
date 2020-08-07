@@ -31,8 +31,6 @@ class TaskSetsPath {
 
   bool valid() => eInput.value.isNotEmpty;
 
-  static String template;
-
   static String htmlTemplateSrc;
 
   static String html(final int id) =>
