@@ -16,6 +16,21 @@ class MyConverters extends Archiver {
   /// Таблица кодировок `ssCharMaps['CP866']`
   final Map<String, List<String>> ssCharMaps;
 
+  /// Значение рейтинга кодировок
+  Map<String, int> encodesRaiting;
+
+  /// Конечная подобранная кодировка
+  String encode;
+
+  String convertData(final List<int> bytes) {
+    // Подбираем кодировку
+    encodesRaiting = getMappingRaitings(ssCharMaps, bytes);
+    encode = getMappingMax(encodesRaiting);
+    // Преобразуем байты из кодировки в символы
+    return String.fromCharCodes(bytes.map(
+        (i) => i >= 0x80 ? ssCharMaps[encode][i - 0x80].codeUnitAt(0) : i));
+  }
+
   MyConverters(
       this.ssPath7z, this.ssPathWordconv, this.ssCharMaps, final Directory dir,
       [final AsyncTaskQueue queue])

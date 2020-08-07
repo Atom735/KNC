@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:knc/errors.dart';
@@ -48,7 +47,7 @@ class WebClient {
     });
     waitMsgAll(wwwGetFileData).listen((msg) {
       File(msg.s).readAsBytes().then((data) {
-        wrapper.send(msg.i, ascii.decode(data, allowInvalid: true));
+        wrapper.send(msg.i, App().converters.convertData(data));
       });
     });
   }
