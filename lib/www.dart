@@ -18,6 +18,9 @@ const wwwTaskGetErrors = 'taskgeterros;';
 /// Запрос на получение обработанных файлов
 const wwwTaskGetFiles = 'taskgetfiles;';
 
+/// Запрос на получение данных файла
+const wwwGetFileData = 'getfiledata;';
+
 /// Закрыть подписку на обновления
 const wwwStreamClose = 'streamclose;';
 
@@ -202,8 +205,9 @@ class CErrorOnLine {
     s.write('''
         </div>
         <div class="mdl-card__actions mdl-card--border">
-          <button class="mdl-button mdl-button--icon mdl-button--colored"><i
-                class="material-icons">launch</i></button>
+          <button class="mdl-button mdl-button--icon mdl-button--colored">
+            <i class="material-icons">launch</i>
+          </button>
         </div>
       </details>''');
     return s.toString();

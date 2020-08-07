@@ -125,3 +125,30 @@
         }
     }
 }
+
+.file-err-line {
+    font-family: 'Fira Code',
+        monospace;
+    white-space: pre;
+    font-size  : 1rem;
+    line-height: 1rem;
+    margin     : 0;
+}
+
+.file-err-line:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.file-err-line.error {
+    background-color: rgba(255, 0, 0, 0.04);
+}
+
+.file-err-line.error:hover {
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+#file-err-content {
+    border    : dashed 1px black;
+    margin-top: 1em;
+    padding   : 0.2em;
+}

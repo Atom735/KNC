@@ -3,6 +3,7 @@ import 'dart:html';
 import 'package:knc/www.dart';
 
 import 'App.dart';
+import 'ErrorFileDialog.dart';
 import 'TaskCard.dart';
 import 'misc.dart';
 
@@ -16,6 +17,7 @@ class TaskErrorsDialog {
 
   TaskCard cCard;
   final listOfErrors = <CErrorOnLine>[];
+  final listOfErrorsButton = <ButtonElement>[];
 
   bool _loading = false;
   set loading(final bool b) {
@@ -31,6 +33,10 @@ class TaskErrorsDialog {
     listOfErrors.addAll(list);
     for (final item in list) {
       eContent.appendHtml(item.html);
+      ButtonElement btn =
+          (eContent.lastChild as Element).querySelector('button');
+      btn.onClick.listen((_) => ErrorFileDialog().open(item));
+      listOfErrorsButton.add(btn);
     }
     eCounter.innerText = '${listOfErrors.length}/${_iErrors}';
     loading = false;
@@ -66,6 +72,8 @@ class TaskErrorsDialog {
 
   void close() {
     eDialog.close();
+    listOfErrors.clear();
+    listOfErrorsButton.clear();
     cCard.errorsDialogOpend = false;
     cCard = null;
   }

@@ -15,6 +15,8 @@
       rel='stylesheet' type='text/css'>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/tonsky/FiraCode@4/distr/fira_code.css">
 
     <link rel="stylesheet" href="main.css">
 
@@ -198,6 +200,26 @@
       </div>
     </dialog>
 
+    <dialog id="file-err-dialog" class="mdl-dialog mdl-shadow--2dp fullwidth">
+      <div id="file-err-title" class="mdl-dialog__title sticky">
+      </div>
+      <div class="mdl-dialog__content">
+        <div id="file-err-path">
+        </div>
+        <div id="file-err-loader"
+          class="mdl-progress mdl-progress__indeterminate">
+        </div>
+        <div id="file-err-content">
+
+        </div>
+      </div>
+      <div id="file-err-actions" class="mdl-dialog__actions sticky">
+        <button id="file-err-close" type="button"
+          class="mdl-button mdl-button--raised close">
+          Закрыть
+        </button>
+      </div>
+    </dialog>
 
     <script defer src="main.dart.js"></script>
   </body>

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:knc/errors.dart';
@@ -44,6 +45,11 @@ class WebClient {
           .wrapper
           .requestOnce('$wwwTaskGetFiles${msg.s.substring(i0 + 1)}')
           .then((v) => wrapper.send(msg.i, v));
+    });
+    waitMsgAll(wwwGetFileData).listen((msg) {
+      File(msg.s).readAsBytes().then((data) {
+        wrapper.send(msg.i, ascii.decode(data, allowInvalid: true));
+      });
     });
   }
 
