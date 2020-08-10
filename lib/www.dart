@@ -212,4 +212,27 @@ class CErrorOnLine {
       </details>''');
     return s.toString();
   }
+
+  String get html2 {
+    final s = StringBuffer();
+
+    for (final err in errors) {
+      if (err.err == KncError.arch.index) {
+        final arch = ArchiverOutput.fromWrapperMsg(err.txt);
+        s.write('''
+          <a class="arch" href="#file-err-line-${err.line}">
+            <span class="eco">${arch.exitCode}</span>
+            <span class="out">${arch.stdOut}</span>
+            <span class="err">${arch.stdErr}</span>
+          </a>''');
+      } else {
+        s.write('''
+          <a class="sub" href="#file-err-line-${err.line}">
+            <span class="line">${err.line}</span>:
+            <span class="err">${kncErrorStrings[err.err]}</span>
+          </a>''');
+      }
+    }
+    return s.toString();
+  }
 }
