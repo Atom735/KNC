@@ -21,6 +21,7 @@ main(List<String> args) {
           final ext = p.extension(entity.path);
           if (exts.contains(ext)) {
             final path = dirOut.path + entity.path.substring(pathIn.length);
+            out.writeln(path);
             final dir = Directory(p.dirname(path));
             dir.createSync(recursive: true);
             entity.copy(path);
