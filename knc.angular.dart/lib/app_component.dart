@@ -3,11 +3,20 @@ import 'package:angular_components/angular_components.dart';
 import 'package:angular_forms/angular_forms.dart';
 import 'package:english_words/english_words.dart';
 
+import 'src/loginForm.dart';
+
 @Component(
   selector: 'my-app',
   templateUrl: 'app_component.html',
   styleUrls: ['app_component.css'],
-  directives: [coreDirectives, formDirectives, materialInputDirectives],
+  directives: [
+    coreDirectives,
+    formDirectives,
+    MaterialInputComponent,
+    MaterialButtonComponent,
+    MaterialIconComponent,
+    MyLoginForm
+  ],
   providers: [materialProviders],
 )
 class AppComponent implements OnInit {

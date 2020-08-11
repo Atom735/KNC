@@ -1,0 +1,18 @@
+.my-login-form {
+    display: grid;
+
+    .close {
+        margin-left: auto;
+    }
+
+    .email,
+    .pass {
+        margin: 0 auto;
+        width : calc(100% - 3em);
+    }
+
+    .login {
+        margin: 0 auto;
+        width : 10em;
+    }
+}

@@ -1,0 +1,14 @@
+<section class="my-login-form">
+    <material-button class="close" icon (click)="onClose()">
+        <material-icon icon="close"></material-icon>
+    </material-button>
+    <material-input class="email" type="email" floatingLabel label="Email"
+        leadingGlyph="alternate_email" ngModel (ngModelChange)="mail=$event">
+    </material-input>
+    <material-input class="pass" type="password" [maxCount]="32" floatingLabel
+        label="Password" leadingGlyph="lock" ngModel
+        (ngModelChange)="pass=$event">
+    </material-input>
+    <material-button class="login" raised [disabled]="!valid"
+        (click)="submit()">LOGIN</material-button>
+</section>
