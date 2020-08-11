@@ -1,5 +1,6 @@
 <section class="my-login-form">
-    <material-button class="close" icon (click)="onClose()">
+    <material-progress *ngIf="load" indeterminate></material-progress>
+    <material-button class="close" icon (click)="close()">
         <material-icon icon="close"></material-icon>
     </material-button>
     <material-input class="email" type="email" floatingLabel label="Email"
@@ -9,6 +10,6 @@
         label="Password" leadingGlyph="lock" ngModel
         (ngModelChange)="pass=$event">
     </material-input>
-    <material-button class="login" raised [disabled]="!valid"
+    <material-button class="login" raised [disabled]="!valid||load"
         (click)="submit()">LOGIN</material-button>
 </section>

@@ -7,12 +7,16 @@ import 'package:crypto/crypto.dart' as crypto;
   templateUrl: 'loginForm.html',
   styleUrls: ['loginForm.css'],
   directives: [
+    NgIf,
     materialInputDirectives,
     MaterialIconComponent,
-    MaterialButtonComponent
+    MaterialButtonComponent,
+    MaterialProgressComponent
   ],
 )
 class MyLoginForm {
+  bool load = false;
+
   bool _valid = false;
   bool get valid => _valid;
   set valid(bool b) {
@@ -61,12 +65,11 @@ class MyLoginForm {
       caseSensitive: false);
 
   void submit() {
-    if (!valid) {
+    if (!valid || load) {
       return;
     }
-    print('mail: $mail');
-    print('pass: $pass');
+    load = true;
   }
 
-  void Function() onClose;
+  void close() {}
 }
