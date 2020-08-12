@@ -1,1 +1,14 @@
 @import 'package:angular_components/css/material/material';
+
+material-progress {
+    position: absolute;
+}
+
+header.material-header {
+    position: sticky;
+    top     : 0;
+}
+
+#last-app {
+    height: 4300px;
+}

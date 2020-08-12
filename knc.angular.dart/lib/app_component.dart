@@ -8,18 +8,23 @@ import 'src/loginForm.dart';
 @Component(
   selector: 'my-app',
   templateUrl: 'app_component.html',
-  styleUrls: ['app_component.css'],
+  styleUrls: [
+    'package:angular_components/app_layout/layout.scss.css',
+    'app_component.css'
+  ],
   directives: [
     coreDirectives,
     formDirectives,
     MaterialInputComponent,
     MaterialButtonComponent,
     MaterialIconComponent,
+    MaterialProgressComponent,
     MyLoginForm
   ],
   providers: [materialProviders],
 )
 class AppComponent implements OnInit {
+  bool load = true;
   final title = 'Tour of Heroes';
 
   var names = <WordPair>[];
