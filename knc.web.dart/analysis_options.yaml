@@ -10,9 +10,5 @@ include: package:pedantic/analysis_options.yaml
 #     - camel_case_types
 
 analyzer:
-  exclude:
-    - code_gen/**
-    - angular_tutorial/**
-    - knc.angular.dart/**
-    - knc.main.dart/**
-    - knc.web.dart/**
+#   exclude:
+#     - path/to/excluded/files/**

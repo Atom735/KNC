@@ -19,6 +19,10 @@ import 'src/loginForm.dart';
     MaterialButtonComponent,
     MaterialIconComponent,
     MaterialProgressComponent,
+    MaterialListComponent,
+    MaterialListItemComponent,
+    MaterialPopupComponent,
+    PopupSourceDirective,
     MyLoginForm
   ],
   providers: [materialProviders],
@@ -26,9 +30,11 @@ import 'src/loginForm.dart';
 class AppComponent implements OnInit {
   bool load = true;
   final title = 'Tour of Heroes';
+  bool accountPopupVisible = false;
+  final accountPopupPosition = RelativePosition.InlineBottomLeft;
 
   var names = <WordPair>[];
-  final savedNames = new Set<WordPair>();
+  final savedNames = Set<WordPair>();
 
   void generateNames() {
     names = generateWordPairs().take(5).toList();

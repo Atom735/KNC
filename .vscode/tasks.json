@@ -39,6 +39,9 @@
                 "--log-requests"
             ],
             "problemMatcher": [],
+            "options": {
+                "cwd": "knc.web.dart"
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true

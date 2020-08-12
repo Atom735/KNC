@@ -71,5 +71,5 @@ class MyLoginForm {
     load = true;
   }
 
-  void close() {}
+  void Function() close;
 }
