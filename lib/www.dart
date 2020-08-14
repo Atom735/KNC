@@ -26,8 +26,11 @@ const wwwGetFileData = 'getfiledata;';
 /// Закрыть подписку на обновления
 const wwwStreamClose = 'streamclose;';
 
-/// Отправка данных
-const wwwLogin = 'login;';
+/// Отправка данных для входа
+const wwwSignIn = 'signin;';
+
+/// Отправка данных для регистрации
+const wwwRegistration = 'registrtion;';
 
 String passwordEncode(final String pass) => sha256.convert([
       ...'0x834^'.codeUnits,

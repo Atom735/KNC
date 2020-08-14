@@ -37,6 +37,8 @@ class App {
   App._init(this.socket, this.socketCompleter)
       : wrapper = SocketWrapper((msg) => socket.sendString(msg),
             signal: socketCompleter.future) {
+    print('App created: $hashCode');
+
     socket.onOpen.listen((_) {
       eTitle.innerText = 'Пункт приёма стеклотары.';
       eLinearProgress.close();

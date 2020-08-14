@@ -4,6 +4,7 @@ import 'package:knc/www.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'App.dart';
+import 'DialogRegistration.dart';
 import 'misc.dart';
 
 class DialogLogin extends MDCDialog {
@@ -13,13 +14,12 @@ class DialogLogin extends MDCDialog {
       MDCLinearProgress(eGetById('my-login-dialog-linear-progress'));
   final eInMail = MDCTextField(eGetById('my-login-dialog-mail'));
   final eInPass = MDCTextField(eGetById('my-login-dialog-pass'));
+  final eSnackBarOfError =
+      MDCSnackbar(eGetById('my-login-dialog-sackbar-error'));
 
   DialogLogin._init(Element root) : super(root) {
-    eLinearProgress.close();
-    eInMail.disabled = false;
-    eInPass.disabled = false;
-    eSignIn.disabled = false;
-    eRegistration.disabled = false;
+    print('DialogLogin created: $hashCode');
+    _clear();
 
     eSignIn.onClick.listen((_) {
       eLinearProgress.open();
@@ -27,15 +27,40 @@ class DialogLogin extends MDCDialog {
       eInPass.disabled = true;
       eSignIn.disabled = true;
       eRegistration.disabled = true;
-      print('$wwwLogin${eInMail.value};${passwordEncode(eInPass.value)}');
+      print('$wwwSignIn${eInMail.value}:${passwordEncode(eInPass.value)}');
       App()
           .requestOnce(
-              '$wwwLogin${eInMail.value};${passwordEncode(eInPass.value)}')
+              '$wwwSignIn${eInMail.value}:${passwordEncode(eInPass.value)}')
           .then((msg) {
-        _instance = null;
+        if (msg != 'null') {
+          _clear();
+          window.localStorage['signin'] =
+              '${eInMail.value}:${passwordEncode(eInPass.value)}';
+        } else {
+          _clear();
+        }
       });
     });
+
+    eRegistration.onClick.listen((_) {
+      _clear();
+      DialogRegistration().open();
+    });
   }
+  void _clear() {
+    close();
+    eLinearProgress.close();
+    // eSnackBarOfError.show(SnackbarData(
+    //   message: 'Неверные Email или Пароль.',
+    //   timeout: 1500,
+    // ));
+    eSnackBarOfError.open();
+    eInMail.disabled = false;
+    eInPass.disabled = false;
+    eSignIn.disabled = false;
+    eRegistration.disabled = false;
+  }
+
   static DialogLogin _instance;
   factory DialogLogin() =>
       (_instance) ??

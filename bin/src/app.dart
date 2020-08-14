@@ -55,6 +55,7 @@ class App {
   }
 
   Future<void> run(final int port) async {
+    WebClientUsersDB();
     converters = await MyConverters.init(queueProc);
     await converters.clear();
     http = await HttpServer.bind(InternetAddress.anyIPv4, port);
@@ -115,7 +116,7 @@ class App {
   }
 
   App._init(this.dir) {
-    print('App created: $hashCode');
+    print('${runtimeType.toString()} created: $hashCode');
   }
   static App _instance;
   factory App() => _instance ?? (_instance = App._init(Directory(r'web')));
