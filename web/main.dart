@@ -15,6 +15,7 @@ void main() {
   final ButtonElement myLoginDialogOpen =
       document.querySelector('#my-login-dialog-open');
 
+  final tf = MDCTextField(document.querySelector('#my---text-field'));
   preInitApp();
   ioc.Container.bindModules([CoreComponentsModule()]);
   componentHandler().upgrade();

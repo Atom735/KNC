@@ -11,15 +11,15 @@ import 'TaskViewSection.dart';
 import 'misc.dart';
 
 class App {
-  final eLinearProgress = MDCLinearProgress(eGetById('my-app-linear-progress'));
-  final eTitle = eGetById('my-app-title');
-  final eLoginBtn = eGetById('my-app-login')
-    ..onClick.listen((_) => DialogLogin().open());
-
   /// Сокет для связи с сервером
   final WebSocket socket;
   final Completer socketCompleter;
   final SocketWrapper wrapper;
+
+  final eLinearProgress = MDCLinearProgress(eGetById('my-app-linear-progress'));
+  final eTitle = eGetById('my-app-title');
+  final eLoginBtn = eGetById('my-app-login')
+    ..onClick.listen((_) => DialogLogin().open());
 
   final DivElement eTitleSpinner = eGetById('page-title-spinner');
   final SpanElement eTitleText = eGetById('my-app-title');
@@ -27,34 +27,25 @@ class App {
   final TaskSetsDialog taskSets = TaskSetsDialog();
   final TaskViewSection taskView = TaskViewSection();
 
-  void onOpen() {
-    eTitleText.innerText = 'Пункт приёма стеклотары.';
-    eTitleSpinner.hidden = true;
-    socketCompleter.complete();
-    taskSets.eOpen.disabled = false;
-  }
-
-  void onClose() {
-    eTitleText.innerText = 'Меня отключили и потеряли...';
-    taskSets.eOpen.disabled = true;
-  }
-
-  void onMessage(final String msg) => wrapper.recv(msg);
-
-  Future<SocketWrapperResponse> Function(String msgBegin) get waitMsg =>
-      wrapper.waitMsg;
-  Stream<SocketWrapperResponse> Function(String msgBegin) get waitMsgAll =>
-      wrapper.waitMsgAll;
-  Future<String> Function(String msg) get requestOnce => wrapper.requestOnce;
-  Stream<String> Function(String msg) get requestSubscribe =>
-      wrapper.requestSubscribe;
+  Future<SocketWrapperResponse> waitMsg(String msgBegin) =>
+      wrapper.waitMsg(msgBegin);
+  Stream<SocketWrapperResponse> waitMsgAll(String msgBegin) =>
+      wrapper.waitMsgAll(msgBegin);
+  Future<String> requestOnce(String msg) => wrapper.requestOnce(msg);
+  Stream<String> requestSubscribe(String msg) => wrapper.requestSubscribe(msg);
 
   App._init(this.socket, this.socketCompleter)
       : wrapper = SocketWrapper((msg) => socket.sendString(msg),
             signal: socketCompleter.future) {
-    socket.onOpen.listen((_) => onOpen());
-    socket.onClose.listen((_) => onClose());
-    socket.onMessage.listen((_) => onMessage(_.data));
+    socket.onOpen.listen((_) {
+      eTitle.innerText = 'Пункт приёма стеклотары.';
+      eLinearProgress.close();
+      socketCompleter.complete();
+    });
+    socket.onClose.listen((_) {
+      eTitleText.innerText = 'Меня отключили и потеряли...';
+    });
+    socket.onMessage.listen((_) => wrapper.recv(_.data));
   }
   static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');

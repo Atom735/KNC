@@ -1,5 +1,7 @@
 import 'dart:convert' as c;
 
+import 'package:crypto/crypto.dart' show sha256;
+
 import 'ArchiverOtput.dart';
 import 'errors.dart';
 
@@ -23,6 +25,15 @@ const wwwGetFileData = 'getfiledata;';
 
 /// Закрыть подписку на обновления
 const wwwStreamClose = 'streamclose;';
+
+/// Отправка данных
+const wwwLogin = 'login;';
+
+String passwordEncode(final String pass) => sha256.convert([
+      ...'0x834^'.codeUnits,
+      ...pass.codeUnits,
+      ...'x12kdasdj'.codeUnits
+    ]).toString();
 
 class CLasFileSub {
   final bool added;
