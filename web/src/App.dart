@@ -2,20 +2,27 @@ import 'dart:async';
 import 'dart:html';
 
 import 'package:knc/SocketWrapper.dart';
+import 'package:mdc_web/mdc_web.dart';
 
+import 'DialogLogin.dart';
 import 'HtmlGenerator.dart';
 import 'TaskSets.dart';
 import 'TaskViewSection.dart';
 import 'misc.dart';
 
 class App {
+  final eLinearProgress = MDCLinearProgress(eGetById('my-app-linear-progress'));
+  final eTitle = eGetById('my-app-title');
+  final eLoginBtn = eGetById('my-app-login')
+    ..onClick.listen((_) => DialogLogin().open());
+
   /// Сокет для связи с сервером
   final WebSocket socket;
   final Completer socketCompleter;
   final SocketWrapper wrapper;
 
   final DivElement eTitleSpinner = eGetById('page-title-spinner');
-  final SpanElement eTitleText = eGetById('page-title-text');
+  final SpanElement eTitleText = eGetById('my-app-title');
 
   final TaskSetsDialog taskSets = TaskSetsDialog();
   final TaskViewSection taskView = TaskViewSection();

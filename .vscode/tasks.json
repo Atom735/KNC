@@ -40,7 +40,7 @@
             ],
             "problemMatcher": [],
             "options": {
-                "cwd": "knc.web.dart"
+                "cwd": "."
             },
             "group": {
                 "kind": "build",

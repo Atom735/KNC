@@ -4,61 +4,108 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description"
-      content="Material 4 Dart (M4D) is a library of components for web developers based on Google's Material Design, ported to Dart.">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>Все ненужное на слом, соберем металлолом!</title>
 
     <link
-      href='https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en'
-      rel='stylesheet' type='text/css'>
+      href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en,ru"
+      rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
     <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/tonsky/FiraCode@4/distr/fira_code.css">
 
+    <link
+      href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css"
+      rel="stylesheet">
+    <script
+      src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+
     <link rel="stylesheet" href="main.css">
-
-
-
-    <style>
-      div.loading {
-        display: none;
-      }
-
-      body.mdl-upgrading>* {
-        display: none;
-      }
-
-      body.mdl-upgrading div.loading {
-        display: block;
-      }
-
-      header,
-      body {
-        padding: 0;
-        margin: 0;
-      }
-
-    </style>
 
   </head>
 
-  <body class="mdl-upgrading mdl-color--grey-800">
-    <div class="loading">Loading...</div>
+  <body>
+
+    <header class="mdc-top-app-bar mdc-top-app-bar--fixed">
+      <div class="mdc-top-app-bar__row">
+        <section
+          class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+          <button
+            class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button">menu</button>
+          <span id="my-app-title" class="mdc-top-app-bar__title"></span>
+        </section>
+        <section
+          class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
+          <button
+            class="material-icons mdc-top-app-bar__action-item mdc-icon-button">favorite</button>
+          <button
+            class="material-icons mdc-top-app-bar__action-item mdc-icon-button">search</button>
+          <button id="my-app-login"
+            class="material-icons mdc-top-app-bar__action-item mdc-icon-button">login</button>
+        </section>
+      </div>
+
+      <div id="my-app-linear-progress"
+        class="mdc-linear-progress mdc-linear-progress--indeterminate">
+        <div class="mdc-linear-progress__buffer">
+          <div class="mdc-linear-progress__buffer-bar"></div>
+          <div class="mdc-linear-progress__buffer-dots"></div>
+        </div>
+        <div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+          <span class="mdc-linear-progress__bar-inner"></span>
+        </div>
+        <div
+          class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+          <span class="mdc-linear-progress__bar-inner"></span>
+        </div>
+      </div>
+
+    </header>
+
+    <main class="mdc-top-app-bar--fixed-adjust">
+      <button class="mdc-button foo-button">
+        <div class="mdc-button__ripple"></div>
+        <span class="mdc-button__label">Button</span>
+      </button>
+
+      <div id="output"></div>
+    </main>
+
+
+    <!-- Диалог авторизации -->
+    <div id="my-login-dialog" class="mdc-dialog">
+      <div class="mdc-dialog__container">
+        <div class="mdc-dialog__surface">
+          <!-- Title cannot contain leading whitespace due to mdc-typography-baseline-top() -->
+          <h2 class="mdc-dialog__title" id="my-login-dialog-title">
+            Авторизация
+          </h2>
+          <div class="mdc-dialog__content" id="my-login-dialog-content">
+            <ul class="mdc-list mdc-list--avatar-list">
+              <li class="mdc-list-item" tabindex="0"
+                data-mdc-dialog-action="none">
+                <span class="mdc-list-item__text">None</span>
+              </li>
+              <li class="mdc-list-item" data-mdc-dialog-action="callisto">
+                <span class="mdc-list-item__text">Callisto</span>
+              </li>
+              <!-- ... -->
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="mdc-dialog__scrim"></div>
+    </div>
+
+
+
     <div class="mdl-layout mdl-layout--fixed-header mdl-color--grey-100">
       <header
         class="mdl-layout__header mdl-layout__header--scroll mdl-color--grey-100 mdl-color-text--grey-800">
         <div class="mdl-layout__header-row">
           <span class="mdl-layout-title">
-            <div id="page-title-spinner"
-              class="mdl-spinner mdl-spinner--single-color is-active"
-              style="width: 1em;height: 1em;">
-            </div>
-            <span id="page-title-text">
-              Подключение...
-            </span>
           </span>
           <div class="mdl-layout-spacer"></div>
 
