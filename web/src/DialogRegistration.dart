@@ -1,7 +1,8 @@
 import 'dart:html';
 
 import 'package:knc/www.dart';
-import 'package:mdc_web/mdc_web.dart';
+import 'package:mdc_web/mdc_web.dart' hide MDCSnackbar;
+import 'MDC/snackbar.dart';
 
 import 'App.dart';
 import 'DialogLogin.dart';
@@ -15,15 +16,12 @@ class DialogRegistration extends MDCDialog {
       MDCLinearProgress(eGetById('my-registration-dialog-linear-progress'));
   final eInMail = MDCTextField(eGetById('my-registration-dialog-mail'));
   final eInPass = MDCTextField(eGetById('my-registration-dialog-pass'));
+  final eSnackBarOfError =
+      MDCSnackbar(eGetById('my-registration-dialog-sackbar-error'));
 
   DialogRegistration._init(Element root) : super(root) {
-    print('DialogRegistration created: $hashCode');
-
-    eLinearProgress.close();
-    eInMail.disabled = false;
-    eInPass.disabled = false;
-    eSignIn.disabled = false;
-    eRegistration.disabled = false;
+    print('$runtimeType created: $hashCode');
+    _clear();
 
     eRegistration.onClick.listen((_) {
       eLinearProgress.open();
@@ -31,12 +29,19 @@ class DialogRegistration extends MDCDialog {
       eInPass.disabled = true;
       eSignIn.disabled = true;
       eRegistration.disabled = true;
-      print('$wwwSignIn${eInMail.value}:${passwordEncode(eInPass.value)}');
       App()
           .requestOnce(
-              '$wwwSignIn${eInMail.value}:${passwordEncode(eInPass.value)}')
+              '$wwwRegistration${eInMail.value}:${passwordEncode(eInPass.value)}')
           .then((msg) {
-        _instance = null;
+        if (msg != 'null') {
+          _clear();
+          window.localStorage['signin'] =
+              '${eInMail.value}:${passwordEncode(eInPass.value)}';
+        } else {
+          _clear();
+          open();
+          eSnackBarOfError.open();
+        }
       });
     });
 
@@ -45,6 +50,15 @@ class DialogRegistration extends MDCDialog {
       DialogLogin().open();
     });
   }
+  void _clear() {
+    close();
+    eLinearProgress.close();
+    eInMail.disabled = false;
+    eInPass.disabled = false;
+    eSignIn.disabled = false;
+    eRegistration.disabled = false;
+  }
+
   static DialogRegistration _instance;
   factory DialogRegistration() =>
       (_instance) ??

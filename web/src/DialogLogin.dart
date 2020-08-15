@@ -1,7 +1,8 @@
 import 'dart:html';
 
 import 'package:knc/www.dart';
-import 'package:mdc_web/mdc_web.dart';
+import 'package:mdc_web/mdc_web.dart' hide MDCSnackbar;
+import 'MDC/snackbar.dart';
 
 import 'App.dart';
 import 'DialogRegistration.dart';
@@ -18,7 +19,7 @@ class DialogLogin extends MDCDialog {
       MDCSnackbar(eGetById('my-login-dialog-sackbar-error'));
 
   DialogLogin._init(Element root) : super(root) {
-    print('DialogLogin created: $hashCode');
+    print('$runtimeType created: $hashCode');
     _clear();
 
     eSignIn.onClick.listen((_) {
@@ -27,7 +28,6 @@ class DialogLogin extends MDCDialog {
       eInPass.disabled = true;
       eSignIn.disabled = true;
       eRegistration.disabled = true;
-      print('$wwwSignIn${eInMail.value}:${passwordEncode(eInPass.value)}');
       App()
           .requestOnce(
               '$wwwSignIn${eInMail.value}:${passwordEncode(eInPass.value)}')
@@ -38,6 +38,8 @@ class DialogLogin extends MDCDialog {
               '${eInMail.value}:${passwordEncode(eInPass.value)}';
         } else {
           _clear();
+          open();
+          eSnackBarOfError.open();
         }
       });
     });
@@ -50,11 +52,6 @@ class DialogLogin extends MDCDialog {
   void _clear() {
     close();
     eLinearProgress.close();
-    // eSnackBarOfError.show(SnackbarData(
-    //   message: 'Неверные Email или Пароль.',
-    //   timeout: 1500,
-    // ));
-    eSnackBarOfError.open();
     eInMail.disabled = false;
     eInPass.disabled = false;
     eSignIn.disabled = false;

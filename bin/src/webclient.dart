@@ -18,7 +18,8 @@ class WebClientUsersDB {
             (jsonDecode(data) as List).map((e) => WebClientUser.fromJson(e))));
   }
   WebClientUser signIn(WebClientUser user) =>
-      _list.firstWhere((e) => e.mail == user.mail && e.pass == user.pass);
+      _list.firstWhere((e) => e.mail == user.mail && e.pass == user.pass,
+          orElse: () => null);
 
   bool register(WebClientUser user) {
     if (_list.any((e) => e.mail == user.mail)) {
