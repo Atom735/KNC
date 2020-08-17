@@ -41,7 +41,7 @@ class DialogAddTaskPath extends MDCTextField {
                   placeholder="Сканируемый путь">
                 <span class="mdc-line-ripple"></span>
               </label>
-              <button id="$_id-btn"
+              <button id="$_id-btn" type="button"
                 class="mdc-icon-button material-icons">close</button>
     ''';
     DialogAddTask()
