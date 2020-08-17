@@ -5,6 +5,7 @@ import 'package:knc/SocketWrapper.dart';
 import 'package:knc/www.dart';
 import 'package:mdc_web/mdc_web.dart';
 
+import 'DialogAddTask.dart';
 import 'DialogLogin.dart';
 import 'TaskSets.dart';
 import 'TaskViewSection.dart';
@@ -35,6 +36,7 @@ class App {
 
   final TaskSetsDialog taskSets = TaskSetsDialog();
   final TaskViewSection taskView = TaskViewSection();
+  final CardAddTask cardAddTask = CardAddTask();
 
   Future<SocketWrapperResponse> waitMsg(String msgBegin) =>
       wrapper.waitMsg(msgBegin);

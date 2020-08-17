@@ -275,3 +275,11 @@ body {
     top: 0;
     margin: 1em;
 }
+
+.my-add-task-dialog-task-path {
+    display: flex;
+    > button {
+        margin: auto;
+    }
+    margin: 1em 0;
+}
