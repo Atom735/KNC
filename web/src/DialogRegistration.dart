@@ -37,6 +37,7 @@ class DialogRegistration extends MDCDialog {
           _clear();
           window.localStorage['signin'] =
               '${eInMail.value}:${passwordEncode(eInPass.value)}';
+          App().signin(eInMail.value, msg);
         } else {
           _clear();
           open();
