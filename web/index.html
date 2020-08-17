@@ -17,10 +17,10 @@
       href="https://cdn.jsdelivr.net/gh/tonsky/FiraCode@4/distr/fira_code.css">
 
     <link
-      href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css"
+      href="https://unpkg.com/material-components-web@7.0.0/dist/material-components-web.min.css"
       rel="stylesheet">
     <script
-      src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+      src="https://unpkg.com/material-components-web@7.0.0/dist/material-components-web.min.js"></script>
 
     <link rel="stylesheet" href="main.css">
 
@@ -67,26 +67,63 @@
     </header>
 
     <main class="mdc-top-app-bar--fixed-adjust">
-      <button class="mdc-button foo-button">
-        <div class="mdc-button__ripple"></div>
-        <span class="mdc-button__label">Button</span>
-      </button>
+      <div class="mdc-layout-grid">
+        <div class="mdc-layout-grid__inner">
+          <div class="mdc-layout-grid__cell">
 
-      <div id="output"></div>
+            <div id="my-add-task-card" class="mdc-card">
+              <div class="mdc-card__primary-action">
+                <div class="mdc-card__media mdc-card__media--square">
+                  <div class="mdc-card__media-content mdc-theme--secondary-bg">
+                    <img class="mdc-theme--on-secondary"
+                      src="/data/add_task-white-48dp.svg" alt="Add task">
+                    <div id="my-add-task-card-texts">
+                      <h2
+                        class="demo-card__title mdc-typography mdc-typography--headline6">
+                        Добавить задачу</h2>
+                      <h3
+                        class="demo-card__subtitle mdc-typography mdc-typography--subtitle2">
+                        Начнём с малого</h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-      <label id="my---text-field"
-        class="mdc-text-field mdc-text-field--outlined">
-        <input type="text" class="mdc-text-field__input"
-          aria-labelledby="my-label-id">
-        <span class="mdc-notched-outline">
-          <span class="mdc-notched-outline__leading"></span>
-          <span class="mdc-notched-outline__notch">
-            <span class="mdc-floating-label" id="my-label-id">Your Name</span>
+
+          </div>
+          <div class="mdc-layout-grid__cell"></div>
+          <div class="mdc-layout-grid__cell"></div>
+        </div>
+      </div>
+
+
+      <div class="grid-container">
+
+
+
+
+        <button class="mdc-button foo-button">
+          <div class="mdc-button__ripple"></div>
+          <span class="mdc-button__label">Button</span>
+        </button>
+
+        <div id="output"></div>
+
+        <label id="my---text-field"
+          class="mdc-text-field mdc-text-field--outlined">
+          <input type="text" class="mdc-text-field__input"
+            aria-labelledby="my-label-id">
+          <span class="mdc-notched-outline">
+            <span class="mdc-notched-outline__leading"></span>
+            <span class="mdc-notched-outline__notch">
+              <span class="mdc-floating-label" id="my-label-id">Your Name</span>
+            </span>
+            <span class="mdc-notched-outline__trailing"></span>
           </span>
-          <span class="mdc-notched-outline__trailing"></span>
-        </span>
-      </label>
+        </label>
 
+      </div>
     </main>
 
     <!-- Диалог авторизации -->
