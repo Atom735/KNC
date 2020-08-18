@@ -282,30 +282,68 @@ body {
     transition: margin-left 0.333s ease-out;
 }
 
-.my-task-card .mdc-card__media-content,
-#my-add-task-card .mdc-card__media-content {
-    --heh: var(width);
-    > i {
-        display: block;
-        width: 24px;
-        height: 24px;
-        position: absolute;
-        align-self: baseline;
-        top: calc(50% - 12px);
-        left: calc(50% - 12px);
-        opacity: 0.15;
-        font-size: 24px;
-        transform: scale(10);
+@keyframes animation-my-task-card {
+    from {
+        opacity: 0;
     }
-    > div {
-        display: block;
-        position: absolute;
-        top: 0;
-        margin: 1em;
+
+    to {
+        opacity: 1;
     }
-    > .mdc-card__actions {
-        top: auto;
-        position: absolute;
-        bottom: 0;
+}
+
+//
+
+#my-add-task-card,
+.my-task-card {
+    animation: animation-my-task-card 500ms ease-in;
+    overflow: hidden;
+    .mdc-card__media-content {
+        > i {
+            display: block;
+            width: 24px;
+            height: 24px;
+            position: absolute;
+            align-self: baseline;
+            top: calc(50% - 12px);
+            left: calc(50% - 12px);
+            opacity: 0.15;
+            font-size: 24px;
+            transform: scale(10);
+        }
+        > div {
+            display: block;
+            position: absolute;
+            top: 0;
+            margin: 1em;
+        }
+        > .mdc-card__actions {
+            top: auto;
+            position: absolute;
+            bottom: 0;
+            display: flex;
+            flex-direction: row;
+            align-items: start;
+            flex-wrap: wrap;
+            padding: 4px;
+            > * {
+                margin: 4px;
+            }
+            .mdc-button > i {
+                position: absolute;
+                right: -8px;
+                top: -8px;
+                width: 24px;
+                height: 24px;
+                text-align: center;
+                background-color: var(--mdc-theme-secondary);
+                border-radius: 50%;
+                font-size: 12px;
+                font-style: normal;
+                vertical-align: middle;
+                line-height: 24px;
+                color: var(--mdc-theme-on-secondary);
+            }
+        }
     }
 }
