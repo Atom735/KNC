@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'dart:html';
+import 'dart:math';
 
+import 'package:knc/www.dart';
 import 'package:mdc_web/mdc_web.dart';
 
+import 'App.dart';
 import 'misc.dart';
 
 class CardAddTask {
@@ -58,6 +62,7 @@ class DialogAddTask extends MDCDialog {
   final eLinearProgress =
       MDCLinearProgress(eGetById('my-add-task-dialog-linear-progress'));
   final eTabBar = MDCTabBar(eGetById('my-add-task-dialog-tab-bar'));
+  final Set<MDCTab> eTabs = {};
 
   final eSSName = MDCTextField(eGetById('my-add-task-dialog-task-name'));
   final ButtonElement eSSPathAdd = eGetById('my-add-task-dialog-task-path-add');
@@ -67,10 +72,59 @@ class DialogAddTask extends MDCDialog {
     eSSPathSet.add(DialogAddTaskPath());
   }
 
+  final tabCon = eGetById('my-add-task-dialog-tab-content-container');
+  ElementList<Element> tabCons;
+  int _tabActive;
+  set tabActive(final int i) {
+    if (_tabActive == i) {
+      return;
+    }
+    _tabActive = i;
+    tabCon.style.marginLeft = '-${_tabActive - 1}00%';
+  }
+
+  void reset() {
+    close();
+    while (eSSPathSet.isNotEmpty) {
+      eSSPathSet.last._close();
+    }
+    eLinearProgress.close();
+    addPath();
+    tabActive = 1;
+  }
+
+  void send() {
+    eLinearProgress.open();
+    final v = {
+      'user': App().user.mail,
+      'name': eSSName.value,
+      'path': eSSPathSet.map((e) => e.value).where((e) => e.isNotEmpty).toList()
+    };
+    App().requestOnce('$wwwTaskNew${jsonEncode(v)}').then((msg) => reset());
+  }
+
   DialogAddTask._init() : super(eGetById('my-add-task-dialog')) {
     _instance = this;
     print('$runtimeType created: $hashCode');
+    eTabs.addAll(eGetById('my-add-task-dialog-tab-bar')
+        .querySelectorAll('.mdc-tab')
+        .map((e) => MDCTab(e)));
+    tabCon.style.width = '${eTabs.length}00%';
+    tabCon.style.display = 'grid';
+    tabCon.style.gridTemplateRows = '1fr';
+    tabCon.style.gridTemplateColumns =
+        ''.padRight(eTabs.length, '*').replaceAll('*', ' 1fr');
+    tabCons = tabCon.querySelectorAll('.my-add-task-dialog-tab-content');
+    eTabs.forEach((e) {
+      e.listen('MDCTab:interacted', (e) {
+        final i = int.parse(
+            (e as CustomEvent).detail['tabId'].toString().substring(8));
+        tabActive = i;
+      });
+    });
     eSSPathAdd.onClick.listen((_) => addPath());
+    eSend.onClick.listen((_) => send());
+
     addPath();
   }
   static DialogAddTask _instance;

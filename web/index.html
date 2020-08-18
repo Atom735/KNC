@@ -69,14 +69,14 @@
     <main class="mdc-top-app-bar--fixed-adjust">
       <div class="mdc-layout-grid">
         <div class="mdc-layout-grid__inner">
-          <div class="mdc-layout-grid__cell--span-4">
 
+          <div class="mdc-layout-grid__cell--span-4">
             <div id="my-add-task-card" class="mdc-card  mdc-card--outlined">
-              <div class="mdc-card__primary-action">
+              <div class="mdc-card__primary-action" tabindex="0">
                 <div class="mdc-card__media mdc-card__media--square">
                   <div class="mdc-card__media-content mdc-theme--secondary-bg">
-                    <img class="mdc-theme--on-secondary"
-                      src="/data/add_task-white-48dp.svg" alt="Add task">
+                    <i
+                      class="material-icons mdc-theme--on-secondary">add_task</i>
                     <div id="my-add-task-card-texts">
                       <h2
                         class="mdc-theme--on-secondary mdc-typography mdc-typography--headline6">
@@ -89,9 +89,37 @@
                 </div>
               </div>
             </div>
-
-
           </div>
+
+
+          <div class="mdc-layout-grid__cell--span-4">
+            <div class="my-task-card mdc-card  mdc-card--outlined">
+              <div class="mdc-card__media mdc-card__media--square">
+                <div class="mdc-card__media-content mdc-theme--surface">
+                  <i
+                    class="material-icons mdc-theme--on-surface">add_circle_outline</i>
+                  <div>
+                    <h2 class="mdc-typography mdc-typography--headline6">
+                      Вася пупкин решает вопросики</h2>
+                  </div>
+                  <div class="mdc-card__actions">
+                    <button
+                      class="mdc-button mdc-card__action mdc-card__action--button">
+                      <div class="mdc-button__ripple"></div>
+                      <span class="mdc-button__label">Action 1</span>
+                    </button>
+                    <button
+                      class="mdc-button mdc-card__action mdc-card__action--button">
+                      <div class="mdc-button__ripple"></div>
+                      <span class="mdc-button__label">Action 2</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
         </div>
       </div>
 
@@ -326,19 +354,83 @@
                 </div>
               </div>
             </div>
+            <div id='my-add-task-dialog-tab-content-viewport'>
+              <div id='my-add-task-dialog-tab-content-container'>
+                <div id='my-add-task-dialog-tab-content-settings-base'
+                  class='my-add-task-dialog-tab-content'>
+                  <label id="my-add-task-dialog-task-name"
+                    class="mdc-text-field mdc-text-field--filled mdc-text-field--fullwidth">
+                    <span class="mdc-text-field__ripple"></span>
+                    <input class="mdc-text-field__input" type="text" name="name"
+                      placeholder="Название задачи" required>
+                    <span class="mdc-line-ripple"></span>
+                  </label>
+
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                </div>
+
+                <div id='my-add-task-dialog-tab-content-settings-additional'
+                  class='my-add-task-dialog-tab-content'>
+                  <label id="my-add-task-dialog-task-name"
+                    class="mdc-text-field mdc-text-field--filled mdc-text-field--fullwidth">
+                    <span class="mdc-text-field__ripple"></span>
+                    <input class="mdc-text-field__input" type="text" name="name"
+                      placeholder="Название задачи" required>
+                    <span class="mdc-line-ripple"></span>
+                  </label>
+                  <label id="my-add-task-dialog-task-name"
+                    class="mdc-text-field mdc-text-field--filled mdc-text-field--fullwidth">
+                    <span class="mdc-text-field__ripple"></span>
+                    <input class="mdc-text-field__input" type="text" name="name"
+                      placeholder="Название задачи" required>
+                    <span class="mdc-line-ripple"></span>
+                  </label>
+                  <label id="my-add-task-dialog-task-name"
+                    class="mdc-text-field mdc-text-field--filled mdc-text-field--fullwidth">
+                    <span class="mdc-text-field__ripple"></span>
+                    <input class="mdc-text-field__input" type="text" name="name"
+                      placeholder="Название задачи" required>
+                    <span class="mdc-line-ripple"></span>
+                  </label>
+
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                </div>
+
+                <div id='my-add-task-dialog-tab-content-settings-access'
+                  class='my-add-task-dialog-tab-content'>
+                  <label id="my-add-task-dialog-task-name"
+                    class="mdc-text-field mdc-text-field--filled mdc-text-field--fullwidth">
+                    <span class="mdc-text-field__ripple"></span>
+                    <input class="mdc-text-field__input" type="text" name="name"
+                      placeholder="Название задачи" required>
+                    <span class="mdc-line-ripple"></span>
+                  </label>
+
+                  <button id="my-add-task-dialog-task-path-add" type="button"
+                    class="mdc-icon-button material-icons">add</button>
+                </div>
+              </div>
+            </div>
 
 
-            <label id="my-add-task-dialog-task-name"
-              class="mdc-text-field mdc-text-field--filled mdc-text-field--fullwidth">
-              <span class="mdc-text-field__ripple"></span>
-              <input class="mdc-text-field__input" type="text" name="name"
-                placeholder="Название задачи" required>
-              <span class="mdc-line-ripple"></span>
-            </label>
-
-
-            <button id="my-add-task-dialog-task-path-add" type="button"
-              class="mdc-icon-button material-icons">add</button>
           </div>
           <div class="mdc-dialog__actions">
             <button type="button" class="mdc-button mdc-dialog__button"

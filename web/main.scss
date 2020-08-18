@@ -173,7 +173,7 @@
     with (
         $primary: #7cb342,
         $secondary: #0277bd,
-        $background: #ddd,
+        $background: #ccc,
       );
 
 @use "package:mdc_dart/scss/material-components-web";
@@ -258,28 +258,54 @@ acronym {
     padding: 2vw;
 }
 
-#my-add-task-card .mdc-card__media-content > img {
-    display: block;
-    width: 50%;
-    padding: 25%;
-    opacity: 0.15;
-}
-
 body {
     background-color: #e2f1f8;
 }
 
-#my-add-task-card-texts {
-    display: block;
-    position: absolute;
-    top: 0;
-    margin: 1em;
+#my-add-task-dialog {
+    .mdc-dialog__content > * {
+        margin: 1em 0;
+    }
+    .my-add-task-dialog-task-path {
+        display: flex;
+        > button {
+            margin: auto;
+        }
+    }
 }
 
-.my-add-task-dialog-task-path {
-    display: flex;
-    > button {
-        margin: auto;
+#my-add-task-dialog-tab-content-viewport {
+    overflow: hidden;
+}
+
+#my-add-task-dialog-tab-content-container {
+    transition: margin-left 0.333s ease-out;
+}
+
+.my-task-card .mdc-card__media-content,
+#my-add-task-card .mdc-card__media-content {
+    --heh: var(width);
+    > i {
+        display: block;
+        width: 24px;
+        height: 24px;
+        position: absolute;
+        align-self: baseline;
+        top: calc(50% - 12px);
+        left: calc(50% - 12px);
+        opacity: 0.15;
+        font-size: 24px;
+        transform: scale(10);
     }
-    margin: 1em 0;
+    > div {
+        display: block;
+        position: absolute;
+        top: 0;
+        margin: 1em;
+    }
+    > .mdc-card__actions {
+        top: auto;
+        position: absolute;
+        bottom: 0;
+    }
 }
