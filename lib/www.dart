@@ -32,6 +32,16 @@ const wwwSignIn = 'signin;';
 /// Отправка данных для регистрации
 const wwwRegistration = 'registrtion;';
 
+enum NTaskState {
+  initialization,
+  searchFiles,
+  workFiles,
+  generateTable,
+  waitForCorrectErrors,
+  reworkErrors,
+  completed,
+}
+
 String passwordEncode(final String pass) => sha256.convert([
       ...'0x834^'.codeUnits,
       ...pass.codeUnits,

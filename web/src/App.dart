@@ -7,6 +7,7 @@ import 'package:mdc_web/mdc_web.dart';
 
 import 'DialogAddTask.dart';
 import 'DialogLogin.dart';
+import 'TaskCard.dart';
 import 'TaskSets.dart';
 import 'TaskViewSection.dart';
 import 'misc.dart';
@@ -54,6 +55,9 @@ class App {
       : wrapper = SocketWrapper((msg) => socket.sendString(msg),
             signal: socketCompleter.future) {
     print('$runtimeType created: $hashCode');
+    _instance = this;
+
+    MyTaskCardTemplate();
 
     eLoginBtn.onClick.listen((_) => user == null ? DialogLogin().open() : 0);
 
@@ -75,7 +79,10 @@ class App {
     socket.onClose.listen((_) {
       eTitleText.innerText = 'Меня отключили и потеряли...';
     });
-    socket.onMessage.listen((_) => wrapper.recv(_.data));
+    socket.onMessage.listen((_) {
+      wrapper.recv(_.data);
+      print(_.data);
+    });
   }
   static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');

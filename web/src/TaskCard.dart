@@ -1,12 +1,262 @@
+import 'dart:convert';
 import 'dart:html';
 
+import 'package:knc/www.dart';
 import 'package:m4d_components/m4d_components.dart';
 
+import 'App.dart';
 import 'HtmlGenerator.dart';
 import 'TaskErrors.dart';
 import 'TaskFiles.dart';
 import 'TaskViewSection.dart';
 import 'misc.dart';
+
+class MyTaskCard {
+  final int uid;
+  final Element eRoot;
+  final Element eName;
+  final Element eState;
+  final Element eBgIcon;
+  final ButtonElement eBtnErrors;
+  final ButtonElement eBtnWarnings;
+  final ButtonElement eBtnFiles;
+  final Element eErrors;
+  final Element eWarnings;
+  final Element eFiles;
+
+  void _updateState() {
+    final s = NTaskState.values[_iState];
+    switch (s) {
+      case NTaskState.initialization:
+        eState
+          ..innerText = 'Запуск задачи' + (_bPause ? '(преостановлено)' : '')
+          ..classes.clear()
+          ..classes.addAll(['task-state', 'init']);
+        break;
+      case NTaskState.searchFiles:
+        eState
+          ..innerText = 'Поиск и подсчёт файлов для обработки' +
+              (_bPause ? '(преостановлено)' : '')
+          ..classes.clear()
+          ..classes.addAll(['task-state', 'search']);
+        break;
+      case NTaskState.workFiles:
+        eState
+          ..innerText = 'Обработка файлов' + (_bPause ? '(преостановлено)' : '')
+          ..classes.clear()
+          ..classes.addAll(['task-state', 'work']);
+        break;
+      case NTaskState.generateTable:
+        eState
+          ..innerText =
+              'Генерация таблицы' + (_bPause ? '(преостановлено)' : '')
+          ..classes.clear()
+          ..classes.addAll(['task-state', 'gen-tbl']);
+        break;
+      case NTaskState.completed:
+        eState
+          ..innerText = 'Завершена' + (_bPause ? '(преостановлено)' : '')
+          ..classes.clear()
+          ..classes.addAll(['task-state', 'completed']);
+        break;
+      case NTaskState.reworkErrors:
+        eState
+          ..innerText =
+              'Работа над ошибками' + (_bPause ? '(преостановлено)' : '')
+          ..classes.clear()
+          ..classes.addAll(['task-state', 'rework']);
+        break;
+      case NTaskState.waitForCorrectErrors:
+        eState
+          ..innerText = 'Ожидание исправления ошибок' +
+              (_bPause ? '(преостановлено)' : '')
+          ..classes.clear()
+          ..classes.addAll(['task-state', 'wait-errors']);
+        break;
+    }
+  }
+
+  String _sName;
+  set sName(final String i) {
+    if (i == null || _sName == i) {
+      return;
+    }
+    _sName = i;
+    eName.innerText = '[$uid] $_sName';
+  }
+
+  bool _bPause = true;
+  set bPause(final bool i) {
+    if (i == null || _bPause == i) {
+      return;
+    }
+    _bPause = i;
+    _updateState();
+  }
+
+  int _iState = -1;
+  set iState(final int i) {
+    if (i == null || _iState == i) {
+      return;
+    }
+    _iState = i;
+    _updateState();
+  }
+
+  int _iErrors = -1;
+  set iErrors(final int i) {
+    if (_iErrors == i) {
+      return;
+    }
+    _iErrors = i;
+    if (_iErrors == null || _iErrors <= 0) {
+      eErrors.hidden = true;
+      eBtnErrors.hidden = true;
+    } else {
+      eErrors.hidden = false;
+      eBtnErrors.hidden = false;
+      if (_iErrors >= 1000) {
+        eErrors.innerText =
+            '${_iErrors % 1000 == 0 ? '' : '>'}${_iErrors ~/ 1000}k';
+      } else {
+        eErrors.innerText = _iErrors.toString();
+      }
+    }
+  }
+
+  int _iWarnings = -1;
+  set iWarnings(final int i) {
+    if (_iWarnings == i) {
+      return;
+    }
+    _iWarnings = i;
+    if (_iWarnings == null || _iWarnings <= 0) {
+      eWarnings.hidden = true;
+      eBtnWarnings.hidden = true;
+    } else {
+      eWarnings.hidden = false;
+      eBtnWarnings.hidden = false;
+      if (_iWarnings >= 1000) {
+        eWarnings.innerText =
+            '${_iWarnings % 1000 == 0 ? '' : '>'}${_iWarnings ~/ 1000}k';
+      } else {
+        eWarnings.innerText = _iWarnings.toString();
+      }
+    }
+  }
+
+  int _iFiles = -1;
+  set iFiles(final int i) {
+    if (_iFiles == i) {
+      return;
+    }
+    _iFiles = i;
+    if (_iFiles == null || _iFiles <= 0) {
+      eFiles.hidden = true;
+      eBtnFiles.hidden = true;
+    } else {
+      eFiles.hidden = false;
+      eBtnFiles.hidden = false;
+      if (_iFiles >= 1000) {
+        eFiles.innerText =
+            '${_iFiles % 1000 == 0 ? '' : '>'}${_iFiles ~/ 1000}k';
+      } else {
+        eFiles.innerText = _iFiles.toString();
+      }
+    }
+  }
+
+  void byJson(final dynamic item) {
+    sName = item['name'];
+    iState = item['state'];
+    iErrors = item['errors'];
+    iWarnings = item['warnings'];
+    iFiles = item['files'];
+    bPause = item['pause'];
+  }
+
+  MyTaskCard._new(final Element root, this.uid)
+      : eRoot = root,
+        eName = root.querySelector('.mdc-card__media-content>div>h2'),
+        eState = root.querySelector('.mdc-card__media-content>div>h3'),
+        eBgIcon = root.querySelector('.mdc-card__media-content>i'),
+        eBtnErrors = root.querySelector('.mdc-card__actions button.my-errors'),
+        eBtnWarnings =
+            root.querySelector('.mdc-card__actions button.my-warnings'),
+        eBtnFiles = root.querySelector('.mdc-card__actions button.my-files'),
+        eErrors = root.querySelector('.mdc-card__actions button.my-errors>i'),
+        eWarnings =
+            root.querySelector('.mdc-card__actions button.my-warnings>i'),
+        eFiles = root.querySelector('.mdc-card__actions button.my-files>i');
+  factory MyTaskCard(final int uid) {
+    final DocumentFragment imp =
+        document.importNode(MyTaskCardTemplate().eTemp.content, true);
+    MyTaskCardTemplate().eTemp.parent.append(imp);
+    print(imp.children);
+    return MyTaskCard._new(imp.children.first, uid);
+  }
+}
+
+class MyTaskCardTemplate {
+  final TemplateElement eTemp;
+  final Element eTitle;
+  final Element eSubTitle;
+  final Element eBgIcon;
+  final ButtonElement eBtnErrors;
+  final ButtonElement eBtnWarnings;
+  final ButtonElement eBtnFiles;
+  final Element eCounterErrors;
+  final Element eCounterWarnings;
+  final Element eCounterFiles;
+
+  final list = <int, MyTaskCard>{};
+
+  MyTaskCardTemplate._init(final TemplateElement temp)
+      : eTemp = temp,
+        eTitle = temp.content.querySelector('.mdc-card__media-content>div>h2'),
+        eSubTitle =
+            temp.content.querySelector('.mdc-card__media-content>div>h3'),
+        eBgIcon = temp.content.querySelector('.mdc-card__media-content>i'),
+        eBtnErrors =
+            temp.content.querySelector('.mdc-card__actions button.my-errors'),
+        eBtnWarnings =
+            temp.content.querySelector('.mdc-card__actions button.my-warnings'),
+        eBtnFiles =
+            temp.content.querySelector('.mdc-card__actions button.my-files'),
+        eCounterErrors =
+            temp.content.querySelector('.mdc-card__actions button.my-errors>i'),
+        eCounterWarnings = temp.content
+            .querySelector('.mdc-card__actions button.my-warnings>i'),
+        eCounterFiles =
+            temp.content.querySelector('.mdc-card__actions button.my-files>i') {
+    print('$runtimeType created: $hashCode');
+    _instance = this;
+
+    App().requestOnce(wwwTaskViewUpdate).then((msg) {
+      final items = jsonDecode(msg);
+      for (final item in items) {
+        list[item['id']] = MyTaskCard(item['id'])..byJson(item);
+      }
+    });
+
+    App().waitMsgAll(wwwTaskUpdates).listen((msg) {
+      final items = jsonDecode(msg.s);
+      for (final item in items) {
+        list[item['id']]..byJson(item);
+      }
+    });
+
+    App().waitMsgAll(wwwTaskNew).listen((msg) {
+      final item = jsonDecode(msg.s);
+      list[item['id']] = MyTaskCard(item['id'])..byJson(item);
+    });
+  }
+
+  static MyTaskCardTemplate _instance;
+  factory MyTaskCardTemplate() =>
+      (_instance) ??
+      (_instance = MyTaskCardTemplate._init(eGetById('my-template-task-card')));
+}
 
 class ErrorFileDetails {}
 
