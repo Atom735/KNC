@@ -61,6 +61,16 @@ class PathNewer {
   bool unlock(final String name) => _reserved.remove(p.basename(name));
 }
 
+enum NOneFileDataType { txt, las, ink }
+
+class OneFileData {
+  final String path;
+  final String origin;
+  final NOneFileDataType type;
+
+  OneFileData(this.path, this.origin, this.type);
+}
+
 class KncTask extends KncTaskSpawnSets {
   /// Порт для получение сообщений этим изолятом
   final ReceivePort receivePort = ReceivePort();
@@ -87,6 +97,9 @@ class KncTask extends KncTaskSpawnSets {
   dynamic inkDbfMap;
 
   final lasCurvesNameOriginals = <String>[];
+
+  final String pathTemp;
+  final filesSearche = <OneFileData>[];
 
   int _state = 0;
   set state(final int i) {
@@ -134,11 +147,13 @@ class KncTask extends KncTaskSpawnSets {
 
   Future entryPointInClass() async {
     await Future.wait([
+      Directory(pathTemp).create(recursive: true),
       Directory(pathOutLas).create(recursive: true),
       Directory(pathOutInk).create(recursive: true),
       Directory(pathOutErr).create(recursive: true)
     ]);
-    state = 1;
+    state = NTaskState.searchFiles.index;
+    handleFile = handleFileSearch;
     final fs = <Future>[];
     final func = listFilesGet(0, '');
     settings.path.forEach((element) {
@@ -153,11 +168,32 @@ class KncTask extends KncTaskSpawnSets {
       }
     });
     await Future.wait(fs);
-    state = 2;
+    state = NTaskState.workFiles.index;
+    state = NTaskState.completed.index;
     // TODO: Генерация таблицы
   }
 
-  Future handleFile(final File file, final String origin) async {
+  Future Function(File file, String origin) handleFile;
+
+  Future handleFileSearch(final File file, final String origin) async {
+    final ext = p.extension(file.path).toLowerCase();
+    if (settings.ext_las.contains(ext)) {
+      final i = filesSearche.length;
+      final ph = p.join(pathTemp, i.toRadixString(36).padLeft(8, '0'));
+      filesSearche.add(OneFileData(ph, origin, NOneFileDataType.las));
+      files = i;
+      await file.copy(ph);
+    }
+    if (settings.ext_ink.contains(ext)) {
+      final i = filesSearche.length;
+      final ph = p.join(pathTemp, i.toRadixString(36).padLeft(8, '0'));
+      filesSearche.add(OneFileData(ph, origin, NOneFileDataType.ink));
+      files = i;
+      await file.copy(ph);
+    }
+  }
+
+  Future handleFileWork(final File file, final String origin) async {
     final ext = p.extension(file.path).toLowerCase();
     try {
       if (settings.ext_las.contains(ext)) {
@@ -300,6 +336,7 @@ class KncTask extends KncTaskSpawnSets {
               if (arch.exitCode == 0) {
                 await listFilesGet(iArchDepth + 1, pathToArch + relPath)(
                     Directory(arch.pathOut), '');
+                await Directory(arch.pathOut).delete(recursive: true);
                 // TODO: удалить вскрытый архив
               } else {
                 // TODO: обработка ошибки
@@ -354,6 +391,7 @@ class KncTask extends KncTaskSpawnSets {
         errorsOut = File(p.join(pathOut, 'errors.txt'))
             .openWrite(encoding: utf8, mode: FileMode.writeOnly)
               ..writeCharCode(unicodeBomCharacterRune),
+        pathTemp = p.join(pathOut, 'temp'),
         wrapper = SocketWrapper((msg) => sets.sendPort.send([sets.id, msg])),
         super.clone(sets) {
     print('$runtimeType created: $hashCode');

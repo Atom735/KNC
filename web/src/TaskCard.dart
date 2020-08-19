@@ -4,6 +4,7 @@ import 'dart:html';
 
 import 'package:knc/www.dart';
 import 'package:m4d_components/m4d_components.dart';
+import 'package:mdc_web/mdc_web.dart';
 
 import 'App.dart';
 import 'HtmlGenerator.dart';
@@ -26,6 +27,7 @@ class MyTaskCard {
   final Element eErrors;
   final Element eWarnings;
   final Element eFiles;
+  final MDCLinearProgress eLinearProgress;
 
   void _updateState() {
     final s = NTaskState.values[_iState];
@@ -224,7 +226,9 @@ class MyTaskCard {
         eWarnings =
             root.querySelector('.mdc-card__actions button.my-warnings>i'),
         eFiles = root.querySelector('.mdc-card__actions button.my-files>i'),
-        eCard = root.querySelector('.mdc-card') {
+        eCard = root.querySelector('.mdc-card'),
+        eLinearProgress =
+            MDCLinearProgress(root.querySelector('.mdc-linear-progress')) {
     eCard.querySelector('.mdc-card__media-content > i')?.style?.transform =
         'scale(${eCard.offsetWidth / 48})';
     window.onResize.listen((_) => eCard
