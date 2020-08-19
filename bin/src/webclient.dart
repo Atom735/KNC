@@ -69,7 +69,13 @@ class WebClient {
       }
     }, onError: getErrorFunc('Ошибка в прослушке WebSocket:'));
     waitMsgAll(wwwTaskViewUpdate).listen((msg) {
-      wrapper.send(msg.i, App().getWwwTaskViewUpdate());
+      wrapper.send(
+          msg.i,
+          App().getWwwTaskViewUpdate(
+              user,
+              (jsonDecode(msg.s) as List)
+                  .map((e) => e as int)
+                  .toList(growable: false)));
     });
     waitMsgAll(wwwTaskNew).listen((msg) {
       App().sendForAllClients(App().getWwwTaskNew(msg.s));

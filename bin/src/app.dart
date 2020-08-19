@@ -40,10 +40,13 @@ class App {
   MyConverters converters;
 
   /// Получить данные для формы TaskView
-  String getWwwTaskViewUpdate() {
+  String getWwwTaskViewUpdate(
+      final WebClientUser user, final List<int> updated) {
     final list = [];
     listOfTasks.forEach((key, task) {
-      list.add(task.json);
+      if (!updated.contains(key)) {
+        list.add(task.json);
+      }
     });
     return json.encode(list);
   }

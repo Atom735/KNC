@@ -117,15 +117,15 @@ class MyTaskCard {
 
   int _iErrors = -1;
   set iErrors(final int i) {
-    if (_iErrors == i) {
+    if (i == null || _iErrors == i) {
       return;
     }
     _iErrors = i;
-    if (_iErrors == null || _iErrors <= 0) {
-      eErrors.hidden = true;
+    if (_iErrors <= 0) {
+      // eErrors.hidden = true;
       eBtnErrors.hidden = true;
     } else {
-      eErrors.hidden = false;
+      // eErrors.hidden = false;
       eBtnErrors.hidden = false;
       if (_iErrors >= 1000) {
         eErrors.innerText =
@@ -138,15 +138,15 @@ class MyTaskCard {
 
   int _iWarnings = -1;
   set iWarnings(final int i) {
-    if (_iWarnings == i) {
+    if (i == null || _iWarnings == i) {
       return;
     }
     _iWarnings = i;
-    if (_iWarnings == null || _iWarnings <= 0) {
-      eWarnings.hidden = true;
+    if (_iWarnings <= 0) {
+      // eWarnings.hidden = true;
       eBtnWarnings.hidden = true;
     } else {
-      eWarnings.hidden = false;
+      // eWarnings.hidden = false;
       eBtnWarnings.hidden = false;
       if (_iWarnings >= 1000) {
         eWarnings.innerText =
@@ -159,15 +159,15 @@ class MyTaskCard {
 
   int _iFiles = -1;
   set iFiles(final int i) {
-    if (_iFiles == i) {
+    if (i == null || _iFiles == i) {
       return;
     }
     _iFiles = i;
-    if (_iFiles == null || _iFiles <= 0) {
-      eFiles.hidden = true;
+    if (_iFiles <= 0) {
+      // eFiles.hidden = true;
       eBtnFiles.hidden = true;
     } else {
-      eFiles.hidden = false;
+      // eFiles.hidden = false;
       eBtnFiles.hidden = false;
       if (_iFiles >= 1000) {
         eFiles.innerText =
@@ -178,10 +178,10 @@ class MyTaskCard {
     }
   }
 
-  String _sRaport = '#';
+  String _sRaport;
   StreamSubscription _ssRaport;
   set sRaport(final String i) {
-    if (_sRaport == i) {
+    if (i == null || _sRaport == i) {
       return;
     }
     _sRaport = i;
@@ -237,27 +237,33 @@ class MyTaskCardTemplate {
 
   final list = <int, MyTaskCard>{};
 
-  MyTaskCardTemplate._init(final TemplateElement temp) : eTemp = temp {
-    print('$runtimeType created: $hashCode');
-    _instance = this;
-
-    App().requestOnce(wwwTaskViewUpdate).then((msg) {
+  void updateTasks() {
+    App()
+        .requestOnce(
+            wwwTaskViewUpdate + jsonEncode(list.keys.toList(growable: false)))
+        .then((msg) {
       final items = jsonDecode(msg);
       for (final item in items) {
         list[item['id']] = MyTaskCard(item['id'])..byJson(item);
       }
     });
+  }
 
-    App().waitMsgAll(wwwTaskUpdates).listen((msg) {
-      final items = jsonDecode(msg.s);
-      for (final item in items) {
-        list[item['id']]..byJson(item);
-      }
-    });
+  MyTaskCardTemplate._init(final TemplateElement temp) : eTemp = temp {
+    print('$runtimeType created: $hashCode');
+    _instance = this;
+
+    updateTasks();
 
     App().waitMsgAll(wwwTaskNew).listen((msg) {
       final item = jsonDecode(msg.s);
       list[item['id']] = MyTaskCard(item['id'])..byJson(item);
+    });
+    App().waitMsgAll(wwwTaskUpdates).listen((msg) {
+      final items = json.decode(msg.s);
+      for (final item in items) {
+        list[item['id']]?.byJson(item);
+      }
     });
   }
 

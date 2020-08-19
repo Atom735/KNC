@@ -51,13 +51,19 @@ class App {
   void signin(String mail, String access) {
     eLoginBtn.innerText = 'account_circle';
     user = AppUser(mail, int.parse(access));
+    MyTaskCardTemplate().updateTasks();
   }
 
   App._init(this.socket, this.socketCompleter)
-      : wrapper = SocketWrapper((msg) => socket.sendString(msg),
-            signal: socketCompleter.future) {
+      : wrapper = SocketWrapper((msg) {
+          print('SEND: $msg');
+          socket.sendString(msg);
+        }, signal: socketCompleter.future) {
     print('$runtimeType created: $hashCode');
     _instance = this;
+
+    MyTaskCardTemplate();
+    CardAddTask();
 
     eTopBarRoot.style.backgroundColor = 'var(--mdc-theme-secondary)';
     eTopBarRoot.style.color = 'var(--mdc-theme-on-secondary)';
@@ -67,11 +73,7 @@ class App {
         .forEach((e) => e.style.color = 'var(--mdc-theme-on-secondary)');
     eTitle.innerText = 'Подлкючение к серверу...';
 
-    MyTaskCardTemplate();
-    CardAddTask();
-
     eLoginBtn.onClick.listen((_) => user == null ? DialogLogin().open() : 0);
-
     socket.onOpen.listen((_) {
       eLinearProgress.close();
       socketCompleter.complete();
@@ -104,7 +106,7 @@ class App {
     });
     socket.onMessage.listen((_) {
       wrapper.recv(_.data);
-      print(_.data);
+      print('RECV: ${_.data}');
     });
   }
   static App _instance;
