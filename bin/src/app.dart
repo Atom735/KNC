@@ -57,22 +57,27 @@ class App {
     });
   }
 
-  Future<void> run(final int port) async {
+  Future<void> run() async {
     WebClientUsersDB();
     converters = await MyConverters.init(queueProc);
     await converters.clear();
-    http = await HttpServer.bind(InternetAddress.anyIPv4, port);
+    http =
+        await HttpServer.bind(InternetAddress.anyIPv4, wwwPort, shared: true);
     print('Listening on http://${http.address.address}:${http.port}/');
     print('For connect use http://localhost:${http.port}/');
     httpSubscription = http.listen((request) async {
-      if (request.uri.path == '/ws') {
-        // ignore: unawaited_futures
-        WebSocketTransformer.upgrade(request).then((socket) {
-          final c = WebClient(socket);
-          listOfClients.add(c);
-        }, onError: getErrorFunc('Ошибка в подключении WebSocket'));
+      final response = request.response;
+      print('http: ${request.uri.path}');
+      if (request.uri.path.startsWith('/ws')) {
+        if (request.uri.path == '/ws') {
+          // ignore: unawaited_futures
+          WebSocketTransformer.upgrade(request).then((socket) {
+            response.close();
+            final c = WebClient(socket);
+            listOfClients.add(c);
+          }, onError: getErrorFunc('Ошибка в подключении WebSocket'));
+        }
       } else {
-        final response = request.response;
         response.statusCode = HttpStatus.internalServerError;
         await response.write('Internal Server Error');
         await response.flush();
@@ -90,8 +95,8 @@ class App {
         }
         if (msg.length == 2 && msg[0] is int && msg[1] is String) {
           final kncTask = listOfTasks[msg[0]];
-          if (kncTask.wrapper != null) {
-            kncTask.wrapper.recv(msg[1]);
+          if (kncTask.wrapperSendPort != null) {
+            kncTask.wrapperSendPort.recv(msg[1]);
           }
         }
       }

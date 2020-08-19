@@ -111,5 +111,6 @@ class App {
   // WebSocket('ws://${uri.host}:${uri.port}');
   factory App() =>
       (_instance) ??
-      (_instance = App._init(WebSocket('ws://${uri.host}:80/ws'), Completer()));
+      (_instance =
+          App._init(WebSocket('ws://${uri.host}:$wwwPort/ws'), Completer()));
 }

@@ -20,6 +20,9 @@ class KncTaskInternal {
         user = _this.user,
         settings = _this.settings,
         wrappers = [];
+
+  void sendForAllClients(final String msg) =>
+      wrappers.forEach((s) => s.send(0, msg));
 }
 
 class KncTaskSpawnSets extends KncTaskInternal {
@@ -46,7 +49,7 @@ class KncTaskOnMain extends KncTaskInternal {
 
   /// Порт задачи
   SendPort sendPort;
-  SocketWrapper wrapper;
+  SocketWrapper wrapperSendPort;
 
   KncTaskOnMain(final int _id, final WWW_TaskSettings _settings,
       final WebClientUser _user)
@@ -62,9 +65,6 @@ class KncTaskOnMain extends KncTaskInternal {
     final jsonMsg = wwwTaskNew + c.jsonEncode(json);
     sendForAllClients(jsonMsg);
   }
-
-  void sendForAllClients(final String msg) =>
-      wrappers.forEach((s) => s.send(0, msg));
 
   dynamic get json => {
         'id': id,
@@ -150,43 +150,44 @@ class KncTaskOnMain extends KncTaskInternal {
   }
 
   void initWrapper() {
-    wrapper = SocketWrapper((str) => sendPort.send(str));
-    wrapper
+    wrapperSendPort = SocketWrapper((str) => sendPort.send(str));
+
+    wrapperSendPort
         .waitMsgAll(msgTaskUpdateState)
         .listen((msg) => state = int.tryParse(msg.s));
-    wrapper
+    wrapperSendPort
         .waitMsgAll(msgTaskUpdateErrors)
         .listen((msg) => errors = int.tryParse(msg.s));
-    wrapper
+    wrapperSendPort
         .waitMsgAll(msgTaskUpdateFiles)
         .listen((msg) => files = int.tryParse(msg.s));
-    wrapper
+    wrapperSendPort
         .waitMsgAll(msgTaskUpdateWarnings)
         .listen((msg) => warnings = int.tryParse(msg.s));
 
-    wrapper.waitMsgAll(msgDoc2x).listen((msg) {
+    wrapperSendPort.waitMsgAll(msgDoc2x).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
       App()
           .converters
           .doc2x(msg.s.substring(0, i0),
               msg.s.substring(i0 + msgRecordSeparator.length))
-          .then((value) => wrapper.send(msg.i, value.toString()));
+          .then((value) => wrapperSendPort.send(msg.i, value.toString()));
     });
 
-    wrapper.waitMsgAll(msgZip).listen((msg) {
+    wrapperSendPort.waitMsgAll(msgZip).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
       App()
           .converters
           .zip(msg.s.substring(0, i0),
               msg.s.substring(i0 + msgRecordSeparator.length))
-          .then((value) => wrapper.send(msg.i, value.toWrapperMsg()));
+          .then((value) => wrapperSendPort.send(msg.i, value.toWrapperMsg()));
     });
 
-    wrapper.waitMsgAll(msgUnzip).listen((msg) {
+    wrapperSendPort.waitMsgAll(msgUnzip).listen((msg) {
       App()
           .converters
           .unzip(msg.s)
-          .then((value) => wrapper.send(msg.i, value.toWrapperMsg()));
+          .then((value) => wrapperSendPort.send(msg.i, value.toWrapperMsg()));
     });
   }
 }

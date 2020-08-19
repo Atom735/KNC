@@ -5,6 +5,8 @@ import 'package:crypto/crypto.dart' show sha256;
 import 'ArchiverOtput.dart';
 import 'errors.dart';
 
+const wwwPort = 0xC000;
+
 /// Клиент отправляет серверу запрос на обновление данных всех задач
 const wwwTaskViewUpdate = 'taskview;';
 

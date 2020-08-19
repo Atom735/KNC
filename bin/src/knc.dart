@@ -356,7 +356,7 @@ class KncTask extends KncTaskSpawnSets {
               ..writeCharCode(unicodeBomCharacterRune),
         wrapper = SocketWrapper((msg) => sets.sendPort.send([sets.id, msg])),
         super.clone(sets) {
-    print('KncTask created: $hashCode');
+    print('$runtimeType created: $hashCode');
     receivePort.listen((final msg) {
       if (msg is String) {
         wrapper.recv(msg);

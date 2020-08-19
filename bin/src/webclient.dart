@@ -61,13 +61,16 @@ class WebClient {
   StreamSubscription socketSubscription;
 
   WebClient(this.socket) : wrapper = SocketWrapper((msg) => socket.add(msg)) {
-    print('${runtimeType.toString()} created: $hashCode');
-    socketSubscription = socket.listen((event) {
+    print('$runtimeType created: $hashCode');
+    print('socket [${socket.hashCode}] created');
+    socket.listen((event) {
       if (event is String) {
         print('WS_RECV: $event');
         wrapper.recv(event);
       }
-    }, onError: getErrorFunc('Ошибка в прослушке WebSocket:'));
+    },
+        onError: getErrorFunc('Ошибка в прослушке WebSocket:'),
+        onDone: () => print('socket [${socket.hashCode}] done'));
     waitMsgAll(wwwTaskViewUpdate).listen((msg) {
       wrapper.send(
           msg.i,
@@ -86,7 +89,7 @@ class WebClient {
       final id = int.tryParse(msg.s.substring(0, i0));
       App()
           .listOfTasks[id]
-          .wrapper
+          .wrapperSendPort
           .requestOnce('$wwwTaskGetErrors${msg.s.substring(i0 + 1)}')
           .then((v) => wrapper.send(msg.i, v));
     });
@@ -95,7 +98,7 @@ class WebClient {
       final id = int.tryParse(msg.s.substring(0, i0));
       App()
           .listOfTasks[id]
-          .wrapper
+          .wrapperSendPort
           .requestOnce('$wwwTaskGetFiles${msg.s.substring(i0 + 1)}')
           .then((v) => wrapper.send(msg.i, v));
     });
