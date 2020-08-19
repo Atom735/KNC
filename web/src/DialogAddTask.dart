@@ -95,11 +95,20 @@ class DialogAddTask extends MDCDialog {
 
   void send() {
     eLinearProgress.open();
+
+    final path =
+        eSSPathSet.map((e) => e.value).where((e) => e.isNotEmpty).toList();
+
     final v = {
       'user': App().user?.mail,
-      'name': eSSName.value,
-      'path': eSSPathSet.map((e) => e.value).where((e) => e.isNotEmpty).toList()
+      'task': WWW_TaskSettings(
+              name: eSSName.value.isNotEmpty
+                  ? eSSName.value
+                  : WWW_TaskSettings.def_name,
+              path: path.isNotEmpty ? path : WWW_TaskSettings.def_path)
+          .json,
     };
+
     App().requestOnce('$wwwTaskNew${jsonEncode(v)}').then((msg) => reset());
   }
 

@@ -48,6 +48,77 @@ String passwordEncode(final String pass) => sha256.convert([
       ...'x12kdasdj'.codeUnits
     ]).toString();
 
+class WWW_TaskSettings {
+  final String name;
+  static const def_name = '@unnamed';
+
+  final List<String> path;
+  static const def_path = [r'D:\Искринское м-е'];
+
+  /// Настройки расширения для архивных файлов
+  final List<String> ext_ar;
+  static const def_ext_ar = ['.zip', '.rar'];
+
+  /// Настройки расширения для файлов LAS
+  final List<String> ext_las;
+  static const def_ext_las = ['.las'];
+
+  /// Настройки расширения для файлов с инклинометрией
+  final List<String> ext_ink;
+  static const def_ext_ink = ['.doc', '.docx', '.txt', '.dbf'];
+
+  /// Максимальный размер вскрываемого архива в байтах
+  ///
+  /// Для задания значения можно использовать постфиксы:
+  /// * `k` = КилоБайты
+  /// * `m` = МегаБайты = `kk`
+  /// * `g` = ГигаБайты = `kkk`
+  ///
+  /// `0` - для всех архивов
+  ///
+  /// По умолчанию 1Gb
+  final int maxsize_ar;
+  static const def_maxsize_ar = 1024 * 1024 * 1024;
+
+  /// Максимальный глубина прохода по архивам
+  /// * `-1` - для бесконечной вложенности (По умолчанию)
+  /// * `0` - для отбрасывания всех архивов
+  /// * `1` - для входа на один уровень архива
+  final int maxdepth_ar;
+  static const def_maxdepth_ar = -1;
+
+  WWW_TaskSettings(
+      {this.name = def_name,
+      this.path = def_path,
+      this.ext_ar = def_ext_ar,
+      this.ext_las = def_ext_las,
+      this.ext_ink = def_ext_ink,
+      this.maxsize_ar = def_maxsize_ar,
+      this.maxdepth_ar = def_maxdepth_ar});
+
+  WWW_TaskSettings.fromJson(dynamic json)
+      : name = json['name'] ?? def_name,
+        path = ((json['path'] ?? def_path) as Iterable).toList(growable: false),
+        ext_ar = ((json['ext_ar'] ?? def_ext_ar) as Iterable)
+            .toList(growable: false),
+        ext_las = ((json['ext_las'] ?? def_ext_las) as Iterable)
+            .toList(growable: false),
+        ext_ink = ((json['ext_ink'] ?? def_ext_ink) as Iterable)
+            .toList(growable: false),
+        maxsize_ar = json['maxsize_ar'] ?? def_maxsize_ar,
+        maxdepth_ar = json['maxdepth_ar'] ?? def_maxdepth_ar;
+
+  Map get json => {
+        'name': name,
+        'path': path,
+        'ext_ar': ext_ar,
+        'ext_las': ext_las,
+        'ext_ink': ext_ink,
+        'maxsize_ar': maxsize_ar,
+        'maxdepth_ar': maxdepth_ar
+      };
+}
+
 class CLasFileSub {
   final bool added;
   final String mnem;
