@@ -28,6 +28,8 @@ class App {
   /// Вошедший пользователь
   AppUser user;
 
+  final eTopBar = MDCTopAppBar(eGetById('my-top-app-bar'));
+  final eTopBarRoot = eGetById('my-top-app-bar');
   final eLinearProgress = MDCLinearProgress(eGetById('my-app-linear-progress'));
   final eTitle = eGetById('my-app-title');
   final eLoginBtn = eGetById('my-app-login');
@@ -57,13 +59,20 @@ class App {
     print('$runtimeType created: $hashCode');
     _instance = this;
 
+    eTopBarRoot.style.backgroundColor = 'var(--mdc-theme-secondary)';
+    eTopBarRoot.style.color = 'var(--mdc-theme-on-secondary)';
+    eTopBarRoot
+        .querySelectorAll(
+            '.mdc-top-app-bar .mdc-top-app-bar__action-item, .mdc-top-app-bar .mdc-top-app-bar__navigation-icon')
+        .forEach((e) => e.style.color = 'var(--mdc-theme-on-secondary)');
+    eTitle.innerText = 'Подлкючение к серверу...';
+
     MyTaskCardTemplate();
     CardAddTask();
 
     eLoginBtn.onClick.listen((_) => user == null ? DialogLogin().open() : 0);
 
     socket.onOpen.listen((_) {
-      eTitle.innerText = 'Пункт приёма стеклотары.';
       eLinearProgress.close();
       socketCompleter.complete();
       if (window.localStorage['signin'] != null) {
@@ -76,9 +85,22 @@ class App {
           }
         });
       }
+      eTopBarRoot.style.backgroundColor = 'var(--mdc-theme-primary)';
+      eTopBarRoot.style.color = 'var(--mdc-theme-on-primary)';
+      eTopBarRoot
+          .querySelectorAll(
+              '.mdc-top-app-bar .mdc-top-app-bar__action-item, .mdc-top-app-bar .mdc-top-app-bar__navigation-icon')
+          .forEach((e) => e.style.color = 'var(--mdc-theme-on-primary)');
+      eTitle.innerText = 'Пункт приёма стеклотары.';
     });
     socket.onClose.listen((_) {
       eTitleText.innerText = 'Меня отключили и потеряли...';
+      eTopBarRoot.style.backgroundColor = 'var(--mdc-theme-error)';
+      eTopBarRoot.style.color = 'var(--mdc-theme-on-error)';
+      eTopBarRoot
+          .querySelectorAll(
+              '.mdc-top-app-bar .mdc-top-app-bar__action-item, .mdc-top-app-bar .mdc-top-app-bar__navigation-icon')
+          .forEach((e) => e.style.color = 'var(--mdc-theme-on-error)');
     });
     socket.onMessage.listen((_) {
       wrapper.recv(_.data);
