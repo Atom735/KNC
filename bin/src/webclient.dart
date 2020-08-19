@@ -63,14 +63,18 @@ class WebClient {
   WebClient(this.socket) : wrapper = SocketWrapper((msg) => socket.add(msg)) {
     print('$runtimeType created: $hashCode');
     print('socket [${socket.hashCode}] created');
-    socket.listen((event) {
-      if (event is String) {
-        print('WS_RECV: $event');
-        wrapper.recv(event);
-      }
-    },
+    socket.listen(
+        (event) {
+          if (event is String) {
+            print('WS_RECV: $event');
+            wrapper.recv(event);
+          }
+        },
         onError: getErrorFunc('Ошибка в прослушке WebSocket:'),
-        onDone: () => print('socket [${socket.hashCode}] done'));
+        onDone: () {
+          print('socket [${socket.hashCode}] done');
+          App().listOfClients.remove(this);
+        });
     waitMsgAll(wwwTaskViewUpdate).listen((msg) {
       wrapper.send(
           msg.i,

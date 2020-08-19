@@ -61,22 +61,19 @@ class App {
     WebClientUsersDB();
     converters = await MyConverters.init(queueProc);
     await converters.clear();
-    http =
-        await HttpServer.bind(InternetAddress.anyIPv4, wwwPort, shared: true);
+    http = await HttpServer.bind(InternetAddress.anyIPv4, wwwPort);
     print('Listening on http://${http.address.address}:${http.port}/');
     print('For connect use http://localhost:${http.port}/');
     httpSubscription = http.listen((request) async {
       final response = request.response;
       print('http: ${request.uri.path}');
-      if (request.uri.path.startsWith('/ws')) {
-        if (request.uri.path == '/ws') {
-          // ignore: unawaited_futures
-          WebSocketTransformer.upgrade(request).then((socket) {
-            response.close();
-            final c = WebClient(socket);
-            listOfClients.add(c);
-          }, onError: getErrorFunc('Ошибка в подключении WebSocket'));
-        }
+      if (request.uri.path == '/ws') {
+        // ignore: unawaited_futures
+        WebSocketTransformer.upgrade(request).then((socket) {
+          response.close();
+          final c = WebClient(socket);
+          listOfClients.add(c);
+        }, onError: getErrorFunc('Ошибка в подключении WebSocket'));
       } else {
         response.statusCode = HttpStatus.internalServerError;
         await response.write('Internal Server Error');
