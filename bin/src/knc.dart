@@ -168,6 +168,9 @@ class KncTask extends KncTaskSpawnSets {
       }
     });
     await Future.wait(fs);
+    await File(p.join(pathOut, 'searchedFiles.txt')).writeAsString(filesSearche
+        .map((e) => '${e.type.toString()}\n${e.origin}\n${e.path}\n')
+        .join('\n'));
     state = NTaskState.workFiles.index;
     state = NTaskState.completed.index;
     // TODO: Генерация таблицы
