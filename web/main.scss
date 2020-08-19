@@ -292,8 +292,6 @@ body {
     }
 }
 
-//
-
 #my-add-task-card,
 .my-task-card {
     animation: animation-my-task-card 500ms ease-in;
@@ -307,7 +305,7 @@ body {
             align-self: baseline;
             top: calc(50% - 12px);
             left: calc(50% - 12px);
-            opacity: 0.15;
+            opacity: 0.05;
             font-size: 24px;
             transform: scale(10);
         }

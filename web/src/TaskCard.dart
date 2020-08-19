@@ -15,6 +15,7 @@ import 'misc.dart';
 class MyTaskCard {
   final int uid;
   final Element eRoot;
+  final Element eCard;
   final Element eName;
   final Element eState;
   final Element eBgIcon;
@@ -222,12 +223,21 @@ class MyTaskCard {
         eErrors = root.querySelector('.mdc-card__actions button.my-errors>i'),
         eWarnings =
             root.querySelector('.mdc-card__actions button.my-warnings>i'),
-        eFiles = root.querySelector('.mdc-card__actions button.my-files>i');
+        eFiles = root.querySelector('.mdc-card__actions button.my-files>i'),
+        eCard = root.querySelector('.mdc-card') {
+    eCard.querySelector('.mdc-card__media-content > i')?.style?.transform =
+        'scale(${eCard.offsetWidth / 48})';
+    window.onResize.listen((_) => eCard
+        .querySelector('.mdc-card__media-content > i')
+        ?.style
+        ?.transform = 'scale(${eCard.offsetWidth / 48})');
+  }
 
   factory MyTaskCard(final int uid) {
     final Element imp = document.importNode(
         MyTaskCardTemplate().eTemp.content.children.first, true);
     MyTaskCardTemplate().eTemp.parent.append(imp);
+
     return MyTaskCard._new(imp, uid);
   }
 }

@@ -12,6 +12,13 @@ class CardAddTask {
   CardAddTask._init() {
     print('$runtimeType created: $hashCode');
     eCard.onClick.listen((_) => DialogAddTask().open());
+
+    eCard.querySelector('.mdc-card__media-content > i')?.style?.transform =
+        'scale(${eCard.offsetWidth / 48})';
+    window.onResize.listen((_) => eCard
+        .querySelector('.mdc-card__media-content > i')
+        ?.style
+        ?.transform = 'scale(${eCard.offsetWidth / 48})');
   }
 
   static CardAddTask _instance;
