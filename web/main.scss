@@ -329,6 +329,9 @@ body {
             > * {
                 margin: 4px;
             }
+            .mdc-button[hidden] {
+                display: none;
+            }
             .mdc-button > i {
                 position: absolute;
                 right: -8px;

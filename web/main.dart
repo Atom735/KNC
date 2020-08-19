@@ -8,11 +8,11 @@ import 'src/App.dart';
 import 'src/PreInit.dart';
 
 void main() {
-  document.onLoad.listen((_) => App());
   autoInit();
   document.querySelectorAll('.mdc-icon-button').forEach((element) {
     MDCRipple(element).unbounded = true;
   });
+  App();
 
   // final ButtonElement myLoginDialogOpen =
   //     document.querySelector('#my-login-dialog-open');

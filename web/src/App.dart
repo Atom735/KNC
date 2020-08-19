@@ -35,9 +35,9 @@ class App {
   final DivElement eTitleSpinner = eGetById('page-title-spinner');
   final SpanElement eTitleText = eGetById('my-app-title');
 
-  final TaskSetsDialog taskSets = TaskSetsDialog();
-  final TaskViewSection taskView = TaskViewSection();
-  final CardAddTask cardAddTask = CardAddTask();
+  // final TaskSetsDialog taskSets = TaskSetsDialog();
+  // final TaskViewSection taskView = TaskViewSection();
+  // final CardAddTask cardAddTask = CardAddTask();
 
   Future<SocketWrapperResponse> waitMsg(String msgBegin) =>
       wrapper.waitMsg(msgBegin);
@@ -58,6 +58,7 @@ class App {
     _instance = this;
 
     MyTaskCardTemplate();
+    CardAddTask();
 
     eLoginBtn.onClick.listen((_) => user == null ? DialogLogin().open() : 0);
 

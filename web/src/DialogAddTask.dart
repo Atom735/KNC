@@ -96,7 +96,7 @@ class DialogAddTask extends MDCDialog {
   void send() {
     eLinearProgress.open();
     final v = {
-      'user': App().user.mail,
+      'user': App().user?.mail,
       'name': eSSName.value,
       'path': eSSPathSet.map((e) => e.value).where((e) => e.isNotEmpty).toList()
     };
