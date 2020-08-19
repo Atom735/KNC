@@ -98,12 +98,17 @@ class WWW_TaskSettings {
 
   WWW_TaskSettings.fromJson(dynamic json)
       : name = json['name'] ?? def_name,
-        path = ((json['path'] ?? def_path) as Iterable).toList(growable: false),
+        path = ((json['path'] ?? def_path) as Iterable)
+            .map((e) => e as String)
+            .toList(growable: false),
         ext_ar = ((json['ext_ar'] ?? def_ext_ar) as Iterable)
+            .map((e) => e as String)
             .toList(growable: false),
         ext_las = ((json['ext_las'] ?? def_ext_las) as Iterable)
+            .map((e) => e as String)
             .toList(growable: false),
         ext_ink = ((json['ext_ink'] ?? def_ext_ink) as Iterable)
+            .map((e) => e as String)
             .toList(growable: false),
         maxsize_ar = json['maxsize_ar'] ?? def_maxsize_ar,
         maxdepth_ar = json['maxdepth_ar'] ?? def_maxdepth_ar;

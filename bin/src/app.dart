@@ -98,24 +98,15 @@ class App {
     }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
   }
 
-  String getWwwTaskNew(final String s) {
-    final value = json.decode(s);
-    if (value['name'] == null || value['path'] == null) {
-      return '';
-    }
+  void getWwwTaskNew(final String s, final WebClientUser user) {
     _uTaskNewId += 1;
-    final path = <String>[];
-    for (String item in value['path']) {
-      path.add(item);
-    }
-    final kncTask =
-        KncTaskOnMain(_uTaskNewId, value['name'], path.toList(growable: false));
+    final task = WWW_TaskSettings.fromJson(jsonDecode(s));
+    final kncTask = KncTaskOnMain(_uTaskNewId, task, user);
     listOfTasks[kncTask.id] = kncTask;
 
     KncTaskSpawnSets(kncTask, converters.ssCharMaps, receivePort.sendPort)
         .spawn()
         .then((isolate) => kncTask.isolate = isolate);
-    return wwwTaskNew + json.encode(kncTask.json);
   }
 
   App._init(this.dir) {

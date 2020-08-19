@@ -17,6 +17,7 @@ import 'las.dart';
 const msgTaskUpdateState = 'taskstate;';
 const msgTaskUpdateErrors = 'taskerrors;';
 const msgTaskUpdateFiles = 'taskfiles;';
+const msgTaskUpdateWarnings = 'taskwarnings;';
 const msgDoc2x = 'doc2x;';
 const msgZip = 'zip;';
 const msgUnzip = 'unzip;';
@@ -114,6 +115,15 @@ class KncTask extends KncTaskSpawnSets {
     wrapper.send(0, '$msgTaskUpdateFiles$_files');
   }
 
+  int _warnings = 0;
+  set warnings(final int i) {
+    if (i == null || _warnings == i) {
+      return;
+    }
+    _warnings = i;
+    wrapper.send(0, '$msgTaskUpdateWarnings$_warnings');
+  }
+
   final listOfErrors = <CErrorOnLine>[];
   final listOfFiles = <C_File>[];
 
@@ -131,7 +141,7 @@ class KncTask extends KncTaskSpawnSets {
     state = 1;
     final fs = <Future>[];
     final func = listFilesGet(0, '');
-    path.forEach((element) {
+    settings.path.forEach((element) {
       if (element.isNotEmpty) {
         print('task[$id] scan $element');
         fs.add(FileSystemEntity.type(element).then((value) =>
@@ -150,7 +160,7 @@ class KncTask extends KncTaskSpawnSets {
   Future handleFile(final File file, final String origin) async {
     final ext = p.extension(file.path).toLowerCase();
     try {
-      if (ssFileExtLas.contains(ext)) {
+      if (settings.ext_las.contains(ext)) {
         // == LAS FILES == Begin
         final las = LasData(UnmodifiableUint8ListView(await file.readAsBytes()),
             charMaps, lasIgnore);
@@ -197,7 +207,7 @@ class KncTask extends KncTaskSpawnSets {
           await newerOutErr.unlock(newPath);
         }
       } // == LAS FILES == End
-      else if (ssFileExtInk.contains(ext)) {
+      else if (settings.ext_ink.contains(ext)) {
         // == INK FILES == Begin
         final inks = await InkData.loadFile(file, this);
         if (inks != null) {
@@ -280,9 +290,11 @@ class KncTask extends KncTaskSpawnSets {
           }
           final ext = p.extension(entity.path).toLowerCase();
           // == UNZIPPER == Begin
-          if (ssFileExtAr.contains(ext)) {
-            if ((ssArMaxSize <= 0 || await entity.length() < ssArMaxSize) &&
-                (ssArMaxDepth == -1 || iArchDepth < ssArMaxDepth)) {
+          if (settings.ext_ar.contains(ext)) {
+            if ((settings.maxsize_ar <= 0 ||
+                    await entity.length() < settings.maxsize_ar) &&
+                (settings.maxdepth_ar == -1 ||
+                    iArchDepth < settings.maxdepth_ar)) {
               // вскрываем архив если он соотвествует размеру если он установлен и мы не привысили глубину вложенности
               final arch = await unzip(entity.path);
               if (arch.exitCode == 0) {

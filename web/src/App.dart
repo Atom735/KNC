@@ -8,8 +8,6 @@ import 'package:mdc_web/mdc_web.dart';
 import 'DialogAddTask.dart';
 import 'DialogLogin.dart';
 import 'TaskCard.dart';
-import 'TaskSets.dart';
-import 'TaskViewSection.dart';
 import 'misc.dart';
 
 class AppUser {

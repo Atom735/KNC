@@ -78,7 +78,7 @@ class WebClient {
                   .toList(growable: false)));
     });
     waitMsgAll(wwwTaskNew).listen((msg) {
-      App().sendForAllClients(App().getWwwTaskNew(msg.s));
+      App().getWwwTaskNew(msg.s, user);
       wrapper.send(msg.i, '');
     });
     waitMsgAll(wwwTaskGetErrors).listen((msg) {
