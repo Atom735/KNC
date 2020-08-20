@@ -10,9 +10,11 @@ import 'package:knc/www.dart';
 import 'package:path/path.dart' as p;
 import 'package:knc/SocketWrapper.dart';
 
+import 'FIleParserLas.dart';
 import 'ink.dart';
 import 'knc.main.dart';
 import 'las.dart';
+import 'mapping.dart';
 
 const msgTaskUpdateState = 'taskstate;';
 const msgTaskUpdateErrors = 'taskerrors;';
@@ -61,14 +63,71 @@ class PathNewer {
   bool unlock(final String name) => _reserved.remove(p.basename(name));
 }
 
-enum NOneFileDataType { txt, las, ink }
+enum NOneFileDataType { unknown }
+
+/// Значения иследований
+class OneFilesDataCurve {
+  /// Наименоваине кривой (.ink - для инклинометрии)
+  final String name;
+
+  /// Глубина начальной точки кривой
+  final String strt;
+
+  /// Глубина конечной точки кривой
+  final String stop;
+
+  /// Шаг точек (null для инклинометрии)
+  final String step;
+
+  /// Значения в точках (у инклинометрии по три значения на точку)
+  final List<String> data;
+
+  OneFilesDataCurve(this.name, this.strt, this.stop, this.step, this.data);
+  Map<String, String> get json => {
+        'name': name,
+        'strt': strt,
+        'stop': stop,
+        'step': step,
+      };
+}
 
 class OneFileData {
+  /// Путь к сущности обработанного файла
   final String path;
+
+  /// Путь к оригинальной сущности файла
   final String origin;
+
+  /// Тип файла
   final NOneFileDataType type;
 
-  OneFileData(this.path, this.origin, this.type);
+  /// Размер файла в байтах
+  final int size;
+
+  /// Название кодировки
+  final String encode;
+
+  /// Наименование скважины
+  final String well;
+
+  /// Кривые найденные в файле
+  final List<OneFilesDataCurve> curves;
+
+  OneFileData(this.path, this.origin, this.type, this.size,
+      {this.well, this.curves, this.encode});
+
+  Map<String, Object> get json => {
+        'type': type.index,
+        'path': path,
+        'origin': origin,
+        'size': size,
+        'encode': encode,
+      }..addAll(well != null
+          ? {
+              'well': well,
+              'curves': curves.map((e) => e.json).toList(growable: false)
+            }
+          : {});
 }
 
 class KncTask extends KncTaskSpawnSets {
@@ -102,6 +161,7 @@ class KncTask extends KncTaskSpawnSets {
   final filesSearche = <OneFileData>[];
 
   int _state = 0;
+  int get state => _state;
   set state(final int i) {
     if (i == null || _state == i) {
       return;
@@ -111,6 +171,7 @@ class KncTask extends KncTaskSpawnSets {
   }
 
   int _errors = 0;
+  int get errors => _errors;
   set errors(final int i) {
     if (i == null || _errors == i) {
       return;
@@ -120,6 +181,7 @@ class KncTask extends KncTaskSpawnSets {
   }
 
   int _files = 0;
+  int get files => _files;
   set files(final int i) {
     if (i == null || _files == i) {
       return;
@@ -129,6 +191,7 @@ class KncTask extends KncTaskSpawnSets {
   }
 
   int _warnings = 0;
+  int get warnings => _warnings;
   set warnings(final int i) {
     if (i == null || _warnings == i) {
       return;
@@ -140,12 +203,12 @@ class KncTask extends KncTaskSpawnSets {
   final listOfErrors = <CErrorOnLine>[];
   final listOfFiles = <C_File>[];
 
-  static void entryPoint(final KncTaskSpawnSets sets) async {
+  static Future<void> entryPoint(final KncTaskSpawnSets sets) async {
     final pathOut = (await Directory('temp').createTemp('task.')).absolute.path;
     await KncTask(sets, pathOut).entryPointInClass();
   }
 
-  Future entryPointInClass() async {
+  Future<void> entryPointInClass() async {
     await Future.wait([
       Directory(pathTemp).create(recursive: true),
       Directory(pathOutLas).create(recursive: true),
@@ -153,7 +216,6 @@ class KncTask extends KncTaskSpawnSets {
       Directory(pathOutErr).create(recursive: true)
     ]);
     state = NTaskState.searchFiles.index;
-    handleFile = handleFileSearch;
     final fs = <Future>[];
     final func = listFilesGet(0, '');
     settings.path.forEach((element) {
@@ -172,147 +234,163 @@ class KncTask extends KncTaskSpawnSets {
         .map((e) => '${e.type.toString()}\n${e.origin}\n${e.path}\n')
         .join('\n'));
     state = NTaskState.workFiles.index;
+    final _l = filesSearche.length;
+    for (var i = 0; i < _l; i++) {
+      await handleFile(i);
+    }
     state = NTaskState.completed.index;
     // TODO: Генерация таблицы
   }
 
-  Future Function(File file, String origin) handleFile;
-
-  Future handleFileSearch(final File file, final String origin) async {
+  Future<void> handleFileSearch(final File file, final String origin) async {
     final ext = p.extension(file.path).toLowerCase();
-    if (settings.ext_las.contains(ext)) {
+    if (settings.ext_files.contains(ext)) {
       final i = filesSearche.length;
       final ph = p.join(pathTemp, i.toRadixString(36).padLeft(8, '0'));
-      filesSearche.add(OneFileData(ph, origin, NOneFileDataType.las));
-      files = i;
-      await file.copy(ph);
-    }
-    if (settings.ext_ink.contains(ext)) {
-      final i = filesSearche.length;
-      final ph = p.join(pathTemp, i.toRadixString(36).padLeft(8, '0'));
-      filesSearche.add(OneFileData(ph, origin, NOneFileDataType.ink));
+      filesSearche.add(OneFileData(
+          ph, origin, NOneFileDataType.unknown, await file.length()));
       files = i;
       await file.copy(ph);
     }
   }
 
-  Future handleFileWork(final File file, final String origin) async {
-    final ext = p.extension(file.path).toLowerCase();
-    try {
-      if (settings.ext_las.contains(ext)) {
-        // == LAS FILES == Begin
-        final las = LasData(UnmodifiableUint8ListView(await file.readAsBytes()),
-            charMaps, lasIgnore);
-        las.origin = origin;
-        if (las.listOfErrors.isEmpty) {
-          // Данные корректны
-          final newPath =
-              await newerOutLas.lock(las.wWell + '___' + p.basename(file.path));
-          final originals = lasDB.addLasData(las);
-          for (var i = 1; i < las.curves.length; i++) {
-            final item = las.curves[i];
-            if (!lasCurvesNameOriginals.contains(item.mnem)) {
-              lasCurvesNameOriginals.add(item.mnem);
-            }
-          }
-          try {
-            if (originals.any((e) => e.added)) {
-              await file.copy(newPath);
-            }
-          } catch (e) {
-            listOfErrors.add(CErrorOnLine(
-                origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
-            errors = listOfErrors.length;
-            print(e);
-          }
-          listOfFiles.add(CLasFile(origin, newPath, las.wWell, originals));
-          files = listOfFiles.length;
-          // TODO: обработка LAS файла
-          await newerOutLas.unlock(newPath);
-        } else {
-          // Ошибка в данных файла
-          final newPath = await newerOutErr.lock(p.basename(file.path));
-          listOfErrors.add(CErrorOnLine(origin, newPath, las.listOfErrors));
-          errors = listOfErrors.length;
-          try {
-            await file.copy(newPath);
-          } catch (e) {
-            listOfErrors.add(CErrorOnLine(
-                origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
-            errors = listOfErrors.length;
-            print(e);
-          }
-          // TODO: обработка ошибок LAS файла
-          await newerOutErr.unlock(newPath);
-        }
-      } // == LAS FILES == End
-      else if (settings.ext_ink.contains(ext)) {
-        // == INK FILES == Begin
-        final inks = await InkData.loadFile(file, this);
-        if (inks != null) {
-          for (final ink in inks) {
-            if (ink != null) {
-              ink.origin = origin;
-              if (ink.listOfErrors.isEmpty) {
-                // Данные корректны
-                final newPath = await newerOutInk.lock(ink.well +
-                    '___' +
-                    p.basenameWithoutExtension(file.path) +
-                    '.txt');
-                final original = inkDB.addInkData(ink);
-
-                try {
-                  if (original) {
-                    final io =
-                        File(newPath).openWrite(mode: FileMode.writeOnly);
-                    io.writeln(ink.well);
-                    final dat = ink.inkData;
-                    for (final item in dat.data) {
-                      io.writeln(
-                          '${item.depth}\t${item.angle}\t${item.azimuth}');
-                    }
-                    await io.flush();
-                    await io.close();
-                  }
-                } catch (e) {
-                  listOfErrors.add(CErrorOnLine(origin, newPath,
-                      [ErrorOnLine(KncError.exception, 0, e)]));
-                  errors = listOfErrors.length;
-                  print(e);
-                }
-                listOfFiles.add(CInkFile(
-                    origin, newPath, ink.well, ink.strt, ink.stop, original));
-                files = listOfFiles.length;
-                // TODO: обработка INK файла
-                await newerOutInk.unlock(newPath);
-              } else {
-                // Ошибка в данных файла
-                final newPath = await newerOutErr.lock(p.basename(file.path));
-                try {
-                  await file.copy(newPath);
-                } catch (e) {
-                  listOfErrors.add(CErrorOnLine(origin, newPath,
-                      [ErrorOnLine(KncError.exception, 0, e)]));
-                  errors = listOfErrors.length;
-                  print(e);
-                }
-                listOfErrors
-                    .add(CErrorOnLine(origin, newPath, ink.listOfErrors));
-                errors = listOfErrors.length;
-                // TODO: бработка ошибок INK файла
-                await newerOutErr.unlock(newPath);
-              }
-            }
-          }
-        }
+  Future<void> handleFile(final int _i) async {
+    final fileData = filesSearche[_i];
+    final file = File(fileData.path);
+    final data = await file.readAsBytes();
+    OneFileData fileDataNew;
+    // проверка на совпадения сигнатур
+    if (signatureBegining(data, signatureDoc)) {
+      return;
+    }
+    for (final signature in signatureZip) {
+      if (signatureBegining(data, signature)) {
         return;
-      } // == INK FILES == End
-    } catch (e) {
-      // TODO: обработка исключений
+      }
     }
+    // текстовый файл не должен содержать бинарных данных
+    if (data.any((e) =>
+        e == 0x7f || (e <= 0x1f && (e != 0x09 && e != 0x0A && e != 0x0D)))) {
+      return null;
+    }
+    // Подбираем кодировку
+    final encodesRaiting = getMappingRaitings(charMaps, data);
+    final encode = getMappingMax(encodesRaiting);
+    // Преобразуем байты из кодировки в символы
+    final buffer = String.fromCharCodes(data
+        .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
 
-    // TODO: обработка файла
+    if ((fileDataNew = ParserFileLas(this, fileData, buffer, encode)) != null) {
+      return;
+    }
   }
+
+  /// == LAS FILES == Begin
+  Future handleFileLas(final File file, final String origin) async {
+    final las = LasData(UnmodifiableUint8ListView(await file.readAsBytes()),
+        charMaps, lasIgnore);
+    las.origin = origin;
+    if (las.listOfErrors.isEmpty) {
+      // Данные корректны
+      final newPath =
+          await newerOutLas.lock(las.wWell + '___' + p.basename(file.path));
+      final originals = lasDB.addLasData(las);
+      for (var i = 1; i < las.curves.length; i++) {
+        final item = las.curves[i];
+        if (!lasCurvesNameOriginals.contains(item.mnem)) {
+          lasCurvesNameOriginals.add(item.mnem);
+        }
+      }
+      try {
+        if (originals.any((e) => e.added)) {
+          await file.copy(newPath);
+        }
+      } catch (e) {
+        listOfErrors.add(CErrorOnLine(
+            origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
+        errors = listOfErrors.length;
+        print(e);
+      }
+      listOfFiles.add(CLasFile(origin, newPath, las.wWell, originals));
+      files = listOfFiles.length;
+      // TODO: обработка LAS файла
+      await newerOutLas.unlock(newPath);
+    } else {
+      // Ошибка в данных файла
+      final newPath = await newerOutErr.lock(p.basename(file.path));
+      listOfErrors.add(CErrorOnLine(origin, newPath, las.listOfErrors));
+      errors = listOfErrors.length;
+      try {
+        await file.copy(newPath);
+      } catch (e) {
+        listOfErrors.add(CErrorOnLine(
+            origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
+        errors = listOfErrors.length;
+        print(e);
+      }
+      // TODO: обработка ошибок LAS файла
+      await newerOutErr.unlock(newPath);
+    }
+  } // == LAS FILES == End
+
+  /// == INK FILES == Begin
+  Future handleFileInk(final File file, final String origin) async {
+    final inks = await InkData.loadFile(file, this);
+    if (inks != null) {
+      for (final ink in inks) {
+        if (ink != null) {
+          ink.origin = origin;
+          if (ink.listOfErrors.isEmpty) {
+            // Данные корректны
+            final newPath = await newerOutInk.lock(ink.well +
+                '___' +
+                p.basenameWithoutExtension(file.path) +
+                '.txt');
+            final original = inkDB.addInkData(ink);
+
+            try {
+              if (original) {
+                final io = File(newPath).openWrite(mode: FileMode.writeOnly);
+                io.writeln(ink.well);
+                final dat = ink.inkData;
+                for (final item in dat.data) {
+                  io.writeln('${item.depth}\t${item.angle}\t${item.azimuth}');
+                }
+                await io.flush();
+                await io.close();
+              }
+            } catch (e) {
+              listOfErrors.add(CErrorOnLine(
+                  origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
+              errors = listOfErrors.length;
+              print(e);
+            }
+            listOfFiles.add(CInkFile(
+                origin, newPath, ink.well, ink.strt, ink.stop, original));
+            files = listOfFiles.length;
+            // TODO: обработка INK файла
+            await newerOutInk.unlock(newPath);
+          } else {
+            // Ошибка в данных файла
+            final newPath = await newerOutErr.lock(p.basename(file.path));
+            try {
+              await file.copy(newPath);
+            } catch (e) {
+              listOfErrors.add(CErrorOnLine(
+                  origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
+              errors = listOfErrors.length;
+              print(e);
+            }
+            listOfErrors.add(CErrorOnLine(origin, newPath, ink.listOfErrors));
+            errors = listOfErrors.length;
+            // TODO: бработка ошибок INK файла
+            await newerOutErr.unlock(newPath);
+          }
+        }
+      }
+    }
+    return;
+  } // == INK FILES == End
 
   /// Получает новый экземляр функции для обхода по файлам
   /// с настоящими настройками
@@ -352,7 +430,7 @@ class KncTask extends KncTaskSpawnSets {
               return;
             }
           } // == UNZIPPER == End
-          return handleFile(entity, pathToArch + relPath);
+          return handleFileSearch(entity, pathToArch + relPath);
         } // entity is File
         else if (entity is Directory) {
           final func = listFilesGet(iArchDepth, pathToArch + relPath);

@@ -34,6 +34,25 @@ const wwwSignIn = 'signin;';
 /// Отправка данных для регистрации
 const wwwRegistration = 'registrtion;';
 
+const signatureDoc = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+const signatureZip = [
+  [0x50, 0x4B, 0x03, 0x04],
+  [0x50, 0x4B, 0x05, 0x06],
+  [0x50, 0x4B, 0x07, 0x08]
+];
+
+bool signatureBegining(final List<int> data, final List<int> signature) {
+  if (data.length < signature.length) {
+    return false;
+  }
+  for (var i = 0; i < signature.length; i++) {
+    if (data[i] != signatureDoc[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 enum NTaskState {
   initialization,
   searchFiles,
@@ -61,13 +80,9 @@ class WWW_TaskSettings {
   final List<String> ext_ar;
   static const def_ext_ar = ['.zip', '.rar'];
 
-  /// Настройки расширения для файлов LAS
-  final List<String> ext_las;
-  static const def_ext_las = ['.las'];
-
-  /// Настройки расширения для файлов с инклинометрией
-  final List<String> ext_ink;
-  static const def_ext_ink = ['.doc', '.docx', '.txt', '.dbf'];
+  /// Настройки расширения для файлов LAS и Инклинометрией
+  final List<String> ext_files;
+  static const def_ext_files = ['.las', '.doc', '.docx', '.txt', '.dbf'];
 
   /// Максимальный размер вскрываемого архива в байтах
   ///
@@ -93,8 +108,7 @@ class WWW_TaskSettings {
       {this.name = def_name,
       this.path = def_path,
       this.ext_ar = def_ext_ar,
-      this.ext_las = def_ext_las,
-      this.ext_ink = def_ext_ink,
+      this.ext_files = def_ext_files,
       this.maxsize_ar = def_maxsize_ar,
       this.maxdepth_ar = def_maxdepth_ar});
 
@@ -106,10 +120,7 @@ class WWW_TaskSettings {
         ext_ar = ((json['ext_ar'] ?? def_ext_ar) as Iterable)
             .map((e) => e as String)
             .toList(growable: false),
-        ext_las = ((json['ext_las'] ?? def_ext_las) as Iterable)
-            .map((e) => e as String)
-            .toList(growable: false),
-        ext_ink = ((json['ext_ink'] ?? def_ext_ink) as Iterable)
+        ext_files = ((json['ext_las'] ?? def_ext_files) as Iterable)
             .map((e) => e as String)
             .toList(growable: false),
         maxsize_ar = json['maxsize_ar'] ?? def_maxsize_ar,
@@ -119,8 +130,7 @@ class WWW_TaskSettings {
         'name': name,
         'path': path,
         'ext_ar': ext_ar,
-        'ext_las': ext_las,
-        'ext_ink': ext_ink,
+        'ext_las': ext_files,
         'maxsize_ar': maxsize_ar,
         'maxdepth_ar': maxdepth_ar
       };
