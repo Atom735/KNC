@@ -280,58 +280,12 @@ class KncTask extends KncTaskSpawnSets {
     final buffer = String.fromCharCodes(data
         .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
 
-    if ((fileDataNew = ParserFileLas(this, fileData, buffer, encode)) != null) {
+    if ((fileDataNew =
+            await ParserFileLas.get(this, fileData, buffer, encode)) !=
+        null) {
       return;
     }
   }
-
-  /// == LAS FILES == Begin
-  Future handleFileLas(final File file, final String origin) async {
-    final las = LasData(UnmodifiableUint8ListView(await file.readAsBytes()),
-        charMaps, lasIgnore);
-    las.origin = origin;
-    if (las.listOfErrors.isEmpty) {
-      // Данные корректны
-      final newPath =
-          await newerOutLas.lock(las.wWell + '___' + p.basename(file.path));
-      final originals = lasDB.addLasData(las);
-      for (var i = 1; i < las.curves.length; i++) {
-        final item = las.curves[i];
-        if (!lasCurvesNameOriginals.contains(item.mnem)) {
-          lasCurvesNameOriginals.add(item.mnem);
-        }
-      }
-      try {
-        if (originals.any((e) => e.added)) {
-          await file.copy(newPath);
-        }
-      } catch (e) {
-        listOfErrors.add(CErrorOnLine(
-            origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
-        errors = listOfErrors.length;
-        print(e);
-      }
-      listOfFiles.add(CLasFile(origin, newPath, las.wWell, originals));
-      files = listOfFiles.length;
-      // TODO: обработка LAS файла
-      await newerOutLas.unlock(newPath);
-    } else {
-      // Ошибка в данных файла
-      final newPath = await newerOutErr.lock(p.basename(file.path));
-      listOfErrors.add(CErrorOnLine(origin, newPath, las.listOfErrors));
-      errors = listOfErrors.length;
-      try {
-        await file.copy(newPath);
-      } catch (e) {
-        listOfErrors.add(CErrorOnLine(
-            origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
-        errors = listOfErrors.length;
-        print(e);
-      }
-      // TODO: обработка ошибок LAS файла
-      await newerOutErr.unlock(newPath);
-    }
-  } // == LAS FILES == End
 
   /// == INK FILES == Begin
   Future handleFileInk(final File file, final String origin) async {

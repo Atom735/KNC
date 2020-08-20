@@ -341,16 +341,7 @@ class LasData {
   /// * [bytes] - данные файла в байтовом представлении
   /// * [charMaps] - доступные кодировки
   /// * [mapIgnore] (opt) - Таблица шаблонных значений
-  LasData(final UnmodifiableUint8ListView bytes,
-      final Map<String, List<String>> charMaps,
-      [dynamic mapIgnore]) {
-    // Подбираем кодировку
-    encodesRaiting = getMappingRaitings(charMaps, bytes);
-    encode = getMappingMax(encodesRaiting);
-    // Преобразуем байты из кодировки в символы
-    final buffer = String.fromCharCodes(bytes
-        .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
-
+  LasData(final String buffer, [dynamic mapIgnore]) {
     // Нарезаем на линии
     final lines = LineSplitter.split(buffer);
 
