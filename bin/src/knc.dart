@@ -91,6 +91,22 @@ class OneFilesDataCurve {
       };
 }
 
+class OneFileLineNote {
+  /// Номер линии
+  final int line;
+
+  /// Номер символа в строке
+  final int column;
+
+  /// Текст заметки
+  final String text;
+
+  /// Доп. данные заметки (обычно то что записано в строке)
+  final String data;
+
+  OneFileLineNote(this.line, this.column, this.text, this.data);
+}
+
 class OneFileData {
   /// Путь к сущности обработанного файла
   final String path;
@@ -113,8 +129,11 @@ class OneFileData {
   /// Кривые найденные в файле
   final List<OneFilesDataCurve> curves;
 
+  final List<OneFileLineNote> errors;
+  final List<OneFileLineNote> warnings;
+
   OneFileData(this.path, this.origin, this.type, this.size,
-      {this.well, this.curves, this.encode});
+      {this.well, this.curves, this.encode, this.errors, this.warnings});
 
   Map<String, Object> get json => {
         'type': type.index,
