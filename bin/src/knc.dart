@@ -63,7 +63,7 @@ class PathNewer {
   bool unlock(final String name) => _reserved.remove(p.basename(name));
 }
 
-enum NOneFileDataType { unknown }
+enum NOneFileDataType { unknown, las }
 
 /// Значения иследований
 class OneFilesDataCurve {
@@ -299,9 +299,9 @@ class KncTask extends KncTaskSpawnSets {
     final buffer = String.fromCharCodes(data
         .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
 
-    if ((fileDataNew =
-            await ParserFileLas.get(this, fileData, buffer, encode)) !=
+    if ((fileDataNew = await parserFileLas(this, fileData, buffer, encode)) !=
         null) {
+      filesSearche[_i] = fileDataNew;
       return;
     }
   }
