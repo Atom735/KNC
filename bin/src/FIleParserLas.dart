@@ -19,7 +19,6 @@ class ParserFileLas extends OneFileData {
     final _errors = <OneFileLineNote>[];
     final _warnings = <OneFileLineNote>[];
 
-    var bLas = false;
     var bNewLine = true;
     var iSymbol = 0;
     var iLine = 1;
@@ -44,6 +43,7 @@ class ParserFileLas extends OneFileData {
     String _w_null;
     double _w_null_n;
     String _w_well;
+    String _w_well_desc;
 
     void rNextSymbol() {
       iSymbol++;
@@ -107,21 +107,21 @@ class ParserFileLas extends OneFileData {
 
     void rV_VERS(final int iSeparatorDot, final int iLineEndSymbol) {
       if (_v_vers != null) {
-        _addWarning('переопределение версии файла');
+        _addWarning('переопределение');
       }
       if (data[iSeparatorDot + 1] != ' ') {
         _addWarning('отсуствует пробел после точки');
       }
-      final iSeaparatorColon = data.indexOf(':', iSeparatorDot);
-      if (iSeaparatorColon == -1 || iSeaparatorColon >= iLineEndSymbol) {
+      final iSeparatorColon = data.indexOf(':', iSeparatorDot);
+      if (iSeparatorColon == -1 || iSeparatorColon >= iLineEndSymbol) {
         _addWarning('отсутсвует двоеточие');
       }
       final _value = data
           .substring(
               iSeparatorDot + 1,
-              iSeaparatorColon == -1 || iSeaparatorColon >= iLineEndSymbol
+              iSeparatorColon == -1 || iSeparatorColon >= iLineEndSymbol
                   ? iLineEndSymbol
-                  : iSeaparatorColon)
+                  : iSeparatorColon)
           .trim();
       switch (_value) {
         case '1.2':
@@ -165,21 +165,21 @@ class ParserFileLas extends OneFileData {
 
     void rV_WRAP(final int iSeparatorDot, final int iLineEndSymbol) {
       if (_v_wrap != null) {
-        _addWarning('переопределение разделения строк');
+        _addWarning('переопределение');
       }
       if (data[iSeparatorDot + 1] != ' ') {
         _addWarning('отсуствует пробел после точки');
       }
-      final iSeaparatorColon = data.indexOf(':', iSeparatorDot);
-      if (iSeaparatorColon == -1 || iSeaparatorColon >= iLineEndSymbol) {
+      final iSeparatorColon = data.indexOf(':', iSeparatorDot);
+      if (iSeparatorColon == -1 || iSeparatorColon >= iLineEndSymbol) {
         _addWarning('отсутсвует двоеточие');
       }
       final _value = data
           .substring(
               iSeparatorDot + 1,
-              iSeaparatorColon == -1 || iSeaparatorColon >= iLineEndSymbol
+              iSeparatorColon == -1 || iSeparatorColon >= iLineEndSymbol
                   ? iLineEndSymbol
-                  : iSeaparatorColon)
+                  : iSeparatorColon)
           .trim();
       switch (_value) {
         case 'YES':
@@ -262,6 +262,131 @@ class ParserFileLas extends OneFileData {
       return true;
     }
 
+    void rW_STxx(
+        final int iSeparatorDot, final int iLineEndSymbol, final String mnem) {
+      if (mnem == 'STRT' && _w_strt != null) {
+        _addWarning('переопределение $mnem');
+      }
+      if (mnem == 'STOP' && _w_stop != null) {
+        _addWarning('переопределение $mnem');
+      }
+      if (mnem == 'STEP' && _w_step != null) {
+        _addWarning('переопределение $mnem');
+      }
+      if (mnem == 'NULL' && _w_null != null) {
+        _addWarning('переопределение $mnem');
+      }
+      final iSeparatorSpace = data.indexOf(' ', iSeparatorDot);
+      if (iSeparatorSpace == -1 || iSeparatorSpace >= iLineEndSymbol) {
+        _addWarning('отсутсвует пробел');
+      }
+      final iSeparatorColon = data.indexOf(':', iSeparatorDot);
+      if (iSeparatorColon == -1 || iSeparatorColon >= iLineEndSymbol) {
+        _addWarning('отсутсвует двоеточие');
+      }
+      final _unit = data.substring(
+          iSeparatorDot + 1,
+          iSeparatorSpace == -1 ||
+                  iSeparatorSpace >= iLineEndSymbol ||
+                  (iSeparatorColon != -1 && iSeparatorSpace >= iSeparatorColon)
+              ? (iSeparatorColon == -1 || iSeparatorColon >= iLineEndSymbol
+                  ? iLineEndSymbol
+                  : iSeparatorColon)
+              : iSeparatorSpace);
+      if (_unit.isEmpty) {
+        if (mnem != 'NULL') {
+          _addWarning('отсутсвует размерность');
+        }
+      } else {
+        if (mnem == 'NULL') {
+          _addWarning('отсутсвует пробел после точки');
+        }
+        final _unit_n = double.tryParse(_unit);
+        if (_unit_n == null) {
+          if (_unit == 'M' || _unit == 'm') {
+          } else {
+            _addWarning('не каноничное значение размерности, игнорируется');
+          }
+        } else {
+          _addWarning('размерность взята как значение');
+          switch (mnem) {
+            case 'NULL':
+              _w_null = _unit;
+              _w_null_n = _unit_n;
+              return;
+            case 'STRT':
+              _w_strt = _unit;
+              _w_strt_n = _unit_n;
+              return;
+            case 'STOP':
+              _w_stop = _unit;
+              _w_stop_n = _unit_n;
+              return;
+            case 'STEP':
+              _w_step = _unit;
+              _w_step_n = _unit_n;
+              return;
+          }
+        }
+      }
+      final _iEl = iSeparatorColon == -1 || iSeparatorColon >= iLineEndSymbol
+          ? iLineEndSymbol
+          : iSeparatorColon;
+      final _value = data
+          .substring(
+              iSeparatorSpace >= _iEl || iSeparatorSpace == -1
+                  ? iSeparatorDot + 1
+                  : iSeparatorSpace + 1,
+              _iEl)
+          .trim();
+      final _value_n = double.tryParse(_value);
+      if (_value_n == null) {
+        _addError('неудалось разобрать число');
+      } else {
+        switch (mnem) {
+          case 'NULL':
+            _w_null = _value;
+            _w_null_n = _value_n;
+            return;
+          case 'STRT':
+            _w_strt = _value;
+            _w_strt_n = _value_n;
+            return;
+          case 'STOP':
+            _w_stop = _value;
+            _w_stop_n = _value_n;
+            return;
+          case 'STEP':
+            _w_step = _value;
+            _w_step_n = _value_n;
+            return;
+        }
+      }
+    }
+
+    void rW_WELL(final int iSeparatorDot, final int iLineEndSymbol) {
+      if (_w_well != null) {
+        _addWarning('переопределение');
+      }
+      if (data[iSeparatorDot + 1] != ' ') {
+        _addWarning('отсуствует пробел после точки');
+      }
+      bool _colon;
+      final iSeparatorColon = data.indexOf(':', iSeparatorDot);
+      if (_colon =
+          (iSeparatorColon == -1 || iSeparatorColon >= iLineEndSymbol)) {
+        _addWarning('отсутсвует двоеточие');
+      }
+      _w_well = data
+          .substring(
+              iSeparatorDot + 1, _colon ? iLineEndSymbol : iSeparatorColon)
+          .trim();
+      _w_well_desc = data
+          .substring(_colon ? iLineEndSymbol : iSeparatorColon + 1,
+              _colon ? iLineEndSymbol : iSeparatorColon)
+          .trim();
+    }
+
     bool rSectionW() {
       if (_w_iSymbol != null) {
         _addWarning('повтороная секция');
@@ -289,6 +414,13 @@ class ParserFileLas extends OneFileData {
               data.substring(iLineBeginSymbol, iSeparatorDot).trimRight();
           switch (mnem) {
             case 'STRT':
+            case 'STOP':
+            case 'STEP':
+            case 'NULL':
+              rW_STxx(iSeparatorDot, iLineEndSymbol, mnem);
+              continue loop;
+            case 'WELL':
+              rW_WELL(iSeparatorDot, iLineEndSymbol);
               continue loop;
             default:
               _addWarning('проигнорированная строка');
