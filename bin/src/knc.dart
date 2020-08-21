@@ -36,24 +36,22 @@ class PathNewer {
 
   /// Подбирает новое имя для файла, если он уже существует в папке [prePath]
   /// И резервирует его
-  Future<String> lock(final String name) async {
+  String lock(final String name) {
     var n = p.basename(name);
     var o = p.join(prePath, n);
-    if (!_reserved.contains(n) &&
-        await FileSystemEntity.type(o) == FileSystemEntityType.notFound) {
+    if (!_reserved.contains(n)) {
       // Если имя не зарезрвированно и файла с таким именем не существует
-      _reserved.add(p.basename(name));
+      _reserved.add(n);
       return o;
     } else {
       final fn = p.basenameWithoutExtension(name);
       final fe = p.extension(name);
       var i = 0;
       do {
-        n = '${fn}_${i}${fe}';
+        n = '${fn}(${i})${fe}';
         o = p.join(prePath, n);
         i += 1;
-      } while (_reserved.contains(n) ||
-          await FileSystemEntity.type(o) != FileSystemEntityType.notFound);
+      } while (_reserved.contains(n));
       _reserved.add(n);
       return o;
     }
@@ -264,11 +262,11 @@ class KncTask extends KncTaskSpawnSets {
   Future<void> handleFileSearch(final File file, final String origin) async {
     final ext = p.extension(file.path).toLowerCase();
     if (settings.ext_files.contains(ext)) {
-      final i = filesSearche.length;
+      final i = files;
+      files++;
       final ph = p.join(pathTemp, i.toRadixString(36).padLeft(8, '0'));
       filesSearche.add(OneFileData(
           ph, origin, NOneFileDataType.unknown, await file.length()));
-      files = i;
       var _tryes = 0;
       while (_tryes < 100) {
         try {
@@ -279,6 +277,7 @@ class KncTask extends KncTaskSpawnSets {
           _tryes++;
         }
       }
+      // newerTemp.unlock(ph);
     }
   }
 
@@ -324,7 +323,7 @@ class KncTask extends KncTaskSpawnSets {
           ink.origin = origin;
           if (ink.listOfErrors.isEmpty) {
             // Данные корректны
-            final newPath = await newerOutInk.lock(ink.well +
+            final newPath = newerOutInk.lock(ink.well +
                 '___' +
                 p.basenameWithoutExtension(file.path) +
                 '.txt');
@@ -351,10 +350,10 @@ class KncTask extends KncTaskSpawnSets {
                 origin, newPath, ink.well, ink.strt, ink.stop, original));
             files = listOfFiles.length;
             // TODO: обработка INK файла
-            await newerOutInk.unlock(newPath);
+            // await newerOutInk.unlock(newPath);
           } else {
             // Ошибка в данных файла
-            final newPath = await newerOutErr.lock(p.basename(file.path));
+            final newPath = newerOutErr.lock(p.basename(file.path));
             try {
               await file.copy(newPath);
             } catch (e) {
@@ -366,7 +365,7 @@ class KncTask extends KncTaskSpawnSets {
             listOfErrors.add(CErrorOnLine(origin, newPath, ink.listOfErrors));
             errors = listOfErrors.length;
             // TODO: бработка ошибок INK файла
-            await newerOutErr.unlock(newPath);
+            // await newerOutErr.unlock(newPath);
           }
         }
       }
