@@ -45,6 +45,9 @@ class ParserFileLas extends OneFileData {
     String _w_well;
     String _w_well_desc;
 
+    int _c_iSymbol;
+    final _c_mnems = <String>[];
+
     void rNextSymbol() {
       iSymbol++;
       iColumn++;
@@ -241,8 +244,8 @@ class ParserFileLas extends OneFileData {
               rV_WRAP(iSeparatorDot, iLineEndSymbol);
               continue loop;
             default:
-              final _menm_u = _mnem.toUpperCase();
-              switch (_menm_u) {
+              final _mnem_u = _mnem.toUpperCase();
+              switch (_mnem_u) {
                 case 'VERS':
                   _addWarning('мнемоника не в верхнем регистре');
                   rV_VERS(iSeparatorDot, iLineEndSymbol);
@@ -410,22 +413,75 @@ class ParserFileLas extends OneFileData {
           _addError('отсутсвует точка');
           continue loop;
         } else {
-          final mnem =
+          final _mnem =
               data.substring(iLineBeginSymbol, iSeparatorDot).trimRight();
-          switch (mnem) {
+          switch (_mnem) {
             case 'STRT':
             case 'STOP':
             case 'STEP':
             case 'NULL':
-              rW_STxx(iSeparatorDot, iLineEndSymbol, mnem);
+              rW_STxx(iSeparatorDot, iLineEndSymbol, _mnem);
               continue loop;
             case 'WELL':
               rW_WELL(iSeparatorDot, iLineEndSymbol);
               continue loop;
             default:
-              _addWarning('проигнорированная строка');
-              continue loop;
+              final _mnem_u = _mnem.toUpperCase();
+              switch (_mnem_u) {
+                case 'STRT':
+                case 'STOP':
+                case 'STEP':
+                case 'NULL':
+                  _addWarning('мнемоника не в верхнем регистре');
+                  rW_STxx(iSeparatorDot, iLineEndSymbol, _mnem_u);
+                  continue loop;
+                case 'WELL':
+                  rW_WELL(iSeparatorDot, iLineEndSymbol);
+                  continue loop;
+                default:
+                  _addWarning('проигнорированная строка');
+                  continue loop;
+              }
           }
+        }
+      }
+      _addError('непредвиденный конец файла');
+      return true;
+    }
+
+    bool rSectionC() {
+      if (_c_iSymbol != null) {
+        _addWarning('повтороная секция');
+      }
+      _c_iSymbol = iSymbol;
+      loop:
+      while (iSymbol < _dataLength) {
+        rSkipWhiteSpacesAndComments();
+        if (iSymbol >= _dataLength) {
+          _addError('непредвиденный конец файла');
+          return true;
+        }
+        if (data[iSymbol] == '~') {
+          return false;
+        }
+        final iLineBeginSymbol = iSymbol;
+        rSkipToEndOfLine();
+        final iLineEndSymbol = iSymbol;
+        final iSeparatorDot = data.indexOf('.', iLineBeginSymbol);
+        if (iSeparatorDot == -1 || iSeparatorDot >= iLineEndSymbol) {
+          _addError('отсутсвует точка');
+          continue loop;
+        } else {
+          final iSeparatorSpace = data.indexOf(' ', iSeparatorDot);
+          if (iSeparatorSpace == -1 || iSeparatorSpace >= iLineEndSymbol) {
+            _addWarning('отсутсвует пробел');
+          }
+          final iSeparatorColon = data.indexOf(':', iSeparatorDot);
+          if (iSeparatorColon == -1 || iSeparatorColon >= iLineEndSymbol) {
+            _addWarning('отсутсвует двоеточие');
+          }
+          _c_mnems
+              .add(data.substring(iLineBeginSymbol, iSeparatorDot).trimRight());
         }
       }
       _addError('непредвиденный конец файла');
@@ -454,13 +510,22 @@ class ParserFileLas extends OneFileData {
         case 'W':
           rSkipToEndOfLine();
           return rSectionW();
-        default:
-          _addWarning('неизвестная секция, пропуск секции');
+        case 'C':
+          rSkipToEndOfLine();
+          return rSectionC();
+        case 'P':
+        case 'O':
+          _addWarning('пропуск секции');
           if (rSkipSection()) {
             return true;
-          } else {
-            return rBeginOfSection();
           }
+          return rBeginOfSection();
+        default:
+          _addError('неизвестная секция, пропуск секции');
+          if (rSkipSection()) {
+            return true;
+          }
+          return rBeginOfSection();
       }
     }
 
