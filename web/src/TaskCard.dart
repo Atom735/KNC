@@ -38,6 +38,7 @@ class MyTaskCard {
           ..classes.clear()
           ..classes.addAll(['task-state', 'init']);
         eBgIcon.innerText = 'build_circle';
+        eLinearProgress.close();
         break;
       case NTaskState.searchFiles:
         eState
@@ -46,6 +47,8 @@ class MyTaskCard {
           ..classes.clear()
           ..classes.addAll(['task-state', 'search']);
         eBgIcon.innerText = 'track_changes';
+        eLinearProgress.open();
+        eLinearProgress.determinate = false;
         break;
       case NTaskState.workFiles:
         eState
@@ -53,6 +56,8 @@ class MyTaskCard {
           ..classes.clear()
           ..classes.addAll(['task-state', 'work']);
         eBgIcon.innerText = 'arrow_circle_down';
+        eLinearProgress.open();
+        eLinearProgress.determinate = true;
         break;
       case NTaskState.generateTable:
         eState
@@ -68,6 +73,7 @@ class MyTaskCard {
           ..classes.clear()
           ..classes.addAll(['task-state', 'completed']);
         eBgIcon.innerText = 'stars';
+        eLinearProgress.close();
         break;
       case NTaskState.reworkErrors:
         eState
@@ -181,6 +187,15 @@ class MyTaskCard {
     }
   }
 
+  int _iWorked = -1;
+  set iWorked(final int i) {
+    if (i == null || _iWorked == i) {
+      return;
+    }
+    _iWorked = i;
+    eLinearProgress.progress = _iWorked.toDouble() / _iFiles.toDouble();
+  }
+
   String _sRaport;
   StreamSubscription _ssRaport;
   set sRaport(final String i) {
@@ -208,6 +223,7 @@ class MyTaskCard {
     iErrors = item['errors'];
     iWarnings = item['warnings'];
     iFiles = item['files'];
+    iWorked = item['worked'];
     bPause = item['pause'];
     sRaport = item['raport'];
   }

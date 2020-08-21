@@ -20,6 +20,7 @@ const msgTaskUpdateState = 'taskstate;';
 const msgTaskUpdateErrors = 'taskerrors;';
 const msgTaskUpdateFiles = 'taskfiles;';
 const msgTaskUpdateWarnings = 'taskwarnings;';
+const msgTaskUpdateWorked = 'taskworked;';
 const msgDoc2x = 'doc2x;';
 const msgZip = 'zip;';
 const msgUnzip = 'unzip;';
@@ -217,6 +218,16 @@ class KncTask extends KncTaskSpawnSets {
     wrapper.send(0, '$msgTaskUpdateWarnings$_warnings');
   }
 
+  int _worked = 0;
+  int get worked => _worked;
+  set worked(final int i) {
+    if (i == null || _worked == i) {
+      return;
+    }
+    _worked = i;
+    wrapper.send(0, '$msgTaskUpdateWorked$_worked');
+  }
+
   final listOfErrors = <CErrorOnLine>[];
   final listOfFiles = <C_File>[];
 
@@ -288,16 +299,19 @@ class KncTask extends KncTaskSpawnSets {
     OneFileData fileDataNew;
     // проверка на совпадения сигнатур
     if (signatureBegining(data, signatureDoc)) {
+      worked++;
       return;
     }
     for (final signature in signatureZip) {
       if (signatureBegining(data, signature)) {
+        worked++;
         return;
       }
     }
     // текстовый файл не должен содержать бинарных данных
     if (data.any((e) =>
         e == 0x7f || (e <= 0x1f && (e != 0x09 && e != 0x0A && e != 0x0D)))) {
+      worked++;
       return null;
     }
     // Подбираем кодировку
@@ -310,8 +324,15 @@ class KncTask extends KncTaskSpawnSets {
     if ((fileDataNew = await parserFileLas(this, fileData, buffer, encode)) !=
         null) {
       filesSearche[_i] = fileDataNew;
+      if (fileDataNew.errors != null) {
+        errors++;
+      } else if (fileDataNew.warnings != null) {
+        warnings++;
+      }
+      worked++;
       return;
     }
+    worked++;
   }
 
   /// == INK FILES == Begin

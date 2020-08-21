@@ -125,6 +125,18 @@ class KncTaskOnMain extends KncTaskInternal {
         ]));
   }
 
+  int _worked = 0;
+  set worked(final int i) {
+    if (i == null || _worked == i) {
+      return;
+    }
+    _worked = i;
+    sendForAllClients(wwwTaskUpdates +
+        c.json.encode([
+          {'id': id, 'worked': _worked}
+        ]));
+  }
+
   int _errors = 0;
   set errors(final int i) {
     if (i == null || _errors == i) {
@@ -164,6 +176,9 @@ class KncTaskOnMain extends KncTaskInternal {
     wrapperSendPort
         .waitMsgAll(msgTaskUpdateWarnings)
         .listen((msg) => warnings = int.tryParse(msg.s));
+    wrapperSendPort
+        .waitMsgAll(msgTaskUpdateWorked)
+        .listen((msg) => worked = int.tryParse(msg.s));
 
     wrapperSendPort.waitMsgAll(msgDoc2x).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
