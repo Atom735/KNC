@@ -269,7 +269,16 @@ class KncTask extends KncTaskSpawnSets {
       filesSearche.add(OneFileData(
           ph, origin, NOneFileDataType.unknown, await file.length()));
       files = i;
-      await file.copy(ph);
+      var _tryes = 0;
+      while (_tryes < 100) {
+        try {
+          await file.copy(ph);
+          break;
+        } catch (e) {
+          await Future.delayed(Duration(milliseconds: 1));
+          _tryes++;
+        }
+      }
     }
   }
 

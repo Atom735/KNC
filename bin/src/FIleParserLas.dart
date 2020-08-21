@@ -381,8 +381,8 @@ Future<OneFileData> parserFileLas(final KncTask kncTask,
         .substring(iSeparatorDot + 1, _colon ? iLineEndSymbol : iSeparatorColon)
         .trim();
     _w_well_desc = data
-        .substring(_colon ? iLineEndSymbol : iSeparatorColon + 1,
-            _colon ? iLineEndSymbol : iSeparatorColon)
+        .substring(
+            _colon ? iLineEndSymbol : iSeparatorColon + 1, iLineEndSymbol)
         .trim();
   }
 
