@@ -618,7 +618,7 @@ Future<OneFileData> parserFileLas(final KncTask kncTask,
           _c_strt_s[_index],
           _c_stop_s[_index],
           _w_step,
-          List.generate(_a_data_s[_index].length,
+          List.generate(_c_stop_i[_index] - _c_strt_i[_index],
               (_i) => _a_data_s[_index][_i + _c_strt_i[_index]])));
 
   return OneFileData(
