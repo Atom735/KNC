@@ -102,10 +102,8 @@ class App {
               '.mdc-top-app-bar .mdc-top-app-bar__action-item, .mdc-top-app-bar .mdc-top-app-bar__navigation-icon')
           .forEach((e) => e.style.color = 'var(--mdc-theme-on-error)');
     });
-    socket.onMessage.listen((_) {
-      wrapper.recv(_.data);
-      print('RECV: ${_.data}');
-    });
+    socket.onMessage
+        .listen((_) => wrapper.recv(_.data) ? null : print('RECV: ${_.data}'));
   }
   static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');

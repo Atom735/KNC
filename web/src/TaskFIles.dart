@@ -17,6 +17,7 @@ class MyTaskFilesDialog extends MDCDialog {
   final ButtonElement eBtnLoad = eGetById('my-task-files-dialog-load');
   final Element eTitle;
   final Element eContent;
+  final eTableRows = <TableRowElement>[];
 
   final files = <OneFileData>[];
 
@@ -70,38 +71,52 @@ class MyTaskFilesDialog extends MDCDialog {
         final f = sb.map((e) => OneFileData.byJson(e)).toList(growable: false);
         for (var item in f) {
           files.add(item);
+          var eRow = TableRowElement();
+          eTableRows.add(eRow);
+          eRow.classes.add('mdc-data-table__row');
           if (item.curves == null) {
-            eContent.appendHtml('''
-                    <tr class="mdc-data-table__row">
+            eRow.innerHtml = '''
                       <th class="mdc-data-table__cell">${item.origin}</th>
                       <td class="mdc-data-table__cell">${item.path}</td>
                       <td class="mdc-data-table__cell mdc-data-table__cell--numeric">
                         ${item.size}</td>
                       <td class="mdc-data-table__cell">${item.encode}</td>
-                      <td class="mdc-data-table__cell">${item.type}</td>
+                      <td class="mdc-data-table__cell">${item.type.toString().substring(item.type.runtimeType.toString().length)}</td>
+                      <td class="mdc-data-table__cell mdc-data-table__cell--numeric">
+                        ${item.errors != null ? item.errors.length : ""}</td>
+                      <td class="mdc-data-table__cell mdc-data-table__cell--numeric">
+                        ${item.warnings != null ? item.warnings.length : ""}</td>
                       <td class="mdc-data-table__cell">${item.well}</td>
-                      <td class="mdc-data-table__cell">-</td>
-                      <td
-                        class="mdc-data-table__cell mdc-data-table__cell--numeric">
-                        -</td>
-                      <td
-                        class="mdc-data-table__cell mdc-data-table__cell--numeric">
-                        -</td>
-                      <td
-                        class="mdc-data-table__cell mdc-data-table__cell--numeric">
-                        -</td>
-                    </tr>''');
+                      <td class="mdc-data-table__cell"></td>
+                      <td class="mdc-data-table__cell mdc-data-table__cell--numeric"></td>
+                      <td class="mdc-data-table__cell mdc-data-table__cell--numeric"></td>
+                      <td class="mdc-data-table__cell mdc-data-table__cell--numeric"></td>''';
           } else {
             for (var i = 0; i < item.curves.length; i++) {
-              eContent.appendHtml('''
-                    <tr class="mdc-data-table__row">
-                      <th class="mdc-data-table__cell">${item.origin}</th>
-                      <td class="mdc-data-table__cell">${item.path}</td>
+              if (i != 0) {
+                eContent.append(eRow);
+                eRow = TableRowElement();
+                eTableRows.add(eRow);
+                eRow.classes.add('mdc-data-table__row');
+                eRow.classes.add('my-double');
+              }
+              if (item.errors != null) {
+                eRow.classes.add('error');
+              } else if (item.warnings != null) {
+                eRow.classes.add('warning');
+              }
+              eRow.innerHtml = '''
+                      <th class="mdc-data-table__cell">${i == 0 ? item.origin : ""}</th>
+                      <td class="mdc-data-table__cell">${i == 0 ? item.path : ""}</td>
                       <td class="mdc-data-table__cell mdc-data-table__cell--numeric">
-                        ${item.size}</td>
-                      <td class="mdc-data-table__cell">${item.encode}</td>
-                      <td class="mdc-data-table__cell">${item.type}</td>
-                      <td class="mdc-data-table__cell">${item.well}</td>
+                        ${i == 0 ? item.size : ""}</td>
+                      <td class="mdc-data-table__cell">${i == 0 ? item.encode : ""}</td>
+                      <td class="mdc-data-table__cell">${i == 0 ? item.type.toString().substring(item.type.runtimeType.toString().length) : ""}</td>
+                      <td class="mdc-data-table__cell mdc-data-table__cell--numeric">
+                        ${i == 0 && item.errors != null ? item.errors.length : ""}</td>
+                      <td class="mdc-data-table__cell mdc-data-table__cell--numeric">
+                        ${i == 0 && item.warnings != null ? item.warnings.length : ""}</td>
+                      <td class="mdc-data-table__cell">${i == 0 ? item.well : ""}</td>
                       <td class="mdc-data-table__cell">$i:${item.curves[i].name}</td>
                       <td
                         class="mdc-data-table__cell mdc-data-table__cell--numeric">
@@ -111,13 +126,13 @@ class MyTaskFilesDialog extends MDCDialog {
                         ${item.curves[i].stop}</td>
                       <td
                         class="mdc-data-table__cell mdc-data-table__cell--numeric">
-                        ${item.curves[i].step}</td>
-                    </tr>''');
+                        ${item.curves[i].step}</td>''';
             }
           }
-          eTitle.innerText =
-              'Файлы [${_task.uid}] ${_task.sName} (${files.length}/${_task.iFiles})';
+          eContent.append(eRow);
         }
+        eTitle.innerText =
+            'Файлы [${_task.uid}] ${_task.sName} (${files.length}/${_task.iFiles})';
       }
 
       loading = false;

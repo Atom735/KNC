@@ -84,8 +84,12 @@ class OneFileData {
                 (index) =>
                     OneFilesDataCurve.byJson((json['curves'] as List)[index]))),
         encode = json['encode'],
-        errors = null,
-        warnings = null;
+        errors = json['errors'] != null
+            ? List<OneFileLineNote>(json['errors'])
+            : null,
+        warnings = json['warnings'] != null
+            ? List<OneFileLineNote>(json['warnings'])
+            : null;
 
   Map<String, Object> get json => {
         'type': type.index,
@@ -93,10 +97,21 @@ class OneFileData {
         'origin': origin,
         'size': size,
         'encode': encode,
-      }..addAll(well != null
-          ? {
-              'well': well,
-              'curves': curves.map((e) => e.json).toList(growable: false)
-            }
-          : {});
+      }
+        ..addAll(well != null
+            ? {
+                'well': well,
+                'curves': curves.map((e) => e.json).toList(growable: false)
+              }
+            : {})
+        ..addAll(errors != null
+            ? {
+                'errors': errors.length,
+              }
+            : {})
+        ..addAll(warnings != null
+            ? {
+                'warnings': warnings.length,
+              }
+            : {});
 }

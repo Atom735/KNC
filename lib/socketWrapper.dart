@@ -44,7 +44,8 @@ class SocketWrapper {
       ? sender('$msgIdBegin$id$msgIdEnd$msg')
       : signal.then((_) => sender('$msgIdBegin$id$msgIdEnd$msg'));
 
-  void recv(final String msgRaw, [final int id]) {
+  bool recv(final String msgRaw, [final int id]) {
+    var b = false;
     if (msgRaw.startsWith(msgIdBegin)) {
       final i0 = msgRaw.indexOf(msgIdEnd, msgIdBegin.length);
       if (i0 != -1) {
@@ -62,13 +63,16 @@ class SocketWrapper {
     _listOfResponses.forEach((key, value) {
       if (msgRaw.startsWith(key)) {
         value.complete(SocketWrapperResponse(msgRaw.substring(key.length), id));
+        b = true;
       }
     });
     _listOfRespSubers.forEach((key, value) {
       if (msgRaw.startsWith(key)) {
         value.add(SocketWrapperResponse(msgRaw.substring(key.length), id));
+        b = true;
       }
     });
+    return b;
   }
 
   /// Подписаться на получение единождого ответа
