@@ -98,6 +98,7 @@ class MyTaskCard {
   }
 
   String _sName;
+  String get sName => _sName;
   set sName(final String i) {
     if (i == null || _sName == i) {
       return;
@@ -167,6 +168,7 @@ class MyTaskCard {
   }
 
   int _iFiles = -1;
+  int get iFiles => _iFiles;
   set iFiles(final int i) {
     if (i == null || _iFiles == i) {
       return;
@@ -251,6 +253,10 @@ class MyTaskCard {
         .querySelector('.mdc-card__media-content > i')
         ?.style
         ?.transform = 'scale(${eCard.offsetWidth / 48})');
+
+    eBtnFiles.onClick.listen((_) {
+      MyTaskFilesDialog(this).open();
+    });
   }
 
   factory MyTaskCard(final int uid) {

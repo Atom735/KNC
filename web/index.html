@@ -505,6 +505,105 @@
       <div class="mdc-dialog__scrim"></div>
     </div>
 
+    <!-- Диалог просмотра файлов задачи -->
+    <div id="my-task-files-dialog" class="mdc-dialog">
+      <div class="mdc-dialog__container">
+        <form class="mdc-dialog__surface">
+          <!-- Title cannot contain leading whitespace due to mdc-typography-baseline-top() -->
+          <h2 class="mdc-dialog__title">
+            Файлы задачи: ...
+          </h2>
+          <div class="mdc-dialog__content">
+            <div class="mdc-data-table">
+              <div class="mdc-data-table__table-container">
+                <table class="mdc-data-table__table">
+                  <thead>
+                    <tr class="mdc-data-table__header-row">
+                      <th class="mdc-data-table__header-cell">Оригинал</th>
+                      <th class="mdc-data-table__header-cell">Копия</th>
+                      <th
+                        class="mdc-data-table__header-cell mdc-data-table__header-cell--numeric">
+                        Размер файла (байты)</th>
+                      <th class="mdc-data-table__header-cell">Кодировка</th>
+                      <th class="mdc-data-table__header-cell">Тип</th>
+                      <th class="mdc-data-table__header-cell">Скважина</th>
+                      <th class="mdc-data-table__header-cell">Иследование</th>
+                      <th
+                        class="mdc-data-table__header-cell mdc-data-table__header-cell--numeric">
+                        Начало</th>
+                      <th
+                        class="mdc-data-table__header-cell mdc-data-table__header-cell--numeric">
+                        Конец</th>
+                      <th
+                        class="mdc-data-table__header-cell mdc-data-table__header-cell--numeric">
+                        Шаг</th>
+                    </tr>
+                  </thead>
+                  <tbody class="mdc-data-table__content">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="mdc-dialog__actions">
+            <button type="button" class="mdc-button mdc-dialog__button"
+              data-mdc-dialog-action="close">
+              <div class="mdc-button__ripple"></div>
+              <span class="mdc-button__label">Закрыть</span>
+            </button>
+            <button id="my-task-files-dialog-load" type="button"
+              class="mdc-button mdc-button--raised mdc-dialog__button">
+              <div class="mdc-button__ripple"></div>
+              <span class="mdc-button__label">Подгрузить ещё</span>
+            </button>
+          </div>
+          <div id="my-task-files-dialog-linear-progress"
+            class="mdc-linear-progress mdc-linear-progress--indeterminate mdc-linear-progress--closed">
+            <div class="mdc-linear-progress__buffer">
+              <div class="mdc-linear-progress__buffer-bar"></div>
+              <div class="mdc-linear-progress__buffer-dots"></div>
+            </div>
+            <div
+              class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+              <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
+            <div
+              class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+              <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="mdc-dialog__scrim"></div>
+    </div>
+
+
+    <dialog id="my-task-files-dialog"
+      class="mdl-dialog mdl-shadow--2dp fullwidth">
+      <div class="mdl-dialog__title sticky">
+        <span>Список обработанных файлов</span>
+        <span id="task-files-counter" class="right">
+          41/534
+        </span>
+      </div>
+      <div id="task-files-content" class="mdl-dialog__content">
+
+      </div>
+      <div id="task-files-actions" class="mdl-dialog__actions sticky">
+        <button id="task-files-close" type="button"
+          class="mdl-button mdl-button--raised close">
+          Закрыть
+        </button>
+        <button id="task-files-load" type="button"
+          class="mdl-button mdl-button--raised mdl-button--accent" disabled>
+          Загрузить ещё
+        </button>
+        <div id="task-files-spinner"
+          class="mdl-spinner mdl-spinner--single-color is-active" hidden>
+        </div>
+      </div>
+    </dialog>
+
 
     <div class="mdl-layout mdl-layout--fixed-header mdl-color--grey-100">
       <header

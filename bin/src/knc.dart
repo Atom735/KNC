@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:knc/ArchiverOtput.dart';
+import 'package:knc/OneFile.dart';
 import 'package:knc/errors.dart';
 import 'package:knc/www.dart';
 import 'package:path/path.dart' as p;
@@ -60,92 +61,6 @@ class PathNewer {
 
   /// Отменить резервацию файла
   bool unlock(final String name) => _reserved.remove(p.basename(name));
-}
-
-enum NOneFileDataType { unknown, las }
-
-/// Значения иследований
-class OneFilesDataCurve {
-  /// Наименоваине кривой (.ink - для инклинометрии)
-  final String name;
-
-  /// Глубина начальной точки кривой
-  final String strt;
-
-  /// Глубина конечной точки кривой
-  final String stop;
-
-  /// Шаг точек (null для инклинометрии)
-  final String step;
-
-  /// Значения в точках (у инклинометрии по три значения на точку)
-  final List<String> data;
-
-  OneFilesDataCurve(this.name, this.strt, this.stop, this.step, this.data);
-  Map<String, String> get json => {
-        'name': name,
-        'strt': strt,
-        'stop': stop,
-        'step': step,
-      };
-}
-
-class OneFileLineNote {
-  /// Номер линии
-  final int line;
-
-  /// Номер символа в строке
-  final int column;
-
-  /// Текст заметки
-  final String text;
-
-  /// Доп. данные заметки (обычно то что записано в строке)
-  final String data;
-
-  OneFileLineNote(this.line, this.column, this.text, this.data);
-}
-
-class OneFileData {
-  /// Путь к сущности обработанного файла
-  final String path;
-
-  /// Путь к оригинальной сущности файла
-  final String origin;
-
-  /// Тип файла
-  final NOneFileDataType type;
-
-  /// Размер файла в байтах
-  final int size;
-
-  /// Название кодировки
-  final String encode;
-
-  /// Наименование скважины
-  final String well;
-
-  /// Кривые найденные в файле
-  final List<OneFilesDataCurve> curves;
-
-  final List<OneFileLineNote> errors;
-  final List<OneFileLineNote> warnings;
-
-  OneFileData(this.path, this.origin, this.type, this.size,
-      {this.well, this.curves, this.encode, this.errors, this.warnings});
-
-  Map<String, Object> get json => {
-        'type': type.index,
-        'path': path,
-        'origin': origin,
-        'size': size,
-        'encode': encode,
-      }..addAll(well != null
-          ? {
-              'well': well,
-              'curves': curves.map((e) => e.json).toList(growable: false)
-            }
-          : {});
 }
 
 class KncTask extends KncTaskSpawnSets {
@@ -498,12 +413,12 @@ class KncTask extends KncTaskSpawnSets {
 
     wrapper.waitMsgAll(wwwTaskGetFiles).listen((msg) {
       final ic = int.tryParse(msg.s);
-      final im = listOfFiles.length - ic;
+      final im = filesSearche.length - ic;
       final v = List(im);
       for (var i = 0; i < im; i++) {
-        v[i] = listOfFiles[i + ic].toJson();
+        v[i] = filesSearche[i + ic].json;
       }
-      wrapper.send(msg.i, json.encode(v));
+      wrapper.send(msg.i, jsonEncode({'first': ic, 'task': id, 'data': v}));
     });
 
     sendPort.send([id, receivePort.sendPort, pathOut]);

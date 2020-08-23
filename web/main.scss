@@ -291,7 +291,13 @@ body {
         opacity: 1;
     }
 }
-
+#my-task-files-dialog {
+    .mdc-dialog__surface,
+    .mdc-dialog__container {
+        max-width: unset;
+        width: 95%;
+    }
+}
 #my-add-task-card,
 .my-task-card {
     animation: animation-my-task-card 500ms ease-in;
