@@ -195,36 +195,48 @@ class MyFileViewer extends MDCDialog {
       final errors = _file.errors?.where((e) => e.line == i + 1);
       final warnings = _file.warnings?.where((e) => e.line == i + 1);
       final s = StringBuffer();
-      s.writeln(
-          '<div id="my-file-line-${i + 1}" class="line${errors != null && errors.isNotEmpty ? " error" : ""}${warnings != null && warnings.isNotEmpty ? " warning" : ""}">');
+      final ignore = (errors == null || errors.isEmpty) &&
+          warnings != null &&
+          warnings.isNotEmpty &&
+          warnings.length == 1 &&
+          warnings.first.text == 'проигнорированная строка';
+      s.write('<div id="my-file-line-${i + 1}" class="line');
+      if (ignore) {
+        s.write(' ignore">');
+      } else {
+        s.write(
+            '${errors != null && errors.isNotEmpty ? " error" : ""}${warnings != null && warnings.isNotEmpty ? " warning" : ""}">');
+      }
       s.writeln(
           '<div class="data"><div>${i + 1}:</div><div>${lines[i]}</div></div>');
-      if ((errors != null && errors.isNotEmpty) ||
-          (warnings != null && warnings.isNotEmpty)) {
-        s.writeln('<div class="errors">');
-        if (errors != null && errors.isNotEmpty) {
-          errors.forEach((e) {
-            s.write('''
+      if (!ignore) {
+        if ((errors != null && errors.isNotEmpty) ||
+            (warnings != null && warnings.isNotEmpty)) {
+          s.writeln('<div class="errors">');
+          if (errors != null && errors.isNotEmpty) {
+            errors.forEach((e) {
+              s.write('''
               <div class="error">
                 <div>
                   (${e.line}:${e.column}) ${e.text}
                 </div>
               </div>
               ''');
-          });
-        }
-        if (warnings != null && warnings.isNotEmpty) {
-          warnings.forEach((e) {
-            s.write('''
+            });
+          }
+          if (warnings != null && warnings.isNotEmpty) {
+            warnings.forEach((e) {
+              s.write('''
               <div class="warning">
                 <div>
                   (${e.line}:${e.column}) ${e.text}
                 </div>
               </div>
             ''');
-          });
+            });
+          }
+          s.writeln('</div>');
         }
-        s.writeln('</div>');
       }
       s.writeln('</div>');
       eContent.appendHtml(s.toString());

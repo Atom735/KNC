@@ -85,7 +85,7 @@ Future<OneFileData> parserFileLas(final KncTask kncTask,
   void rSkipWhiteSpacesAndComments() {
     rSkipWhiteSpaces();
     while (iSymbol < _dataLength && bNewLine && data[iSymbol] == '#') {
-      if (iSymbol != 1) {
+      if (iColumn != 1) {
         _addWarning('комментарий не в начале строки');
       }
       rSkipToEndOfLine();
@@ -127,7 +127,7 @@ Future<OneFileData> parserFileLas(final KncTask kncTask,
                 : iSeparatorColon)
         .trim();
     switch (_value) {
-      case '1.2':
+      case '1.20':
         _v_vers = 1;
         return;
       case '2.0':
@@ -137,11 +137,11 @@ Future<OneFileData> parserFileLas(final KncTask kncTask,
         final _vd = double.tryParse(_value);
         if (_vd == null) {
           _addWarning(
-              'неудалось разобрать версию файла, считается что версия файла 1.2');
+              'неудалось разобрать версию файла, считается что версия файла 1.20');
           _v_vers = 1;
         } else {
           if (_vd == 1.2) {
-            _addWarning('несовсем корректная запись версии файла 1.2');
+            _addWarning('несовсем корректная запись версии файла 1.20');
             _v_vers = 1;
             return;
           } else if (_vd == 2.0) {
@@ -149,7 +149,7 @@ Future<OneFileData> parserFileLas(final KncTask kncTask,
             _v_vers = 2;
             return;
           } else if (_vd >= 1.0 && _vd < 2.0) {
-            _addWarning('неизвестное число в записи версии файла 1.2');
+            _addWarning('неизвестное число в записи версии файла 1.20');
             _v_vers = 1;
             return;
           } else if (_vd >= 2.0 && _vd < 3.0) {
@@ -158,7 +158,7 @@ Future<OneFileData> parserFileLas(final KncTask kncTask,
             return;
           } else {
             _addWarning(
-                'неизвестное число в записи версии файла, считается что версия файла 1.2');
+                'неизвестное число в записи версии файла, считается что версия файла 1.20');
             _v_vers = 1;
             return;
           }
@@ -501,11 +501,12 @@ Future<OneFileData> parserFileLas(final KncTask kncTask,
       _a_data_n = List.generate(_curves, (_) => []);
     }
     _a_iSymbol = iSymbol;
+    rSkipToEndOfLine();
     loop:
     while (iSymbol < _dataLength) {
       rSkipWhiteSpacesAndComments();
       if (iSymbol >= _dataLength) {
-        _addError('непредвиденный конец файла');
+        // _addError('непредвиденный конец файла');
         return true;
       }
       if (data[iSymbol] == '~') {
