@@ -505,7 +505,7 @@
       <div class="mdc-dialog__scrim"></div>
     </div>
 
-    <!-- Диалог просмотра файлов задачи -->
+    <!-- Диалог просмотра списка файлов задачи -->
     <div id="my-task-files-dialog" class="mdc-dialog">
       <div class="mdc-dialog__container">
         <form class="mdc-dialog__surface">
@@ -582,6 +582,68 @@
       </div>
       <div class="mdc-dialog__scrim"></div>
     </div>
+
+
+
+
+    <!-- Диалог просмотра самих файлов задачи -->
+    <div id="my-files-dialog" class="mdc-dialog">
+      <div class="mdc-dialog__container">
+        <form class="mdc-dialog__surface">
+          <!-- Title cannot contain leading whitespace due to mdc-typography-baseline-top() -->
+          <h2 class="mdc-dialog__title">
+            Файлы задачи: ...
+          </h2>
+          <div class="mdc-dialog__content">
+            <div id="my-files-dialog-errors"></div>
+            <div id="my-files-dialog-content"></div>
+          </div>
+          <div class="mdc-dialog__actions">
+            <button type="button" class="mdc-button mdc-dialog__button"
+              data-mdc-dialog-action="close">
+              <div class="mdc-button__ripple"></div>
+              <span class="mdc-button__label">Закрыть</span>
+            </button>
+            <button id=my-files-dialog-update" type="button"
+              class="mdc-button mdc-button--raised mdc-dialog__button">
+              <div class="mdc-button__ripple"></div>
+              <span class="mdc-button__label">Отправить</span>
+            </button>
+          </div>
+          <div id="my-files-dialog-linear-progress"
+            class="mdc-linear-progress mdc-linear-progress--indeterminate mdc-linear-progress--closed">
+            <div class="mdc-linear-progress__buffer">
+              <div class="mdc-linear-progress__buffer-bar"></div>
+              <div class="mdc-linear-progress__buffer-dots"></div>
+            </div>
+            <div
+              class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+              <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
+            <div
+              class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+              <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="mdc-dialog__scrim"></div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     <dialog id="my-task-files-dialog"

@@ -42,6 +42,14 @@ class OneFileLineNote {
   final String data;
 
   OneFileLineNote(this.line, this.column, this.text, this.data);
+  OneFileLineNote.byJson(Map<String, Object> json)
+      : line = json['line'],
+        column = json['column'],
+        text = json['text'],
+        data = json['data'];
+
+  Map<String, Object> get json =>
+      {'line': line, 'column': column, 'text': text, 'data': data};
 }
 
 class OneFileData {
@@ -90,6 +98,31 @@ class OneFileData {
         warnings = json['warnings'] != null
             ? List<OneFileLineNote>(json['warnings'])
             : null;
+  updateErrorsByJson(Map<String, Object> json) {
+    if (json['errors'] != null) {
+      for (var i = 0; i < errors.length; i++) {
+        errors[i] = OneFileLineNote.byJson((json['errors'] as List<Object>)[i]);
+      }
+    }
+    if (json['warnings'] != null) {
+      for (var i = 0; i < warnings.length; i++) {
+        warnings[i] =
+            OneFileLineNote.byJson((json['warnings'] as List<Object>)[i]);
+      }
+    }
+  }
+
+  Map<String, Object> get jsonErrors => {}
+    ..addAll(errors != null
+        ? {
+            'errors': errors.map((e) => e.json).toList(growable: false),
+          }
+        : {})
+    ..addAll(warnings != null
+        ? {
+            'warnings': warnings.map((e) => e.json).toList(growable: false),
+          }
+        : {});
 
   Map<String, Object> get json => {
         'type': type.index,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:html';
 import 'dart:convert';
 
@@ -72,6 +73,7 @@ class MyTaskFilesDialog extends MDCDialog {
         for (var item in f) {
           files.add(item);
           var eRow = TableRowElement();
+          eRow.onClick.listen((_) => MyFileViewer(_task, item).open());
           eTableRows.add(eRow);
           eRow.classes.add('mdc-data-table__row');
           if (item.curves == null) {
@@ -96,6 +98,7 @@ class MyTaskFilesDialog extends MDCDialog {
               if (i != 0) {
                 eContent.append(eRow);
                 eRow = TableRowElement();
+                eRow.onClick.listen((_) => MyFileViewer(_task, item).open());
                 eTableRows.add(eRow);
                 eRow.classes.add('mdc-data-table__row');
                 eRow.classes.add('my-double');
@@ -153,6 +156,130 @@ class MyTaskFilesDialog extends MDCDialog {
   factory MyTaskFilesDialog([final MyTaskCard task]) => (_instance) ??
       (_instance = MyTaskFilesDialog._init(eGetById('my-task-files-dialog')))
     ..task = task;
+}
+
+class MyFileViewer extends MDCDialog {
+  final MDCLinearProgress eLinearProgress =
+      MDCLinearProgress(eGetById('my-files-dialog-linear-progress'));
+  final ButtonElement eBtnUpdate = eGetById('my-files-dialog-update');
+  final Element eTitle;
+  final Element eContent = eGetById('my-files-dialog-content');
+  final Element eErrors = eGetById('my-files-dialog-errors');
+
+  MyTaskCard _task;
+  OneFileData _file;
+  String _fileData;
+  void update() {
+    if (_file.errors != null) {
+      for (var item in _file.errors) {
+        eErrors.appendHtml('''
+              <a class="error" href="#my-file-line-${item.line}">
+                (${item.line}:${item.column}) ${item.text}
+              </a>
+              ''');
+      }
+    }
+    if (_file.warnings != null) {
+      for (var item in _file.warnings) {
+        eErrors.appendHtml('''
+              <a class="warning" href="#my-file-line-${item.line}">
+                (${item.line}:${item.column}) ${item.text}
+              </a>
+              ''');
+      }
+    }
+
+    final lines = LineSplitter().convert(_fileData);
+
+    for (var i = 0; i < lines.length; i++) {
+      final errors = _file.errors?.where((e) => e.line == i + 1);
+      final warnings = _file.warnings?.where((e) => e.line == i + 1);
+      final s = StringBuffer();
+      s.writeln(
+          '<div id="my-file-line-${i + 1}" class="line${errors != null && errors.isNotEmpty ? " error" : ""}${warnings != null && warnings.isNotEmpty ? " warning" : ""}">');
+      s.writeln(
+          '<div class="data"><div>${i + 1}:</div><div>${lines[i]}</div></div>');
+      if ((errors != null && errors.isNotEmpty) ||
+          (warnings != null && warnings.isNotEmpty)) {
+        s.writeln('<div class="errors">');
+        if (errors != null && errors.isNotEmpty) {
+          errors.forEach((e) {
+            s.write('''
+              <div class="error">
+                <div>
+                  (${e.line}:${e.column}) ${e.text}
+                </div>
+              </div>
+              ''');
+          });
+        }
+        if (warnings != null && warnings.isNotEmpty) {
+          warnings.forEach((e) {
+            s.write('''
+              <div class="warning">
+                <div>
+                  (${e.line}:${e.column}) ${e.text}
+                </div>
+              </div>
+            ''');
+          });
+        }
+        s.writeln('</div>');
+      }
+      s.writeln('</div>');
+      eContent.appendHtml(s.toString());
+    }
+    loading = false;
+  }
+
+  set file(OneFileData i) {
+    if (i == null || i == _file) {
+      return;
+    }
+    _file = i;
+    eContent.innerHtml = '';
+    eErrors.innerHtml = '';
+    loading = true;
+    Future.wait([
+      (_file.warnings.isNotEmpty && _file.warnings[0] == null) ||
+              (_file.errors.isNotEmpty && _file.errors[0] == null)
+          ? App()
+              .requestOnce('$wwwTaskGetErrors${_task.uid}:${_file.path}')
+              .then((msg) {
+              _file.updateErrorsByJson(jsonDecode(msg));
+            })
+          : null,
+      App()
+          .requestOnce('$wwwGetFileData${_file.path}')
+          .then((msg) => _fileData = msg)
+    ]).then((_) => update());
+  }
+
+  bool _loading = false;
+  set loading(final bool b) {
+    if (_loading == b) {
+      return;
+    }
+    _loading = b;
+    if (_loading) {
+      eLinearProgress.open();
+    } else {
+      eLinearProgress.close();
+    }
+  }
+
+  MyFileViewer._init(Element root)
+      : eTitle = root.querySelector('.mdc-dialog__title'),
+        super(root) {
+    print('$runtimeType created: $hashCode');
+  }
+
+  static MyFileViewer _instance;
+  factory MyFileViewer([final MyTaskCard task, final OneFileData file]) =>
+      (_instance) ??
+          (_instance = MyFileViewer._init(eGetById('my-files-dialog')))
+        .._task = task
+        ..file = file;
 }
 
 class LasFileDetails {

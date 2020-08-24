@@ -402,13 +402,10 @@ class KncTask extends KncTaskSpawnSets {
     });
 
     wrapper.waitMsgAll(wwwTaskGetErrors).listen((msg) {
-      final ic = int.tryParse(msg.s);
-      final im = listOfErrors.length - ic;
-      final v = List(im);
-      for (var i = 0; i < im; i++) {
-        v[i] = listOfErrors[i + ic].toJson();
-      }
-      wrapper.send(msg.i, json.encode(v));
+      wrapper.send(
+          msg.i,
+          jsonEncode(
+              filesSearche.firstWhere((e) => e.path == msg.s).jsonErrors));
     });
 
     wrapper.waitMsgAll(wwwTaskGetFiles).listen((msg) {
