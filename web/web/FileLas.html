@@ -6,15 +6,105 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Example of Las File</title>
         <style>
+            body,
+            div,
+            dl,
+            dt,
+            dd,
+            ul,
+            ol,
+            li,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            pre,
+            form,
+            fieldset,
+            input,
+            textarea,
+            p,
+            blockquote,
+            th,
+            td {
+                margin: 0;
+                padding: 0;
+            }
+
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+            }
+
+            fieldset,
+            img {
+                border: 0;
+            }
+
+            address,
+            caption,
+            cite,
+            code,
+            dfn,
+            em,
+            strong,
+            th,
+            var {
+                font-style: normal;
+                font-weight: normal;
+            }
+
+            ol,
+            ul {
+                list-style: none;
+            }
+
+            caption,
+            th {
+                text-align: left;
+            }
+
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
+                font-size: 100%;
+                font-weight: normal;
+            }
+
+            q:before,
+            q:after {
+                content: "";
+            }
+
+            abbr,
+            acronym {
+                border: 0;
+            }
+
+            .grid-container {
+                display: grid;
+                grid-template-rows: 1fr 1fr 1fr;
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-gap: 2vw;
+                padding: 2vw;
+            }
+
+
             main>div {
                 height: 1rem;
-                width: 100%;
-                min-width: max-content;
-                border: 1px dotted rgba(0, 0, 0, 0);
+                /* width: max-content; */
+                /* min-width: max-content; */
+                /* box-sizing: border-box; */
+                display: block;
             }
 
             main>div:hover {
-                border: 1px dotted rgba(0, 0, 0, 0.15);
+                background: #eee;
             }
 
             main>div>* {
@@ -26,45 +116,35 @@
                 user-select: none;
             }
 
-            main>div>div:first-child {
+            main>div>div {
                 width: 2rem;
                 text-align: right;
+                background: #eee;
+                position: sticky;
+                left: 0;
+                z-index: 1;
             }
 
-            main>div>div:first-child:hover {
+            main>div>div:hover {
                 background: #ddd;
             }
 
-
-            main>div>pre {
-                -moz-user-select: text;
-                -webkit-user-select: text;
-                -ms-user-select: text;
-                user-select: text;
-            }
-
-            main>div>pre>div.vline {
-                position: absolute;
-                border-left: 1px solid rgba(0, 0, 0, 0.15);
-                display: inline-block;
-                height: 6rem;
-            }
-
             main>div>div.parsed {
-                display: inline-block;
+                /* display: block; */
                 position: absolute;
                 right: 5px;
+                left: auto;
                 background: #ccc;
                 padding: 4px;
                 margin-top: -4px;
                 border-radius: 4px;
                 width: max-content;
-                opacity: 0.0;
-                transition: ease-in-out opacity 0.3s;
+                visibility: hidden;
             }
 
             main>div:hover>div.parsed {
                 opacity: 1.0;
+                visibility: visible;
             }
 
             main>div>div.parsed>span.value {
@@ -77,6 +157,26 @@
                 margin: -2px -2px 0 8px;
             }
 
+            main>div>pre,
+            main>div>input {
+                -moz-user-select: text;
+                -webkit-user-select: text;
+                -ms-user-select: text;
+                user-select: text;
+                width: 100%;
+                position: absolute;
+                width: calc(100% - 2rem);
+                /* position: relative; */
+                /* margin-left: 2rem; */
+                white-space: pre;
+                font-family: monospace;
+                font-size: 1rem;
+                border: none;
+                /* color: aquamarine; */
+                background: none;
+                /* box-sizing: border-box; */
+            }
+
             main>div>pre.ignore,
             main>div>pre.comment {
                 opacity: 0.5;
@@ -86,12 +186,42 @@
                 color: rgb(0, 128, 128);
             }
 
+            main>div>div#line-v+pre {
+                -moz-user-select: none;
+                -webkit-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            main>div>div#line-v+pre>div {
+                position: absolute;
+                border-left: 1px solid rgba(0, 0, 0, 0.15);
+                display: inline-block;
+                height: 100%;
+            }
+
         </style>
         <script>
+            var v;
+            var t;
+            var i;
             window.onload = function () {
                 document.querySelectorAll("main>div>div:first-child").forEach(function (element) {
+                    var b = false;
                     element.onclick = function (event) {
+                        // if (b) return;
+                        // b = true;
+                        element.onclick = null;
                         console.log(event.target);
+                        v = event.target;
+                        t = v.nextElementSibling;
+                        i = document.createElement('input');
+                        i.value = t.innerText;
+                        while (t.nextElementSibling) {
+                            t.nextElementSibling.remove();
+                        }
+                        t.replaceWith(i);
+                        v.style.background = "#e1bee7";
                     };
                 });
             };
@@ -378,10 +508,13 @@
                 <pre
                     class="section">~ASCII Log Data                                                         </pre>
             </div>
-
+            <div style="height: 0;">
+                <div id="line-v"></div>
+                <pre style="height: 6rem;">          <div></div></pre>
+            </div>
             <div>
                 <div id="line-58">58</div>
-                <pre>     880.0<div class="vline"></div>-9999.000</pre>
+                <pre>     880.0-9999.000</pre>
             </div>
             <div>
                 <div id="line-59">59</div>
