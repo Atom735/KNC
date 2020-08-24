@@ -1,76 +1,409 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Example of Las File</title>
+        <style>
+            main>div {
+                height: 1rem;
+                width: 100%;
+                min-width: max-content;
+                border: 1px dotted rgba(0, 0, 0, 0);
+            }
+
+            main>div:hover {
+                border: 1px dotted rgba(0, 0, 0, 0.15);
+            }
+
+            main>div>* {
+                display: inline-block;
+                margin: 0;
+                -moz-user-select: none;
+                -webkit-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            main>div>div:first-child {
+                width: 2rem;
+                text-align: right;
+            }
+
+            main>div>div:first-child:hover {
+                background: #ddd;
+            }
+
+
+            main>div>pre {
+                -moz-user-select: text;
+                -webkit-user-select: text;
+                -ms-user-select: text;
+                user-select: text;
+            }
+
+            main>div>pre>div.vline {
+                position: absolute;
+                border-left: 1px solid rgba(0, 0, 0, 0.15);
+                display: inline-block;
+                height: 6rem;
+            }
+
+            main>div>div.parsed {
+                display: inline-block;
+                position: absolute;
+                right: 5px;
+                background: #ccc;
+                padding: 4px;
+                margin-top: -4px;
+                border-radius: 4px;
+                width: max-content;
+                opacity: 0.0;
+                transition: ease-in-out opacity 0.3s;
+            }
+
+            main>div:hover>div.parsed {
+                opacity: 1.0;
+            }
+
+            main>div>div.parsed>span.value {
+                background: #aaa;
+                /* margin: 0 4px; */
+                border-radius: 4px;
+                padding: 2px;
+                margin-top: -2px;
+                margin-left: 4px;
+                margin: -2px -2px 0 8px;
+            }
+
+            main>div>pre.ignore,
+            main>div>pre.comment {
+                opacity: 0.5;
+            }
+
+            main>div>pre.section {
+                color: rgb(0, 128, 128);
+            }
+
+        </style>
+        <script>
+            window.onload = function () {
+                document.querySelectorAll("main>div>div:first-child").forEach(function (element) {
+                    element.onclick = function (event) {
+                        console.log(event.target);
+                    };
+                });
+            };
+        </script>
     </head>
 
     <body>
-        <pre></pre>
-        <pre># Gintel Geo 1        16.10.07   07:15:49</pre>
-        <pre>#</pre>
-        <pre># ----------------------------------------------------------</pre>
-        <pre>#</pre>
-        <pre>~Version information</pre>
-        <pre>  VERS.                             2.0: CWLS LAS  -  VERSION 2.0</pre>
-        <pre>  WRAP.                              NO: One line per depth step</pre>
-        <pre>~Well information</pre>
-        <pre># MNEM.UNIT                 INFORMATION  DATA TYPE</pre>
-        <pre># ====.================================: ===================</pre>
-        <pre>  STRT.M                          880.0: First depth in file</pre>
-        <pre>  STOP.M                         1378.0: Last  depth in file</pre>
-        <pre>  STEP.M                            0.2: Last  depth in file</pre>
-        <pre>  NULL.M                        -9999.0: Null  values</pre>
-        <pre>  COMP.                                : COMPANY</pre>
-        <pre>  WELL.                            2308: WELL</pre>
-        <pre>  FLD .                      Искринская: FIELD</pre>
-        <pre>  LOC .                                : LOCATION</pre>
-        <pre>  CNTY.                                : COUNTY</pre>
-        <pre>  STAT.                                : STATE</pre>
-        <pre>  CTRY.                                : COUNTRY</pre>
-        <pre>  SRVC.                                : SERVICE COMPANY</pre>
-        <pre>  DATE.                                : LOG DATE</pre>
-        <pre>  API .                                : API NUMBER</pre>
-        <pre>~Curve information</pre>
-        <pre># MNEM.UNIT                   API CODE   CURVE DESCRIPTION</pre>
-        <pre># ====.================================:====================</pre>
-        <pre>  DEPTH.M                              : Depth curve</pre>
-        <pre>  KPR_. md                             : Permeability                                          </pre>
-        <pre>~Parameter information block</pre>
-        <pre># MNEM.UNIT                     VALUE    DESCRIPTION</pre>
-        <pre># ====.================================:====================</pre>
-        <pre>~Other information</pre>
-        <pre>  </pre>
-        <pre>#  </pre>
-        <pre># ==========================================================  </pre>
-        <pre># ============ COL CURVE HEADER        KPR_A            ====  </pre>
-        <pre># ==========================================================  </pre>
-        <pre>#CURVE         KPR_A  </pre>
-        <pre>  REGI.                         Татария: Регион                                    	</pre>
-        <pre>  FLD .                      Искринская: Площадь                        </pre>
-        <pre>  WELL.                            2308: Скважина                       </pre>
-        <pre>  LCMP.                       ОАО"ТНГФ": Имя геофизического предприятия           </pre>
-        <pre>  COL .                           KPR_A: Шифр кривой свойств            </pre>
-        <pre>  UNIT.                              мД: Единицы измерения              </pre>
-        <pre>  PRNM.                            AUGR: Код интерпретатора в системе   </pre>
-        <pre>  PROJ.                          W_2308: Имя проекта                    </pre>
-        <pre>  PROG.                            RTLI: Имя программы, версия          </pre>
-        <pre>  PRDT.               13.09.07 13:08:40: Дата и время обработки         </pre>
-        <pre>  DIR .                              -1: Направление=-1 -вверх 1 - вниз </pre>
-        <pre>  MIN .омм                         0.00: Минимум кривой                 </pre>
-        <pre>  MAX .омм                    493230.13: Максимум кривой                </pre>
-        <pre>  MEAN.омм                       551.66: Среднее показание кривой       </pre>
-        <pre># ==========================================================            </pre>
-        <pre>#                                                                       </pre>
-        <pre>~ASCII Log Data                                                         </pre>
-        <pre>     880.0     0.000</pre>
-        <pre>     880.2     0.000</pre>
-        <pre>     880.4     0.000</pre>
-        <pre>     880.6     0.000</pre>
-        <pre>     880.8     0.000</pre>
-        <pre>     881.0     0.000        </pre>
+        <main>
+            <div>
+                <div id="line-1">1</div>
+                <pre></pre>
+            </div>
+            <div>
+                <div id="line-2">2</div>
+                <pre
+                    class="comment"># Gintel Geo 1        16.10.07   07:15:49</pre>
+            </div>
+            <div>
+                <div id="line-3">3</div>
+                <pre class="comment">#</pre>
+            </div>
+            <div>
+                <div id="line-4">4</div>
+                <pre
+                    class="comment"># ----------------------------------------------------------</pre>
+            </div>
+            <div>
+                <div id="line-5">5</div>
+                <pre class="comment">#</pre>
+            </div>
+            <div>
+                <div id="line-6">6</div>
+                <pre class="section">~Version information</pre>
+            </div>
+            <div>
+                <div id="line-7">7</div>
+                <pre>  VERS.                             2.0: CWLS LAS  -  VERSION 2.0</pre>
+                <div class="parsed">VERSION<span class="value">2.0</span></div>
+            </div>
+            <div>
+                <div id="line-8">8</div>
+                <pre>  WRAP.                              NO: One line per depth step</pre>
+                <div class="parsed">WRAP<span class="value">NO</span></div>
+            </div>
+            <div>
+                <div id="line-9">9</div>
+                <pre class="section">~Well information</pre>
+            </div>
+            <div>
+                <div id="line-10">10</div>
+                <pre
+                    class="comment"># MNEM.UNIT                 INFORMATION  DATA TYPE</pre>
+            </div>
+            <div>
+                <div id="line-11">11</div>
+                <pre
+                    class="comment"># ====.================================: ===================</pre>
+            </div>
+            <div>
+                <div id="line-12">12</div>
+                <pre>  STRT.M                          880.0: First depth in file</pre>
+                <div class="parsed">STRT<span class="value">880.0</span></div>
+            </div>
+            <div>
+                <div id="line-13">13</div>
+                <pre>  STOP.M                         1378.0: Last  depth in file</pre>
+                <div class="parsed">STOP<span class="value">1378.0</span></div>
+            </div>
+            <div>
+                <div id="line-14">14</div>
+                <pre>  STEP.M                            0.2: Last  depth in file</pre>
+                <div class="parsed">STEP<span class="value">0.2</span></div>
+            </div>
+            <div>
+                <div id="line-15">15</div>
+                <pre>  NULL.M                        -9999.0: Null  values</pre>
+                <div class="parsed">NULL<span class="value">-9999.0</span></div>
+            </div>
+            <div>
+                <div id="line-16">16</div>
+                <pre
+                    class="ignore">  COMP.                                : COMPANY</pre>
+            </div>
+            <div>
+                <div id="line-17">17</div>
+                <pre>  WELL.                            2308: WELL</pre>
+                <div class="parsed">WELL<span class="value">2308</span></div>
+            </div>
+            <div>
+                <div id="line-18">18</div>
+                <pre
+                    class="ignore">  FLD .                      Искринская: FIELD</pre>
+            </div>
+            <div>
+                <div id="line-19">19</div>
+                <pre
+                    class="ignore">  LOC .                                : LOCATION</pre>
+            </div>
+            <div>
+                <div id="line-20">20</div>
+                <pre
+                    class="ignore">  CNTY.                                : COUNTY</pre>
+            </div>
+            <div>
+                <div id="line-21">21</div>
+                <pre
+                    class="ignore">  STAT.                                : STATE</pre>
+            </div>
+            <div>
+                <div id="line-22">22</div>
+                <pre
+                    class="ignore">  CTRY.                                : COUNTRY</pre>
+            </div>
+            <div>
+                <div id="line-23">23</div>
+                <pre
+                    class="ignore">  SRVC.                                : SERVICE COMPANY</pre>
+            </div>
+            <div>
+                <div id="line-24">24</div>
+                <pre
+                    class="ignore">  DATE.                                : LOG DATE</pre>
+            </div>
+            <div>
+                <div id="line-25">25</div>
+                <pre
+                    class="ignore">  API .                                : API NUMBER</pre>
+            </div>
+            <div>
+                <div id="line-26">26</div>
+                <pre class="section">~Curve information</pre>
+            </div>
+            <div>
+                <div id="line-27">27</div>
+                <pre
+                    class="comment"># MNEM.UNIT                   API CODE   CURVE DESCRIPTION</pre>
+            </div>
+            <div>
+                <div id="line-28">28</div>
+                <pre
+                    class="comment"># ====.================================:====================</pre>
+            </div>
+            <div>
+                <div id="line-29">29</div>
+                <pre>  DEPTH.M                              : Depth curve</pre>
+                <div class="parsed">DEPTH<span class="value">880.0</span><span
+                        class="value">881.0</span><span class="value">0.2</span>
+                </div>
+            </div>
+            <div>
+                <div id="line-30">30</div>
+                <pre>  KPR_. md                             : Permeability                                          </pre>
+                <div class="parsed">KPR_<span class="value">880.2</span><span
+                        class="value">880.8</span><span class="value">0.2</span>
+                </div>
+            </div>
+            <div>
+                <div id="line-31">31</div>
+                <pre class="section">~Parameter information block</pre>
+            </div>
+            <div>
+                <div id="line-32">32</div>
+                <pre
+                    class="comment"># MNEM.UNIT                     VALUE    DESCRIPTION</pre>
+            </div>
+            <div>
+                <div id="line-33">33</div>
+                <pre
+                    class="comment"># ====.================================:====================</pre>
+            </div>
+            <div>
+                <div id="line-34">34</div>
+                <pre class="section">~Other information</pre>
+            </div>
+            <div>
+                <div id="line-35">35</div>
+                <pre class="ignore">  </pre>
+            </div>
+            <div>
+                <div id="line-36">36</div>
+                <pre class="comment">#  </pre>
+            </div>
+            <div>
+                <div id="line-37">37</div>
+                <pre
+                    class="comment"># ==========================================================  </pre>
+            </div>
+            <div>
+                <div id="line-38">38</div>
+                <pre
+                    class="comment"># ============ COL CURVE HEADER        KPR_A            ====  </pre>
+            </div>
+            <div>
+                <div id="line-39">39</div>
+                <pre
+                    class="comment"># ==========================================================  </pre>
+            </div>
+            <div>
+                <div id="line-40">40</div>
+                <pre class="comment">#CURVE         KPR_A  </pre>
+            </div>
+            <div>
+                <div id="line-41">41</div>
+                <pre
+                    class="ignore">  REGI.                         Татария: Регион                                    	</pre>
+            </div>
+            <div>
+                <div id="line-42">42</div>
+                <pre
+                    class="ignore">  FLD .                      Искринская: Площадь                        </pre>
+            </div>
+            <div>
+                <div id="line-43">43</div>
+                <pre
+                    class="ignore">  WELL.                            2308: Скважина                       </pre>
+            </div>
+            <div>
+                <div id="line-44">44</div>
+                <pre
+                    class="ignore">  LCMP.                       ОАО"ТНГФ": Имя геофизического предприятия           </pre>
+            </div>
+            <div>
+                <div id="line-45">45</div>
+                <pre
+                    class="ignore">  COL .                           KPR_A: Шифр кривой свойств            </pre>
+            </div>
+            <div>
+                <div id="line-46">46</div>
+                <pre
+                    class="ignore">  UNIT.                              мД: Единицы измерения              </pre>
+            </div>
+            <div>
+                <div id="line-47">47</div>
+                <pre
+                    class="ignore">  PRNM.                            AUGR: Код интерпретатора в системе   </pre>
+            </div>
+            <div>
+                <div id="line-48">48</div>
+                <pre
+                    class="ignore">  PROJ.                          W_2308: Имя проекта                    </pre>
+            </div>
+            <div>
+                <div id="line-49">49</div>
+                <pre
+                    class="ignore">  PROG.                            RTLI: Имя программы, версия          </pre>
+            </div>
+            <div>
+                <div id="line-50">50</div>
+                <pre
+                    class="ignore">  PRDT.               13.09.07 13:08:40: Дата и время обработки         </pre>
+            </div>
+            <div>
+                <div id="line-51">51</div>
+                <pre
+                    class="ignore">  DIR .                              -1: Направление=-1 -вверх 1 - вниз </pre>
+            </div>
+            <div>
+                <div id="line-52">52</div>
+                <pre
+                    class="ignore">  MIN .омм                         0.00: Минимум кривой                 </pre>
+            </div>
+            <div>
+                <div id="line-53">53</div>
+                <pre
+                    class="ignore">  MAX .омм                    493230.13: Максимум кривой                </pre>
+            </div>
+            <div>
+                <div id="line-54">54</div>
+                <pre
+                    class="ignore">  MEAN.омм                       551.66: Среднее показание кривой       </pre>
+            </div>
+            <div>
+                <div id="line-55">55</div>
+                <pre
+                    class="comment"># ==========================================================            </pre>
+            </div>
+            <div>
+                <div id="line-56">56</div>
+                <pre
+                    class="comment">#                                                                       </pre>
+            </div>
+            <div>
+                <div id="line-57">57</div>
+                <pre
+                    class="section">~ASCII Log Data                                                         </pre>
+            </div>
+
+            <div>
+                <div id="line-58">58</div>
+                <pre>     880.0<div class="vline"></div>-9999.000</pre>
+            </div>
+            <div>
+                <div id="line-59">59</div>
+                <pre>     880.2    0.000</pre>
+            </div>
+            <div>
+                <div id="line-60">60</div>
+                <pre>     880.4-9999.0</pre>
+            </div>
+            <div>
+                <div id="line-61">61</div>
+                <pre>     880.6    0.000</pre>
+            </div>
+            <div>
+                <div id="line-62">62</div>
+                <pre>     880.8    0.000</pre>
+            </div>
+            <div>
+                <div id="line-63">63</div>
+                <pre>     881.0-9999.000        </pre>
+            </div>
+        </main>
     </body>
 
 </html>
