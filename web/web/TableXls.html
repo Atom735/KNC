@@ -122,6 +122,22 @@
                 text-decoration: none;
             }
 
+            main>div:first-child {
+                margin-top: 1px;
+            }
+
+            main>div:last-child {
+                margin-bottom: 1px;
+            }
+
+            main>div>*:first-child {
+                margin-left: 1px;
+            }
+
+            main>div>*:last-child {
+                margin-right: 1px;
+            }
+
             main>div:first-child>*:not(:first-child) {
                 width: 200px;
                 text-align: center;
