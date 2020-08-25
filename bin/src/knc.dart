@@ -16,6 +16,7 @@ import 'ink.dart';
 import 'knc.main.dart';
 import 'las.dart';
 import 'mapping.dart';
+import 'xls.dart';
 
 const msgTaskUpdateState = 'taskstate;';
 const msgTaskUpdateErrors = 'taskerrors;';
@@ -92,6 +93,7 @@ class KncTask extends KncTaskSpawnSets {
 
   final String pathTemp;
   final filesSearche = <OneFileData>[];
+  KncXlsBuilder xls;
 
   int _state = 0;
   int get state => _state;
@@ -181,8 +183,9 @@ class KncTask extends KncTaskSpawnSets {
     for (var i = 0; i < _l; i++) {
       await handleFile(i);
     }
-    state = NTaskState.completed.index;
+    state = NTaskState.generateTable.index;
     // TODO: Генерация таблицы
+    // xls.
   }
 
   Future<void> handleFileSearch(final File file, final String origin) async {
