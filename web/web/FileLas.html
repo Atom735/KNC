@@ -129,7 +129,8 @@
                 background: #ddd;
             }
 
-            main>div>div.parsed {
+            main>div>pre+div,
+            main>div>input+div {
                 /* display: block; */
                 position: absolute;
                 right: 5px;
@@ -142,12 +143,14 @@
                 visibility: hidden;
             }
 
-            main>div:hover>div.parsed {
+
+            main>div:hover>pre+div,
+            main>div:hover>input+div {
                 opacity: 1.0;
                 visibility: visible;
             }
 
-            main>div>div.parsed>span.value {
+            main>div>div.parsed>span {
                 background: #aaa;
                 /* margin: 0 4px; */
                 border-radius: 4px;
@@ -177,6 +180,16 @@
                 /* box-sizing: border-box; */
             }
 
+            main>div>pre.error,
+            main>div>input.error {
+                background: rgba(255, 0, 0, 0.05);
+            }
+
+            main>div>pre.error+div,
+            main>div>input.error+div {
+                background: #faa;
+            }
+
             main>div>pre.ignore,
             main>div>pre.comment {
                 opacity: 0.5;
@@ -200,6 +213,10 @@
                 height: 100%;
             }
 
+            main {
+                padding-bottom: calc(90vh);
+            }
+
         </style>
         <script>
             var v;
@@ -220,6 +237,7 @@
                         while (t.nextElementSibling) {
                             t.nextElementSibling.remove();
                         }
+                        i.classList = t.classList;
                         t.replaceWith(i);
                         v.style.background = "#e1bee7";
                     };
@@ -259,12 +277,12 @@
             <div>
                 <div id="line-7">7</div>
                 <pre>  VERS.                             2.0: CWLS LAS  -  VERSION 2.0</pre>
-                <div class="parsed">VERSION<span class="value">2.0</span></div>
+                <div>VERSION<span>2.0</span></div>
             </div>
             <div>
                 <div id="line-8">8</div>
                 <pre>  WRAP.                              NO: One line per depth step</pre>
-                <div class="parsed">WRAP<span class="value">NO</span></div>
+                <div>WRAP<span>NO</span></div>
             </div>
             <div>
                 <div id="line-9">9</div>
@@ -283,22 +301,32 @@
             <div>
                 <div id="line-12">12</div>
                 <pre>  STRT.M                          880.0: First depth in file</pre>
-                <div class="parsed">STRT<span class="value">880.0</span></div>
+                <div>STRT<span>880.0</span></div>
             </div>
             <div>
                 <div id="line-13">13</div>
                 <pre>  STOP.M                         1378.0: Last  depth in file</pre>
-                <div class="parsed">STOP<span class="value">1378.0</span></div>
+                <div>STOP<span>1378.0</span></div>
             </div>
             <div>
                 <div id="line-14">14</div>
                 <pre>  STEP.M                            0.2: Last  depth in file</pre>
-                <div class="parsed">STEP<span class="value">0.2</span></div>
+                <div>STEP<span>0.2</span></div>
             </div>
-            <div>
+            <!-- <div>
                 <div id="line-15">15</div>
                 <pre>  NULL.M                        -9999.0: Null  values</pre>
-                <div class="parsed">NULL<span class="value">-9999.0</span></div>
+                <div>NULL<span>-9999.0</span></div>
+            </div> -->
+            <div>
+                <div id="line-15">15</div>
+                <pre
+                    class="error">  NULL.M                               : Null  values</pre>
+                <div>
+                    <div>Поле не должно быть пустым</div>
+                    <div>Ошибка разбора файла</div>
+                    <div>Третья ошибка</div>
+                </div>
             </div>
             <div>
                 <div id="line-16">16</div>
@@ -308,7 +336,7 @@
             <div>
                 <div id="line-17">17</div>
                 <pre>  WELL.                            2308: WELL</pre>
-                <div class="parsed">WELL<span class="value">2308</span></div>
+                <div>WELL<span>2308</span></div>
             </div>
             <div>
                 <div id="line-18">18</div>
@@ -367,15 +395,15 @@
             <div>
                 <div id="line-29">29</div>
                 <pre>  DEPTH.M                              : Depth curve</pre>
-                <div class="parsed">DEPTH<span class="value">880.0</span><span
-                        class="value">881.0</span><span class="value">0.2</span>
+                <div>
+                    DEPTH<span>880.0</span><span>881.0</span><span>0.2</span>
                 </div>
             </div>
             <div>
                 <div id="line-30">30</div>
                 <pre>  KPR_. md                             : Permeability                                          </pre>
-                <div class="parsed">KPR_<span class="value">880.2</span><span
-                        class="value">880.8</span><span class="value">0.2</span>
+                <div>
+                    KPR_<span>880.2</span><span>880.8</span><span>0.2</span>
                 </div>
             </div>
             <div>
@@ -535,6 +563,8 @@
             <div>
                 <div id="line-63">63</div>
                 <pre>     881.0-9999.000        </pre>
+            </div>
+            <div id="line-last">
             </div>
         </main>
     </body>
