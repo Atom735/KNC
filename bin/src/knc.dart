@@ -27,6 +27,25 @@ const msgDoc2x = 'doc2x;';
 const msgZip = 'zip;';
 const msgUnzip = 'unzip;';
 
+String numToXlsAlpha(int i) {
+  return ((i >= 26) ? numToXlsAlpha((i ~/ 26) - 1) : '') +
+      String.fromCharCode('A'.codeUnits[0] + (i % 26));
+}
+
+Future<void> copyDirectoryRecursive(
+    final Directory i, final Directory o) async {
+  await o.create();
+  final entitys = await i.list();
+  await for (var entity in entitys) {
+    if (entity is File) {
+      await entity.copy(o.path + entity.path.substring(i.path.length));
+    } else if (entity is Directory) {
+      await copyDirectoryRecursive(
+          entity, Directory(o.path + entity.path.substring(i.path.length)));
+    }
+  }
+}
+
 class PathNewer {
   /// Путь именно к существующей папке, в которой будет подбираться имя
   final String prePath;
@@ -185,7 +204,100 @@ class KncTask extends KncTaskSpawnSets {
     }
     state = NTaskState.generateTable.index;
     // TODO: Генерация таблицы
+    await generateTable();
     // xls.
+    state = NTaskState.completed.index;
+  }
+
+  Future<void> generateTable() async {
+    final xlsDataIn = Directory(p.join('data', 'xls')).absolute;
+    final xlsDataOut = Directory(p.join(pathOut, 'xls')).absolute;
+    await copyDirectoryRecursive(xlsDataIn, xlsDataOut);
+    final xlsSheet =
+        File(p.join(xlsDataOut.path, 'xl', 'worksheets', 'sheet1.xml'));
+    final xlsSharedStrings =
+        File(p.join(xlsDataOut.path, 'xl', 'sharedStrings.xml'));
+    final xlsSheetTemplate = await xlsSheet.readAsString();
+    final xlsSharedStringsTemplate = await xlsSharedStrings.readAsString();
+    final _methods = <String>[];
+    final _wells = <String>[];
+
+    filesSearche.forEach((e) {
+      if (e.curves != null && e.curves.length >= 2) {
+        final _length = e.curves.length;
+        for (var i = 1; i < _length; i++) {
+          final _name = e.curves[i].name;
+          if (!_methods.contains(_name)) {
+            _methods.add(e.curves[i].name);
+          }
+        }
+      }
+      if (e.well != null && !_wells.contains(e.well)) {
+        _wells.add(e.well);
+      }
+    });
+    final _rows = <List<String>>[]; // WELL, INK, GISx2...
+    final _methodsLength = _methods.length;
+    filesSearche.forEach((e) {
+      if (e.well == null) {
+        return;
+      }
+      if (e.curves != null && e.curves.length >= 2) {
+        final _length = e.curves.length;
+        for (var i = 1; i < _length; i++) {
+          final _i = _methods.indexOf(e.curves[i].name) * 2 + 2;
+          var _row = _rows.firstWhere((_e) => _e[0] == e.well && _e[_i] == null,
+              orElse: () => null);
+          if (_row == null) {
+            _rows.add(List(_methodsLength * 2 + 2));
+            _row = _rows.last;
+            _row[0] = e.well;
+          }
+          _row[_i] = e.curves[i].strt;
+          _row[_i + 1] = e.curves[i].stop;
+        }
+      }
+    });
+
+    final _length = _methods.length;
+    final _sbMethods = StringBuffer();
+    final _sbMerge = StringBuffer(
+        '<mergeCell ref="H1:${numToXlsAlpha(_length * 2 + 5)}1"/>');
+    for (var i = 0; i < _length; i++) {
+      _sbMethods.write(
+          '<c r="${numToXlsAlpha(i * 2 + 7)}2" s="1" t="inlineStr"><is><t>${_methods[i]}</t></is></c>');
+      _sbMerge.write(
+          '<mergeCell ref="${numToXlsAlpha(i * 2 + 7)}2:${numToXlsAlpha(i * 2 + 8)}2"/>');
+    }
+
+    final _sbRows = StringBuffer();
+    final _rowsLength = _rows.length;
+    for (var i = 0; i < _rowsLength; i++) {
+      final _row = _rows[i];
+      _sbRows.write('<row r="${i + 2}" x14ac:dyDescent="0.25">');
+      _sbRows.write(
+          '<c r="A$i" s="0" t="s"><v>${_wells.indexOf(_row[0])}</v></c>');
+      final _rowLength = _row.length;
+      for (var j = 2; j < _rowLength; j++) {
+        _sbRows.write(
+            '<c r="${numToXlsAlpha(j + 5)}$i" s="0" t="n"><v>${_row[j]}</v></c>');
+      }
+      _sbRows.write('</row>');
+    }
+
+    await xlsSharedStrings.writeAsString(xlsSharedStringsTemplate
+        .replaceAll(r'$C$', _wells.length.toString())
+        .replaceFirst(r'$S$', _wells.map((e) => '<si><t>$e</t></si>').join()));
+
+    await xlsSheet.writeAsString(
+        xlsSheetTemplate
+            .replaceFirst(r'$METHODS$', _sbMethods.toString())
+            .replaceFirst(r'$ROWS$', _sbRows.toString())
+            .replaceFirst(r'$MERGE$', _sbMerge.toString()),
+        mode: FileMode.writeOnly,
+        flush: true);
+
+    await zip(xlsDataOut.path, xlsDataOut.path + '.xlsx');
   }
 
   Future<void> handleFileSearch(final File file, final String origin) async {
