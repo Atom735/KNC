@@ -274,13 +274,15 @@ class KncTask extends KncTaskSpawnSets {
     final _rowsLength = _rows.length;
     for (var i = 0; i < _rowsLength; i++) {
       final _row = _rows[i];
-      _sbRows.write('<row r="${i + 2}" x14ac:dyDescent="0.25">');
+      _sbRows.write('<row r="${i + 3}" x14ac:dyDescent="0.25">');
       _sbRows.write(
-          '<c r="A$i" s="0" t="s"><v>${_wells.indexOf(_row[0])}</v></c>');
+          '<c r="A${i + 3}" s="0" t="s"><v>${_wells.indexOf(_row[0])}</v></c>');
       final _rowLength = _row.length;
       for (var j = 2; j < _rowLength; j++) {
-        _sbRows.write(
-            '<c r="${numToXlsAlpha(j + 5)}$i" s="0" t="n"><v>${_row[j]}</v></c>');
+        if (_row[j] != null) {
+          _sbRows.write(
+              '<c r="${numToXlsAlpha(j + 5)}${i + 3}" s="0" t="n"><v>${_row[j]}</v></c>');
+        }
       }
       _sbRows.write('</row>');
     }
@@ -301,6 +303,9 @@ class KncTask extends KncTaskSpawnSets {
   }
 
   Future<void> handleFileSearch(final File file, final String origin) async {
+    if (filesSearche.length > 1000) {
+      return;
+    }
     final ext = p.extension(file.path).toLowerCase();
     if (settings.ext_files.contains(ext)) {
       final i = files;
