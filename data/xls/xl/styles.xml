@@ -34,14 +34,16 @@
         <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
     </cellStyleXfs>
     <cellXfs count="4">
+        <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
         <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1">
-            <alignment horizontal="center" vertical="center" wrapText="1"/>
+            <alignment horizontal="center" vertical="center"/>
         </xf>
-        <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyFill="1"/>
         <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1">
-            <alignment horizontal="center" vertical="center" wrapText="1"/>
+            <alignment horizontal="left" vertical="top"/>
         </xf>
-        <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyFill="1"/>
+        <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1">
+            <alignment horizontal="right"/>
+        </xf>
     </cellXfs>
     <cellStyles count="1">
         <cellStyle name="Обычный" xfId="0" builtinId="0"/>
