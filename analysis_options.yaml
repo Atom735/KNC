@@ -16,3 +16,4 @@ analyzer:
     - knc.angular.dart/**
     - knc.main.dart/**
     - knc.web.dart/**
+    - build/**

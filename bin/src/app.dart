@@ -7,6 +7,7 @@ import 'dart:isolate';
 import 'package:knc/async.dart';
 import 'package:knc/errors.dart';
 import 'package:knc/www.dart';
+import 'package:path/path.dart' as p;
 
 import 'converters.dart';
 import 'knc.main.dart';
@@ -38,6 +39,7 @@ class App {
 
   /// Конвертер WordConv и архивтор 7zip
   MyConverters converters;
+  final listOfFiles = <String, File>{'/': File('build/index.html')};
 
   /// Получить данные для формы TaskView
   String getWwwTaskViewUpdate(
@@ -57,6 +59,43 @@ class App {
     });
   }
 
+  Future<void> serveFile(
+      HttpRequest request, HttpResponse response, File file) async {
+    if (await file.exists()) {
+      response.statusCode = HttpStatus.ok;
+      final ext = p.extension(file.path).toLowerCase();
+      switch (ext) {
+        case '.html':
+          response.headers.add('content-type', 'text/html');
+          break;
+        case '.css':
+          response.headers.add('content-type', 'text/css');
+          break;
+        case '.js':
+          response.headers.add('content-type', 'application/javascript');
+          break;
+        case '.ico':
+          response.headers.add('content-type', 'image/x-icon');
+          break;
+        case '.map':
+          response.headers.add('content-type', 'application/json');
+          break;
+        case '.xlsx':
+          response.headers.add('content-type', 'application/vnd.ms-excel');
+          break;
+        default:
+      }
+      await response.addStream(file.openRead());
+      await response.flush();
+      await response.close();
+    } else {
+      response.statusCode = HttpStatus.notFound;
+      await response.write('404: Not Found');
+      await response.flush();
+      await response.close();
+    }
+  }
+
   Future<void> run() async {
     WebClientUsersDB();
     converters = await MyConverters.init(queueProc);
@@ -74,11 +113,12 @@ class App {
           final c = WebClient(socket);
           listOfClients.add(c);
         }, onError: getErrorFunc('Ошибка в подключении WebSocket'));
+      } else if (listOfFiles[request.uri.path] != null) {
+        await serveFile(request, response, listOfFiles[request.uri.path]);
+      } else if (listOfFiles[request.uri.path] != null) {
+        await serveFile(request, response, listOfFiles[request.uri.path]);
       } else {
-        response.statusCode = HttpStatus.internalServerError;
-        await response.write('Internal Server Error');
-        await response.flush();
-        await response.close();
+        await serveFile(request, response, File('build' + request.uri.path));
       }
     }, onError: getErrorFunc('Ошибка в прослушке HttpRequest:'));
 

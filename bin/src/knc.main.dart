@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert' as c;
 
@@ -83,9 +84,12 @@ class KncTaskOnMain extends KncTaskInternal {
       return;
     }
     _raport = i;
+    final xmlUrl =
+        '/' + i.replaceAll('\\', '/').replaceAll(':', ' ').replaceAll(' ', '_');
+    App().listOfFiles[xmlUrl] = File(_raport);
     sendForAllClients(wwwTaskUpdates +
         c.json.encode([
-          {'id': id, 'raport': _raport}
+          {'id': id, 'raport': xmlUrl}
         ]));
   }
 
@@ -179,6 +183,9 @@ class KncTaskOnMain extends KncTaskInternal {
     wrapperSendPort
         .waitMsgAll(msgTaskUpdateWorked)
         .listen((msg) => worked = int.tryParse(msg.s));
+    wrapperSendPort
+        .waitMsgAll(msgTaskUpdateRaport)
+        .listen((msg) => raport = msg.s);
 
     wrapperSendPort.waitMsgAll(msgDoc2x).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);

@@ -42,6 +42,19 @@
             "options": {
                 "cwd": "."
             },
+            "group": "build"
+        },
+        {
+            "label": "webdev build",
+            "type": "shell",
+            "command": "webdev",
+            "args": [
+                "build",
+                "--no-release",
+                "--output",
+                "web:build"
+            ],
+            "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true

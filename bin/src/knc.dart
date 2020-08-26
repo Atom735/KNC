@@ -23,6 +23,7 @@ const msgTaskUpdateErrors = 'taskerrors;';
 const msgTaskUpdateFiles = 'taskfiles;';
 const msgTaskUpdateWarnings = 'taskwarnings;';
 const msgTaskUpdateWorked = 'taskworked;';
+const msgTaskUpdateRaport = 'taskraport;';
 const msgDoc2x = 'doc2x;';
 const msgZip = 'zip;';
 const msgUnzip = 'unzip;';
@@ -223,6 +224,9 @@ class KncTask extends KncTaskSpawnSets {
     final _wells = <String>[];
 
     filesSearche.forEach((e) {
+      if (e.well == null || e.well.isEmpty) {
+        return;
+      }
       if (e.curves != null && e.curves.length >= 2) {
         final _length = e.curves.length;
         for (var i = 1; i < _length; i++) {
@@ -239,7 +243,7 @@ class KncTask extends KncTaskSpawnSets {
     final _rows = <List<String>>[]; // WELL, INK, GISx2...
     final _methodsLength = _methods.length;
     filesSearche.forEach((e) {
-      if (e.well == null) {
+      if (e.well == null || e.well.isEmpty) {
         return;
       }
       if (e.curves != null && e.curves.length >= 2) {
@@ -276,7 +280,7 @@ class KncTask extends KncTaskSpawnSets {
       final _row = _rows[i];
       _sbRows.write('<row r="${i + 3}" x14ac:dyDescent="0.25">');
       _sbRows.write(
-          '<c r="A${i + 3}" s="0" t="s"><v>${_wells.indexOf(_row[0])}</v></c>');
+          '<c r="A${i + 3}" s="0" t="inlineStr"><is><t>_${_row[0]}</t></is></c>');
       final _rowLength = _row.length;
       for (var j = 2; j < _rowLength; j++) {
         if (_row[j] != null) {
@@ -299,13 +303,15 @@ class KncTask extends KncTaskSpawnSets {
         mode: FileMode.writeOnly,
         flush: true);
 
-    await zip(xlsDataOut.path, xlsDataOut.path + '.xlsx');
+    final xlsPath = xlsDataOut.path + '.xlsx';
+    await zip(xlsDataOut.path, xlsPath);
+    wrapper.send(0, '$msgTaskUpdateRaport$xlsPath');
   }
 
   Future<void> handleFileSearch(final File file, final String origin) async {
-    if (filesSearche.length > 1000) {
-      return;
-    }
+    // if (filesSearche.length > 1000) {
+    //   return;
+    // }
     final ext = p.extension(file.path).toLowerCase();
     if (settings.ext_files.contains(ext)) {
       final i = files;
