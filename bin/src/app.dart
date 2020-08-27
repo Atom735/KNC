@@ -8,7 +8,7 @@ import 'package:path/path.dart' as p;
 
 import 'User.dart';
 import 'Client.dart';
-import 'converters.dart';
+import 'AppIO.dart';
 import 'knc.main.dart';
 
 class App {
@@ -36,7 +36,7 @@ class App {
   final queueProc = AsyncTaskQueue(8, false);
 
   /// Конвертер WordConv и архивтор 7zip
-  MyConverters converters;
+  AppIO converters;
   final listOfFiles = <String, File>{'/': File('build/index.html')};
 
   /// Получить данные для формы TaskView
@@ -96,7 +96,7 @@ class App {
   Future<void> run() async {
     await User.load();
 
-    converters = await MyConverters.init(queueProc);
+    converters = await AppIO.init(queueProc);
     await converters.clear();
     http = await HttpServer.bind(InternetAddress.anyIPv4, wwwPort);
     print('Listening on http://${http.address.address}:${http.port}/');
