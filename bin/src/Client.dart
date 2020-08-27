@@ -6,7 +6,7 @@ import 'package:knc/errors.dart';
 import 'package:knc/SocketWrapper.dart';
 import 'package:knc/www.dart';
 
-import 'App2.dart';
+import 'App.dart';
 import 'User.dart';
 
 class Client {

@@ -1,4 +1,4 @@
-import 'src/App2.dart';
+import 'src/App.dart';
 
 void main(List<String> args) {
   App().run();
