@@ -1,0 +1,72 @@
+<!-- Диалог регистрации -->
+<div id="my-registration-dialog" class="mdc-dialog">
+    <div class="mdc-dialog__container">
+        <form class="mdc-dialog__surface">
+            <!-- Title cannot contain leading whitespace due to mdc-typography-baseline-top() -->
+            <h2 class="mdc-dialog__title">
+                Регистрация
+            </h2>
+            <div class="mdc-dialog__content">
+                <label id="my-registration-dialog-mail"
+                    class="mdc-text-field mdc-text-field--filled mdc-text-field--fullwidth">
+                    <span class="mdc-text-field__ripple"></span>
+                    <input class="mdc-text-field__input" type="email"
+                        name="email" placeholder="Login or Email" required>
+                    <span class="mdc-line-ripple"></span>
+                </label>
+                <label id="my-registration-dialog-pass"
+                    class="mdc-text-field mdc-text-field--filled mdc-text-field--fullwidth">
+                    <span class="mdc-text-field__ripple"></span>
+                    <input class="mdc-text-field__input" type="password"
+                        name="pass" placeholder="Пароль" required minlength="1">
+                    <span class="mdc-line-ripple"></span>
+                </label>
+            </div>
+            <div class="mdc-dialog__actions">
+                <button id="my-registration-dialog-sign-in" type="button"
+                    class="mdc-button mdc-dialog__button mdc-button--outlined">
+                    <div class="mdc-button__ripple"></div>
+                    <span class="mdc-button__label">Войти</span>
+                </button>
+                <button type="button" class="mdc-button mdc-dialog__button"
+                    data-mdc-dialog-action="close">
+                    <div class="mdc-button__ripple"></div>
+                    <span class="mdc-button__label">Отмена</span>
+                </button>
+                <button id="my-registration-dialog-registration" type="button"
+                    class="mdc-button mdc-dialog__button mdc-button--raised">
+                    <div class="mdc-button__ripple"></div>
+                    <span class="mdc-button__label">Регистрация</span>
+                </button>
+            </div>
+            <div id="my-registration-dialog-linear-progress"
+                class="mdc-linear-progress mdc-linear-progress--indeterminate mdc-linear-progress--closed">
+                <div class="mdc-linear-progress__buffer">
+                    <div class="mdc-linear-progress__buffer-bar"></div>
+                    <div class="mdc-linear-progress__buffer-dots"></div>
+                </div>
+                <div
+                    class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+                    <span class="mdc-linear-progress__bar-inner"></span>
+                </div>
+                <div
+                    class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+                    <span class="mdc-linear-progress__bar-inner"></span>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="mdc-dialog__scrim"></div>
+</div>
+<div id="my-registration-dialog-sackbar-error"
+    class="mdc-snackbar mdc-snackbar--leading">
+    <div class="mdc-snackbar__surface">
+        <div class="mdc-snackbar__label">
+            Этот Email уже зарегестрирован
+        </div>
+        <div class="mdc-snackbar__actions">
+            <button
+                class="mdc-snackbar__dismiss mdc-icon-button material-icons">close</button>
+        </div>
+    </div>
+</div>

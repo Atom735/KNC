@@ -18,6 +18,12 @@ class DialogLogin extends MDCDialog {
   final eSnackBarOfError =
       MDCSnackbar(eGetById('my-login-dialog-sackbar-error'));
 
+  static Future<void> init() async {
+    document.body
+        .appendHtml(await HttpRequest.getString('/src/DialogLogin.html'));
+    DialogLogin();
+  }
+
   DialogLogin._init(Element root) : super(root) {
     print('$runtimeType created: $hashCode');
     _clear();

@@ -19,6 +19,12 @@ class DialogRegistration extends MDCDialog {
   final eSnackBarOfError =
       MDCSnackbar(eGetById('my-registration-dialog-sackbar-error'));
 
+  static Future<void> init() async {
+    document.body.appendHtml(
+        await HttpRequest.getString('/src/DialogRegistration.html'));
+    DialogRegistration();
+  }
+
   DialogRegistration._init(Element root) : super(root) {
     print('$runtimeType created: $hashCode');
     _clear();

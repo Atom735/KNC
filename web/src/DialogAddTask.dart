@@ -115,6 +115,12 @@ class DialogAddTask extends MDCDialog {
     App().requestOnce('$wwwTaskNew${jsonEncode(v)}').then((msg) => reset());
   }
 
+  static Future<void> init() async {
+    document.body
+        .appendHtml(await HttpRequest.getString('/src/DialogAddTask.html'));
+    DialogAddTask();
+  }
+
   DialogAddTask._init() : super(eGetById('my-add-task-dialog')) {
     _instance = this;
     print('$runtimeType created: $hashCode');
