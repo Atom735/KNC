@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:knc/ArchiverOtput.dart';
 import 'package:knc/OneFile.dart';
@@ -11,11 +10,11 @@ import 'package:knc/www.dart';
 import 'package:path/path.dart' as p;
 import 'package:knc/SocketWrapper.dart';
 
+import 'Conv.dart';
 import 'FIleParserLas.dart';
 import 'ink.dart';
 import 'knc.main.dart';
 import 'las.dart';
-import 'mapping.dart';
 import 'misc.dart';
 import 'msgs.dart';
 import 'xls.dart';
@@ -329,8 +328,8 @@ class KncTask extends KncTaskSpawnSets {
       return null;
     }
     // Подбираем кодировку
-    final encodesRaiting = getMappingRaitings(charMaps, data);
-    final encode = getMappingMax(encodesRaiting);
+    final encodesRaiting = Conv.staticGetMappingRaitings(charMaps, data);
+    final encode = Conv.getMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
     final buffer = String.fromCharCodes(data
         .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));

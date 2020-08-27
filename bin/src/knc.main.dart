@@ -7,7 +7,6 @@ import 'package:knc/www.dart';
 
 import 'App.dart';
 import 'User.dart';
-import 'Client.dart';
 import 'Task.dart';
 import 'msgs.dart';
 
@@ -192,7 +191,7 @@ class KncTaskOnMain extends KncTaskInternal {
     wrapperSendPort.waitMsgAll(msgDoc2x).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
       App()
-          .converters
+          .conv
           .doc2x(msg.s.substring(0, i0),
               msg.s.substring(i0 + msgRecordSeparator.length))
           .then((value) => wrapperSendPort.send(msg.i, value.toString()));
@@ -200,16 +199,17 @@ class KncTaskOnMain extends KncTaskInternal {
 
     wrapperSendPort.waitMsgAll(msgZip).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
+      final pIn = msg.s.substring(0, i0);
+      final pOut = msg.s.substring(i0 + msgRecordSeparator.length);
       App()
-          .converters
-          .zip(msg.s.substring(0, i0),
-              msg.s.substring(i0 + msgRecordSeparator.length))
+          .conv
+          .zip(pIn, pOut)
           .then((value) => wrapperSendPort.send(msg.i, value.toWrapperMsg()));
     });
 
     wrapperSendPort.waitMsgAll(msgUnzip).listen((msg) {
       App()
-          .converters
+          .conv
           .unzip(msg.s)
           .then((value) => wrapperSendPort.send(msg.i, value.toWrapperMsg()));
     });

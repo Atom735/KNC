@@ -24,10 +24,10 @@ class ProcessManager {
   int _max;
 
   /// Максимальное количество одновременно исполняемых задач
-  int get max => _max;
+  int get maxProc => _max;
 
   /// Максимальное количество одновременно исполняемых задач
-  set max(int i) {
+  set maxProc(int i) {
     if (_max == i) {
       return;
     }

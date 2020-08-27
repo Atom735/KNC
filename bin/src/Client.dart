@@ -73,7 +73,7 @@ class Client {
     });
     waitMsgAll(wwwGetFileData).listen((msg) {
       File(msg.s).readAsBytes().then((data) {
-        wrapper.send(msg.i, App().converters.convertData(data));
+        wrapper.send(msg.i, App().conv.decode(data));
       });
     });
 

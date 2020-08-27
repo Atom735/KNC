@@ -8,7 +8,7 @@ import 'package:path/path.dart' as p;
 
 import 'User.dart';
 import 'Client.dart';
-import 'AppIO.dart';
+import 'Conv.dart';
 import 'knc.main.dart';
 
 class App {
@@ -36,7 +36,7 @@ class App {
   final queueProc = AsyncTaskQueue(8, false);
 
   /// Конвертер WordConv и архивтор 7zip
-  AppIO converters;
+  Conv conv;
   final listOfFiles = <String, File>{'/': File('build/index.html')};
 
   /// Получить данные для формы TaskView
@@ -95,9 +95,8 @@ class App {
 
   Future<void> run() async {
     await User.load();
+    conv = await Conv.init();
 
-    converters = await AppIO.init(queueProc);
-    await converters.clear();
     http = await HttpServer.bind(InternetAddress.anyIPv4, wwwPort);
     print('Listening on http://${http.address.address}:${http.port}/');
     print('For connect use http://localhost:${http.port}/');
@@ -144,7 +143,7 @@ class App {
     final kncTask = KncTaskOnMain(_uTaskNewId, task, user);
     listOfTasks[kncTask.id] = kncTask;
 
-    KncTaskSpawnSets(kncTask, converters.ssCharMaps, receivePort.sendPort)
+    KncTaskSpawnSets(kncTask, conv.charMaps, receivePort.sendPort)
         .spawn()
         .then((isolate) => kncTask.isolate = isolate);
   }

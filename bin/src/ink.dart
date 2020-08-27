@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:xml/xml_events.dart';
 
 import 'package:knc/errors.dart';
-import 'mapping.dart';
+import 'Conv.dart';
 import 'dbf.dart';
 import 'Task.dart';
 
@@ -498,8 +498,8 @@ class InkData {
   InkData.txt(final UnmodifiableUint8ListView bytes,
       final Map<String, List<String>> charMaps) {
     // Подбираем кодировку
-    encodesRaiting = getMappingRaitings(charMaps, bytes);
-    encode = getMappingMax(encodesRaiting);
+    encodesRaiting = Conv.staticGetMappingRaitings(charMaps, bytes);
+    encode = Conv.getMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
     final buffer = String.fromCharCodes(bytes
         .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
@@ -1598,8 +1598,9 @@ class InkDataOLD {
       final Map<String, List<String>> charMaps) {
     bInkFile = false;
     // Подбираем кодировку
-    encodesRaiting = Map.unmodifiable(getMappingRaitings(charMaps, bytes));
-    encode = getMappingMax(encodesRaiting);
+    encodesRaiting =
+        Map.unmodifiable(Conv.staticGetMappingRaitings(charMaps, bytes));
+    encode = Conv.getMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
     final buffer = String.fromCharCodes(bytes
         .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
