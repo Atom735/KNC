@@ -16,36 +16,9 @@ import 'ink.dart';
 import 'knc.main.dart';
 import 'las.dart';
 import 'mapping.dart';
+import 'misc.dart';
+import 'msgs.dart';
 import 'xls.dart';
-
-const msgTaskUpdateState = 'taskstate;';
-const msgTaskUpdateErrors = 'taskerrors;';
-const msgTaskUpdateFiles = 'taskfiles;';
-const msgTaskUpdateWarnings = 'taskwarnings;';
-const msgTaskUpdateWorked = 'taskworked;';
-const msgTaskUpdateRaport = 'taskraport;';
-const msgDoc2x = 'doc2x;';
-const msgZip = 'zip;';
-const msgUnzip = 'unzip;';
-
-String numToXlsAlpha(int i) {
-  return ((i >= 26) ? numToXlsAlpha((i ~/ 26) - 1) : '') +
-      String.fromCharCode('A'.codeUnits[0] + (i % 26));
-}
-
-Future<void> copyDirectoryRecursive(
-    final Directory i, final Directory o) async {
-  await o.create();
-  final entitys = await i.list();
-  await for (var entity in entitys) {
-    if (entity is File) {
-      await entity.copy(o.path + entity.path.substring(i.path.length));
-    } else if (entity is Directory) {
-      await copyDirectoryRecursive(
-          entity, Directory(o.path + entity.path.substring(i.path.length)));
-    }
-  }
-}
 
 class PathNewer {
   /// Путь именно к существующей папке, в которой будет подбираться имя

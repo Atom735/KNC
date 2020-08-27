@@ -1,13 +1,14 @@
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:convert' as c;
+import 'dart:convert';
 
 import 'package:knc/SocketWrapper.dart';
 import 'package:knc/www.dart';
 
 import 'App.dart';
 import 'WebClient.dart';
-import 'knc.dart';
+import 'Task.dart';
+import 'msgs.dart';
 
 class KncTaskInternal {
   final int id;
@@ -63,7 +64,7 @@ class KncTaskOnMain extends KncTaskInternal {
                 .where((client) => client.user == _user)
                 .map((e) => e.wrapper)
                 .toList(growable: true)) {
-    final jsonMsg = wwwTaskNew + c.jsonEncode(json);
+    final jsonMsg = wwwTaskNew + jsonEncode(json);
     sendForAllClients(jsonMsg);
   }
 
@@ -88,7 +89,7 @@ class KncTaskOnMain extends KncTaskInternal {
         '/' + i.replaceAll('\\', '/').replaceAll(':', ' ').replaceAll(' ', '_');
     App().listOfFiles[xmlUrl] = File(_raport);
     sendForAllClients(wwwTaskUpdates +
-        c.json.encode([
+        jsonEncode([
           {'id': id, 'raport': xmlUrl}
         ]));
   }
@@ -100,7 +101,7 @@ class KncTaskOnMain extends KncTaskInternal {
     }
     _pause = i;
     sendForAllClients(wwwTaskUpdates +
-        c.json.encode([
+        jsonEncode([
           {'id': id, 'pause': _pause}
         ]));
   }
@@ -112,7 +113,7 @@ class KncTaskOnMain extends KncTaskInternal {
     }
     _state = i;
     sendForAllClients(wwwTaskUpdates +
-        c.json.encode([
+        jsonEncode([
           {'id': id, 'state': _state}
         ]));
   }
@@ -124,7 +125,7 @@ class KncTaskOnMain extends KncTaskInternal {
     }
     _warnings = i;
     sendForAllClients(wwwTaskUpdates +
-        c.json.encode([
+        jsonEncode([
           {'id': id, 'warnings': _warnings}
         ]));
   }
@@ -136,7 +137,7 @@ class KncTaskOnMain extends KncTaskInternal {
     }
     _worked = i;
     sendForAllClients(wwwTaskUpdates +
-        c.json.encode([
+        jsonEncode([
           {'id': id, 'worked': _worked}
         ]));
   }
@@ -148,7 +149,7 @@ class KncTaskOnMain extends KncTaskInternal {
     }
     _errors = i;
     sendForAllClients(wwwTaskUpdates +
-        c.json.encode([
+        jsonEncode([
           {'id': id, 'errors': _errors}
         ]));
   }
@@ -160,7 +161,7 @@ class KncTaskOnMain extends KncTaskInternal {
     }
     _files = i;
     sendForAllClients(wwwTaskUpdates +
-        c.json.encode([
+        jsonEncode([
           {'id': id, 'files': _files}
         ]));
   }

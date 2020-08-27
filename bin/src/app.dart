@@ -1,17 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'dart:isolate';
 
-import 'package:knc/async.dart';
-import 'package:knc/errors.dart';
-import 'package:knc/www.dart';
+import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 
+import 'WebClient.dart';
 import 'converters.dart';
 import 'knc.main.dart';
-import 'WebClient.dart';
 
 class App {
   /// Собсна сам сервер
@@ -50,7 +47,7 @@ class App {
         list.add(task.json);
       }
     });
-    return json.encode(list);
+    return jsonEncode(list);
   }
 
   void sendForAllClients(final String str) {

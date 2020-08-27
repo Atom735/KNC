@@ -7,7 +7,7 @@ import 'package:xml/xml_events.dart';
 import 'package:knc/errors.dart';
 import 'mapping.dart';
 import 'dbf.dart';
-import 'knc.dart';
+import 'Task.dart';
 
 import 'package:path/path.dart' as p;
 
