@@ -6,7 +6,7 @@ import 'mapping.dart';
 import 'package:path/path.dart' as p;
 import 'package:knc/async.dart';
 
-class MyConverters extends Archiver {
+class AppIO extends Archiver {
   /// Путь к программе 7Zip
   final String ssPath7z;
 
@@ -31,14 +31,17 @@ class MyConverters extends Archiver {
         (i) => i >= 0x80 ? ssCharMaps[encode][i - 0x80].codeUnitAt(0) : i));
   }
 
-  MyConverters(
+  AppIO(
       this.ssPath7z, this.ssPathWordconv, this.ssCharMaps, final Directory dir,
       [final AsyncTaskQueue queue])
       : super(ssPath7z, dir, queue);
 
-  static Future<MyConverters> init([final AsyncTaskQueue queue]) async =>
-      MyConverters(await searchProgram_7Zip(), await searchProgram_WordConv(),
-          await loadCharMaps(), Directory('temp').absolute, queue);
+  static Future<AppIO> init([final AsyncTaskQueue queue]) async => AppIO(
+      await searchProgram_7Zip(),
+      await searchProgram_WordConv(),
+      await loadCharMaps(),
+      Directory('temp').absolute,
+      queue);
 
   static Future<Map<String, List<String>>> loadCharMaps() =>
       loadMappings('mappings').then((charmap) => charmap);

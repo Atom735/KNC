@@ -6,7 +6,8 @@ import 'dart:isolate';
 import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 
-import 'WebClient.dart';
+import 'User.dart';
+import 'Client.dart';
 import 'converters.dart';
 import 'knc.main.dart';
 
@@ -29,7 +30,7 @@ class App {
   var _uTaskNewId = 0;
 
   /// Список подключенных клиентов
-  final listOfClients = <WebClient>[];
+  final clients = <Client>[];
 
   /// Очередь выполнения субпроцессов
   final queueProc = AsyncTaskQueue(8, false);
@@ -39,8 +40,7 @@ class App {
   final listOfFiles = <String, File>{'/': File('build/index.html')};
 
   /// Получить данные для формы TaskView
-  String getWwwTaskViewUpdate(
-      final WebClientUser user, final List<int> updated) {
+  String getWwwTaskViewUpdate(final User user, final List<int> updated) {
     final list = [];
     listOfTasks.forEach((key, task) {
       if (!updated.contains(key)) {
@@ -51,7 +51,7 @@ class App {
   }
 
   void sendForAllClients(final String str) {
-    listOfClients.forEach((client) {
+    clients.forEach((client) {
       client.wrapper.send(0, str);
     });
   }
@@ -94,7 +94,8 @@ class App {
   }
 
   Future<void> run() async {
-    WebClientUsersDB();
+    await User.load();
+
     converters = await MyConverters.init(queueProc);
     await converters.clear();
     http = await HttpServer.bind(InternetAddress.anyIPv4, wwwPort);
@@ -107,8 +108,8 @@ class App {
         // ignore: unawaited_futures
         WebSocketTransformer.upgrade(request).then((socket) {
           response.close();
-          final c = WebClient(socket);
-          listOfClients.add(c);
+          final c = Client(socket);
+          clients.add(c);
         }, onError: getErrorFunc('Ошибка в подключении WebSocket'));
       } else if (listOfFiles[request.uri.path] != null) {
         await serveFile(request, response, listOfFiles[request.uri.path]);
@@ -137,7 +138,7 @@ class App {
     }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
   }
 
-  void getWwwTaskNew(final String s, final WebClientUser user) {
+  void getWwwTaskNew(final String s, final User user) {
     _uTaskNewId += 1;
     final task = WWW_TaskSettings.fromJson(jsonDecode(s));
     final kncTask = KncTaskOnMain(_uTaskNewId, task, user);

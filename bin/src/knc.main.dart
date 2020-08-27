@@ -6,13 +6,14 @@ import 'package:knc/SocketWrapper.dart';
 import 'package:knc/www.dart';
 
 import 'App.dart';
-import 'WebClient.dart';
+import 'User.dart';
+import 'Client.dart';
 import 'Task.dart';
 import 'msgs.dart';
 
 class KncTaskInternal {
   final int id;
-  final WebClientUser user;
+  final User user;
   final WWW_TaskSettings settings;
   final List<SocketWrapper> wrappers;
 
@@ -53,14 +54,14 @@ class KncTaskOnMain extends KncTaskInternal {
   SendPort sendPort;
   SocketWrapper wrapperSendPort;
 
-  KncTaskOnMain(final int _id, final WWW_TaskSettings _settings,
-      final WebClientUser _user)
+  KncTaskOnMain(
+      final int _id, final WWW_TaskSettings _settings, final User _user)
       : super(
             _id,
             _user,
             _settings,
             App()
-                .listOfClients
+                .clients
                 .where((client) => client.user == _user)
                 .map((e) => e.wrapper)
                 .toList(growable: true)) {
