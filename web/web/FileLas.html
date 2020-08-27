@@ -5,89 +5,9 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Example of Las File</title>
-
+        <link rel="stylesheet" href="../res/clear.css">
         <script defer src="/web/test.dart.js"></script>
         <style>
-            body,
-            div,
-            dl,
-            dt,
-            dd,
-            ul,
-            ol,
-            li,
-            h1,
-            h2,
-            h3,
-            h4,
-            h5,
-            h6,
-            pre,
-            form,
-            fieldset,
-            input,
-            textarea,
-            p,
-            blockquote,
-            th,
-            td {
-                margin: 0;
-                padding: 0;
-            }
-
-            table {
-                border-collapse: collapse;
-                border-spacing: 0;
-            }
-
-            fieldset,
-            img {
-                border: 0;
-            }
-
-            address,
-            caption,
-            cite,
-            code,
-            dfn,
-            em,
-            strong,
-            th,
-            var {
-                font-style: normal;
-                font-weight: normal;
-            }
-
-            ol,
-            ul {
-                list-style: none;
-            }
-
-            caption,
-            th {
-                text-align: left;
-            }
-
-            h1,
-            h2,
-            h3,
-            h4,
-            h5,
-            h6 {
-                font-size: 100%;
-                font-weight: normal;
-            }
-
-            q:before,
-            q:after {
-                content: "";
-            }
-
-            abbr,
-            acronym {
-                border: 0;
-            }
-
             main>div {
                 height: 1rem;
                 /* width: max-content; */
@@ -128,7 +48,7 @@
                 position: absolute;
                 right: 5px;
                 left: auto;
-                background: #ccc;
+                background: #eee;
                 padding: 4px;
                 margin-top: -4px;
                 border-radius: 4px;
@@ -138,20 +58,12 @@
 
 
             main>div:hover>pre+div,
-            main>div:hover>input+div {
+            main>div:hover>input+div,
+            main>div>input:focus+div {
                 opacity: 1.0;
                 visibility: visible;
             }
 
-            main>div>pre+div>span {
-                background: #aaa;
-                /* margin: 0 4px; */
-                border-radius: 4px;
-                padding: 2px;
-                margin-top: -2px;
-                margin-left: 4px;
-                margin: -2px -2px 0 8px;
-            }
 
             main>div>pre,
             main>div>input {
@@ -170,6 +82,7 @@
                 border: none;
                 /* color: aquamarine; */
                 background: none;
+                padding: 0;
                 /* box-sizing: border-box; */
             }
 
@@ -178,9 +91,33 @@
                 background: rgba(255, 0, 0, 0.05);
             }
 
-            main>div>pre.error+div,
-            main>div>input.error+div {
-                background: #faa;
+
+            main>div>pre+div>span,
+            main>div>pre+div>div.p>span,
+            main>div>input+div>span,
+            main>div>input+div>div.p>span {
+                background: #fff;
+                /* margin: 0 4px; */
+                border-radius: 4px;
+                padding: 2px;
+                margin: -2px -2px 0 8px;
+            }
+
+            main>div>pre+div>div,
+            main>div>input+div>div {
+                border-radius: 4px;
+                padding: 2px;
+                margin: 2px;
+            }
+
+            main>div>pre+div>div.e,
+            main>div>input+div>div.e {
+                background: #fcc;
+            }
+
+            main>div>pre+div>div.w,
+            main>div>input+div>div.w {
+                background: #ffc;
             }
 
             main>div>pre.ignore,
@@ -227,9 +164,9 @@
                         t = v.nextElementSibling;
                         i = document.createElement('input');
                         i.value = t.innerText;
-                        while (t.nextElementSibling) {
-                            t.nextElementSibling.remove();
-                        }
+                        // while (t.nextElementSibling) {
+                        //     t.nextElementSibling.remove();
+                        // }
                         i.classList = t.classList;
                         t.replaceWith(i);
                         v.style.background = "#e1bee7";
@@ -316,9 +253,11 @@
                 <pre
                     class="error">  NULL.M                               : Null  values</pre>
                 <div>
-                    <div>Поле не должно быть пустым</div>
-                    <div>Ошибка разбора файла</div>
-                    <div>Третья ошибка</div>
+                    <div class="p">NULL<span>0.2</span><span>0.2</span></div>
+                    <div class="w">Поле не должно быть пустым</div>
+                    <div class="e">Поле не должно быть пустым</div>
+                    <div class="e">Ошибка разбора файла</div>
+                    <div class="e">Третья ошибка</div>
                 </div>
             </div>
             <div>
@@ -374,6 +313,7 @@
             <div>
                 <div id="line-26">26</div>
                 <pre class="section">~Curve information</pre>
+                <div>Curves</div>
             </div>
             <div>
                 <div id="line-27">27</div>
