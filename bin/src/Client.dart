@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:knc/errors.dart';
-import 'package:knc/SocketWrapper.dart';
-import 'package:knc/www.dart';
+import 'package:knc/knc.dart';
 
 import 'App.dart';
 import 'User.dart';
@@ -19,26 +17,28 @@ class Client {
   /// Пользователь подключённого клиента
   User user;
 
+  @override
+  String toString() =>
+      '$runtimeType($hashCode)[$user].WebSocket(${socket.hashCode})';
+
   /// Создание нового клиента с указанным сокетом и
   /// пользователем, если он был задан
   Client(this.socket, [this.user = User.guest])
       : wrapper = SocketWrapper((msg) => socket.add(msg)) {
-    print(
-        '$runtimeType($hashCode)[$user].WebSocket(${socket.hashCode}) создан');
+    print('$this created');
+    App().clients.add(this);
 
     socket.listen(
         (event) {
           if (event is String) {
-            print('$runtimeType($hashCode)[$user]: recv => $event');
+            print('$this: recv => $event');
             wrapper.recv(event);
           }
         },
-        onError: getErrorFunc(
-            'Ошибка в прослушке $runtimeType($hashCode)[$user].WebSocket(${socket.hashCode}):'),
+        onError: getErrorFunc('Ошибка в прослушке $this'),
         onDone: () {
           App().clients.remove(this);
-          print(
-              '$runtimeType($hashCode)[$user].WebSocket(${socket.hashCode}) уничтожен');
+          print('$this released');
         });
     waitMsgAll(wwwTaskViewUpdate).listen((msg) {
       wrapper.send(

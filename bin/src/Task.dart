@@ -3,12 +3,8 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
 
-import 'package:knc/ArchiverOtput.dart';
-import 'package:knc/OneFile.dart';
-import 'package:knc/errors.dart';
-import 'package:knc/www.dart';
+import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
-import 'package:knc/SocketWrapper.dart';
 
 import 'Conv.dart';
 import 'FIleParserLas.dart';

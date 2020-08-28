@@ -24,7 +24,16 @@ class Conv extends ProcessManager {
   /// Временная папка содержащая все временные функции разархивирования
   final Directory dirTemp;
 
-  Conv(this.dirTemp, this.pathArchiver, this.pathWordConv, this.charMaps);
+  @override
+  String toString() =>
+      '$runtimeType($hashCode)[$pathArchiver;$pathWordConv]{${charMaps.keys.join(";")}}';
+  Conv._init(
+      this.dirTemp, this.pathArchiver, this.pathWordConv, this.charMaps) {
+    print('$this created');
+    _instance = this;
+  }
+  static Conv _instance;
+  factory Conv() => _instance;
 
   /// Значение рейтинга кодировок
   Map<String, int> codePageRaiting;
@@ -44,7 +53,7 @@ class Conv extends ProcessManager {
       _searchProgram_7Zip(),
       _searchProgram_WordConv(),
       _loadCharMaps()
-    ]).then((f) => Conv(f[0], f[1], f[2], f[3]));
+    ]).then((f) => Conv._init(f[0], f[1], f[2], f[3]));
   }
 
   /// Подбирает кодировку и конвертирует в строку, подобранная кодировка
@@ -89,17 +98,20 @@ class Conv extends ProcessManager {
               .createTemp('arch.')
               .then((temp) => unzip(pathToArchive, temp.path)))
           : run(pathArchiver,
-              ['x', '-o$pathToOutDir', pathToArchive, '-scsUTF-8'],
-              stdoutEncoding: null, stderrEncoding: null).then((value) => archiverResults(value, pathToArchive, pathToOutDir));
+                  ['x', '-o$pathToOutDir', pathToArchive, '-scsUTF-8'],
+                  stdoutEncoding: null, stderrEncoding: null)
+              .then((value) =>
+                  archiverResults(value, pathToArchive, pathToOutDir));
 
   /// Запаковывает данные внутри папки [pathToData] в zip архиф [pathToOutput]
   /// с помощью 7zip
   Future<ArchiverOutput> zip(
           final String pathToData, final String pathToOutput) =>
       run(pathArchiver, ['a', '-tzip', pathToOutput, '*', '-scsUTF-8'],
-          workingDirectory: pathToData,
-          stdoutEncoding: null,
-          stderrEncoding: null).then((value) => archiverResults(value, pathToData, pathToOutput));
+              workingDirectory: pathToData,
+              stdoutEncoding: null,
+              stderrEncoding: null)
+          .then((value) => archiverResults(value, pathToData, pathToOutput));
 
   /// Ищет где находися программа 7Zip
   static Future<String> _searchProgram_7Zip() => Future.wait(
@@ -188,7 +200,7 @@ class Conv extends ProcessManager {
 
   /// Преобразует данные процесса в выходные данные архиватора
   ArchiverOutput archiverResults(
-          final ProcessResult res, final String pathIn, final String pathOut) {
+      final ProcessResult res, final String pathIn, final String pathOut) {
     if (exitCode == 0) {
       return ArchiverOutput(
           exitCode: exitCode, pathIn: pathIn, pathOut: pathOut);

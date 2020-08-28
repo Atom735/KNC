@@ -6,6 +6,7 @@ import 'dart:isolate';
 import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 
+import 'Server.dart';
 import 'User.dart';
 import 'Client.dart';
 import 'Conv.dart';
@@ -13,8 +14,7 @@ import 'knc.main.dart';
 
 class App {
   /// Собсна сам сервер
-  HttpServer http;
-  StreamSubscription<HttpRequest> httpSubscription;
+  Server server;
 
   /// Виртуальная папка, при URL к файлам, файлы ищутся этой папке.
   ///
@@ -23,7 +23,6 @@ class App {
 
   /// Порт прослушиваемый главным изолятом
   final receivePort = ReceivePort();
-  StreamSubscription receivePortSubscription;
 
   /// Список запущенных задач
   final listOfTasks = <int, KncTaskOnMain>{};
@@ -31,9 +30,6 @@ class App {
 
   /// Список подключенных клиентов
   final clients = <Client>[];
-
-  /// Очередь выполнения субпроцессов
-  final queueProc = AsyncTaskQueue(8, false);
 
   /// Конвертер WordConv и архивтор 7zip
   Conv conv;
@@ -56,70 +52,10 @@ class App {
     });
   }
 
-  Future<void> serveFile(
-      HttpRequest request, HttpResponse response, File file) async {
-    if (await file.exists()) {
-      response.statusCode = HttpStatus.ok;
-      final ext = p.extension(file.path).toLowerCase();
-      switch (ext) {
-        case '.html':
-          response.headers.add('content-type', 'text/html');
-          break;
-        case '.css':
-          response.headers.add('content-type', 'text/css');
-          break;
-        case '.js':
-          response.headers.add('content-type', 'application/javascript');
-          break;
-        case '.ico':
-          response.headers.add('content-type', 'image/x-icon');
-          break;
-        case '.map':
-          response.headers.add('content-type', 'application/json');
-          break;
-        case '.xlsx':
-          response.headers.add('content-type', 'application/vnd.ms-excel');
-          break;
-        default:
-      }
-      await response.addStream(file.openRead());
-      await response.flush();
-      await response.close();
-    } else {
-      response.statusCode = HttpStatus.notFound;
-      await response.write('404: Not Found');
-      await response.flush();
-      await response.close();
-    }
-  }
-
   Future<void> run() async {
-    await User.load();
-    conv = await Conv.init();
+    await Future.wait([User.load(), Conv.init()]);
 
-    http = await HttpServer.bind(InternetAddress.anyIPv4, wwwPort);
-    print('Listening on http://${http.address.address}:${http.port}/');
-    print('For connect use http://localhost:${http.port}/');
-    httpSubscription = http.listen((request) async {
-      final response = request.response;
-      print('http: ${request.uri.path}');
-      if (request.uri.path == '/ws') {
-        // ignore: unawaited_futures
-        WebSocketTransformer.upgrade(request).then((socket) {
-          response.close();
-          final c = Client(socket);
-          clients.add(c);
-        }, onError: getErrorFunc('Ошибка в подключении WebSocket'));
-      } else if (listOfFiles[request.uri.path] != null) {
-        await serveFile(request, response, listOfFiles[request.uri.path]);
-      } else if (listOfFiles[request.uri.path] != null) {
-        await serveFile(request, response, listOfFiles[request.uri.path]);
-      } else {
-        await serveFile(request, response, File('build' + request.uri.path));
-      }
-    }, onError: getErrorFunc('Ошибка в прослушке HttpRequest:'));
-
-    receivePortSubscription = receivePort.listen((msg) {
+    receivePort.listen((msg) {
       if (msg is List) {
         if (msg.length == 3 && msg[0] is int && msg[1] is SendPort) {
           final kncTask = listOfTasks[msg[0]];
@@ -135,6 +71,7 @@ class App {
         }
       }
     }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
+    await Server.init();
   }
 
   void getWwwTaskNew(final String s, final User user) {
@@ -148,8 +85,12 @@ class App {
         .then((isolate) => kncTask.isolate = isolate);
   }
 
+  @override
+  String toString() => '${runtimeType.toString()}($hashCode)';
+
   App._init(this.dir) {
-    print('${runtimeType.toString()} created: $hashCode');
+    print('$this: created');
+    _instance = this;
   }
   static App _instance;
   factory App() => _instance ?? (_instance = App._init(Directory(r'web')));
