@@ -62,20 +62,14 @@ class Conv extends ProcessManager {
     if (_codePage == null) {
       // Подбираем кодировку
       codePageRaiting = getMappingRaitings(bytes);
-      codePage = getMappingMax(codePageRaiting);
+      codePage = convGetMappingMax(codePageRaiting);
     } else {
       codePageRaiting = null;
       codePage = _codePage;
     }
     // Преобразуем байты из кодировки в символы
-    return staticDecode(bytes, charMaps[codePage]);
+    return convDecode(bytes, charMaps[codePage]);
   }
-
-  /// Преобразует данные с помощью заданной кодировки
-  static String staticDecode(
-          final List<int> bytes, final List<String> charMap) =>
-      String.fromCharCodes(
-          bytes.map((i) => i >= 0x80 ? charMap[i - 0x80].codeUnitAt(0) : i));
 
   /// Конвертирует старый `.doc` файл в новый `.docx`
   Future<ProcessResult> doc2x(final String path2doc, final String path2out) =>
@@ -174,29 +168,7 @@ class Conv extends ProcessManager {
 
   /// Возвращает актуальность той или иной кодировки
   Map<String, int> getMappingRaitings(final List<int> bytes) =>
-      staticGetMappingRaitings(charMaps, bytes);
-
-  /// Возвращает актуальность той или иной кодировки
-  static Map<String, int> staticGetMappingRaitings(
-      final Map<String, List<String>> map, final List<int> bytes) {
-    final r = <String, int>{};
-    map.forEach((k, v) {
-      r[k] = 0;
-    });
-    var byteLast = 0;
-    for (final byte in bytes) {
-      if (byte >= 0x80 && byteLast >= 0x80) {
-        // map.forEach(k,v) {
-        //   // r[i] += freq_2letters(map[i][byteLast - 0x80] + map[i][byte - 0x80]);
-        // }
-        map.forEach((final k, final v) {
-          r[k] += freq_2letters(v[byteLast - 0x80] + v[byte - 0x80]);
-        });
-      }
-      byteLast = byte;
-    }
-    return r;
-  }
+      convGetMappingRaitings(charMaps, bytes);
 
   /// Преобразует данные процесса в выходные данные архиватора
   ArchiverOutput archiverResults(
@@ -209,8 +181,8 @@ class Conv extends ProcessManager {
     String stdErr;
     if (res.stdout != null) {
       if (res.stdout is List<int> && charMaps != null) {
-        final encodesRaiting = staticGetMappingRaitings(charMaps, res.stdout);
-        final encode = getMappingMax(encodesRaiting);
+        final encodesRaiting = convGetMappingRaitings(charMaps, res.stdout);
+        final encode = convGetMappingMax(encodesRaiting);
         // Преобразуем байты из кодировки в символы
         final buffer = String.fromCharCodes(res.stdout.map(
             (i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
@@ -221,8 +193,8 @@ class Conv extends ProcessManager {
     }
     if (res.stderr != null) {
       if (res.stderr is List<int> && charMaps != null) {
-        final encodesRaiting = staticGetMappingRaitings(charMaps, res.stderr);
-        final encode = getMappingMax(encodesRaiting);
+        final encodesRaiting = convGetMappingRaitings(charMaps, res.stderr);
+        final encode = convGetMappingMax(encodesRaiting);
         // Преобразуем байты из кодировки в символы
         final buffer = String.fromCharCodes(res.stderr.map(
             (i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
@@ -233,18 +205,5 @@ class Conv extends ProcessManager {
     }
     return ArchiverOutput(
         exitCode: exitCode, pathIn: pathIn, stdOut: stdOut, stdErr: stdErr);
-  }
-
-  /// Возвращает актуальную кодировку
-  static String getMappingMax(final Map<String, int> r) {
-    var o = '';
-    r.forEach((final k, final v) {
-      if (r[o] == null) {
-        o = k;
-      } else if (r[o] < v) {
-        o = k;
-      }
-    });
-    return o;
   }
 }
