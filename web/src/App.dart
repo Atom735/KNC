@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:html';
 
-import 'package:knc/SocketWrapper.dart';
-import 'package:knc/www.dart';
+import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'DialogAddTask.dart';

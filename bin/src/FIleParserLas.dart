@@ -1,4 +1,4 @@
-import 'package:knc/OneFile.dart';
+import 'package:knc/knc.dart';
 
 import 'IsoTask.dart';
 

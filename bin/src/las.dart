@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:knc/errors.dart';
-import 'package:knc/www.dart';
+import 'package:knc/knc.dart';
 
 /// Конечные данные одной кривой (хранятся в базе данных LAS)
 class SingleCurveLasData {

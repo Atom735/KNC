@@ -1,4 +1,4 @@
-import 'package:knc/freq_2letters.dart';
+import 'freq_2letters.dart';
 
 /// Возвращает актуальную кодировку
 String convGetMappingMax(final Map<String, int> r) {

@@ -2,8 +2,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:convert';
 
-import 'package:knc/SocketWrapper.dart';
-import 'package:knc/www.dart';
+import 'package:knc/knc.dart';
 
 import 'App.dart';
 import 'Conv.dart';

@@ -1,4 +1,4 @@
-import 'package:knc/SocketWrapper.dart';
+import 'SocketWrapper.dart';
 
 class ArchiverOutput {
   /// Имя выходного файла

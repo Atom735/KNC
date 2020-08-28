@@ -1,6 +1,6 @@
 import 'dart:html';
 
-import 'package:knc/www.dart';
+import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart' hide MDCSnackbar;
 import 'MDC/snackbar.dart';
 

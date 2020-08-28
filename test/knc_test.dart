@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:knc/async.dart';
+import 'package:knc/knc.dart';
 import 'package:test/test.dart';
 
 import 'package:path/path.dart' as p;

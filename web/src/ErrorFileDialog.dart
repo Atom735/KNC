@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:html';
 
-import 'package:knc/www.dart';
+import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 
 import 'App.dart';

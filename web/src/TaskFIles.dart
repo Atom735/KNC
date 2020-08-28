@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:convert';
 
-import 'package:knc/OneFile.dart';
-import 'package:knc/www.dart';
+import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'App.dart';
