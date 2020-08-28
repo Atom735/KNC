@@ -1,6 +1,6 @@
 import 'package:knc/OneFile.dart';
 
-import 'Task.dart';
+import 'IsoTask.dart';
 
 Future<OneFileData> parserFileLas(final KncTask kncTask,
     final OneFileData fileData, final String data, final String encode) async {

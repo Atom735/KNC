@@ -8,7 +8,7 @@ import 'package:knc/www.dart';
 import 'App.dart';
 import 'Conv.dart';
 import 'User.dart';
-import 'Task.dart';
+import 'IsoTask.dart';
 import 'msgs.dart';
 
 class KncTaskInternal {

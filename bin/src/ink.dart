@@ -4,10 +4,9 @@ import 'dart:typed_data';
 
 import 'package:xml/xml_events.dart';
 
-import 'package:knc/errors.dart';
-import 'Conv.dart';
+import 'package:knc/knc.dart';
 import 'dbf.dart';
-import 'Task.dart';
+import 'IsoTask.dart';
 
 import 'package:path/path.dart' as p;
 
@@ -498,8 +497,8 @@ class InkData {
   InkData.txt(final UnmodifiableUint8ListView bytes,
       final Map<String, List<String>> charMaps) {
     // Подбираем кодировку
-    encodesRaiting = Conv.staticGetMappingRaitings(charMaps, bytes);
-    encode = Conv.getMappingMax(encodesRaiting);
+    encodesRaiting = convGetMappingRaitings(charMaps, bytes);
+    encode = convGetMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
     final buffer = String.fromCharCodes(bytes
         .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
@@ -1598,9 +1597,8 @@ class InkDataOLD {
       final Map<String, List<String>> charMaps) {
     bInkFile = false;
     // Подбираем кодировку
-    encodesRaiting =
-        Map.unmodifiable(Conv.staticGetMappingRaitings(charMaps, bytes));
-    encode = Conv.getMappingMax(encodesRaiting);
+    encodesRaiting = Map.unmodifiable(convGetMappingRaitings(charMaps, bytes));
+    encode = convGetMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
     final buffer = String.fromCharCodes(bytes
         .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));

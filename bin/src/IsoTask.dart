@@ -6,7 +6,6 @@ import 'dart:convert';
 import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 
-import 'Conv.dart';
 import 'FIleParserLas.dart';
 import 'ink.dart';
 import 'knc.main.dart';
@@ -324,8 +323,8 @@ class KncTask extends KncTaskSpawnSets {
       return null;
     }
     // Подбираем кодировку
-    final encodesRaiting = Conv.staticGetMappingRaitings(charMaps, data);
-    final encode = Conv.getMappingMax(encodesRaiting);
+    final encodesRaiting = convGetMappingRaitings(charMaps, data);
+    final encode = convGetMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
     final buffer = String.fromCharCodes(data
         .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
