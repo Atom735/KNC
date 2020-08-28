@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:knc/knc.dart';
-import 'package:path/path.dart' as p;
 
 import 'Server.dart';
 import 'User.dart';
@@ -13,9 +12,6 @@ import 'Conv.dart';
 import 'knc.main.dart';
 
 class App {
-  /// Собсна сам сервер
-  Server server;
-
   /// Порт прослушиваемый главным изолятом
   final receivePort = ReceivePort();
 
