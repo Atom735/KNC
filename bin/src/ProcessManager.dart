@@ -74,7 +74,6 @@ class ProcessManager {
             task.completer.complete(value);
             _tasks.remove(task);
             tryProc();
-            return;
           });
         }
       }
