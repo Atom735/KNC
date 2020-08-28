@@ -105,11 +105,11 @@ class DialogAddTask extends MDCDialog {
     final path =
         eSSPathSet.map((e) => e.value).where((e) => e.isNotEmpty).toList();
 
-    final v = WWW_TaskSettings(
+    final v = TaskSettings(
             name: eSSName.value.isNotEmpty
                 ? eSSName.value
-                : WWW_TaskSettings.def_name,
-            path: path.isNotEmpty ? path : WWW_TaskSettings.def_path)
+                : TaskSettings.def_name,
+            path: path.isNotEmpty ? path : TaskSettings.def_path)
         .json;
 
     App().requestOnce('$wwwTaskNew${jsonEncode(v)}').then((msg) => reset());

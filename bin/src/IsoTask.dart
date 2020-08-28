@@ -8,7 +8,7 @@ import 'package:path/path.dart' as p;
 
 import 'FIleParserLas.dart';
 import 'ink.dart';
-import 'TaskInternal.dart';
+import 'TaskSpawnSets.dart';
 import 'las.dart';
 import 'misc.dart';
 import 'msgs.dart';
@@ -51,10 +51,12 @@ class PathNewer {
   bool unlock(final String name) => _reserved.remove(p.basename(name));
 }
 
-class IsoTask extends TaskSpawnSets {
+class IsoTask extends SocketWrapper {
   /// Порт для получение сообщений этим изолятом
   final ReceivePort receivePort = ReceivePort();
-  final SocketWrapper wrapper;
+
+  /// Данные полученные при спавне задачи
+  final TaskSpawnSets sets;
 
   /// Путь к конечным данным
   final String pathOut;
@@ -89,7 +91,7 @@ class IsoTask extends TaskSpawnSets {
       return;
     }
     _state = i;
-    wrapper.send(0, '$msgTaskUpdateState$_state');
+    send(0, '$msgTaskUpdateState$_state');
   }
 
   int _errors = 0;
@@ -99,7 +101,7 @@ class IsoTask extends TaskSpawnSets {
       return;
     }
     _errors = i;
-    wrapper.send(0, '$msgTaskUpdateErrors$_errors');
+    send(0, '$msgTaskUpdateErrors$_errors');
   }
 
   int _files = 0;
@@ -109,7 +111,7 @@ class IsoTask extends TaskSpawnSets {
       return;
     }
     _files = i;
-    wrapper.send(0, '$msgTaskUpdateFiles$_files');
+    send(0, '$msgTaskUpdateFiles$_files');
   }
 
   int _warnings = 0;
@@ -119,7 +121,7 @@ class IsoTask extends TaskSpawnSets {
       return;
     }
     _warnings = i;
-    wrapper.send(0, '$msgTaskUpdateWarnings$_warnings');
+    send(0, '$msgTaskUpdateWarnings$_warnings');
   }
 
   int _worked = 0;
@@ -129,7 +131,7 @@ class IsoTask extends TaskSpawnSets {
       return;
     }
     _worked = i;
-    wrapper.send(0, '$msgTaskUpdateWorked$_worked');
+    send(0, '$msgTaskUpdateWorked$_worked');
   }
 
   final listOfErrors = <CErrorOnLine>[];
@@ -150,9 +152,9 @@ class IsoTask extends TaskSpawnSets {
     state = NTaskState.searchFiles.index;
     final fs = <Future>[];
     final func = listFilesGet(0, '');
-    settings.path.forEach((element) {
+    sets.settings.path.forEach((element) {
       if (element.isNotEmpty) {
-        print('task[$id] scan $element');
+        print('task[${sets.id}] scan $element');
         fs.add(FileSystemEntity.type(element).then((value) =>
             value == FileSystemEntityType.file
                 ? func(File(element), element)
@@ -272,7 +274,7 @@ class IsoTask extends TaskSpawnSets {
 
     final xlsPath = xlsDataOut.path + '.xlsx';
     await zip(xlsDataOut.path, xlsPath);
-    wrapper.send(0, '$msgTaskUpdateRaport$xlsPath');
+    send(0, '$msgTaskUpdateRaport$xlsPath');
   }
 
   Future<void> handleFileSearch(final File file, final String origin) async {
@@ -280,7 +282,7 @@ class IsoTask extends TaskSpawnSets {
     //   return;
     // }
     final ext = p.extension(file.path).toLowerCase();
-    if (settings.ext_files.contains(ext)) {
+    if (sets.settings.ext_files.contains(ext)) {
       final i = files;
       files++;
       final ph = p.join(pathTemp, i.toRadixString(36).padLeft(8, '0'));
@@ -323,11 +325,11 @@ class IsoTask extends TaskSpawnSets {
       return null;
     }
     // Подбираем кодировку
-    final encodesRaiting = convGetMappingRaitings(charMaps, data);
+    final encodesRaiting = convGetMappingRaitings(sets.charMaps, data);
     final encode = convGetMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
-    final buffer = String.fromCharCodes(data
-        .map((i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
+    final buffer = String.fromCharCodes(data.map(
+        (i) => i >= 0x80 ? sets.charMaps[encode][i - 0x80].codeUnitAt(0) : i));
 
     if ((fileDataNew = await parserFileLas(this, fileData, buffer, encode)) !=
         null) {
@@ -417,11 +419,11 @@ class IsoTask extends TaskSpawnSets {
           }
           final ext = p.extension(entity.path).toLowerCase();
           // == UNZIPPER == Begin
-          if (settings.ext_ar.contains(ext)) {
-            if ((settings.maxsize_ar <= 0 ||
-                    await entity.length() < settings.maxsize_ar) &&
-                (settings.maxdepth_ar == -1 ||
-                    iArchDepth < settings.maxdepth_ar)) {
+          if (sets.settings.ext_ar.contains(ext)) {
+            if ((sets.settings.maxsize_ar <= 0 ||
+                    await entity.length() < sets.settings.maxsize_ar) &&
+                (sets.settings.maxdepth_ar == -1 ||
+                    iArchDepth < sets.settings.maxdepth_ar)) {
               // вскрываем архив если он соотвествует размеру если он установлен и мы не привысили глубину вложенности
               final arch = await unzip(entity.path);
               if (arch.exitCode == 0) {
@@ -456,23 +458,22 @@ class IsoTask extends TaskSpawnSets {
       };
 
   /// Преобразует данные
-  Future<int> doc2x(final String path2doc, final String path2out) => wrapper
-      .requestOnce('$msgDoc2x$path2doc$msgRecordSeparator$path2out')
-      .then((msg) => int.tryParse(msg));
+  Future<int> doc2x(final String path2doc, final String path2out) =>
+      requestOnce('$msgDoc2x$path2doc$msgRecordSeparator$path2out')
+          .then((msg) => int.tryParse(msg));
 
   /// Запекает данные в zip архиф с помощью 7zip
   Future<ArchiverOutput> zip(
           final String pathToData, final String pathToOutput) =>
-      wrapper
-          .requestOnce('$msgZip$pathToData$msgRecordSeparator$pathToOutput')
+      requestOnce('$msgZip$pathToData$msgRecordSeparator$pathToOutput')
           .then((value) => ArchiverOutput.fromWrapperMsg(value));
 
   /// Распаковывает архив [pathToArchive]
-  Future<ArchiverOutput> unzip(final String pathToArchive) => wrapper
-      .requestOnce('$msgUnzip$pathToArchive')
-      .then((value) => ArchiverOutput.fromWrapperMsg(value));
+  Future<ArchiverOutput> unzip(final String pathToArchive) =>
+      requestOnce('$msgUnzip$pathToArchive')
+          .then((value) => ArchiverOutput.fromWrapperMsg(value));
 
-  IsoTask._init(final TaskSpawnSets sets, this.pathOut)
+  IsoTask._init(this.sets, this.pathOut)
       : pathOutLas = p.join(pathOut, 'las'),
         newerOutLas = PathNewer(p.join(pathOut, 'las')),
         pathOutInk = p.join(pathOut, 'ink'),
@@ -483,35 +484,34 @@ class IsoTask extends TaskSpawnSets {
             .openWrite(encoding: utf8, mode: FileMode.writeOnly)
               ..writeCharCode(unicodeBomCharacterRune),
         pathTemp = p.join(pathOut, 'temp'),
-        wrapper = SocketWrapper((msg) => sets.sendPort.send([sets.id, msg])),
-        super.clone(sets) {
+        super((msg) => sets.sendPort.send([sets.id, msg])) {
     print('$runtimeType created: $hashCode');
     receivePort.listen((final msg) {
       if (msg is String) {
-        wrapper.recv(msg);
+        recv(msg);
         return;
       }
-      print('task[$id]: recieved unknown msg {$msg}');
+      print('task[${sets.id}]: recieved unknown msg {$msg}');
     });
 
-    wrapper.waitMsgAll(wwwTaskGetErrors).listen((msg) {
-      wrapper.send(
+    waitMsgAll(wwwTaskGetErrors).listen((msg) {
+      send(
           msg.i,
           jsonEncode(
               filesSearche.firstWhere((e) => e.path == msg.s).jsonErrors));
     });
 
-    wrapper.waitMsgAll(wwwTaskGetFiles).listen((msg) {
+    waitMsgAll(wwwTaskGetFiles).listen((msg) {
       final ic = int.tryParse(msg.s);
       final im = filesSearche.length - ic;
       final v = List(im);
       for (var i = 0; i < im; i++) {
         v[i] = filesSearche[i + ic].json;
       }
-      wrapper.send(msg.i, jsonEncode({'first': ic, 'task': id, 'data': v}));
+      send(msg.i, jsonEncode({'first': ic, 'task': sets.id, 'data': v}));
     });
 
-    sendPort.send([id, receivePort.sendPort, pathOut]);
+    sets.sendPort.send([sets.id, receivePort.sendPort]);
   }
   static IsoTask _instance;
   factory IsoTask([final TaskSpawnSets sets, final String pathOut]) =>

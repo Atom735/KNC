@@ -6,7 +6,6 @@ import 'dart:isolate';
 import 'package:knc/knc.dart';
 
 import 'Server.dart';
-import 'TaskInternal.dart';
 import 'User.dart';
 import 'Client.dart';
 import 'Conv.dart';
@@ -16,48 +15,20 @@ class App {
   /// Порт прослушиваемый главным изолятом
   final receivePort = ReceivePort();
 
-  /// Список запущенных задач
-  final listOfTasks = <int, Task>{};
-  var _uTaskNewId = 0;
+  /// Комплитеры для завершения спавна задачи
+  final completers = <int, Completer<SendPort>>{};
 
-  /// Список подключенных клиентов
-  final clients = <Client>[];
-
-  final listOfFiles = <String, File>{'/': File('build/index.html')};
-
-  /// Получить данные для формы TaskView
-  String getWwwTaskViewUpdate(final User user, final List<int> updated) {
-    final list = [];
-    listOfTasks.forEach((key, task) {
-      if (!updated.contains(key)) {
-        list.add(task.json);
-      }
-    });
-    return jsonEncode(list);
-  }
-
-  void sendForAllClients(final String str) {
-    clients.forEach((client) {
-      client.wrapper.send(0, str);
-    });
-  }
-
+  /// Точка входа для приложения
   Future<void> run() async {
     await Future.wait([User.load(), Conv.init()]);
 
     receivePort.listen((msg) {
       if (msg is List) {
         if (msg.length == 3 && msg[0] is int && msg[1] is SendPort) {
-          final kncTask = listOfTasks[msg[0]];
-          kncTask.sendPort = msg[1];
-          kncTask.pathOut = msg[2];
-          kncTask.initWrapper();
+          completers[msg[0]].complete(msg[1]);
         }
         if (msg.length == 2 && msg[0] is int && msg[1] is String) {
-          final kncTask = listOfTasks[msg[0]];
-          if (kncTask.wrapper != null) {
-            kncTask.wrapper.recv(msg[1]);
-          }
+          Task.list[msg[0]].recv(msg[1]);
         }
       }
     }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
@@ -65,20 +36,15 @@ class App {
     await Server.init();
   }
 
-  void getWwwTaskNew(final String s, final User user) {
-    _uTaskNewId += 1;
-    final task = WWW_TaskSettings.fromJson(jsonDecode(s));
-    final kncTask = Task(_uTaskNewId, task, user);
-    listOfTasks[kncTask.id] = kncTask;
-
-    TaskSpawnSets(kncTask, Conv().charMaps, receivePort.sendPort)
-        .spawn()
-        .then((isolate) => kncTask.isolate = isolate);
+  /// Отправка всем подключенным клиентам
+  void sendForAllClients(final String msg) {
+    Client.list.forEach((e) {
+      e.send(0, msg);
+    });
   }
 
   @override
   String toString() => '${runtimeType.toString()}($hashCode)';
-
   App._init() {
     print('$this: created');
     _instance = this;

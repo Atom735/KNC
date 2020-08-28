@@ -1168,7 +1168,7 @@ class InkData {
       }
     }
 
-    return [InkData.txt(bytes, ss.charMaps)];
+    return [InkData.txt(bytes, ss.sets.charMaps)];
   }
 }
 

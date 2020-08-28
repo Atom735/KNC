@@ -5,34 +5,74 @@ import 'dart:convert';
 import 'package:knc/knc.dart';
 
 import 'App.dart';
+import 'Client.dart';
 import 'Conv.dart';
-import 'TaskInternal.dart';
+import 'IsoTask.dart';
 import 'User.dart';
 import 'msgs.dart';
 
-class Task extends TaskInternal {
-  String pathOut;
+class Task extends SocketWrapper {
+  /// Уникальный номер задачи
+  final int id;
 
-  /// Изолят выоплнения задачи
-  Isolate isolate;
+  /// Портя для связи с изолятом задачи
+  final SendPort sendPort;
 
-  /// Порт задачи
-  SendPort sendPort;
-  SocketWrapper wrapper;
+  /// Настройки задачи
+  final TaskSettings settings;
 
-  Task(final int _id, final WWW_TaskSettings _settings, final User _user)
-      : super(
-            _id,
-            _user,
-            _settings,
-            App()
-                .clients
-                .where((client) => client.user == _user)
-                .map((e) => e.wrapper)
-                .toList(growable: true)) {
-    final jsonMsg = wwwTaskNew + jsonEncode(json);
-    sendForAllClients(jsonMsg);
+  /// Изолят выполнения задачи
+  final Isolate isolate;
+
+  /// Папка задачи
+  final Directory dir;
+
+  /// Список всех выполняемых задач
+  static final list = <int, Task>{};
+
+  @override
+  String toString() => '$runtimeType{$id}(${settings.name})[${settings.user}]';
+
+  Task(this.id, this.settings, final SendPort _sendPort, this.isolate, this.dir)
+      : sendPort = _sendPort,
+        super((msg) => _sendPort.send(msg)) {
+    print('$this created');
+    list[id] = this;
+    // TODO: уведомить клиентов о старте новой задачи
+
+    waitMsgAll(msgTaskUpdateState).listen((msg) => state = int.tryParse(msg.s));
+    waitMsgAll(msgTaskUpdateErrors)
+        .listen((msg) => errors = int.tryParse(msg.s));
+    waitMsgAll(msgTaskUpdateFiles).listen((msg) => files = int.tryParse(msg.s));
+    waitMsgAll(msgTaskUpdateWarnings)
+        .listen((msg) => warnings = int.tryParse(msg.s));
+    waitMsgAll(msgTaskUpdateWorked)
+        .listen((msg) => worked = int.tryParse(msg.s));
+    waitMsgAll(msgTaskUpdateRaport).listen((msg) => raport = msg.s);
+
+    waitMsgAll(msgDoc2x).listen((msg) {
+      final i0 = msg.s.indexOf(msgRecordSeparator);
+      Conv()
+          .doc2x(msg.s.substring(0, i0),
+              msg.s.substring(i0 + msgRecordSeparator.length))
+          .then((value) => send(msg.i, value.toString()));
+    });
+
+    waitMsgAll(msgZip).listen((msg) {
+      final i0 = msg.s.indexOf(msgRecordSeparator);
+      final pIn = msg.s.substring(0, i0);
+      final pOut = msg.s.substring(i0 + msgRecordSeparator.length);
+      Conv().zip(pIn, pOut).then((value) => send(msg.i, value.toWrapperMsg()));
+    });
+
+    waitMsgAll(msgUnzip).listen((msg) {
+      Conv().unzip(msg.s).then((value) => send(msg.i, value.toWrapperMsg()));
+    });
   }
+
+  void sendForAllClients(final String msg) => Client.list
+      .where((e) => e.user.mail == settings.user)
+      .forEach((e) => e.send(0, msg));
 
   dynamic get json => {
         'id': id,
@@ -53,7 +93,7 @@ class Task extends TaskInternal {
     _raport = i;
     final xmlUrl =
         '/' + i.replaceAll('\\', '/').replaceAll(':', ' ').replaceAll(' ', '_');
-    App().listOfFiles[xmlUrl] = File(_raport);
+    // App().listOfFiles[xmlUrl] = File(_raport);
     sendForAllClients(wwwTaskUpdates +
         jsonEncode([
           {'id': id, 'raport': xmlUrl}
@@ -131,56 +171,4 @@ class Task extends TaskInternal {
           {'id': id, 'files': _files}
         ]));
   }
-
-  void initWrapper() {
-    wrapper = SocketWrapper((str) => sendPort.send(str));
-
-    wrapper
-        .waitMsgAll(msgTaskUpdateState)
-        .listen((msg) => state = int.tryParse(msg.s));
-    wrapper
-        .waitMsgAll(msgTaskUpdateErrors)
-        .listen((msg) => errors = int.tryParse(msg.s));
-    wrapper
-        .waitMsgAll(msgTaskUpdateFiles)
-        .listen((msg) => files = int.tryParse(msg.s));
-    wrapper
-        .waitMsgAll(msgTaskUpdateWarnings)
-        .listen((msg) => warnings = int.tryParse(msg.s));
-    wrapper
-        .waitMsgAll(msgTaskUpdateWorked)
-        .listen((msg) => worked = int.tryParse(msg.s));
-    wrapper.waitMsgAll(msgTaskUpdateRaport).listen((msg) => raport = msg.s);
-
-    wrapper.waitMsgAll(msgDoc2x).listen((msg) {
-      final i0 = msg.s.indexOf(msgRecordSeparator);
-      Conv()
-          .doc2x(msg.s.substring(0, i0),
-              msg.s.substring(i0 + msgRecordSeparator.length))
-          .then((value) => wrapper.send(msg.i, value.toString()));
-    });
-
-    wrapper.waitMsgAll(msgZip).listen((msg) {
-      final i0 = msg.s.indexOf(msgRecordSeparator);
-      final pIn = msg.s.substring(0, i0);
-      final pOut = msg.s.substring(i0 + msgRecordSeparator.length);
-      Conv()
-          .zip(pIn, pOut)
-          .then((value) => wrapper.send(msg.i, value.toWrapperMsg()));
-    });
-
-    wrapper.waitMsgAll(msgUnzip).listen((msg) {
-      Conv()
-          .unzip(msg.s)
-          .then((value) => wrapper.send(msg.i, value.toWrapperMsg()));
-    });
-  }
-
-  Future<SocketWrapperResponse> Function(String msgBegin) get waitMsg =>
-      wrapper.waitMsg;
-  Stream<SocketWrapperResponse> Function(String msgBegin) get waitMsgAll =>
-      wrapper.waitMsgAll;
-  Future<String> Function(String msg) get requestOnce => wrapper.requestOnce;
-  Stream<String> Function(String msg) get requestSubscribe =>
-      wrapper.requestSubscribe;
 }
