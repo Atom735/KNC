@@ -2,7 +2,7 @@ import 'package:knc/OneFile.dart';
 
 import 'IsoTask.dart';
 
-Future<OneFileData> parserFileLas(final KncTask kncTask,
+Future<OneFileData> parserFileLas(final IsoTask kncTask,
     final OneFileData fileData, final String data, final String encode) async {
   final _dataLength = data.length;
   final _errors = <OneFileLineNote>[];

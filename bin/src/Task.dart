@@ -7,44 +7,11 @@ import 'package:knc/www.dart';
 
 import 'App.dart';
 import 'Conv.dart';
+import 'TaskInternal.dart';
 import 'User.dart';
-import 'IsoTask.dart';
 import 'msgs.dart';
 
-class KncTaskInternal {
-  final int id;
-  final User user;
-  final WWW_TaskSettings settings;
-  final List<SocketWrapper> wrappers;
-
-  KncTaskInternal(this.id, this.user, this.settings, this.wrappers);
-  KncTaskInternal.clone(final KncTaskInternal _this)
-      : id = _this.id,
-        user = _this.user,
-        settings = _this.settings,
-        wrappers = [];
-
-  void sendForAllClients(final String msg) =>
-      wrappers.forEach((s) => s.send(0, msg));
-}
-
-class KncTaskSpawnSets extends KncTaskInternal {
-  final Map<String, List<String>> charMaps;
-  final SendPort sendPort;
-
-  KncTaskSpawnSets(final KncTaskOnMain t, this.charMaps, this.sendPort)
-      : super.clone(t);
-
-  KncTaskSpawnSets.clone(final KncTaskSpawnSets t)
-      : charMaps = t.charMaps,
-        sendPort = t.sendPort,
-        super.clone(t);
-
-  Future<Isolate> spawn() => Isolate.spawn(KncTask.entryPoint, this,
-      debugName: '[$id]($user): "${settings.name}"');
-}
-
-class KncTaskOnMain extends KncTaskInternal {
+class Task extends TaskInternal {
   String pathOut;
 
   /// Изолят выоплнения задачи
@@ -52,10 +19,9 @@ class KncTaskOnMain extends KncTaskInternal {
 
   /// Порт задачи
   SendPort sendPort;
-  SocketWrapper wrapperSendPort;
+  SocketWrapper wrapper;
 
-  KncTaskOnMain(
-      final int _id, final WWW_TaskSettings _settings, final User _user)
+  Task(final int _id, final WWW_TaskSettings _settings, final User _user)
       : super(
             _id,
             _user,
@@ -168,53 +134,54 @@ class KncTaskOnMain extends KncTaskInternal {
   }
 
   void initWrapper() {
-    wrapperSendPort = SocketWrapper((str) => sendPort.send(str));
+    wrapper = SocketWrapper((str) => sendPort.send(str));
 
-    wrapperSendPort
+    wrapper
         .waitMsgAll(msgTaskUpdateState)
         .listen((msg) => state = int.tryParse(msg.s));
-    wrapperSendPort
+    wrapper
         .waitMsgAll(msgTaskUpdateErrors)
         .listen((msg) => errors = int.tryParse(msg.s));
-    wrapperSendPort
+    wrapper
         .waitMsgAll(msgTaskUpdateFiles)
         .listen((msg) => files = int.tryParse(msg.s));
-    wrapperSendPort
+    wrapper
         .waitMsgAll(msgTaskUpdateWarnings)
         .listen((msg) => warnings = int.tryParse(msg.s));
-    wrapperSendPort
+    wrapper
         .waitMsgAll(msgTaskUpdateWorked)
         .listen((msg) => worked = int.tryParse(msg.s));
-    wrapperSendPort
-        .waitMsgAll(msgTaskUpdateRaport)
-        .listen((msg) => raport = msg.s);
+    wrapper.waitMsgAll(msgTaskUpdateRaport).listen((msg) => raport = msg.s);
 
-    wrapperSendPort.waitMsgAll(msgDoc2x).listen((msg) {
+    wrapper.waitMsgAll(msgDoc2x).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
       Conv()
           .doc2x(msg.s.substring(0, i0),
               msg.s.substring(i0 + msgRecordSeparator.length))
-          .then((value) => wrapperSendPort.send(msg.i, value.toString()));
+          .then((value) => wrapper.send(msg.i, value.toString()));
     });
 
-    wrapperSendPort.waitMsgAll(msgZip).listen((msg) {
+    wrapper.waitMsgAll(msgZip).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
       final pIn = msg.s.substring(0, i0);
       final pOut = msg.s.substring(i0 + msgRecordSeparator.length);
       Conv()
           .zip(pIn, pOut)
-          .then((value) => wrapperSendPort.send(msg.i, value.toWrapperMsg()));
+          .then((value) => wrapper.send(msg.i, value.toWrapperMsg()));
     });
 
-    wrapperSendPort.waitMsgAll(msgUnzip).listen((msg) {
+    wrapper.waitMsgAll(msgUnzip).listen((msg) {
       Conv()
           .unzip(msg.s)
-          .then((value) => wrapperSendPort.send(msg.i, value.toWrapperMsg()));
+          .then((value) => wrapper.send(msg.i, value.toWrapperMsg()));
     });
   }
-}
 
-// const msgTaskUpdateState = 'taskstate;';
-// const msgDoc2x = 'doc2x;';
-// const msgZip = 'zip;';
-// const msgUnzip = 'unzip;'
+  Future<SocketWrapperResponse> Function(String msgBegin) get waitMsg =>
+      wrapper.waitMsg;
+  Stream<SocketWrapperResponse> Function(String msgBegin) get waitMsgAll =>
+      wrapper.waitMsgAll;
+  Future<String> Function(String msg) get requestOnce => wrapper.requestOnce;
+  Stream<String> Function(String msg) get requestSubscribe =>
+      wrapper.requestSubscribe;
+}

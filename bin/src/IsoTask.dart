@@ -8,7 +8,7 @@ import 'package:path/path.dart' as p;
 
 import 'FIleParserLas.dart';
 import 'ink.dart';
-import 'knc.main.dart';
+import 'TaskInternal.dart';
 import 'las.dart';
 import 'misc.dart';
 import 'msgs.dart';
@@ -51,7 +51,7 @@ class PathNewer {
   bool unlock(final String name) => _reserved.remove(p.basename(name));
 }
 
-class KncTask extends KncTaskSpawnSets {
+class IsoTask extends TaskSpawnSets {
   /// Порт для получение сообщений этим изолятом
   final ReceivePort receivePort = ReceivePort();
   final SocketWrapper wrapper;
@@ -135,9 +135,9 @@ class KncTask extends KncTaskSpawnSets {
   final listOfErrors = <CErrorOnLine>[];
   final listOfFiles = <C_File>[];
 
-  static Future<void> entryPoint(final KncTaskSpawnSets sets) async {
+  static Future<void> entryPoint(final TaskSpawnSets sets) async {
     final pathOut = (await Directory('temp').createTemp('task.')).absolute.path;
-    await KncTask(sets, pathOut).entryPointInClass();
+    await IsoTask(sets, pathOut).entryPointInClass();
   }
 
   Future<void> entryPointInClass() async {
@@ -472,7 +472,7 @@ class KncTask extends KncTaskSpawnSets {
       .requestOnce('$msgUnzip$pathToArchive')
       .then((value) => ArchiverOutput.fromWrapperMsg(value));
 
-  KncTask._init(final KncTaskSpawnSets sets, this.pathOut)
+  IsoTask._init(final TaskSpawnSets sets, this.pathOut)
       : pathOutLas = p.join(pathOut, 'las'),
         newerOutLas = PathNewer(p.join(pathOut, 'las')),
         pathOutInk = p.join(pathOut, 'ink'),
@@ -513,9 +513,9 @@ class KncTask extends KncTaskSpawnSets {
 
     sendPort.send([id, receivePort.sendPort, pathOut]);
   }
-  static KncTask _instance;
-  factory KncTask([final KncTaskSpawnSets sets, final String pathOut]) =>
-      _instance ?? (_instance = KncTask._init(sets, pathOut));
+  static IsoTask _instance;
+  factory IsoTask([final TaskSpawnSets sets, final String pathOut]) =>
+      _instance ?? (_instance = IsoTask._init(sets, pathOut));
 
   /// Загрузкить все данные
   Future get loadAll => Future.wait([loadLasIgnore(), loadInkDbfMap()]);

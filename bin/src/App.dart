@@ -6,17 +6,18 @@ import 'dart:isolate';
 import 'package:knc/knc.dart';
 
 import 'Server.dart';
+import 'TaskInternal.dart';
 import 'User.dart';
 import 'Client.dart';
 import 'Conv.dart';
-import 'knc.main.dart';
+import 'Task.dart';
 
 class App {
   /// Порт прослушиваемый главным изолятом
   final receivePort = ReceivePort();
 
   /// Список запущенных задач
-  final listOfTasks = <int, KncTaskOnMain>{};
+  final listOfTasks = <int, Task>{};
   var _uTaskNewId = 0;
 
   /// Список подключенных клиентов
@@ -54,22 +55,23 @@ class App {
         }
         if (msg.length == 2 && msg[0] is int && msg[1] is String) {
           final kncTask = listOfTasks[msg[0]];
-          if (kncTask.wrapperSendPort != null) {
-            kncTask.wrapperSendPort.recv(msg[1]);
+          if (kncTask.wrapper != null) {
+            kncTask.wrapper.recv(msg[1]);
           }
         }
       }
     }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
+
     await Server.init();
   }
 
   void getWwwTaskNew(final String s, final User user) {
     _uTaskNewId += 1;
     final task = WWW_TaskSettings.fromJson(jsonDecode(s));
-    final kncTask = KncTaskOnMain(_uTaskNewId, task, user);
+    final kncTask = Task(_uTaskNewId, task, user);
     listOfTasks[kncTask.id] = kncTask;
 
-    KncTaskSpawnSets(kncTask, Conv().charMaps, receivePort.sendPort)
+    TaskSpawnSets(kncTask, Conv().charMaps, receivePort.sendPort)
         .spawn()
         .then((isolate) => kncTask.isolate = isolate);
   }

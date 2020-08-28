@@ -3,12 +3,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:xml/xml_events.dart';
-
 import 'package:knc/knc.dart';
+import 'package:path/path.dart' as p;
+
 import 'dbf.dart';
 import 'IsoTask.dart';
-
-import 'package:path/path.dart' as p;
 
 /// преобразует число из минут в доли градуса
 /// - `1.30` в минутах => `1.50` в градусах
@@ -1070,7 +1069,7 @@ class InkData {
   /// - [entity] - файл
   /// - [ss] - настройки
   /// - [handleErrorCatcher] (opt) - обработчик ошибки от архиватора
-  static Future<List<InkData>> loadFile(final File entity, final KncTask ss,
+  static Future<List<InkData>> loadFile(final File entity, final IsoTask ss,
       {final Future Function(dynamic e) handleErrorCatcher}) async {
     final bytes = UnmodifiableUint8ListView(await entity.readAsBytes());
     if (bytes.length <= 128) {

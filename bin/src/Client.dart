@@ -59,7 +59,7 @@ class Client {
       final id = int.tryParse(msg.s.substring(0, i0));
       App()
           .listOfTasks[id]
-          .wrapperSendPort
+          .wrapper
           .requestOnce('$wwwTaskGetErrors${msg.s.substring(i0 + 1)}')
           .then((v) => wrapper.send(msg.i, v));
     });
@@ -68,7 +68,7 @@ class Client {
       final id = int.tryParse(msg.s.substring(0, i0));
       App()
           .listOfTasks[id]
-          .wrapperSendPort
+          .wrapper
           .requestOnce('$wwwTaskGetFiles${msg.s.substring(i0 + 1)}')
           .then((v) => wrapper.send(msg.i, v));
     });
