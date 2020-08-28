@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:knc/knc.dart';
 
 import 'App.dart';
+import 'Conv.dart';
 import 'User.dart';
 
 class Client {
@@ -73,7 +74,7 @@ class Client {
     });
     waitMsgAll(wwwGetFileData).listen((msg) {
       File(msg.s).readAsBytes().then((data) {
-        wrapper.send(msg.i, App().conv.decode(data));
+        wrapper.send(msg.i, Conv().decode(data));
       });
     });
 

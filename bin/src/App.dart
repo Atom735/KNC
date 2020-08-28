@@ -16,11 +16,6 @@ class App {
   /// Собсна сам сервер
   Server server;
 
-  /// Виртуальная папка, при URL к файлам, файлы ищутся этой папке.
-  ///
-  /// указывается при создании класса
-  final Directory dir;
-
   /// Порт прослушиваемый главным изолятом
   final receivePort = ReceivePort();
 
@@ -31,8 +26,6 @@ class App {
   /// Список подключенных клиентов
   final clients = <Client>[];
 
-  /// Конвертер WordConv и архивтор 7zip
-  Conv conv;
   final listOfFiles = <String, File>{'/': File('build/index.html')};
 
   /// Получить данные для формы TaskView
@@ -80,7 +73,7 @@ class App {
     final kncTask = KncTaskOnMain(_uTaskNewId, task, user);
     listOfTasks[kncTask.id] = kncTask;
 
-    KncTaskSpawnSets(kncTask, conv.charMaps, receivePort.sendPort)
+    KncTaskSpawnSets(kncTask, Conv().charMaps, receivePort.sendPort)
         .spawn()
         .then((isolate) => kncTask.isolate = isolate);
   }
@@ -88,10 +81,10 @@ class App {
   @override
   String toString() => '${runtimeType.toString()}($hashCode)';
 
-  App._init(this.dir) {
+  App._init() {
     print('$this: created');
     _instance = this;
   }
   static App _instance;
-  factory App() => _instance ?? (_instance = App._init(Directory(r'web')));
+  factory App() => _instance ?? (_instance = App._init());
 }

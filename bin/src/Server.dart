@@ -9,7 +9,10 @@ class Server {
   /// Собсна сам сервер
   final HttpServer server;
 
-  final dirs = <Directory>[];
+  final dirs = <Directory>[
+    Directory('build').absolute,
+    Directory('tasks').absolute,
+  ];
   final fileMap = <String, File>{'/': File('build/index.html')};
 
   Future<void> serveFile(
