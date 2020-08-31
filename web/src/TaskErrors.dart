@@ -49,7 +49,7 @@ class TaskErrorsDialog {
     }
     loading = true;
     App()
-        .requestOnce('$wwwTaskGetErrors${cCard.id}:${listOfErrors.length}')
+        .requestOnce('$wwwFileNotes${cCard.id}:${listOfErrors.length}')
         .then((s) => addAll(CErrorOnLine.getByJsonString(s)));
   }
 

@@ -6,6 +6,7 @@ import 'package:knc/knc.dart';
 import 'App.dart';
 import 'Conv.dart';
 import 'Task.dart';
+import 'TaskSpawnSets.dart';
 import 'User.dart';
 
 class Client extends SocketWrapper {
@@ -49,49 +50,65 @@ class Client extends SocketWrapper {
     //               .map((e) => e as int)
     //               .toList(growable: false)));
     // });
-    // waitMsgAll(wwwTaskNew).listen((msg) {
-    //   App().getWwwTaskNew(msg.s, user);
-    //   send(msg.i, '');
-    // });
-    waitMsgAll(wwwTaskGetErrors).listen((msg) {
-      final i0 = msg.s.indexOf(':');
-      final id = int.tryParse(msg.s.substring(0, i0));
-      Task.list[id]
-          .requestOnce('$wwwTaskGetErrors${msg.s.substring(i0 + 1)}')
+
+    /// Запуск новой задачи `task.settings`
+    waitMsgAll(wwwTaskNew).listen((msg) {
+      TaskSpawnSets.spawn(settings: TaskSettings.fromJson(jsonDecode(msg.s)))
+          .then((_) => send(msg.i, ''));
+    });
+
+    /// Получение заметок файла `task.id``file.path`
+    waitMsgAll(wwwFileNotes).listen((msg) {
+      final i0 = msg.s.indexOf(msgRecordSeparator);
+      Task.list[int.parse(msg.s.substring(0, i0))]
+          .requestOnce(
+              '$wwwFileNotes${msg.s.substring(i0 + msgRecordSeparator.length)}')
           .then((v) => send(msg.i, v));
     });
+
+    /// Получение списка файлов `task.id`
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
-      final i0 = msg.s.indexOf(':');
-      final id = int.tryParse(msg.s.substring(0, i0));
-      Task.list[id]
-          .requestOnce('$wwwTaskGetFiles${msg.s.substring(i0 + 1)}')
+      Task.list[int.parse(msg.s)]
+          .requestOnce('$wwwTaskGetFiles')
           .then((v) => send(msg.i, v));
     });
+
+    /// Получение данных файла `path``codepage`
     waitMsgAll(wwwGetFileData).listen((msg) {
-      File(msg.s).readAsBytes().then((data) {
-        send(msg.i, Conv().decode(data));
+      final i0 = msg.s.indexOf(msgRecordSeparator);
+      File(msg.s.substring(0, i0)).readAsBytes().then((data) {
+        send(
+            msg.i,
+            convDecode(
+                data,
+                Conv().charMaps[
+                    msg.s.substring(i0 + msgRecordSeparator.length)]));
       });
     });
 
-    waitMsgAll(wwwRegistration).listen((msg) {
-      final i0 = msg.s.indexOf(':');
-      final _user = User.reg(msg.s.substring(0, i0), msg.s.substring(i0 + 1));
+    /// Регистрация нового пользователя `mail``pass`
+    waitMsgAll(wwwUserRegistration).listen((msg) {
+      final i0 = msg.s.indexOf(msgRecordSeparator);
+      final _user = User.reg(msg.s.substring(0, i0),
+          msg.s.substring(i0 + msgRecordSeparator.length));
       if (_user != null) {
         user = _user;
         send(msg.i, user.access);
       } else {
-        send(msg.i, '?');
+        send(msg.i, '');
       }
     });
 
-    waitMsgAll(wwwSignIn).listen((msg) {
-      final i0 = msg.s.indexOf(':');
-      final _user = User.get(msg.s.substring(0, i0), msg.s.substring(i0 + 1));
+    /// Вход пользователя `mail``pass`
+    waitMsgAll(wwwUserSignin).listen((msg) {
+      final i0 = msg.s.indexOf(msgRecordSeparator);
+      final _user = User.get(msg.s.substring(0, i0),
+          msg.s.substring(i0 + msgRecordSeparator.length));
       if (_user != null) {
         user = _user;
         send(msg.i, user.access);
       } else {
-        send(msg.i, '?');
+        send(msg.i, '');
       }
     });
   }

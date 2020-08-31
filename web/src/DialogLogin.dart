@@ -19,8 +19,9 @@ class DialogLogin extends MDCDialog {
       MDCSnackbar(eGetById('my-login-dialog-sackbar-error'));
 
   static Future<void> init() async {
-    document.body
-        .appendHtml(await HttpRequest.getString('/src/DialogLogin.html'));
+    document.body.appendHtml(
+        await HttpRequest.getString('/src/DialogLogin.html'),
+        validator: nodeValidator);
     DialogLogin();
   }
 
@@ -36,12 +37,12 @@ class DialogLogin extends MDCDialog {
       eRegistration.disabled = true;
       App()
           .requestOnce(
-              '$wwwSignIn${eInMail.value}:${passwordEncode(eInPass.value)}')
+              '$wwwUserSignin${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}')
           .then((msg) {
-        if (msg != 'null') {
+        if (msg.isNotEmpty) {
           _clear();
           window.localStorage['signin'] =
-              '${eInMail.value}:${passwordEncode(eInPass.value)}';
+              '${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}';
           App().signin(eInMail.value, msg);
         } else {
           _clear();

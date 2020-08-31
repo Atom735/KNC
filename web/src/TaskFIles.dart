@@ -255,7 +255,7 @@ class MyFileViewer extends MDCDialog {
       (_file.warnings.isNotEmpty && _file.warnings[0] == null) ||
               (_file.errors.isNotEmpty && _file.errors[0] == null)
           ? App()
-              .requestOnce('$wwwTaskGetErrors${_task.uid}:${_file.path}')
+              .requestOnce('$wwwFileNotes${_task.uid}:${_file.path}')
               .then((msg) {
               _file.updateErrorsByJson(jsonDecode(msg));
             })

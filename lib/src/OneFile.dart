@@ -36,6 +36,9 @@ class OneFileLineNote {
   final int column;
 
   /// Текст заметки
+  /// * `!E` - ошибка
+  /// * `!W` - предупреждение
+  /// * `!P` - разобранная строка, разделяется символом [msgRecordSeparator]
   final String text;
 
   /// Доп. данные заметки (обычно то что записано в строке)
@@ -74,11 +77,11 @@ class OneFileData {
   /// Кривые найденные в файле
   final List<OneFilesDataCurve> curves;
 
-  final List<OneFileLineNote> errors;
-  final List<OneFileLineNote> warnings;
+  /// Заметки файла
+  final List<OneFileLineNote> notes;
 
   OneFileData(this.path, this.origin, this.type, this.size,
-      {this.well, this.curves, this.encode, this.errors, this.warnings});
+      {this.well, this.curves, this.encode, this.notes});
   OneFileData.byJson(Map<String, Object> json)
       : path = json['path'],
         origin = json['origin'],
@@ -92,39 +95,23 @@ class OneFileData {
                 (index) =>
                     OneFilesDataCurve.byJson((json['curves'] as List)[index]))),
         encode = json['encode'],
-        errors = json['errors'] != null
-            ? List<OneFileLineNote>(json['errors'])
-            : null,
-        warnings = json['warnings'] != null
-            ? List<OneFileLineNote>(json['warnings'])
-            : null;
-  updateErrorsByJson(Map<String, Object> json) {
-    if (json['errors'] != null) {
-      for (var i = 0; i < errors.length; i++) {
-        errors[i] = OneFileLineNote.byJson((json['errors'] as List<Object>)[i]);
-      }
-    }
-    if (json['warnings'] != null) {
-      for (var i = 0; i < warnings.length; i++) {
-        warnings[i] =
-            OneFileLineNote.byJson((json['warnings'] as List<Object>)[i]);
+        notes =
+            json['notes'] != null ? List<OneFileLineNote>(json['notes']) : null;
+  void updateNotesByJson(Map<String, Object> json) {
+    if (json['notes'] != null) {
+      for (var i = 0; i < notes.length; i++) {
+        notes[i] = OneFileLineNote.byJson((json['notes'] as List<Object>)[i]);
       }
     }
   }
 
-  Map<String, Object> get jsonErrors => {}
-    ..addAll(errors != null
-        ? {
-            'errors': errors.map((e) => e.json).toList(growable: false),
-          }
-        : {})
-    ..addAll(warnings != null
-        ? {
-            'warnings': warnings.map((e) => e.json).toList(growable: false),
-          }
-        : {});
+  Map<String, Object> get jsonNotes => {}..addAll(notes != null
+      ? {
+          'notes': notes.map((e) => e.json).toList(growable: false),
+        }
+      : {});
 
-  Map<String, Object> get json => {
+  Map<String, Object> toJson() => {
         'type': type.index,
         'path': path,
         'origin': origin,
@@ -137,14 +124,9 @@ class OneFileData {
                 'curves': curves.map((e) => e.json).toList(growable: false)
               }
             : {})
-        ..addAll(errors != null
+        ..addAll(notes != null
             ? {
-                'errors': errors.length,
-              }
-            : {})
-        ..addAll(warnings != null
-            ? {
-                'warnings': warnings.length,
+                'notes': notes.length,
               }
             : {});
 }

@@ -334,9 +334,9 @@ class IsoTask extends SocketWrapper {
     if ((fileDataNew = await parserFileLas(this, fileData, buffer, encode)) !=
         null) {
       filesSearche[_i] = fileDataNew;
-      if (fileDataNew.errors != null) {
+      if (fileDataNew.notes.any((e) => e.text.startsWith('!E'))) {
         errors++;
-      } else if (fileDataNew.warnings != null) {
+      } else if (fileDataNew.notes.any((e) => e.text.startsWith('!W'))) {
         warnings++;
       }
       worked++;
@@ -494,11 +494,11 @@ class IsoTask extends SocketWrapper {
       print('task[${sets.id}]: recieved unknown msg {$msg}');
     });
 
-    waitMsgAll(wwwTaskGetErrors).listen((msg) {
+    waitMsgAll(wwwFileNotes).listen((msg) {
       send(
           msg.i,
           jsonEncode(
-              filesSearche.firstWhere((e) => e.path == msg.s).jsonErrors));
+              filesSearche.firstWhere((e) => e.path == msg.s).jsonNotes));
     });
 
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
@@ -506,7 +506,7 @@ class IsoTask extends SocketWrapper {
       final im = filesSearche.length - ic;
       final v = List(im);
       for (var i = 0; i < im; i++) {
-        v[i] = filesSearche[i + ic].json;
+        v[i] = filesSearche[i + ic].toJson();
       }
       send(msg.i, jsonEncode({'first': ic, 'task': sets.id, 'data': v}));
     });

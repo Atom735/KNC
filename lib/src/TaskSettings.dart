@@ -1,10 +1,10 @@
 class TaskSettings {
+  /// Имя пользователя запустившего задачу
+  final String user;
+
   /// Название задачи
   final String name;
   static const def_name = '@unnamed';
-
-  /// Имя пользователя запустившего задачу
-  final String user;
 
   /// Список сканируемых путей
   final List<String> path;
@@ -62,7 +62,8 @@ class TaskSettings {
         maxsize_ar = json['maxsize_ar'] ?? def_maxsize_ar,
         maxdepth_ar = json['maxdepth_ar'] ?? def_maxdepth_ar;
 
-  Map<String, Object> get json => {
+  Map<String, Object> toJson() => {
+        'user': user,
         'name': name,
         'path': path,
         'ext_ar': ext_ar,

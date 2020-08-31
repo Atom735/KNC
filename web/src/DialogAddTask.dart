@@ -110,14 +110,15 @@ class DialogAddTask extends MDCDialog {
                 ? eSSName.value
                 : TaskSettings.def_name,
             path: path.isNotEmpty ? path : TaskSettings.def_path)
-        .json;
+        .toJson();
 
     App().requestOnce('$wwwTaskNew${jsonEncode(v)}').then((msg) => reset());
   }
 
   static Future<void> init() async {
-    document.body
-        .appendHtml(await HttpRequest.getString('/src/DialogAddTask.html'));
+    document.body.appendHtml(
+        await HttpRequest.getString('/src/DialogAddTask.html'),
+        validator: nodeValidator);
     DialogAddTask();
   }
 

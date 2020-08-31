@@ -9,21 +9,10 @@ import 'DialogLogin.dart';
 import 'TaskCard.dart';
 import 'misc.dart';
 
-class AppUser {
-  final String mail;
-  final int access;
-
-  AppUser(this.mail, this.access);
-}
-
-class App {
+class App extends SocketWrapper {
   /// Сокет для связи с сервером
   final WebSocket socket;
   final Completer socketCompleter;
-  final SocketWrapper wrapper;
-
-  /// Вошедший пользователь
-  AppUser user;
 
   final eTopBar = MDCTopAppBar(eGetById('my-top-app-bar'));
   final eTopBarRoot = eGetById('my-top-app-bar');
@@ -38,21 +27,14 @@ class App {
   // final TaskViewSection taskView = TaskViewSection();
   // final CardAddTask cardAddTask = CardAddTask();
 
-  Future<SocketWrapperResponse> waitMsg(String msgBegin) =>
-      wrapper.waitMsg(msgBegin);
-  Stream<SocketWrapperResponse> waitMsgAll(String msgBegin) =>
-      wrapper.waitMsgAll(msgBegin);
-  Future<String> requestOnce(String msg) => wrapper.requestOnce(msg);
-  Stream<String> requestSubscribe(String msg) => wrapper.requestSubscribe(msg);
-
   void signin(String mail, String access) {
     eLoginBtn.innerText = 'account_circle';
-    user = AppUser(mail, int.parse(access));
+    user = AppUser(mail, access);
     MyTaskCardTemplate().updateTasks();
   }
 
   App._init(this.socket, this.socketCompleter)
-      : wrapper = SocketWrapper((msg) {
+      : super((msg) {
           print('SEND: $msg');
           socket.sendString(msg);
         }, signal: socketCompleter.future) {
@@ -74,16 +56,6 @@ class App {
     socket.onOpen.listen((_) {
       eLinearProgress.close();
       socketCompleter.complete();
-      if (window.localStorage['signin'] != null) {
-        requestOnce('$wwwSignIn${window.localStorage['signin']}').then((msg) {
-          if (msg != 'null') {
-            final s = window.localStorage['signin'];
-            signin(s.substring(0, s.indexOf(':')), msg);
-          } else {
-            window.localStorage['signin'] = null;
-          }
-        });
-      }
       eTopBarRoot.style.backgroundColor = 'var(--mdc-theme-primary)';
       eTopBarRoot.style.color = 'var(--mdc-theme-on-primary)';
       eTopBarRoot

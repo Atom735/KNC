@@ -17,7 +17,7 @@ const wwwTaskNew = 'tasknew;';
 const wwwTaskUpdates = 'taskupdates;';
 
 /// Запрос на получение ошибок
-const wwwTaskGetErrors = 'taskgeterros;';
+const wwwFileNotes = 'taskgeterros;';
 
 /// Запрос на получение обработанных файлов
 const wwwTaskGetFiles = 'taskgetfiles;';
@@ -29,10 +29,10 @@ const wwwGetFileData = 'getfiledata;';
 const wwwStreamClose = 'streamclose;';
 
 /// Отправка данных для входа
-const wwwSignIn = 'signin;';
+const wwwUserSignin = 'signin;';
 
 /// Отправка данных для регистрации
-const wwwRegistration = 'registrtion;';
+const wwwUserRegistration = 'registrtion;';
 
 const signatureDoc = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
 const signatureZip = [

@@ -21,7 +21,8 @@ class DialogRegistration extends MDCDialog {
 
   static Future<void> init() async {
     document.body.appendHtml(
-        await HttpRequest.getString('/src/DialogRegistration.html'));
+        await HttpRequest.getString('/src/DialogRegistration.html'),
+        validator: nodeValidator);
     DialogRegistration();
   }
 
@@ -37,12 +38,12 @@ class DialogRegistration extends MDCDialog {
       eRegistration.disabled = true;
       App()
           .requestOnce(
-              '$wwwRegistration${eInMail.value}:${passwordEncode(eInPass.value)}')
+              '$wwwUserRegistration${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}')
           .then((msg) {
-        if (msg != 'null') {
+        if (msg.isNotEmpty) {
           _clear();
           window.localStorage['signin'] =
-              '${eInMail.value}:${passwordEncode(eInPass.value)}';
+              '${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}';
           App().signin(eInMail.value, msg);
         } else {
           _clear();
