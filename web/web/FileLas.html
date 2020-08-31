@@ -155,10 +155,17 @@
             window.onload = function () {
                 document.querySelectorAll("main>div>div:first-child").forEach(function (element) {
                     var b = false;
+                    element.setAttribute('tabindex', '0');
+                    element.onkeydown = function (event) {
+
+                        if (event.keyCode === 13) {
+                            event.target.click();
+                        }
+                    };
                     element.onclick = function (event) {
-                        // if (b) return;
-                        // b = true;
-                        element.onclick = null;
+                        if (b) return;
+                        b = true;
+                        element.setAttribute('tabindex', '-1');
                         console.log(event.target);
                         v = event.target;
                         t = v.nextElementSibling;
@@ -169,6 +176,7 @@
                         // }
                         i.classList = t.classList;
                         t.replaceWith(i);
+                        i.focus();
                         v.style.background = "#e1bee7";
                     };
                 });

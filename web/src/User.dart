@@ -18,17 +18,18 @@ class User {
   String toString() => mail;
 
   /// Вход в систему
-  static Future<User> signin(final String data) =>
-      requestOnce('$wwwUserSignin$data').then((msg) {
-        if (msg.isNotEmpty) {
-          window.localStorage['signin'] = data;
-          return User._(
-              data.substring(0, data.indexOf(msgRecordSeparator)), msg);
-        } else {
-          window.localStorage['signin'] = null;
-        }
-        return null;
-      });
+  static Future<User> signin(final String data) => data == null
+      ? null
+      : requestOnce('$wwwUserSignin$data').then((msg) {
+          if (msg.isNotEmpty) {
+            window.localStorage['signin'] = data;
+            return User._(
+                data.substring(0, data.indexOf(msgRecordSeparator)), msg);
+          } else {
+            window.localStorage['signin'] = null;
+          }
+          return null;
+        });
 
   /// Вход с помощью сохранённых данных
   static Future<User> signByIndexDB() => signin(window.localStorage['signin']);

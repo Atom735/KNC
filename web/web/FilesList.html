@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Example of Table File</title>
+        <style>
+            body,
+            div,
+            dl,
+            dt,
+            dd,
+            ul,
+            ol,
+            li,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            pre,
+            form,
+            fieldset,
+            input,
+            textarea,
+            p,
+            blockquote,
+            th,
+            td {
+                margin: 0;
+                padding: 0;
+            }
+
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+            }
+
+            fieldset,
+            img {
+                border: 0;
+            }
+
+            address,
+            caption,
+            cite,
+            code,
+            dfn,
+            em,
+            strong,
+            th,
+            var {
+                font-style: normal;
+                font-weight: normal;
+            }
+
+            ol,
+            ul {
+                list-style: none;
+            }
+
+            caption,
+            th {
+                text-align: left;
+            }
+
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
+                font-size: 100%;
+                font-weight: normal;
+            }
+
+            q:before,
+            q:after {
+                content: "";
+            }
+
+            abbr,
+            acronym {
+                border: 0;
+            }
+
+            main {
+                padding: 1px;
+            }
+
+            main>div {
+                display: block;
+                width: max-content;
+                font-size: 0;
+                height: max-content;
+                height: 1.5rem;
+            }
+
+            main>div:hover {
+                background: #eee;
+            }
+
+            main>div>div {
+
+                display: block;
+                font-size: 1rem;
+                line-height: 1.5rem;
+                display: inline-block;
+                margin: 0;
+                border: #607D8B 1px solid;
+                outline: #607D8B 1px solid;
+                box-sizing: border-box;
+                margin-inline-start: 0;
+                word-spacing: 0;
+                padding: 0 4px;
+                overflow: hidden;
+                height: 1.5rem;
+                position: absolute;
+            }
+
+
+            /* <div>#</div> */
+            main>div>div:nth-child(1) {
+                min-width: 2rem;
+                max-width: 2rem;
+            }
+
+            /* <div>Название файла</div> */
+            main>div>div:nth-child(2) {
+                min-width: 6rem;
+                max-width: 6rem;
+                margin-left: 2rem;
+            }
+
+            /* <div>Тип</div> */
+            main>div>div:nth-child(3) {
+                min-width: 4rem;
+                max-width: 4rem;
+                margin-left: 8rem;
+            }
+
+            /* <div>Размер</div> */
+            main>div>div:nth-child(4) {
+                min-width: 6rem;
+                max-width: 6rem;
+                margin-left: 12rem;
+            }
+
+            /* <div>Оригинал</div> */
+            main>div>div:nth-child(5) {
+                min-width: 6rem;
+                max-width: 6rem;
+                margin-left: 18rem;
+            }
+
+            /* <div>Рабочая копия</div> */
+            main>div>div:nth-child(6) {
+                min-width: 6rem;
+                max-width: 6rem;
+                margin-left: 24rem;
+            }
+
+            /* <div>Кодировка</div> */
+            main>div>div:nth-child(7) {
+                min-width: 5rem;
+                max-width: 5rem;
+                margin-left: 30rem;
+            }
+
+            /* <div>Заметки</div> */
+            main>div>div:nth-child(8) {
+                min-width: 5rem;
+                max-width: 5rem;
+                margin-left: 35rem;
+            }
+
+            main>div>div:nth-child(8)>div {
+                display: inline;
+            }
+
+            main>div>div:nth-child(8)>div:nth-child(1) {
+                color: #333;
+            }
+
+            main>div>div:nth-child(8)>div:nth-child(2) {
+                color: #770;
+            }
+
+            main>div>div:nth-child(8)>div:nth-child(3) {
+                color: #700;
+            }
+
+            main>div.up>div:nth-child(1) {
+                min-width: 40rem;
+                max-width: 40rem;
+            }
+
+            /* <div>Скважина</div> */
+            main>div>div:nth-child(9),
+            main>div.up>div:nth-child(2) {
+                min-width: 6rem;
+                max-width: 6rem;
+                margin-left: 40rem;
+            }
+
+
+            /* <div>Иследование</div> */
+            main>div>div:nth-child(10),
+            main>div.up>div:nth-child(3) {
+                min-width: 6rem;
+                max-width: 6rem;
+                margin-left: 46rem;
+            }
+
+            /* <div>Начало</div> */
+            main>div>div:nth-child(11),
+            main>div.up>div:nth-child(4) {
+                min-width: 6rem;
+                max-width: 6rem;
+                margin-left: 52rem;
+            }
+
+            /* <div>Конец</div> */
+            main>div>div:nth-child(12),
+            main>div.up>div:nth-child(5) {
+                min-width: 6rem;
+                max-width: 6rem;
+                margin-left: 58rem;
+            }
+
+            /* <div>Шаг</div> */
+            main>div>div:nth-child(13),
+            main>div.up>div:nth-child(6) {
+                min-width: 6rem;
+                max-width: 6rem;
+                margin-left: 64rem;
+            }
+
+            main>div>div:focus {
+                border-color: #0080ff;
+            }
+
+            main>div>div:focus,
+            main>div>div:hover {
+                background: #eee;
+                z-index: 1;
+                max-width: max-content !important;
+            }
+
+        </style>
+        <script>
+        </script>
+    </head>
+
+    <body>
+        <main>
+            <div>
+                <div tabindex="0">#</div>
+                <div tabindex="0">Название файла</div>
+                <div tabindex="0">Тип</div>
+                <div tabindex="0">Размер</div>
+                <div tabindex="0">Оригинал</div>
+                <div tabindex="0">Копия</div>
+                <div tabindex="0">Кодировка</div>
+                <div tabindex="0">Заметки</div>
+                <div tabindex="0">Скважина</div>
+                <div tabindex="0">Иследование</div>
+                <div tabindex="0">Начало</div>
+                <div tabindex="0">Конец</div>
+                <div tabindex="0">Шаг</div>
+            </div>
+
+            <div>
+                <div tabindex="0">1</div>
+                <div tabindex="0">Ink.las</div>
+                <div tabindex="0">LAS</div>
+                <div tabindex="0">102320</div>
+                <div tabindex="0">//NAS/asda.zip/asd/as,daspc a
+                    sc/asdpaslpdl/casldpl/Ink.las
+                </div>
+                <div tabindex="0">D:/asld/asca//asdlaspcas/dplgit/hab/0000001
+                </div>
+                <div tabindex="0">CP1251</div>
+                <div tabindex="0">
+                    <div>32</div>
+                    <div>41</div>
+                    <div>12</div>
+                </div>
+
+                <div tabindex="0">ASD2551</div>
+                <div tabindex="0">PSlsdf</div>
+                <div tabindex="0">12324.122</div>
+                <div tabindex="0">1242.3123</div>
+                <div tabindex="0">0.01</div>
+            </div>
+            <div class="up">
+                <div tabindex="0"></div>
+                <div tabindex="0">3551</div>
+                <div tabindex="0">PSlsdf</div>
+                <div tabindex="0">12324.122</div>
+                <div tabindex="0">1242.3123</div>
+                <div tabindex="0">0.01</div>
+            </div>
+
+            <div class="up">
+                <div tabindex="0"></div>
+                <div tabindex="0"></div>
+                <div tabindex="0">PSlsdf</div>
+                <div tabindex="0">12324.122</div>
+                <div tabindex="0">1242.3123</div>
+                <div tabindex="0">0.01</div>
+
+            </div>
+        </main>
+    </body>
+
+</html>

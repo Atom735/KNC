@@ -8,6 +8,7 @@ import 'src/DialogLogin.dart';
 import 'src/DialogRegistration.dart';
 
 void main() async {
+  await App.init();
   await DialogAddTask.init();
   await DialogLogin.init();
   await DialogRegistration.init();
