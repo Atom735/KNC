@@ -7,7 +7,8 @@ import 'App.dart';
 final htmlValidator = NodeValidatorBuilder.common()
   ..allowElement('button', attributes: ['data-badge']);
 
-final uri = Uri.tryParse(document.baseUri);
+final uri = Uri.parse(document.baseUri);
+List<String> uriPaths = uri.pathSegments;
 
 Element eGetById(final String id) => document.getElementById(id);
 

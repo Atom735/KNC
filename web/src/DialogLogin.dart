@@ -6,6 +6,7 @@ import 'MDC/snackbar.dart';
 
 import 'App.dart';
 import 'DialogRegistration.dart';
+import 'User.dart';
 import 'misc.dart';
 
 class DialogLogin extends MDCDialog {
@@ -28,24 +29,17 @@ class DialogLogin extends MDCDialog {
   DialogLogin._init(Element root) : super(root) {
     print('$runtimeType created: $hashCode');
     _clear();
-
     eSignIn.onClick.listen((_) {
       eLinearProgress.open();
       eInMail.disabled = true;
       eInPass.disabled = true;
       eSignIn.disabled = true;
       eRegistration.disabled = true;
-      App()
-          .requestOnce(
-              '$wwwUserSignin${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}')
-          .then((msg) {
-        if (msg.isNotEmpty) {
-          _clear();
-          window.localStorage['signin'] =
-              '${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}';
-          App().signin(eInMail.value, msg);
-        } else {
-          _clear();
+      User.signin(
+              '${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}')
+          .then((user) {
+        _clear();
+        if (user == null) {
           open();
           eSnackBarOfError.open();
         }

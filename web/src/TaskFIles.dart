@@ -1,11 +1,8 @@
-import 'dart:async';
 import 'dart:html';
-import 'dart:convert';
 
 import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
-import 'App.dart';
 import 'CardTask.dart';
 import 'misc.dart';
 

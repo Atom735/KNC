@@ -32,9 +32,6 @@ class App extends SocketWrapper {
   // final TaskViewSection taskView = TaskViewSection();
   // final CardAddTask cardAddTask = CardAddTask();
 
-  /// Действия при входе в систему
-  void signin(String mail, String access) {}
-
   /// Установить состояние приложения как "Подключение к серверу"
   void _stateConnecting() {
     eTopBarRoot.style.backgroundColor = 'var(--mdc-theme-secondary)';
@@ -61,10 +58,6 @@ class App extends SocketWrapper {
     /// Попытка автомотического входа
     User.signByIndexDB().then((user) {
       eTitle.innerText = 'Пункт приёма стеклотары.';
-      if (user != null) {
-        eLoginBtn.innerText = 'account_circle';
-        CardTaskTemplate().updateTasks();
-      }
       eLinearProgress.close();
     });
   }

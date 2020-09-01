@@ -6,6 +6,7 @@ import 'MDC/snackbar.dart';
 
 import 'App.dart';
 import 'DialogLogin.dart';
+import 'User.dart';
 import 'misc.dart';
 
 class DialogRegistration extends MDCDialog {
@@ -36,18 +37,13 @@ class DialogRegistration extends MDCDialog {
       eInPass.disabled = true;
       eSignIn.disabled = true;
       eRegistration.disabled = true;
-      App()
-          .requestOnce(
-              '$wwwUserRegistration${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}')
-          .then((msg) {
-        if (msg.isNotEmpty) {
-          _clear();
-          window.localStorage['signin'] =
-              '${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}';
-          App().signin(eInMail.value, msg);
-        } else {
-          _clear();
-          open();
+
+      User.reg(
+              '${eInMail.value}$msgRecordSeparator${passwordEncode(eInPass.value)}')
+          .then((user) {
+        _clear();
+        if (user == null) {
+          super.open();
           eSnackBarOfError.open();
         }
       });
