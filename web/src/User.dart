@@ -19,7 +19,7 @@ class User {
 
   /// Вход в систему
   static Future<User> signin(final String data) => data == null
-      ? null
+      ? Future(() => null)
       : requestOnce('$wwwUserSignin$data').then((msg) {
           if (msg.isNotEmpty) {
             window.localStorage['signin'] = data;

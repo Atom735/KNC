@@ -25,7 +25,8 @@ class Client extends SocketWrapper {
   /// Создание нового клиента с указанным сокетом и
   /// пользователем, если он был задан
   Client(this.socket, [this.user = User.guest])
-      : super((msg) => socket.add(msg)) {
+      : super((msg) =>
+            [socket.add(msg), print('${socket.hashCode}: send => $msg')]) {
     print('$this created');
     list.add(this);
 

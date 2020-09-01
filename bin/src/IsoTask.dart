@@ -138,8 +138,7 @@ class IsoTask extends SocketWrapper {
   final listOfFiles = <C_File>[];
 
   static Future<void> entryPoint(final TaskSpawnSets sets) async {
-    final pathOut = (await Directory('temp').createTemp('task.')).absolute.path;
-    await IsoTask(sets, pathOut).entryPointInClass();
+    await IsoTask(sets, sets.dir.path).entryPointInClass();
   }
 
   Future<void> entryPointInClass() async {
@@ -473,6 +472,9 @@ class IsoTask extends SocketWrapper {
       requestOnce('$msgUnzip$pathToArchive')
           .then((value) => ArchiverOutput.fromWrapperMsg(value));
 
+  @override
+  String toString() =>
+      '$runtimeType{${sets.id}}(${sets.settings.name})[${sets.settings.user}]';
   IsoTask._init(this.sets, this.pathOut)
       : pathOutLas = p.join(pathOut, 'las'),
         newerOutLas = PathNewer(p.join(pathOut, 'las')),
@@ -485,7 +487,7 @@ class IsoTask extends SocketWrapper {
               ..writeCharCode(unicodeBomCharacterRune),
         pathTemp = p.join(pathOut, 'temp'),
         super((msg) => sets.sendPort.send([sets.id, msg])) {
-    print('$runtimeType created: $hashCode');
+    print('$this created');
     receivePort.listen((final msg) {
       if (msg is String) {
         recv(msg);

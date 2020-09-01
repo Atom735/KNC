@@ -12,6 +12,7 @@ class Server {
   final dirs = <Directory>[
     Directory('build').absolute,
     Directory('tasks').absolute,
+    Directory('web').absolute,
   ];
   final fileMap = <String, File>{'/': File('web/index.html')};
   final reMap = <RegExp, File>{

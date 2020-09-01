@@ -23,9 +23,9 @@ class App extends SocketWrapper {
   final DivElement eTitleSpinner = eGetById('page-title-spinner');
 
   static Future<void> init() async {
-    document.body.appendHtml(await HttpRequest.getString('/src/App.html'),
+    document.body.insertAdjacentHtml(
+        'afterBegin', await HttpRequest.getString('/src/App.html'),
         validator: nodeValidator);
-    App();
   }
 
   // final TaskSetsDialog taskSets = TaskSetsDialog();
@@ -36,7 +36,7 @@ class App extends SocketWrapper {
   void signin(String mail, String access) {}
 
   /// Установить состояние приложения как "Подключение к серверу"
-  void stateConnecting() {
+  void _stateConnecting() {
     eTopBarRoot.style.backgroundColor = 'var(--mdc-theme-secondary)';
     eTopBarRoot.style.color = 'var(--mdc-theme-on-secondary)';
     eTopBarRoot
@@ -48,7 +48,7 @@ class App extends SocketWrapper {
   }
 
   /// Установить состояние приложения как "Подключено"
-  void stateConnected() {
+  void _stateConnected() {
     eTopBarRoot.style.backgroundColor = 'var(--mdc-theme-primary)';
     eTopBarRoot.style.color = 'var(--mdc-theme-on-primary)';
     eTopBarRoot
@@ -70,7 +70,7 @@ class App extends SocketWrapper {
   }
 
   /// Установить состояние приложения как "Отключён от сервера"
-  void stateClosed() {
+  void _stateClosed() {
     eTitle.innerText = 'Меня отключили и потеряли...';
     eTopBarRoot.style.backgroundColor = 'var(--mdc-theme-error)';
     eTopBarRoot.style.color = 'var(--mdc-theme-on-error)';
@@ -90,14 +90,13 @@ class App extends SocketWrapper {
         }, signal: socketCompleter.future) {
     print('$this created');
     _instance = this;
-    stateConnecting();
+    _stateConnecting();
 
     eLoginBtn.onClick.listen((_) => User() == null ? DialogLogin().open() : 0);
 
-    socket.onOpen.listen((_) => stateConnected());
-    socket.onClose.listen((_) => stateClosed());
-    socket.onMessage
-        .listen((_) => recv(_.data) ? null : print('RECV: ${_.data}'));
+    socket.onOpen.listen((_) => _stateConnected());
+    socket.onClose.listen((_) => _stateClosed());
+    socket.onMessage.listen((_) => [recv(_.data), print('RECV: ${_.data}')]);
   }
   static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');

@@ -24,11 +24,17 @@ class App {
 
     receivePort.listen((msg) {
       if (msg is List) {
-        if (msg.length == 3 && msg[0] is int && msg[1] is SendPort) {
+        if (msg.length == 2 && msg[0] is int && msg[1] is SendPort) {
           completers[msg[0]].complete(msg[1]);
         }
         if (msg.length == 2 && msg[0] is int && msg[1] is String) {
-          Task.list[msg[0]].recv(msg[1]);
+          if (completers[msg[0]] != null) {
+            completers[msg[0]]
+                .future
+                .then((value) => Task.list[msg[0]].recv(msg[1]));
+          } else {
+            Task.list[msg[0]].recv(msg[1]);
+          }
         }
       }
     }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));

@@ -40,16 +40,16 @@ class TaskSpawnSets {
     App().completers[_id] = _c;
     final _dir = dir ?? await Directory('tasks').absolute.createTemp();
     if (settings != null) {
-      Task(
-          _id,
-          settings,
-          await _c.future,
-          await Isolate.spawn(
-              IsoTask.entryPoint,
-              TaskSpawnSets._(_id, App().receivePort.sendPort, settings,
-                  Conv().charMaps, _dir),
-              debugName: '{$_id}(${settings.name})[${settings.user}'),
-          _dir);
+      final _iso = await Isolate.spawn(
+          IsoTask.entryPoint,
+          TaskSpawnSets._(
+              _id, App().receivePort.sendPort, settings, Conv().charMaps, _dir),
+          debugName: '{$_id}(${settings.name})[${settings.user}');
+      final _sendPort = await _c.future;
+      App().completers[_id] = Completer<SendPort>();
+      Task(_id, settings, _sendPort, _iso, _dir);
+      App().completers[_id].complete();
+      App().completers.remove(_id);
     }
   }
 }
