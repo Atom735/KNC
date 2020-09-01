@@ -91,6 +91,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
         _addNoteWarning('комментарий не в начале строки');
       }
       rSkipToEndOfLine();
+      _addNoteParsed(['ignore']);
       rSkipWhiteSpaces();
     }
   }
@@ -103,6 +104,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
       } else if (data[iSymbol] == '~') {
         return false;
       } else {
+        _addNoteParsed(['ignore']);
         rSkipToEndOfLine();
       }
     }
@@ -131,9 +133,11 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
     switch (_value) {
       case '1.20':
         _v_vers = 1;
+        _addNoteParsed(['VERS', '1.20']);
         return;
       case '2.0':
         _v_vers = 2;
+        _addNoteParsed(['VERS', '2.0']);
         return;
       default:
         final _vd = double.tryParse(_value);
@@ -141,27 +145,33 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
           _addNoteWarning(
               'неудалось разобрать версию файла, считается что версия файла 1.20');
           _v_vers = 1;
+          _addNoteParsed(['VERS', '1.20']);
         } else {
           if (_vd == 1.2) {
             _addNoteWarning('несовсем корректная запись версии файла 1.20');
             _v_vers = 1;
+            _addNoteParsed(['VERS', '1.20']);
             return;
           } else if (_vd == 2.0) {
             _addNoteWarning('несовсем корректная запись версии файла 2.0');
             _v_vers = 2;
+            _addNoteParsed(['VERS', '2.0']);
             return;
           } else if (_vd >= 1.0 && _vd < 2.0) {
             _addNoteWarning('неизвестное число в записи версии файла 1.20');
             _v_vers = 1;
+            _addNoteParsed(['VERS', '1.20']);
             return;
           } else if (_vd >= 2.0 && _vd < 3.0) {
             _addNoteWarning('неизвестное число в записи версии файла 2.0');
             _v_vers = 2;
+            _addNoteParsed(['VERS', '2.0']);
             return;
           } else {
             _addNoteWarning(
                 'неизвестное число в записи версии файла, считается что версия файла 1.20');
             _v_vers = 1;
+            _addNoteParsed(['VERS', '1.20']);
             return;
           }
         }
@@ -189,9 +199,11 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
     switch (_value) {
       case 'YES':
         _v_wrap = true;
+        _addNoteParsed(['WRAP', 'YES']);
         return;
       case 'NO':
         _v_wrap = false;
+        _addNoteParsed(['WRAP', 'NO']);
         return;
       default:
         final _value_u = _value.toUpperCase();
@@ -199,15 +211,18 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
           case 'YES':
             _addNoteWarning('запись не в верхнем регистре');
             _v_wrap = true;
+            _addNoteParsed(['WRAP', 'YES']);
             return;
           case 'NO':
             _addNoteWarning('запись не в верхнем регистре');
             _v_wrap = false;
+            _addNoteParsed(['WRAP', 'NO']);
             return;
           default:
             _addNoteWarning(
                 'неизвестное значение перевода строки, считается что разделение строки включено');
             _v_wrap = true;
+            _addNoteParsed(['WRAP', 'YES']);
             return;
         }
     }
@@ -257,7 +272,8 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
                 rV_WRAP(iSeparatorDot, iLineEndSymbol);
                 continue loop;
               default:
-                _addNoteWarning('проигнорированная строка');
+                // _addNoteWarning('проигнорированная строка');
+                _addNoteParsed(['ignore']);
                 continue loop;
             }
         }
@@ -318,18 +334,22 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
           case 'NULL':
             _w_null = _unit;
             _w_null_n = _unit_n;
+            _addNoteParsed(['NULL', _w_null_n.toString()]);
             return;
           case 'STRT':
             _w_strt = _unit;
             _w_strt_n = _unit_n;
+            _addNoteParsed(['STRT', _w_strt_n.toString()]);
             return;
           case 'STOP':
             _w_stop = _unit;
             _w_stop_n = _unit_n;
+            _addNoteParsed(['STOP', _w_stop_n.toString()]);
             return;
           case 'STEP':
             _w_step = _unit;
             _w_step_n = _unit_n;
+            _addNoteParsed(['STEP', _w_step_n.toString()]);
             return;
         }
       }
@@ -352,18 +372,22 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
         case 'NULL':
           _w_null = _value;
           _w_null_n = _value_n;
+          _addNoteParsed(['NULL', _w_null_n.toString()]);
           return;
         case 'STRT':
           _w_strt = _value;
           _w_strt_n = _value_n;
+          _addNoteParsed(['STRT', _w_strt_n.toString()]);
           return;
         case 'STOP':
           _w_stop = _value;
           _w_stop_n = _value_n;
+          _addNoteParsed(['STOP', _w_stop_n.toString()]);
           return;
         case 'STEP':
           _w_step = _value;
           _w_step_n = _value_n;
+          _addNoteParsed(['STEP', _w_step_n.toString()]);
           return;
       }
     }
@@ -388,6 +412,8 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
         .substring(
             _colon ? iLineEndSymbol : iSeparatorColon + 1, iLineEndSymbol)
         .trim();
+    // TODO: обработка well
+    _addNoteParsed(['WELL', _w_well]);
   }
 
   bool rSectionW() {
@@ -439,7 +465,8 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
                 rW_WELL(iSeparatorDot, iLineEndSymbol);
                 continue loop;
               default:
-                _addNoteWarning('проигнорированная строка');
+                // _addNoteWarning('проигнорированная строка');
+                _addNoteParsed(['ignore']);
                 continue loop;
             }
         }
@@ -553,6 +580,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
           }
         }
       } else {
+        // TODO: научиться работать с WRAP: YES
         _addMoteError(
             'включён перенос строки, но мы пока не умеем с ним работать');
         return true;
@@ -576,6 +604,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
     // ~P - contains parameters or constants
     // ~O - contains other information such as comments
     // ~A - contains ASCII log data
+    _addNoteParsed(['section']);
     switch (data[iSymbol]) {
       case 'V':
         rSkipToEndOfLine();
@@ -588,7 +617,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
         return rSectionC();
       case 'P':
       case 'O':
-        _addNoteWarning('пропуск секции');
+        // _addNoteWarning('пропуск секции');
         if (rSkipSection()) {
           return true;
         }
