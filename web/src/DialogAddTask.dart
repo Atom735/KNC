@@ -5,6 +5,7 @@ import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'App.dart';
+import 'User.dart';
 import 'misc.dart';
 
 class DialogAddTask extends MDCDialog {

@@ -19,7 +19,7 @@ class User {
   @override
   String toString() => mail;
 
-  static const User guest = User._('guest', '', 'a');
+  static const User guest = User._('@guest', '', 'a');
 
   static final _list = <User>[];
 

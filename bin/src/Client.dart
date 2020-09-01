@@ -42,19 +42,27 @@ class Client extends SocketWrapper {
           list.remove(this);
           print('$this released');
         });
-    // waitMsgAll(wwwTaskViewUpdate).listen((msg) {
-    //   send(
-    //       msg.i,
-    //       App().getWwwTaskViewUpdate(
-    //           user,
-    //           (jsonDecode(msg.s) as List)
-    //               .map((e) => e as int)
-    //               .toList(growable: false)));
-    // });
+
+    /// Просьба обновить список задач `task.id...` - которые надо проигнорировать
+    waitMsgAll(wwwTaskViewUpdate).listen((msg) {
+      final _id = (jsonDecode(msg.s) as List)
+          .map((e) => e as int)
+          .toList(growable: false);
+      send(
+          msg.i,
+          jsonEncode(Task.list.values
+              .where((e) =>
+                  !_id.contains(e.id) &&
+                  (e.settings.user == user.mail ||
+                      (e.settings.users.contains(user.mail))))
+              .toList(growable: false)));
+    });
 
     /// Запуск новой задачи `task.settings`
     waitMsgAll(wwwTaskNew).listen((msg) {
-      TaskSpawnSets.spawn(settings: TaskSettings.fromJson(jsonDecode(msg.s)))
+      final v = jsonDecode(msg.s);
+      v['user'] = user.mail;
+      TaskSpawnSets.spawn(settings: TaskSettings.fromJson(v))
           .then((_) => send(msg.i, ''));
     });
 

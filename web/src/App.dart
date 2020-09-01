@@ -89,7 +89,8 @@ class App extends SocketWrapper {
 
     socket.onOpen.listen((_) => _stateConnected());
     socket.onClose.listen((_) => _stateClosed());
-    socket.onMessage.listen((_) => [recv(_.data), print('RECV: ${_.data}')]);
+    socket.onMessage
+        .listen((_) => recv(_.data) ? null : print('RECV: ${_.data}'));
   }
   static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');

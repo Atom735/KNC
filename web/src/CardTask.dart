@@ -221,6 +221,8 @@ class CardTask {
     }
   }
 
+  String dir;
+
   void byJson(final dynamic item) {
     sName = item['name'];
     iState = item['state'];
@@ -230,6 +232,7 @@ class CardTask {
     iWorked = item['worked'];
     bPause = item['pause'];
     sRaport = item['raport'];
+    dir = item['dir'];
   }
 
   CardTask._new(final Element root, this.uid)
@@ -282,7 +285,9 @@ class CardTaskTemplate {
         .then((msg) {
       final items = jsonDecode(msg);
       for (final item in items) {
-        list[item['id']] = CardTask(item['id'])..byJson(item);
+        if (list[item['id']] == null) {
+          list[item['id']] = CardTask(item['id'])..byJson(item);
+        }
       }
     });
   }
@@ -290,7 +295,6 @@ class CardTaskTemplate {
   CardTaskTemplate._init(final TemplateElement temp) : eTemp = temp {
     print('$runtimeType created: $hashCode');
     _instance = this;
-
     updateTasks();
 
     App().waitMsgAll(wwwTaskNew).listen((msg) {

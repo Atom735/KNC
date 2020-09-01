@@ -3,12 +3,11 @@ import 'dart:isolate';
 import 'dart:convert';
 
 import 'package:knc/knc.dart';
+import 'package:path/path.dart' as p;
 
-import 'App.dart';
 import 'Client.dart';
 import 'Conv.dart';
-import 'IsoTask.dart';
-import 'User.dart';
+import 'Server.dart';
 import 'msgs.dart';
 
 class Task extends SocketWrapper {
@@ -38,7 +37,6 @@ class Task extends SocketWrapper {
         super((msg) => _sendPort.send(msg)) {
     print('$this created');
     list[id] = this;
-    // TODO: уведомить клиентов о старте новой задачи
 
     waitMsgAll(msgTaskUpdateState).listen((msg) => state = int.tryParse(msg.s));
     waitMsgAll(msgTaskUpdateErrors)
@@ -68,13 +66,17 @@ class Task extends SocketWrapper {
     waitMsgAll(msgUnzip).listen((msg) {
       Conv().unzip(msg.s).then((value) => send(msg.i, value.toWrapperMsg()));
     });
+
+    // TODO: уведомить клиентов о старте новой задачи
+    sendForAllClients('$wwwTaskNew${jsonEncode(this)}');
   }
 
   void sendForAllClients(final String msg) => Client.list
-      .where((e) => e.user.mail == settings.user)
+      .where((e) =>
+          e.user.mail == settings.user || settings.users.contains(e.user.mail))
       .forEach((e) => e.send(0, msg));
 
-  dynamic get json => {
+  Map<String, Object> toJson() => {
         'id': id,
         'name': settings.name,
         'state': _state,
@@ -83,6 +85,7 @@ class Task extends SocketWrapper {
         'warnings': _warnings,
         'pause': _pause,
         'raport': _raport,
+        'dir': p.basename(dir.path),
       };
 
   String _raport;
@@ -91,8 +94,8 @@ class Task extends SocketWrapper {
       return;
     }
     _raport = i;
-    final xmlUrl =
-        '/' + i.replaceAll('\\', '/').replaceAll(':', ' ').replaceAll(' ', '_');
+    final xmlUrl = '/raport/${passwordEncode(_raport)}';
+    Server().fileMap[xmlUrl] = File(_raport);
     // App().listOfFiles[xmlUrl] = File(_raport);
     sendForAllClients(wwwTaskUpdates +
         jsonEncode([

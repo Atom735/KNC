@@ -2,6 +2,10 @@ class TaskSettings {
   /// Имя пользователя запустившего задачу
   final String user;
 
+  /// Имя пользователей которым доступна задача
+  final List<String> users;
+  static const def_users = ['@guest'];
+
   /// Название задачи
   final String name;
   static const def_name = '@unnamed';
@@ -40,6 +44,7 @@ class TaskSettings {
 
   TaskSettings(
       {this.user,
+      this.users = def_users,
       this.name = def_name,
       this.path = def_path,
       this.ext_ar = def_ext_ar,
@@ -49,6 +54,9 @@ class TaskSettings {
 
   TaskSettings.fromJson(final Map<String, Object> json)
       : user = json['user'],
+        users = ((json['users'] ?? def_users) as Iterable)
+            .map((e) => e as String)
+            .toList(growable: false),
         name = json['name'] ?? def_name,
         path = ((json['path'] ?? def_path) as Iterable)
             .map((e) => e as String)
