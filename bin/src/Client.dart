@@ -90,6 +90,10 @@ class Client extends SocketWrapper {
     /// Регистрация нового пользователя `mail``pass`
     waitMsgAll(wwwUserRegistration).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
+      if (i0 == -1) {
+        send(msg.i, '');
+        return;
+      }
       final _user = User.reg(msg.s.substring(0, i0),
           msg.s.substring(i0 + msgRecordSeparator.length));
       if (_user != null) {
@@ -103,6 +107,10 @@ class Client extends SocketWrapper {
     /// Вход пользователя `mail``pass`
     waitMsgAll(wwwUserSignin).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
+      if (i0 == -1) {
+        send(msg.i, '');
+        return;
+      }
       final _user = User.get(msg.s.substring(0, i0),
           msg.s.substring(i0 + msgRecordSeparator.length));
       if (_user != null) {
