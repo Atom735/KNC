@@ -1,0 +1,32 @@
+@keyframes slideout {
+    from {
+        transform: translate(0);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-100%);
+        opacity: 0;
+    }
+}
+@keyframes slidein {
+    from {
+        transform: translate(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(0);
+        opacity: 1;
+    }
+}
+
+body > main.a-closing {
+    animation: 0.5s ease-out slideout;
+}
+body > main.a-opening {
+    animation: 0.5s ease-out slidein;
+}
+
+body > main {
+    position: absolute;
+    width: 100%;
+}

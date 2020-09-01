@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:knc/knc.dart';
 
 import 'App.dart';
@@ -22,11 +23,16 @@ class Client extends SocketWrapper {
   String toString() =>
       '$runtimeType($hashCode)[$user].WebSocket(${socket.hashCode})';
 
+  @override
+  void send(final int id, final String msg) {
+    print('$this: send ($id) => $msg');
+    super.send(id, msg);
+  }
+
   /// Создание нового клиента с указанным сокетом и
   /// пользователем, если он был задан
   Client(this.socket, [this.user = User.guest])
-      : super((msg) =>
-            [socket.add(msg), print('${socket.hashCode}: send => $msg')]) {
+      : super((msg) => socket.add(msg)) {
     print('$this created');
     list.add(this);
 
@@ -77,9 +83,17 @@ class Client extends SocketWrapper {
 
     /// Получение списка файлов `task.id`
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
-      Task.list[int.parse(msg.s)]
-          .requestOnce('$wwwTaskGetFiles')
-          .then((v) => send(msg.i, v));
+      final _id = Task.list.values
+          .firstWhere((e) => msg.s == p.basename(e.dir.path),
+              orElse: () => null)
+          ?.id;
+      if (_id == null || Task.list[_id] == null) {
+        send(msg.i, '');
+      } else {
+        Task.list[_id]
+            .requestOnce('$wwwTaskGetFiles')
+            .then((v) => send(msg.i, v));
+      }
     });
 
     /// Получение данных файла `path``codepage`

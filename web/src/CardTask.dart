@@ -232,6 +232,7 @@ class CardTask {
     iWorked = item['worked'];
     bPause = item['pause'];
     sRaport = item['raport'];
+    print(dir);
     dir = item['dir'];
   }
 

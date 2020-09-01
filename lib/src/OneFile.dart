@@ -80,8 +80,19 @@ class OneFileData {
   /// Заметки файла
   final List<OneFileLineNote> notes;
 
+  /// Заметки в виде ошибок
+  final int notesError;
+
+  /// Заметки в виде предупрежений
+  final int notesWarnings;
+
   OneFileData(this.path, this.origin, this.type, this.size,
-      {this.well, this.curves, this.encode, this.notes});
+      {this.well,
+      this.curves,
+      this.encode,
+      this.notes,
+      this.notesError,
+      this.notesWarnings});
   OneFileData.byJson(Map<String, Object> json)
       : path = json['path'],
         origin = json['origin'],
@@ -96,7 +107,9 @@ class OneFileData {
                     OneFilesDataCurve.byJson((json['curves'] as List)[index]))),
         encode = json['encode'],
         notes =
-            json['notes'] != null ? List<OneFileLineNote>(json['notes']) : null;
+            json['notes'] != null ? List<OneFileLineNote>(json['notes']) : null,
+        notesError = json['notes-errors'],
+        notesWarnings = json['notes-warnings'];
   void updateNotesByJson(Map<String, Object> json) {
     if (json['notes'] != null) {
       for (var i = 0; i < notes.length; i++) {
@@ -117,6 +130,8 @@ class OneFileData {
         'origin': origin,
         'size': size,
         'encode': encode,
+        'notes-errors': notesError,
+        'notes-warnings': notesWarnings,
       }
         ..addAll(well != null
             ? {

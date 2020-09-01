@@ -21,7 +21,7 @@ class Server {
 
   Future<void> serveFile(
       HttpRequest request, HttpResponse response, File file) async {
-    if (await file.exists()) {
+    if (file != null && await file.exists()) {
       response.statusCode = HttpStatus.ok;
       final ext = p.extension(file.path).toLowerCase();
       switch (ext) {
@@ -92,6 +92,7 @@ class Server {
             return;
           }
         }
+        await serveFile(request, response, null);
       }
     },
         onError: getErrorFunc(

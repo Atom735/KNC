@@ -4,8 +4,8 @@ import 'dart:html';
 import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
-import 'CardTask.dart';
 import 'DialogLogin.dart';
+import 'TaskFiles.dart';
 import 'User.dart';
 import 'misc.dart';
 
@@ -91,6 +91,25 @@ class App extends SocketWrapper {
     socket.onClose.listen((_) => _stateClosed());
     socket.onMessage
         .listen((_) => recv(_.data) ? null : print('RECV: ${_.data}'));
+    document.body.querySelectorAll('main').forEach((e) {
+      e.addEventListener('animationend', (event) {
+        if ((event as AnimationEvent).animationName == 'slideout') {
+          e.hidden = true;
+          e.classes.remove('a-closing');
+        } else if ((event as AnimationEvent).animationName == 'slidein') {
+          e.hidden = false;
+          e.classes.remove('a-opening');
+        }
+      });
+    });
+
+    if (uri.pathSegments.length >= 4 &&
+        uri.pathSegments[0] == 'app' &&
+        uri.pathSegments[1] == 'task') {
+      if (uri.pathSegments[3] == 'files') {
+        TaskFiles.init().then((_) => TaskFiles().open(uri.pathSegments[2]));
+      }
+    }
   }
   static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');

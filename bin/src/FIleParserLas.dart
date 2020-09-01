@@ -12,10 +12,19 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
   var iLine = 1;
   var iColumn = 1;
 
-  void _addNoteError(final String _text, [final String _data]) =>
-      _notes.add(OneFileLineNote(iLine, iColumn, '!E$_text', _data));
-  void _addNoteWarning(final String _text, [final String _data]) =>
-      _notes.add(OneFileLineNote(iLine, iColumn, '!W$_text', _data));
+  var _noteWarnings = 0;
+  var _noteErrors = 0;
+
+  void _addNoteError(final String _text, [final String _data]) {
+    _notes.add(OneFileLineNote(iLine, iColumn, '!E$_text', _data));
+    _noteErrors++;
+  }
+
+  void _addNoteWarning(final String _text, [final String _data]) {
+    _notes.add(OneFileLineNote(iLine, iColumn, '!W$_text', _data));
+    _noteWarnings++;
+  }
+
   void _addNoteParsed(final List<String> _text, [final String _data]) =>
       _notes.add(OneFileLineNote(
           iLine, iColumn, '!P${_text.join(msgRecordSeparator)}', _data));
@@ -658,6 +667,11 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
 
   return OneFileData(
       fileData.path, fileData.origin, NOneFileDataType.las, fileData.size,
-      well: well, curves: curves, encode: encode, notes: _notes);
+      well: well,
+      curves: curves,
+      encode: encode,
+      notes: _notes,
+      notesError: _noteErrors,
+      notesWarnings: _noteWarnings);
   // TODO: вернуть обработанный файл
 }

@@ -504,13 +504,10 @@ class IsoTask extends SocketWrapper {
     });
 
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
-      final ic = int.tryParse(msg.s);
-      final im = filesSearche.length - ic;
-      final v = List(im);
-      for (var i = 0; i < im; i++) {
-        v[i] = filesSearche[i + ic].toJson();
-      }
-      send(msg.i, jsonEncode({'first': ic, 'task': sets.id, 'data': v}));
+      send(
+          msg.i,
+          jsonEncode(
+              filesSearche.map((e) => e.toJson()).toList(growable: false)));
     });
 
     sets.sendPort.send([sets.id, receivePort.sendPort]);

@@ -1,10 +1,113 @@
+import 'dart:convert';
 import 'dart:html';
 
+import 'package:path/path.dart' as p;
 import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'CardTask.dart';
 import 'misc.dart';
+
+class TaskFiles {
+  Element e;
+  Future<bool> open(final String task) async {
+    if (e != null) {
+      e.remove();
+    }
+    e = document.createElement('main');
+    e.classes
+        .addAll(['mdc-top-app-bar--fixed-adjust', 'task-files', 'a-opening']);
+    e = document.importNode(_template.content.children.first, true);
+    e.classes.add('a-openin');
+    // e.appendHtml(, validator: nodeValidator);
+    e.addEventListener('animationend', (event) {
+      if ((event as AnimationEvent).animationName == 'slideout') {
+        e.hidden = true;
+        e.classes.remove('a-closing');
+      } else if ((event as AnimationEvent).animationName == 'slidein') {
+        e.hidden = false;
+        e.classes.remove('a-opening');
+      }
+    });
+    final _msg = await requestOnce('$wwwTaskGetFiles$task');
+    if (_msg.isEmpty) {
+      return false;
+    } else {
+      final f = (jsonDecode(_msg) as List)
+          .map((e) => OneFileData.byJson(e))
+          .toList(growable: false);
+      final _fL = f.length;
+      final ss = StringBuffer();
+      for (var i = 0; i < _fL; i++) {
+        final _i = f[i];
+        ss.write('''<div>
+          <div tabindex="0">$i</div>
+          <div tabindex="0">${p.windows.basename(_i.origin)}</div>
+          <div tabindex="0">${_i.type.toString().substring("NOneFileDataType.".length)}</div>
+          <div tabindex="0">${_i.size}</div>
+          <div tabindex="0">${_i.origin}</div>
+          <div tabindex="0">${_i.path}</div>
+          <div tabindex="0">${_i.encode}</div>
+          <div tabindex="0">''');
+        if(_i.notes != null) {
+          ss.write('''
+            <div>${_i.notes.length}</div>
+            <div>${_i.notesWarnings}</div>
+            <div>${_i.notesError}</div>
+          ''');
+        }
+          ss.write('</div>');
+        if (_i.curves == null || _i.curves.isEmpty) {
+          ss.write('</div>');
+        } else {
+          ss.write('''<div tabindex="0">${_i.well}</div>
+            <div tabindex="0">${_i.curves.first.name}</div>
+            <div tabindex="0">${_i.curves.first.strt}</div>
+            <div tabindex="0">${_i.curves.first.stop}</div>
+            <div tabindex="0">${_i.curves.first.step}</div>
+          </div>''');
+          final _l = _i.curves.length;
+          for (var j = 1; j < _l; j++) {
+            ss.write('''<div class="up">
+              <div tabindex="0"></div>
+              <div tabindex="0">${_i.well}</div>
+              <div tabindex="0">${_i.curves[j].name}</div>
+              <div tabindex="0">${_i.curves[j].strt}</div>
+              <div tabindex="0">${_i.curves[j].stop}</div>
+              <div tabindex="0">${_i.curves[j].step}</div>
+            </div>''');
+          }
+        }
+      }
+        e.appendHtml(ss.toString(), validator: nodeValidator);
+      document.body
+          .querySelectorAll('main')
+          .where((e) => !e.classes.contains('task-files') && !e.hidden)
+          .forEach((e) {
+        e.classes.add('a-closing');
+      });
+      document.body.append(e);
+      return true;
+    }
+  }
+
+  static TemplateElement _template;
+  static Future<void> init() async {
+    if (_template != null) {
+      return;
+    }
+    _template = TemplateElement();
+    _template.content.appendHtml(
+        await HttpRequest.getString('/src/TaskFiles.html'),
+        validator: nodeValidator);
+    document.body.append(_template);
+    TaskFiles();
+  }
+
+  TaskFiles._init();
+  static TaskFiles _instance;
+  factory TaskFiles() => _instance ?? (_instance = TaskFiles._init());
+}
 
 class MyTaskFilesDialog extends MDCDialog {
   CardTask _task;
