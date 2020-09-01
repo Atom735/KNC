@@ -13,7 +13,10 @@ class Server {
     Directory('build').absolute,
     Directory('tasks').absolute,
   ];
-  final fileMap = <String, File>{'/': File('build/index.html')};
+  final fileMap = <String, File>{'/': File('web/index.html')};
+  final reMap = <RegExp, File>{
+    RegExp(r'^\/app(\/.+)?', caseSensitive: false): File('web/index.html')
+  };
 
   Future<void> serveFile(
       HttpRequest request, HttpResponse response, File file) async {
@@ -75,6 +78,12 @@ class Server {
       } else if (fileMap[request.uri.path] != null) {
         await serveFile(request, response, fileMap[request.uri.path]);
       } else {
+        for (var key in reMap.keys) {
+          if (key.hasMatch(request.uri.path)) {
+            await serveFile(request, response, reMap[key]);
+            return;
+          }
+        }
         for (var dir in dirs) {
           final f = File(dir.path + request.uri.path);
           if (await f.exists()) {
