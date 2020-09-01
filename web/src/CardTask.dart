@@ -3,17 +3,13 @@ import 'dart:convert';
 import 'dart:html';
 
 import 'package:knc/knc.dart';
-import 'package:m4d_components/m4d_components.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'App.dart';
-import 'HtmlGenerator.dart';
-import 'TaskErrors.dart';
 import 'TaskFiles.dart';
-import 'TaskViewSection.dart';
 import 'misc.dart';
 
-class MyTaskCard {
+class CardTask {
   final int uid;
   final Element eRoot;
   final Element eCard;
@@ -28,6 +24,12 @@ class MyTaskCard {
   final Element eWarnings;
   final Element eFiles;
   final MDCLinearProgress eLinearProgress;
+
+  static Future<void> init() async {
+    document.body.querySelector('main div.mdc-layout-grid__inner').appendHtml(
+        await HttpRequest.getString('/src/CardTask.html'),
+        validator: nodeValidator);
+  }
 
   void _updateState() {
     final s = NTaskState.values[_iState];
@@ -230,7 +232,7 @@ class MyTaskCard {
     sRaport = item['raport'];
   }
 
-  MyTaskCard._new(final Element root, this.uid)
+  CardTask._new(final Element root, this.uid)
       : eRoot = root,
         eName = root.querySelector('.mdc-card__media-content>div>h2'),
         eState = root.querySelector('.mdc-card__media-content>div>h3'),
@@ -259,19 +261,19 @@ class MyTaskCard {
     });
   }
 
-  factory MyTaskCard(final int uid) {
+  factory CardTask(final int uid) {
     final Element imp = document.importNode(
-        MyTaskCardTemplate().eTemp.content.children.first, true);
-    MyTaskCardTemplate().eTemp.parent.append(imp);
+        CardTaskTemplate().eTemp.content.children.first, true);
+    CardTaskTemplate().eTemp.parent.append(imp);
 
-    return MyTaskCard._new(imp, uid);
+    return CardTask._new(imp, uid);
   }
 }
 
-class MyTaskCardTemplate {
+class CardTaskTemplate {
   final TemplateElement eTemp;
 
-  final list = <int, MyTaskCard>{};
+  final list = <int, CardTask>{};
 
   void updateTasks() {
     App()
@@ -280,12 +282,12 @@ class MyTaskCardTemplate {
         .then((msg) {
       final items = jsonDecode(msg);
       for (final item in items) {
-        list[item['id']] = MyTaskCard(item['id'])..byJson(item);
+        list[item['id']] = CardTask(item['id'])..byJson(item);
       }
     });
   }
 
-  MyTaskCardTemplate._init(final TemplateElement temp) : eTemp = temp {
+  CardTaskTemplate._init(final TemplateElement temp) : eTemp = temp {
     print('$runtimeType created: $hashCode');
     _instance = this;
 
@@ -293,7 +295,7 @@ class MyTaskCardTemplate {
 
     App().waitMsgAll(wwwTaskNew).listen((msg) {
       final item = jsonDecode(msg.s);
-      list[item['id']] = MyTaskCard(item['id'])..byJson(item);
+      list[item['id']] = CardTask(item['id'])..byJson(item);
     });
     App().waitMsgAll(wwwTaskUpdates).listen((msg) {
       final items = json.decode(msg.s);
@@ -303,135 +305,8 @@ class MyTaskCardTemplate {
     });
   }
 
-  static MyTaskCardTemplate _instance;
-  factory MyTaskCardTemplate() =>
+  static CardTaskTemplate _instance;
+  factory CardTaskTemplate() =>
       (_instance) ??
-      (_instance = MyTaskCardTemplate._init(eGetById('my-template-task-card')));
-}
-
-class ErrorFileDetails {}
-
-class TaskCard {
-  final int id;
-  final DivElement eCard;
-  final Element eName;
-  final Element eState;
-  final ButtonElement eReport;
-  final ButtonElement eErrors;
-  final ButtonElement eFiles;
-  final ButtonElement eLaunch;
-  final ButtonElement eClose;
-
-  bool errorsDialogOpend = false;
-  bool filesDialogOpend = false;
-
-  int _iState = -1;
-  int _iErrors = -1;
-  int _iFiles = -1;
-  bool _hiden = true;
-  set hidden(final bool b) {
-    if (_hiden == b) {
-      return;
-    }
-    _hiden = b;
-    eCard.hidden = _hiden;
-  }
-
-  set iState(final int i) {
-    if (i == null || _iState == i) {
-      return;
-    }
-    _iState = i;
-    switch (_iState) {
-      case 0:
-        eState
-          ..innerText = 'Запускается'
-          ..classes.clear()
-          ..classes.add('task-state-init');
-        break;
-      case 1:
-        eState
-          ..innerText = 'Выполняется'
-          ..classes.clear()
-          ..classes.add('task-state-work');
-        break;
-      case 2:
-        eState
-          ..innerText = 'Генерируется таблица'
-          ..classes.clear()
-          ..classes.add('task-state-table');
-        break;
-      case 3:
-        eState
-          ..innerText = 'Завершена'
-          ..classes.clear()
-          ..classes.add('task-state-end');
-        eReport.disabled = false;
-        break;
-      default:
-    }
-  }
-
-  set iErrors(final int i) {
-    if (i == null || _iErrors == i) {
-      return;
-    }
-    _iErrors = i;
-    if (errorsDialogOpend) {
-      TaskErrorsDialog().iErrors = _iErrors;
-    }
-    if (_iErrors <= 0) {
-      eErrors.attributes.remove('data-badge');
-    } else if (_iErrors >= 1000) {
-      eErrors.attributes['data-badge'] = '...';
-    } else {
-      eErrors.attributes['data-badge'] = _iErrors.toString();
-    }
-  }
-
-  set iFiles(final int i) {
-    if (i == null || _iFiles == i) {
-      return;
-    }
-    _iFiles = i;
-    if (filesDialogOpend) {
-      TaskFilesDialog().iFiles = _iFiles;
-    }
-    if (_iFiles <= 0) {
-      eFiles.attributes.remove('data-badge');
-    } else if (_iFiles >= 1000) {
-      eFiles.attributes['data-badge'] = '...';
-    } else {
-      eFiles.attributes['data-badge'] = _iFiles.toString();
-    }
-  }
-
-  TaskCard(this.id)
-      : eCard = eGetById('task-${id}-card'),
-        eName = eGetById('task-${id}-name'),
-        eState = eGetById('task-${id}-state'),
-        eReport = eGetById('task-${id}-report'),
-        eErrors = eGetById('task-${id}-errors'),
-        eFiles = eGetById('task-${id}-files'),
-        eLaunch = eGetById('task-${id}-launch'),
-        eClose = eGetById('task-${id}-close') {
-    eClose.onClick.listen((_) {
-      eCard.remove();
-      TaskViewSection().list.remove(id);
-    });
-    eErrors.onClick.listen((_) {
-      TaskErrorsDialog().iErrors = _iErrors;
-      TaskErrorsDialog().openByTaskCard(this);
-    });
-    eFiles.onClick.listen((_) {
-      TaskFilesDialog().iFiles = _iFiles;
-      TaskFilesDialog().openByTaskCard(this);
-    });
-    componentHandler().upgradeElement(eCard);
-  }
-
-  static String htmlTemplateSrc;
-
-  static String html(final int id) =>
-      htmlGenFromSrc(htmlTemplateSrc, {'id': id});
+      (_instance = CardTaskTemplate._init(eGetById('my-template-task-card')));
 }

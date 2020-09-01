@@ -1,0 +1,66 @@
+<template id="my-template-task-card">
+    <div class="mdc-layout-grid__cell--span-4">
+        <div class="my-task-card mdc-card  mdc-card--outlined">
+            <div class="mdc-card__media mdc-card__media--square">
+                <div class="mdc-card__media-content mdc-theme--surface">
+                    <i
+                        class="material-icons mdc-theme--on-surface">add_circle_outline</i>
+                    <div>
+                        <h2 class="mdc-typography mdc-typography--headline6">
+                            Вася пупкин решает вопросики</h2>
+                        <h3 class="mdc-typography mdc-typography--subtitle2">
+                            Запускается</h3>
+                    </div>
+
+                    <div
+                        class="mdc-linear-progress mdc-linear-progress--indeterminate">
+                        <div class="mdc-linear-progress__buffer">
+                            <div class="mdc-linear-progress__buffer-bar"></div>
+                            <div class="mdc-linear-progress__buffer-dots"></div>
+                        </div>
+                        <div
+                            class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+                            <span class="mdc-linear-progress__bar-inner"></span>
+                        </div>
+                        <div
+                            class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+                            <span class="mdc-linear-progress__bar-inner"></span>
+                        </div>
+                    </div>
+                    <div class="mdc-card__actions">
+                        <button hidden
+                            class="mdc-button mdc-button--outlined mdc-card__action mdc-card__action--button my-errors">
+                            <div class="mdc-button__ripple"></div>
+                            <span class="mdc-button__label">Ошибки</span>
+                            <i class="my-button-icon">
+                                999
+                            </i>
+                        </button>
+                        <button hidden
+                            class="mdc-button mdc-button--outlined mdc-card__action mdc-card__action--button my-warnings">
+                            <div class="mdc-button__ripple"></div>
+                            <span
+                                class="mdc-button__label">Предупрежедения</span>
+                            <i class="my-button-icon">
+                                413
+                            </i>
+                        </button>
+                        <button hidden
+                            class="mdc-button mdc-button--outlined mdc-card__action mdc-card__action--button my-files">
+                            <div class="mdc-button__ripple"></div>
+                            <span class="mdc-button__label">Файлы</span>
+                            <i class="my-button-icon">
+                                ...
+                            </i>
+                        </button>
+                        <button hidden
+                            class="mdc-button mdc-button--raised mdc-card__action mdc-card__action--button my-raport">
+                            <div class="mdc-button__ripple"></div>
+                            <span class="mdc-button__label">Отчёт</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

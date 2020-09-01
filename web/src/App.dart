@@ -4,9 +4,8 @@ import 'dart:html';
 import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
-import 'DialogAddTask.dart';
+import 'CardTask.dart';
 import 'DialogLogin.dart';
-import 'TaskCard.dart';
 import 'User.dart';
 import 'misc.dart';
 
@@ -33,6 +32,7 @@ class App extends SocketWrapper {
   // final TaskViewSection taskView = TaskViewSection();
   // final CardAddTask cardAddTask = CardAddTask();
 
+  /// Действия при входе в систему
   void signin(String mail, String access) {}
 
   /// Установить состояние приложения как "Подключение к серверу"
@@ -63,7 +63,7 @@ class App extends SocketWrapper {
       eTitle.innerText = 'Пункт приёма стеклотары.';
       if (user != null) {
         eLoginBtn.innerText = 'account_circle';
-        MyTaskCardTemplate().updateTasks();
+        CardTaskTemplate().updateTasks();
       }
       eLinearProgress.close();
     });
@@ -91,8 +91,6 @@ class App extends SocketWrapper {
     print('$this created');
     _instance = this;
     stateConnecting();
-    MyTaskCardTemplate();
-    CardAddTask();
 
     eLoginBtn.onClick.listen((_) => User() == null ? DialogLogin().open() : 0);
 
