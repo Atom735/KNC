@@ -12,8 +12,10 @@ final uri = Uri.tryParse(document.baseUri);
 Element eGetById(final String id) => document.getElementById(id);
 
 NodeValidator nodeValidator = NodeValidatorBuilder.common()
-  ..allowElement('button', attributes: ['action'])
-  ..allowElement('input', attributes: ['minlength']);
+  ..allowElement('button', attributes: ['data-mdc-dialog-action'])
+  ..allowElement('input', attributes: ['minlength'])
+  ..allowElement('header', attributes: ['style'])
+  ..allowElement('div', attributes: ['tabindex']);
 
 Future<SocketWrapperResponse> waitMsg(String msgBegin) =>
     App().waitMsg(msgBegin);
