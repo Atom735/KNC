@@ -12,7 +12,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
   var iLine = 1;
   var iColumn = 1;
 
-  void _addMoteError(final String _text, [final String _data]) =>
+  void _addNoteError(final String _text, [final String _data]) =>
       _notes.add(OneFileLineNote(iLine, iColumn, '!E$_text', _data));
   void _addNoteWarning(final String _text, [final String _data]) =>
       _notes.add(OneFileLineNote(iLine, iColumn, '!W$_text', _data));
@@ -108,7 +108,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
         rSkipToEndOfLine();
       }
     }
-    _addMoteError('непредвиденный конец файла на неизвестной секции');
+    _addNoteError('непредвиденный конец файла на неизвестной секции');
     return true;
   }
 
@@ -237,7 +237,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
     while (iSymbol < _dataLength) {
       rSkipWhiteSpacesAndComments();
       if (iSymbol >= _dataLength) {
-        _addMoteError('непредвиденный конец файла');
+        _addNoteError('непредвиденный конец файла');
         return true;
       }
       if (data[iSymbol] == '~') {
@@ -248,7 +248,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
       final iLineEndSymbol = iSymbol;
       final iSeparatorDot = data.indexOf('.', iLineBeginSymbol);
       if (iSeparatorDot == -1 || iSeparatorDot >= iLineEndSymbol) {
-        _addMoteError('отсутсвует точка');
+        _addNoteError('отсутсвует точка');
         continue loop;
       } else {
         final _mnem =
@@ -279,7 +279,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
         }
       }
     }
-    _addMoteError('непредвиденный конец файла');
+    _addNoteError('непредвиденный конец файла');
     return true;
   }
 
@@ -366,7 +366,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
         .trim();
     final _value_n = double.tryParse(_value);
     if (_value_n == null) {
-      _addMoteError('неудалось разобрать число');
+      _addNoteError('неудалось разобрать число');
     } else {
       switch (mnem) {
         case 'NULL':
@@ -425,7 +425,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
     while (iSymbol < _dataLength) {
       rSkipWhiteSpacesAndComments();
       if (iSymbol >= _dataLength) {
-        _addMoteError('непредвиденный конец файла');
+        _addNoteError('непредвиденный конец файла');
         return true;
       }
       if (data[iSymbol] == '~') {
@@ -436,7 +436,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
       final iLineEndSymbol = iSymbol;
       final iSeparatorDot = data.indexOf('.', iLineBeginSymbol);
       if (iSeparatorDot == -1 || iSeparatorDot >= iLineEndSymbol) {
-        _addMoteError('отсутсвует точка');
+        _addNoteError('отсутсвует точка');
         continue loop;
       } else {
         final _mnem =
@@ -472,7 +472,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
         }
       }
     }
-    _addMoteError('непредвиденный конец файла');
+    _addNoteError('непредвиденный конец файла');
     return true;
   }
 
@@ -485,7 +485,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
     while (iSymbol < _dataLength) {
       rSkipWhiteSpacesAndComments();
       if (iSymbol >= _dataLength) {
-        _addMoteError('непредвиденный конец файла');
+        _addNoteError('непредвиденный конец файла');
         return true;
       }
       if (data[iSymbol] == '~') {
@@ -496,7 +496,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
       final iLineEndSymbol = iSymbol;
       final iSeparatorDot = data.indexOf('.', iLineBeginSymbol);
       if (iSeparatorDot == -1 || iSeparatorDot >= iLineEndSymbol) {
-        _addMoteError('отсутсвует точка');
+        _addNoteError('отсутсвует точка');
         continue loop;
       } else {
         final iSeparatorSpace = data.indexOf(' ', iSeparatorDot);
@@ -511,7 +511,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
             .add(data.substring(iLineBeginSymbol, iSeparatorDot).trimRight());
       }
     }
-    _addMoteError('непредвиденный конец файла');
+    _addNoteError('непредвиденный конец файла');
     return true;
   }
 
@@ -553,7 +553,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
             .where((e) => e.isNotEmpty)
             .toList(growable: false);
         if (_nums.length != _curves) {
-          _addMoteError(
+          _addNoteError(
               'количество чисел в строке не совподает с количеством объявленных кривых');
           continue loop;
         } else {
@@ -563,7 +563,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
           for (var i = 0; i < _curves; i++) {
             final _val = double.tryParse(_nums[i]);
             if (_val == null) {
-              _addMoteError('невозможно разобрать число');
+              _addNoteError('невозможно разобрать число');
             }
             _a_data_s[i].add(_nums[i]);
             _a_data_n[i].add(_val);
@@ -581,7 +581,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
         }
       } else {
         // TODO: научиться работать с WRAP: YES
-        _addMoteError(
+        _addNoteError(
             'включён перенос строки, но мы пока не умеем с ним работать');
         return true;
       }
@@ -595,7 +595,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
     }
     rNextSymbol();
     if (iSymbol >= _dataLength) {
-      _addMoteError('непредвиденный конец файла');
+      _addNoteError('непредвиденный конец файла');
       return true;
     }
     // ~V - contains version and wrap mode information
@@ -625,7 +625,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
       case 'A':
         return rSectionA();
       default:
-        _addMoteError('неизвестная секция, пропуск секции');
+        _addNoteError('неизвестная секция, пропуск секции');
         if (rSkipSection()) {
           return true;
         }
