@@ -17,3 +17,4 @@ analyzer:
     - knc.main.dart/**
     - knc.web.dart/**
     - build/**
+    - build

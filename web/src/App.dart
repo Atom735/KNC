@@ -14,6 +14,7 @@ class App extends SocketWrapper {
   final WebSocket socket;
   final Completer socketCompleter;
 
+  final eMain = document.body.querySelector('main.app');
   final eTopBar = MDCTopAppBar(eGetById('my-top-app-bar'));
   final eTopBarRoot = eGetById('my-top-app-bar');
   final eLinearProgress = MDCLinearProgress(eGetById('my-app-linear-progress'));
@@ -91,26 +92,49 @@ class App extends SocketWrapper {
     socket.onClose.listen((_) => _stateClosed());
     socket.onMessage
         .listen((_) => recv(_.data) ? null : print('RECV: ${_.data}'));
-    document.body.querySelectorAll('main').forEach((e) {
-      e.addEventListener('animationend', (event) {
-        if ((event as AnimationEvent).animationName == 'slideout') {
-          e.hidden = true;
-          e.classes.remove('a-closing');
-        } else if ((event as AnimationEvent).animationName == 'slidein') {
-          e.hidden = false;
-          e.classes.remove('a-opening');
-        }
-      });
+
+    eMain.addEventListener('animationend', (event) {
+      if ((event as AnimationEvent).animationName == 'slideout') {
+        eMain.hidden = true;
+        eMain.classes.remove('a-closing');
+      } else if ((event as AnimationEvent).animationName == 'slidein') {
+        eMain.hidden = false;
+        eMain.classes.remove('a-opening');
+      }
     });
 
+    window.onPopState.listen((e) {
+      uri = Uri.parse(document.baseUri);
+      uriPaths = uri.pathSegments;
+      pageSet();
+    });
+
+    pageSet();
+  }
+
+  void _open() {
+    closeAll('app');
+    eMain
+      ..hidden = false
+      ..classes.add('a-opening');
+  }
+
+  void pageSet() {
     if (uri.pathSegments.length >= 4 &&
         uri.pathSegments[0] == 'app' &&
         uri.pathSegments[1] == 'task') {
       if (uri.pathSegments[3] == 'files') {
-        TaskFiles.init().then((_) => TaskFiles().open(uri.pathSegments[2]));
+        TaskFiles().open(uri.pathSegments[2]).then((b) {
+          if (!b) {
+            _open();
+          }
+        });
       }
+    } else {
+      _open();
     }
   }
+
   static App _instance;
   // WebSocket('ws://${uri.host}:${uri.port}');
   factory App() =>

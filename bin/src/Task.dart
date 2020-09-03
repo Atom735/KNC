@@ -84,7 +84,7 @@ class Task extends SocketWrapper {
         'files': _files,
         'warnings': _warnings,
         'pause': _pause,
-        'raport': _raport,
+        'raport': '/raport/${passwordEncode(_raport)}',
         'dir': p.basename(dir.path),
       };
 

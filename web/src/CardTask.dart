@@ -261,6 +261,7 @@ class CardTask {
         ?.transform = 'scale(${eCard.offsetWidth / 48})');
 
     eBtnFiles.onClick.listen((_) {
+      window.history.pushState('data', 'title', '/app/task/$dir/files');
       TaskFiles().open(dir);
     });
   }
