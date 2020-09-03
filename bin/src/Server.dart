@@ -48,11 +48,13 @@ class Server {
       await response.addStream(file.openRead());
       await response.flush();
       await response.close();
+      print('http: ${request.uri.path} serve $file');
     } else {
       response.statusCode = HttpStatus.notFound;
       await response.write('404: Not Found');
       await response.flush();
       await response.close();
+      print('http: ${request.uri.path} 404: Not Found');
     }
   }
 
@@ -69,30 +71,31 @@ class Server {
     print('Listening on http://${server.address.address}:${server.port}/');
     print('For connect use http://localhost:${server.port}/');
     _instance = this;
-    server.listen((request) async {
+    server.listen((request) {
       final response = request.response;
       print('http: ${request.uri.path}');
       if (request.uri.path == '/ws') {
-        final s = await WebSocketTransformer.upgrade(request);
-        await response.close();
-        Client(s);
+        WebSocketTransformer.upgrade(request).then((websocket) {
+          print('http: ${request.uri.path} upgraded to WebSocket');
+          Client(websocket);
+        });
       } else if (fileMap[request.uri.path] != null) {
-        await serveFile(request, response, fileMap[request.uri.path]);
+        serveFile(request, response, fileMap[request.uri.path]);
       } else {
         for (var key in reMap.keys) {
           if (key.hasMatch(request.uri.path)) {
-            await serveFile(request, response, reMap[key]);
+            serveFile(request, response, reMap[key]);
             return;
           }
         }
         for (var dir in dirs) {
           final f = File(dir.path + request.uri.path);
-          if (await f.exists()) {
-            await serveFile(request, response, f);
+          if (f.existsSync()) {
+            serveFile(request, response, f);
             return;
           }
         }
-        await serveFile(request, response, null);
+        serveFile(request, response, null);
       }
     },
         onError: getErrorFunc(

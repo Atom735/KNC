@@ -1,159 +1,88 @@
-/* main.task-files {
-} */
-
-main.task-files > div {
+.tbl-row,
+.tbl-head {
     display: block;
     width: max-content;
-    font-size: 0;
-    height: max-content;
     height: 1.5rem;
 }
 
-main.task-files > div:hover {
+.tbl-head {
+    position: sticky;
+    background: #fff;
+    top: 0;
+}
+
+.tbl-row:hover {
     background: #eee;
 }
 
-main.task-files > div > div {
-    word-break: break-all;
-    display: block;
+.tbl-index,
+.tbl-name,
+.tbl-type,
+.tbl-size,
+.tbl-origin,
+.tbl-path,
+.tbl-encode,
+.tbl-notes,
+.tbl-well,
+.tbl-c-name,
+.tbl-c-strt,
+.tbl-c-stop,
+.tbl-c-step,
+.tbl-up {
+    display: inline-block;
     font-size: 1rem;
     line-height: 1.5rem;
-    display: inline-block;
     margin: 0;
     border: #607d8b 1px solid;
-    outline: #607d8b 1px solid;
     box-sizing: border-box;
-    margin-inline-start: 0;
-    word-spacing: 0;
     padding: 0 4px;
     overflow: hidden;
     height: 1.5rem;
-    position: absolute;
-}
-
-/* <div>#</div> */
-main.task-files > div > div:nth-child(1) {
-    min-width: 2rem;
-    max-width: 2rem;
-}
-
-/* <div>Название файла</div> */
-main.task-files > div > div:nth-child(2) {
     min-width: 6rem;
     max-width: 6rem;
-    margin-left: 2rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* <div>Тип</div> */
-main.task-files > div > div:nth-child(3) {
+.tbl-index {
+    text-align: right;
     min-width: 4rem;
     max-width: 4rem;
-    margin-left: 8rem;
 }
 
-/* <div>Размер</div> */
-main.task-files > div > div:nth-child(4) {
-    min-width: 6rem;
-    max-width: 6rem;
-    margin-left: 12rem;
+.tbl-name {
+    min-width: 12rem;
+    max-width: 12rem;
+}
+.tbl-origin,
+.tbl-path {
+    min-width: 24rem;
+    max-width: 24rem;
 }
 
-/* <div>Оригинал</div> */
-main.task-files > div > div:nth-child(5) {
-    min-width: 6rem;
-    max-width: 6rem;
-    margin-left: 18rem;
+.tbl-size {
+    text-align: right;
 }
 
-/* <div>Рабочая копия</div> */
-main.task-files > div > div:nth-child(6) {
-    min-width: 6rem;
-    max-width: 6rem;
-    margin-left: 24rem;
+.tbl-up {
+    min-width: 88rem;
+    max-width: 88rem;
 }
 
-/* <div>Кодировка</div> */
-main.task-files > div > div:nth-child(7) {
-    min-width: 5rem;
-    max-width: 5rem;
-    margin-left: 30rem;
+.tbl-notes-count,
+.tbl-notes-warn,
+.tbl-notes-error {
+    margin: 0 2px;
 }
 
-/* <div>Заметки</div> */
-main.task-files > div > div:nth-child(8) {
-    min-width: 5rem;
-    max-width: 5rem;
-    margin-left: 35rem;
-}
-
-main.task-files > div > div:nth-child(8) > div {
-    display: inline;
-}
-
-main.task-files > div > div:nth-child(8) > div:nth-child(1) {
+.tbl-notes-count {
     color: #333;
 }
 
-main.task-files > div > div:nth-child(8) > div:nth-child(2) {
+.tbl-notes-warn {
     color: #cc0;
 }
 
-main.task-files > div > div:nth-child(8) > div:nth-child(3) {
+.tbl-notes-error {
     color: #a00;
-}
-
-main.task-files > div.up > div:nth-child(1) {
-    min-width: 40rem;
-    max-width: 40rem;
-}
-
-/* <div>Скважина</div> */
-main.task-files > div > div:nth-child(9),
-main.task-files > div.up > div:nth-child(2) {
-    min-width: 6rem;
-    max-width: 6rem;
-    margin-left: 40rem;
-}
-
-/* <div>Иследование</div> */
-main.task-files > div > div:nth-child(10),
-main.task-files > div.up > div:nth-child(3) {
-    min-width: 6rem;
-    max-width: 6rem;
-    margin-left: 46rem;
-}
-
-/* <div>Начало</div> */
-main.task-files > div > div:nth-child(11),
-main.task-files > div.up > div:nth-child(4) {
-    min-width: 6rem;
-    max-width: 6rem;
-    margin-left: 52rem;
-}
-
-/* <div>Конец</div> */
-main.task-files > div > div:nth-child(12),
-main.task-files > div.up > div:nth-child(5) {
-    min-width: 6rem;
-    max-width: 6rem;
-    margin-left: 58rem;
-}
-
-/* <div>Шаг</div> */
-main.task-files > div > div:nth-child(13),
-main.task-files > div.up > div:nth-child(6) {
-    min-width: 6rem;
-    max-width: 6rem;
-    margin-left: 64rem;
-}
-
-main.task-files > div > div:focus {
-    border-color: #0080ff;
-}
-
-main.task-files > div > div:focus,
-main.task-files > div > div:hover {
-    background: #eee;
-    z-index: 1;
-    max-width: max-content !important;
 }

@@ -261,7 +261,7 @@ class CardTask {
         ?.transform = 'scale(${eCard.offsetWidth / 48})');
 
     eBtnFiles.onClick.listen((_) {
-      MyTaskFilesDialog(this).open();
+      TaskFiles().open(dir);
     });
   }
 
