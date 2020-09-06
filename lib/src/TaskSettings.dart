@@ -42,6 +42,11 @@ class TaskSettings {
   final int maxdepth_ar;
   static const def_maxdepth_ar = -1;
 
+  /// Время обновления каждой задачи в реальном времени в мс
+  /// * 333мс по умолчанию
+  final int update_duration;
+  static const def_update_duration = 333;
+
   TaskSettings(
       {this.user,
       this.users = def_users,
@@ -50,7 +55,8 @@ class TaskSettings {
       this.ext_ar = def_ext_ar,
       this.ext_files = def_ext_files,
       this.maxsize_ar = def_maxsize_ar,
-      this.maxdepth_ar = def_maxdepth_ar});
+      this.maxdepth_ar = def_maxdepth_ar,
+      this.update_duration = def_update_duration});
 
   TaskSettings.fromJson(final Map<String, Object> json)
       : user = json['user'],
@@ -68,7 +74,8 @@ class TaskSettings {
             .map((e) => e as String)
             .toList(growable: false),
         maxsize_ar = json['maxsize_ar'] ?? def_maxsize_ar,
-        maxdepth_ar = json['maxdepth_ar'] ?? def_maxdepth_ar;
+        maxdepth_ar = json['maxdepth_ar'] ?? def_maxdepth_ar,
+        update_duration = json['update_duration'] ?? def_update_duration;
 
   Map<String, Object> toJson() => {
         'user': user,
@@ -77,6 +84,7 @@ class TaskSettings {
         'ext_ar': ext_ar,
         'ext_las': ext_files,
         'maxsize_ar': maxsize_ar,
-        'maxdepth_ar': maxdepth_ar
+        'maxdepth_ar': maxdepth_ar,
+        'update_duration': update_duration
       };
 }

@@ -29,6 +29,12 @@ class Task extends SocketWrapper {
   /// Список всех выполняемых задач
   static final list = <int, Task>{};
 
+  /// Данные подготовляемые для отправки как обновление состояния задачи
+  final vUpdate = <String, Object>{};
+
+  /// Future отправения обновления
+  Future vUpdateFuture;
+
   @override
   String toString() => '$runtimeType{$id}(${settings.name})[${settings.user}]';
 
@@ -71,6 +77,7 @@ class Task extends SocketWrapper {
     sendForAllClients('$wwwTaskNew${jsonEncode(this)}');
   }
 
+  /// Отправка сообщения всем пользователям, которым доступна задача
   void sendForAllClients(final String msg) => Client.list
       .where((e) =>
           e.user.mail == settings.user || settings.users.contains(e.user.mail))
@@ -84,9 +91,23 @@ class Task extends SocketWrapper {
         'files': _files,
         'warnings': _warnings,
         'pause': _pause,
-        'raport': (_raport != null ? '/raport/${passwordEncode(_raport)}' : null),
+        'raport':
+            (_raport != null ? '/raport/${passwordEncode(_raport)}' : null),
         'dir': p.basename(dir.path),
       };
+
+  /// Обновление данных для отправки сообщения об обновлении
+  void update(String n, Object v) {
+    vUpdate[n] = v;
+    vUpdateFuture ??=
+        Future.delayed(Duration(milliseconds: settings.update_duration))
+            .then((_) {
+      vUpdate['id'] = id;
+      sendForAllClients(wwwTaskUpdates + jsonEncode(vUpdate));
+      vUpdateFuture = null;
+      vUpdate.clear();
+    });
+  }
 
   String _raport;
   set raport(final String i) {
@@ -96,11 +117,7 @@ class Task extends SocketWrapper {
     _raport = i;
     final xmlUrl = '/raport/${passwordEncode(_raport)}';
     Server().fileMap[xmlUrl] = File(_raport);
-    // App().listOfFiles[xmlUrl] = File(_raport);
-    sendForAllClients(wwwTaskUpdates +
-        jsonEncode([
-          {'id': id, 'raport': xmlUrl}
-        ]));
+    update('raport', xmlUrl);
   }
 
   bool _pause = false;
@@ -109,10 +126,7 @@ class Task extends SocketWrapper {
       return;
     }
     _pause = i;
-    sendForAllClients(wwwTaskUpdates +
-        jsonEncode([
-          {'id': id, 'pause': _pause}
-        ]));
+    update('pause', _pause);
   }
 
   int _state = NTaskState.initialization.index;
@@ -121,10 +135,7 @@ class Task extends SocketWrapper {
       return;
     }
     _state = i;
-    sendForAllClients(wwwTaskUpdates +
-        jsonEncode([
-          {'id': id, 'state': _state}
-        ]));
+    update('state', _state);
   }
 
   int _warnings = 0;
@@ -133,10 +144,7 @@ class Task extends SocketWrapper {
       return;
     }
     _warnings = i;
-    sendForAllClients(wwwTaskUpdates +
-        jsonEncode([
-          {'id': id, 'warnings': _warnings}
-        ]));
+    update('warnings', _warnings);
   }
 
   int _worked = 0;
@@ -145,10 +153,7 @@ class Task extends SocketWrapper {
       return;
     }
     _worked = i;
-    sendForAllClients(wwwTaskUpdates +
-        jsonEncode([
-          {'id': id, 'worked': _worked}
-        ]));
+    update('worked', _worked);
   }
 
   int _errors = 0;
@@ -157,10 +162,7 @@ class Task extends SocketWrapper {
       return;
     }
     _errors = i;
-    sendForAllClients(wwwTaskUpdates +
-        jsonEncode([
-          {'id': id, 'errors': _errors}
-        ]));
+    update('errors', _errors);
   }
 
   int _files = 0;
@@ -169,9 +171,6 @@ class Task extends SocketWrapper {
       return;
     }
     _files = i;
-    sendForAllClients(wwwTaskUpdates +
-        jsonEncode([
-          {'id': id, 'files': _files}
-        ]));
+    update('files', _files);
   }
 }
