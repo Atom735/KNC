@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 
-main(List<String> args) {
+void main(List<String> args) {
   const pathIn = r'\\NAS\Public\common';
   const exts = ['.zip', '.rar', '.las', '.doc', '.docx', '.txt', '.dbf'];
 
