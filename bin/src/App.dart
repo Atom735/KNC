@@ -29,9 +29,10 @@ class App {
         }
         if (msg.length == 2 && msg[0] is int && msg[1] is String) {
           if (completers[msg[0]] != null) {
-            completers[msg[0]]
-                .future
-                .then((value) => Task.list[msg[0]].recv(msg[1]));
+            completers[msg[0]].future.then((value) {
+              Task.list[msg[0]].recv(msg[1]);
+              completers.remove(msg[0]);
+            });
           } else {
             Task.list[msg[0]].recv(msg[1]);
           }

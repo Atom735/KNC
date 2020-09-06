@@ -124,12 +124,16 @@ class App extends SocketWrapper {
         uri.pathSegments[0] == 'app' &&
         uri.pathSegments[1] == 'task') {
       if (uri.pathSegments[3] == 'files') {
-        TaskFiles().open(uri.pathSegments[2]).then((b) {
+        TaskFiles()
+            .open(uri.pathSegments[2],
+                uri.pathSegments.length >= 5 ? uri.pathSegments[4] : null)
+            .then((b) {
           if (!b) {
             _open();
           }
         });
       }
+      // TODO: другие действия с задачей
     } else {
       _open();
     }

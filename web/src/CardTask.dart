@@ -221,7 +221,13 @@ class CardTask {
     }
   }
 
-  String dir;
+  String _dir;
+  set dir(final String i) {
+    if (i == null || _dir == i) {
+      return;
+    }
+    _dir = i;
+  }
 
   void byJson(final dynamic item) {
     sName = item['name'];
@@ -232,7 +238,6 @@ class CardTask {
     iWorked = item['worked'];
     bPause = item['pause'];
     sRaport = item['raport'];
-    print(dir);
     dir = item['dir'];
   }
 
@@ -260,9 +265,18 @@ class CardTask {
         ?.style
         ?.transform = 'scale(${eCard.offsetWidth / 48})');
 
+    eBtnErrors.onClick.listen((_) {
+      window.history.pushState('data', 'title', '/app/task/$_dir/files/errors');
+      TaskFiles().open(_dir, 'errors');
+    });
+    eBtnWarnings.onClick.listen((_) {
+      window.history
+          .pushState('data', 'title', '/app/task/$_dir/files/warnings');
+      TaskFiles().open(_dir, 'warnings');
+    });
     eBtnFiles.onClick.listen((_) {
-      window.history.pushState('data', 'title', '/app/task/$dir/files');
-      TaskFiles().open(dir);
+      window.history.pushState('data', 'title', '/app/task/$_dir/files');
+      TaskFiles().open(_dir);
     });
   }
 
@@ -281,8 +295,7 @@ class CardTaskTemplate {
   final list = <int, CardTask>{};
 
   void updateTasks() {
-    App()
-        .requestOnce(
+    requestOnce(
             wwwTaskViewUpdate + jsonEncode(list.keys.toList(growable: false)))
         .then((msg) {
       final items = jsonDecode(msg);
@@ -299,11 +312,11 @@ class CardTaskTemplate {
     _instance = this;
     updateTasks();
 
-    App().waitMsgAll(wwwTaskNew).listen((msg) {
+    waitMsgAll(wwwTaskNew).listen((msg) {
       final item = jsonDecode(msg.s);
       list[item['id']] = CardTask(item['id'])..byJson(item);
     });
-    App().waitMsgAll(wwwTaskUpdates).listen((msg) {
+    waitMsgAll(wwwTaskUpdates).listen((msg) {
       final items = json.decode(msg.s);
       for (final item in items) {
         list[item['id']]?.byJson(item);

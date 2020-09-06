@@ -11,17 +11,25 @@ import 'misc.dart';
 
 class TaskFiles {
   Element e;
+  String lastTask;
+  String lastFilter;
+
   void close() {
     if (e != null) {
       e.classes.add('a-closing');
     }
   }
 
-  Future<bool> open(final String task) async {
+  Future<bool> open(final String task, [final String filter]) async {
+    print(filter);
     final _msg = await requestOnce('$wwwTaskGetFiles$task');
-    if (e != null && !e.classes.contains('task-$task')) {
-      e.remove();
+    if ((e != null && !e.classes.contains('task-$task')) ||
+        (lastTask != task) ||
+        (lastFilter != filter)) {
+      e?.remove();
       e = null;
+      lastTask = task;
+      lastFilter = filter;
     }
     if (e == null) {
       e = document.createElement('main')
@@ -88,10 +96,21 @@ class TaskFiles {
       final f = (jsonDecode(_msg) as List)
           .map((e) => OneFileData.byJson(e))
           .toList(growable: false);
-      final _fL = min(f.length, 100);
+      final _fL = f.length; //min(f.length, 100);
 
       for (var i = 0; i < _fL; i++) {
         final _i = f[i];
+        if (filter != null &&
+                (filter == 'errors' &&
+                    (_i.notes == null ||
+                        _i.notes.isEmpty ||
+                        _i.notesError == 0)) ||
+            (filter == 'warnings' &&
+                (_i.notes == null ||
+                    _i.notes.isEmpty ||
+                    (_i.notesWarnings == 0 && _i.notesError == 0)))) {
+          continue;
+        }
         final eRow = document.createElement('div')
           ..classes.add('tbl-row')
           ..append(document.createElement('span')

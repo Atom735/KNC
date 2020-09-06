@@ -99,14 +99,20 @@ class Client extends SocketWrapper {
     /// Получение данных файла `path``codepage`
     waitMsgAll(wwwGetFileData).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
-      File(msg.s.substring(0, i0)).readAsBytes().then((data) {
-        send(
-            msg.i,
-            convDecode(
-                data,
-                Conv().charMaps[
-                    msg.s.substring(i0 + msgRecordSeparator.length)]));
-      });
+      if (i0 == -1) {
+        File(msg.s).readAsBytes().then((data) {
+          send(msg.i, Conv().decode(data));
+        });
+      } else {
+        File(msg.s.substring(0, i0)).readAsBytes().then((data) {
+          send(
+              msg.i,
+              convDecode(
+                  data,
+                  Conv().charMaps[
+                      msg.s.substring(i0 + msgRecordSeparator.length)]));
+        });
+      }
     });
 
     /// Регистрация нового пользователя `mail``pass`

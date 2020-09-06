@@ -19,9 +19,8 @@ class Server {
     RegExp(r'^\/app(\/.+)?', caseSensitive: false): File('web/index.html')
   };
 
-  Future<void> serveFile(
-      HttpRequest request, HttpResponse response, File file) async {
-    if (file != null && await file.exists()) {
+  void serveFile(HttpRequest request, HttpResponse response, File file) {
+    if (file != null && file.existsSync()) {
       response.statusCode = HttpStatus.ok;
       final ext = p.extension(file.path).toLowerCase();
       switch (ext) {
@@ -45,23 +44,33 @@ class Server {
           break;
         default:
       }
-      await response.addStream(file.openRead());
-      await response.flush();
-      await response.close();
+      response.addStream(file.openRead()).then((_) {
+        response.flush().then((_) {
+          response.close().then((_) {
+            iReq -= 1;
+            print(
+                'http(${request.hashCode}): ${request.uri.path} closed ($iReq)');
+          });
+        });
+      });
       print('http: ${request.uri.path} serve $file');
     } else {
       response.statusCode = HttpStatus.notFound;
-      await response.write('404: Not Found');
-      await response.flush();
-      await response.close();
-      print('http: ${request.uri.path} 404: Not Found');
+      response.write('404: Not Found');
+      response.flush().then((_) {
+        response.close().then((_) {
+          iReq -= 1;
+          print(
+              'http(${request.hashCode}): ${request.uri.path} closed ($iReq)');
+        });
+      });
     }
   }
 
   @override
   String toString() =>
       '$runtimeType($hashCode)[${server.address.address}:${server.port}]';
-
+  int iReq = 0;
   static Future<Server> init() async =>
       Server._init(await HttpServer.bind(InternetAddress.anyIPv4, wwwPort));
   static Server _instance;
@@ -72,12 +81,20 @@ class Server {
     print('For connect use http://localhost:${server.port}/');
     _instance = this;
     server.listen((request) {
+      iReq += 1;
       final response = request.response;
-      print('http: ${request.uri.path}');
+      print('http(${request.hashCode}): ${request.uri.path} opend ($iReq)');
       if (request.uri.path == '/ws') {
         WebSocketTransformer.upgrade(request).then((websocket) {
           print('http: ${request.uri.path} upgraded to WebSocket');
           Client(websocket);
+          request.response.flush().then((_) {
+            request.response.close().then((_) {
+              iReq -= 1;
+              print(
+                  'http(${request.hashCode}): ${request.uri.path} closed ($iReq)');
+            });
+          });
         });
       } else if (fileMap[request.uri.path] != null) {
         serveFile(request, response, fileMap[request.uri.path]);
