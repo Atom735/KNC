@@ -7,49 +7,9 @@ import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 
 import 'FIleParserLas.dart';
-import 'ink.dart';
 import 'TaskSpawnSets.dart';
-import 'las.dart';
 import 'misc.dart';
-import 'msgs.dart';
 import 'xls.dart';
-
-class PathNewer {
-  /// Путь именно к существующей папке, в которой будет подбираться имя
-  final String prePath;
-
-  /// Список зарезервированных имён файлов/папок
-  final _reserved = <String>[];
-
-  /// [prePath] - это путь именно к существующей папке
-  PathNewer(this.prePath);
-
-  /// Подбирает новое имя для файла, если он уже существует в папке [prePath]
-  /// И резервирует его
-  String lock(final String name) {
-    var n = p.basename(name);
-    var o = p.join(prePath, n);
-    if (!_reserved.contains(n)) {
-      // Если имя не зарезрвированно и файла с таким именем не существует
-      _reserved.add(n);
-      return o;
-    } else {
-      final fn = p.basenameWithoutExtension(name);
-      final fe = p.extension(name);
-      var i = 0;
-      do {
-        n = '${fn}(${i})${fe}';
-        o = p.join(prePath, n);
-        i += 1;
-      } while (_reserved.contains(n));
-      _reserved.add(n);
-      return o;
-    }
-  }
-
-  /// Отменить резервацию файла
-  bool unlock(final String name) => _reserved.remove(p.basename(name));
-}
 
 class IsoTask extends SocketWrapper {
   /// Порт для получение сообщений этим изолятом
@@ -58,102 +18,129 @@ class IsoTask extends SocketWrapper {
   /// Данные полученные при спавне задачи
   final TaskSpawnSets sets;
 
-  /// Путь к конечным данным
-  final String pathOut;
+  /// Копия ссылки на настройки
+  final TaskSettings settings;
 
-  final String pathOutLas;
-  final PathNewer newerOutLas;
+  /// Папка со всеми обработанными Las файлами
+  final Directory dirLas;
 
-  final String pathOutInk;
-  final PathNewer newerOutInk;
+  /// Папка со всеми обработанными Ink файлами
+  final Directory dirInk;
 
-  final String pathOutErr;
-  final PathNewer newerOutErr;
+  /// Папка со всеми временными файлами (рабочими копиями)
+  final Directory dirTemp;
 
+  /// Поток для записи иформации об ошибках в файл
   final IOSink errorsOut;
 
-  final lasDB = LasDataBase();
-  dynamic lasIgnore;
+  // final lasDB = LasDataBase();
+  // dynamic lasIgnore;
 
-  final inkDB = InkDataBase();
-  dynamic inkDbfMap;
+  // final inkDB = InkDataBase();
+  // dynamic inkDbfMap;
 
-  final lasCurvesNameOriginals = <String>[];
+  // final lasCurvesNameOriginals = <String>[];
 
-  final String pathTemp;
   final filesSearche = <OneFileData>[];
   KncXlsBuilder xls;
 
-  int _state = 0;
+  /// Данные подготовляемые для отправки как обновление состояния задачи
+  final _updatesMap = <String, Object>{};
+
+  /// Handle таймера
+  Future<void> _updatesFuture;
+
+  /// Обновление данных для отправки сообщения об обновлении
+  void _update(String n, Object v) {
+    _updatesMap[n] = v;
+    _updatesFuture ??=
+        Future.delayed(Duration(milliseconds: settings.update_duration))
+            .then((_) {
+      _updatesMap['id'] = sets.id;
+      send(0, wwwTaskUpdates + jsonEncode(_updatesMap));
+      _updatesFuture = null;
+      _updatesMap.clear();
+    });
+  }
+
+  /// Состояние задачи
   int get state => _state;
+  int _state = 0;
   set state(final int i) {
     if (i == null || _state == i) {
       return;
     }
     _state = i;
-    send(0, '$msgTaskUpdateState$_state');
+    _update('state', state);
   }
 
-  int _errors = 0;
+  /// Количество обработанных файлов с ошибками
   int get errors => _errors;
+  int _errors = 0;
   set errors(final int i) {
     if (i == null || _errors == i) {
       return;
     }
     _errors = i;
-    send(0, '$msgTaskUpdateErrors$_errors');
+    _update('errors', errors);
   }
 
-  int _files = 0;
+  /// Количество найденных файлов для обработки
   int get files => _files;
+  int _files = 0;
   set files(final int i) {
     if (i == null || _files == i) {
       return;
     }
     _files = i;
-    send(0, '$msgTaskUpdateFiles$_files');
+    _update('files', files);
   }
 
-  int _warnings = 0;
+  /// Количество обработанных файлов с предупреждениями и/или ошибками
   int get warnings => _warnings;
+  int _warnings = 0;
   set warnings(final int i) {
     if (i == null || _warnings == i) {
       return;
     }
     _warnings = i;
-    send(0, '$msgTaskUpdateWarnings$_warnings');
+    _update('warnings', warnings);
   }
 
-  int _worked = 0;
+  /// Количество обработанных файлов
   int get worked => _worked;
+  int _worked = 0;
   set worked(final int i) {
     if (i == null || _worked == i) {
       return;
     }
     _worked = i;
-    send(0, '$msgTaskUpdateWorked$_worked');
+    _update('worked', worked);
   }
 
   final listOfErrors = <CErrorOnLine>[];
   final listOfFiles = <C_File>[];
 
+  /// Точка входа для изолята
   static Future<void> entryPoint(final TaskSpawnSets sets) async {
-    await IsoTask(sets, sets.dir.path).entryPointInClass();
+    await IsoTask(sets).entryPointInClass();
   }
 
+  /// Точка входа изолята внутри класса
   Future<void> entryPointInClass() async {
     await Future.wait([
-      Directory(pathTemp).create(recursive: true),
-      Directory(pathOutLas).create(recursive: true),
-      Directory(pathOutInk).create(recursive: true),
-      Directory(pathOutErr).create(recursive: true)
+      dirTemp.create(),
+      dirLas.create(),
+      dirInk.create(),
     ]);
+
+    /// Смена состояния на поиск файлов
     state = NTaskState.searchFiles.index;
     final fs = <Future>[];
     final func = listFilesGet(0, '');
-    sets.settings.path.forEach((element) {
+    settings.path.forEach((element) {
       if (element.isNotEmpty) {
-        print('task[${sets.id}] scan $element');
+        print('$this scan $element');
         fs.add(FileSystemEntity.type(element).then((value) =>
             value == FileSystemEntityType.file
                 ? func(File(element), element)
@@ -163,7 +150,7 @@ class IsoTask extends SocketWrapper {
       }
     });
     await Future.wait(fs);
-    await File(p.join(pathOut, 'searchedFiles.txt')).writeAsString(filesSearche
+    await File(p.join(sets.dir.path, 'files.txt')).writeAsString(filesSearche
         .map((e) => '${e.type.toString()}\n${e.origin}\n${e.path}\n')
         .join('\n'));
     state = NTaskState.workFiles.index;
@@ -173,14 +160,15 @@ class IsoTask extends SocketWrapper {
     }
     state = NTaskState.generateTable.index;
     // TODO: Генерация таблицы
-    await generateTable();
+    await _generateTable();
     // xls.
     state = NTaskState.completed.index;
   }
 
-  Future<void> generateTable() async {
+  /// Генерация таблицы
+  Future<void> _generateTable() async {
     final xlsDataIn = Directory(p.join('data', 'xls')).absolute;
-    final xlsDataOut = Directory(p.join(pathOut, 'xls')).absolute;
+    final xlsDataOut = Directory(p.join(sets.dir.path, 'xls')).absolute;
     await copyDirectoryRecursive(xlsDataIn, xlsDataOut);
     final xlsSheet =
         File(p.join(xlsDataOut.path, 'xl', 'worksheets', 'sheet1.xml'));
@@ -188,48 +176,69 @@ class IsoTask extends SocketWrapper {
         File(p.join(xlsDataOut.path, 'xl', 'sharedStrings.xml'));
     final xlsSheetTemplate = await xlsSheet.readAsString();
     final xlsSharedStringsTemplate = await xlsSharedStrings.readAsString();
+
+    /// Список всех названий кривых
     final _methods = <String>[];
+
+    /// Список всех названий скважин
     final _wells = <String>[];
 
-    filesSearche.forEach((e) {
-      if (e.well == null || e.well.isEmpty) {
-        return;
+    /// Заполняем списки названий скважин и кривых
+    final _k = filesSearche.length;
+    for (var k = 0; k < _k; k++) {
+      final e = filesSearche[k];
+
+      /// Пропускаем файлы без кривых
+      if (e.curves == null) {
+        continue;
       }
       if (e.curves != null && e.curves.length >= 2) {
         final _length = e.curves.length;
-        for (var i = 1; i < _length; i++) {
+        for (var i = 0; i < _length; i++) {
           final _name = e.curves[i].name;
+          final _well = e.curves[i].well;
           if (!_methods.contains(_name)) {
-            _methods.add(e.curves[i].name);
+            _methods.add(_name);
+          }
+          if (!_wells.contains(_well)) {
+            _wells.add(_well);
           }
         }
       }
-      if (e.well != null && !_wells.contains(e.well)) {
-        _wells.add(e.well);
-      }
-    });
+    }
+
+    /// Заполняем строки
     final _rows = <List<String>>[]; // WELL, INK, GISx2...
     final _methodsLength = _methods.length;
-    filesSearche.forEach((e) {
-      if (e.well == null || e.well.isEmpty) {
-        return;
+    for (var k = 0; k < _k; k++) {
+      final e = filesSearche[k];
+
+      /// Пропускаем файлы без кривых
+      if (e.curves == null) {
+        continue;
       }
-      if (e.curves != null && e.curves.length >= 2) {
-        final _length = e.curves.length;
-        for (var i = 1; i < _length; i++) {
-          final _i = _methods.indexOf(e.curves[i].name) * 2 + 2;
-          var _row = _rows.firstWhere((_e) => _e[0] == e.well && _e[_i] == null,
-              orElse: () => null);
-          if (_row == null) {
-            _rows.add(List(_methodsLength * 2 + 2));
-            _row = _rows.last;
-            _row[0] = e.well;
-          }
-          _row[_i] = e.curves[i].strt;
-          _row[_i + 1] = e.curves[i].stop;
-        }
+      final _length = e.curves.length;
+      for (var i = 0; i < _length; i++) {
+        final _name = e.curves[i].name;
+        final _well = e.curves[i].well;
+
+        /// Подбираем номер колонки в зависимости от названия кривой
+        final _i = _methods.indexOf(_name) * 2 + 2;
+
+        /// Подбираем строку, чтобы совпадало название скважины
+        /// и выбранная колонка была пустая, иначе создаём новую строку
+        var _row = _rows.firstWhere((_e) => _e[0] == _well && _e[_i] == null,
+            orElse: () {
+          _rows.add(List(_methodsLength * 2 + 2));
+          return _rows.last..[0] = _well;
+        });
+
+        /// Записываем значения кривых в эти ячейки
+        _row[_i] = e.curves[i].strt;
+        _row[_i + 1] = e.curves[i].stop;
       }
-    });
+    }
+    ;
 
     final _length = _methods.length;
     final _sbMethods = StringBuffer();
@@ -273,18 +282,19 @@ class IsoTask extends SocketWrapper {
 
     final xlsPath = xlsDataOut.path + '.xlsx';
     await zip(xlsDataOut.path, xlsPath);
-    send(0, '$msgTaskUpdateRaport$xlsPath');
+    _update('raport', xlsPath);
   }
 
+  /// Обработка файлов во время поиска всех файлов
   Future<void> handleFileSearch(final File file, final String origin) async {
     // if (filesSearche.length > 1000) {
     //   return;
     // }
     final ext = p.extension(file.path).toLowerCase();
-    if (sets.settings.ext_files.contains(ext)) {
+    if (settings.ext_files.contains(ext)) {
       final i = files;
       files++;
-      final ph = p.join(pathTemp, i.toRadixString(36).padLeft(8, '0'));
+      final ph = p.join(dirTemp.path, i.toRadixString(36).padLeft(8, '0'));
       filesSearche.add(OneFileData(
           ph, origin, NOneFileDataType.unknown, await file.length()));
       var _tryes = 0;
@@ -293,11 +303,10 @@ class IsoTask extends SocketWrapper {
           await file.copy(ph);
           break;
         } catch (e) {
-          await Future.delayed(Duration(milliseconds: 1));
+          await Future.delayed(Duration(milliseconds: 16));
           _tryes++;
         }
       }
-      // newerTemp.unlock(ph);
     }
   }
 
@@ -345,63 +354,63 @@ class IsoTask extends SocketWrapper {
   }
 
   /// == INK FILES == Begin
-  Future handleFileInk(final File file, final String origin) async {
-    final inks = await InkData.loadFile(file, this);
-    if (inks != null) {
-      for (final ink in inks) {
-        if (ink != null) {
-          ink.origin = origin;
-          if (ink.listOfErrors.isEmpty) {
-            // Данные корректны
-            final newPath = newerOutInk.lock(ink.well +
-                '___' +
-                p.basenameWithoutExtension(file.path) +
-                '.txt');
-            final original = inkDB.addInkData(ink);
+  // Future handleFileInk(final File file, final String origin) async {
+  //   final inks = await InkData.loadFile(file, this);
+  //   if (inks != null) {
+  //     for (final ink in inks) {
+  //       if (ink != null) {
+  //         ink.origin = origin;
+  //         if (ink.listOfErrors.isEmpty) {
+  //           // Данные корректны
+  //           final newPath = newerOutInk.lock(ink.well +
+  //               '___' +
+  //               p.basenameWithoutExtension(file.path) +
+  //               '.txt');
+  //           final original = inkDB.addInkData(ink);
 
-            try {
-              if (original) {
-                final io = File(newPath).openWrite(mode: FileMode.writeOnly);
-                io.writeln(ink.well);
-                final dat = ink.inkData;
-                for (final item in dat.data) {
-                  io.writeln('${item.depth}\t${item.angle}\t${item.azimuth}');
-                }
-                await io.flush();
-                await io.close();
-              }
-            } catch (e) {
-              listOfErrors.add(CErrorOnLine(
-                  origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
-              errors = listOfErrors.length;
-              print(e);
-            }
-            listOfFiles.add(CInkFile(
-                origin, newPath, ink.well, ink.strt, ink.stop, original));
-            files = listOfFiles.length;
-            // TODO: обработка INK файла
-            // await newerOutInk.unlock(newPath);
-          } else {
-            // Ошибка в данных файла
-            final newPath = newerOutErr.lock(p.basename(file.path));
-            try {
-              await file.copy(newPath);
-            } catch (e) {
-              listOfErrors.add(CErrorOnLine(
-                  origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
-              errors = listOfErrors.length;
-              print(e);
-            }
-            listOfErrors.add(CErrorOnLine(origin, newPath, ink.listOfErrors));
-            errors = listOfErrors.length;
-            // TODO: бработка ошибок INK файла
-            // await newerOutErr.unlock(newPath);
-          }
-        }
-      }
-    }
-    return;
-  } // == INK FILES == End
+  //           try {
+  //             if (original) {
+  //               final io = File(newPath).openWrite(mode: FileMode.writeOnly);
+  //               io.writeln(ink.well);
+  //               final dat = ink.inkData;
+  //               for (final item in dat.data) {
+  //                 io.writeln('${item.depth}\t${item.angle}\t${item.azimuth}');
+  //               }
+  //               await io.flush();
+  //               await io.close();
+  //             }
+  //           } catch (e) {
+  //             listOfErrors.add(CErrorOnLine(
+  //                 origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
+  //             errors = listOfErrors.length;
+  //             print(e);
+  //           }
+  //           listOfFiles.add(CInkFile(
+  //               origin, newPath, ink.well, ink.strt, ink.stop, original));
+  //           files = listOfFiles.length;
+  //           // TODO: обработка INK файла
+  //           // await newerOutInk.unlock(newPath);
+  //         } else {
+  //           // Ошибка в данных файла
+  //           final newPath = newerOutErr.lock(p.basename(file.path));
+  //           try {
+  //             await file.copy(newPath);
+  //           } catch (e) {
+  //             listOfErrors.add(CErrorOnLine(
+  //                 origin, newPath, [ErrorOnLine(KncError.exception, 0, e)]));
+  //             errors = listOfErrors.length;
+  //             print(e);
+  //           }
+  //           listOfErrors.add(CErrorOnLine(origin, newPath, ink.listOfErrors));
+  //           errors = listOfErrors.length;
+  //           // TODO: бработка ошибок INK файла
+  //           // await newerOutErr.unlock(newPath);
+  //         }
+  //       }
+  //     }
+  //   }
+  //   return;
+  // } // == INK FILES == End
 
   /// Получает новый экземляр функции для обхода по файлам
   /// с настоящими настройками
@@ -418,11 +427,11 @@ class IsoTask extends SocketWrapper {
           }
           final ext = p.extension(entity.path).toLowerCase();
           // == UNZIPPER == Begin
-          if (sets.settings.ext_ar.contains(ext)) {
-            if ((sets.settings.maxsize_ar <= 0 ||
-                    await entity.length() < sets.settings.maxsize_ar) &&
-                (sets.settings.maxdepth_ar == -1 ||
-                    iArchDepth < sets.settings.maxdepth_ar)) {
+          if (settings.ext_ar.contains(ext)) {
+            if ((settings.maxsize_ar <= 0 ||
+                    await entity.length() < settings.maxsize_ar) &&
+                (settings.maxdepth_ar == -1 ||
+                    iArchDepth < settings.maxdepth_ar)) {
               // вскрываем архив если он соотвествует размеру если он установлен и мы не привысили глубину вложенности
               final arch = await unzip(entity.path);
               if (arch.exitCode == 0) {
@@ -474,18 +483,15 @@ class IsoTask extends SocketWrapper {
 
   @override
   String toString() =>
-      '$runtimeType{${sets.id}}(${sets.settings.name})[${sets.settings.user}]';
-  IsoTask._init(this.sets, this.pathOut)
-      : pathOutLas = p.join(pathOut, 'las'),
-        newerOutLas = PathNewer(p.join(pathOut, 'las')),
-        pathOutInk = p.join(pathOut, 'ink'),
-        newerOutInk = PathNewer(p.join(pathOut, 'ink')),
-        pathOutErr = p.join(pathOut, 'errors'),
-        newerOutErr = PathNewer(p.join(pathOut, 'errors')),
-        errorsOut = File(p.join(pathOut, 'errors.txt'))
+      '$runtimeType{${sets.id}}(${settings.name})[${settings.user}]';
+  IsoTask._init(this.sets)
+      : settings = sets.settings,
+        dirLas = Directory(p.join(sets.dir.path, 'las')),
+        dirInk = Directory(p.join(sets.dir.path, 'ink')),
+        dirTemp = Directory(p.join(sets.dir.path, 'temp')),
+        errorsOut = File(p.join(sets.dir.path, 'errors.txt'))
             .openWrite(encoding: utf8, mode: FileMode.writeOnly)
               ..writeCharCode(unicodeBomCharacterRune),
-        pathTemp = p.join(pathOut, 'temp'),
         super((msg) => sets.sendPort.send([sets.id, msg])) {
     print('$this created');
     receivePort.listen((final msg) {
@@ -493,14 +499,12 @@ class IsoTask extends SocketWrapper {
         recv(msg);
         return;
       }
-      print('task[${sets.id}]: recieved unknown msg {$msg}');
+      print('$this recieved unknown msg {$msg}');
     });
 
     waitMsgAll(wwwFileNotes).listen((msg) {
-      send(
-          msg.i,
-          jsonEncode(
-              filesSearche.firstWhere((e) => e.path == msg.s).jsonNotes));
+      send(msg.i,
+          jsonEncode(filesSearche.firstWhere((e) => e.path == msg.s).notes));
     });
 
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
@@ -513,19 +517,19 @@ class IsoTask extends SocketWrapper {
     sets.sendPort.send([sets.id, receivePort.sendPort]);
   }
   static IsoTask _instance;
-  factory IsoTask([final TaskSpawnSets sets, final String pathOut]) =>
-      _instance ?? (_instance = IsoTask._init(sets, pathOut));
+  factory IsoTask([final TaskSpawnSets sets]) =>
+      _instance ?? (_instance = IsoTask._init(sets));
 
-  /// Загрузкить все данные
-  Future get loadAll => Future.wait([loadLasIgnore(), loadInkDbfMap()]);
+  // /// Загрузкить все данные
+  // Future get loadAll => Future.wait([loadLasIgnore(), loadInkDbfMap()]);
 
-  /// Загружает таблицу игнорирования полей LAS файла
-  Future loadLasIgnore() => File(r'data/las.ignore.json')
-      .readAsString(encoding: utf8)
-      .then((buffer) => lasIgnore = json.decode(buffer));
+  // /// Загружает таблицу игнорирования полей LAS файла
+  // Future loadLasIgnore() => File(r'data/las.ignore.json')
+  //     .readAsString(encoding: utf8)
+  //     .then((buffer) => lasIgnore = json.decode(buffer));
 
-  /// Загружает таблицу переназначения полей DBF для инклинометрии
-  Future loadInkDbfMap() => File(r'data/ink.dbf.map.json')
-      .readAsString(encoding: utf8)
-      .then((buffer) => inkDbfMap = json.decode(buffer));
+  // /// Загружает таблицу переназначения полей DBF для инклинометрии
+  // Future loadInkDbfMap() => File(r'data/ink.dbf.map.json')
+  //     .readAsString(encoding: utf8)
+  //     .then((buffer) => inkDbfMap = json.decode(buffer));
 }

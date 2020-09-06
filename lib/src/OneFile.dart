@@ -2,6 +2,9 @@ enum NOneFileDataType { unknown, las }
 
 /// Значения иследований
 class OneFilesDataCurve {
+  /// Наименование скважины
+  final String well;
+
   /// Наименоваине кривой (.ink - для инклинометрии)
   final String name;
 
@@ -17,15 +20,17 @@ class OneFilesDataCurve {
   /// Значения в точках (у инклинометрии по три значения на точку)
   final List<String> data;
 
-  OneFilesDataCurve(this.name, this.strt, this.stop, this.step, this.data);
+  OneFilesDataCurve(
+      this.well, this.name, this.strt, this.stop, this.step, this.data);
   OneFilesDataCurve.byJson(Map<String, Object> json)
-      : name = json['name'],
+      : well = json['well'],
+        name = json['name'],
         strt = json['strt'],
         stop = json['stop'],
         step = json['step'],
         data = null;
-  Map<String, Object> get json =>
-      {'name': name, 'strt': strt, 'stop': stop, 'step': step};
+  Map<String, Object> toJson() =>
+      {'well': well, 'name': name, 'strt': strt, 'stop': stop, 'step': step};
 }
 
 class OneFileLineNote {
@@ -51,7 +56,7 @@ class OneFileLineNote {
         text = json['text'],
         data = json['data'];
 
-  Map<String, Object> get json =>
+  Map<String, Object> toJson() =>
       {'line': line, 'column': column, 'text': text, 'data': data};
 }
 
@@ -71,9 +76,6 @@ class OneFileData {
   /// Название кодировки
   final String encode;
 
-  /// Наименование скважины
-  final String well;
-
   /// Кривые найденные в файле
   final List<OneFilesDataCurve> curves;
 
@@ -87,8 +89,7 @@ class OneFileData {
   final int notesWarnings;
 
   OneFileData(this.path, this.origin, this.type, this.size,
-      {this.well,
-      this.curves,
+      {this.curves,
       this.encode,
       this.notes,
       this.notesError,
@@ -98,8 +99,7 @@ class OneFileData {
         origin = json['origin'],
         type = NOneFileDataType.values[json['type']],
         size = json['size'],
-        well = json['well'],
-        curves = json['well'] == null
+        curves = json['curves'] == null
             ? null
             : (List<OneFilesDataCurve>.generate(
                 (json['curves'] as List).length,
@@ -118,12 +118,6 @@ class OneFileData {
     }
   }
 
-  Map<String, Object> get jsonNotes => {}..addAll(notes != null
-      ? {
-          'notes': notes.map((e) => e.json).toList(growable: false),
-        }
-      : {});
-
   Map<String, Object> toJson() => {
         'type': type.index,
         'path': path,
@@ -133,15 +127,6 @@ class OneFileData {
         'notes-errors': notesError,
         'notes-warnings': notesWarnings,
       }
-        ..addAll(well != null
-            ? {
-                'well': well,
-                'curves': curves.map((e) => e.json).toList(growable: false)
-              }
-            : {})
-        ..addAll(notes != null
-            ? {
-                'notes': notes.length,
-              }
-            : {});
+        ..addAll(curves != null ? {'curves': curves} : {})
+        ..addAll(notes != null ? {'notes': notes.length} : {});
 }

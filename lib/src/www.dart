@@ -34,6 +34,10 @@ const wwwUserSignin = 'signin;';
 /// Отправка данных для регистрации
 const wwwUserRegistration = 'registrtion;';
 
+const msgDoc2x = 'doc2x;';
+const msgZip = 'zip;';
+const msgUnzip = 'unzip;';
+
 const signatureDoc = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
 const signatureZip = [
   [0x50, 0x4B, 0x03, 0x04],

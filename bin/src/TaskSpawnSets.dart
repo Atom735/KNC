@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
 import 'package:knc/knc.dart';
+import 'package:path/path.dart' as p;
 
 import 'App.dart';
 import 'Conv.dart';
@@ -32,22 +34,28 @@ class TaskSpawnSets {
   static var _uid = 0;
 
   /// Запускает новую задачу с указанными настройками
-  static Future<void> spawn(
-      {final TaskSettings settings, Directory dir}) async {
+  static Future<void> spawn({TaskSettings settings, Directory dir}) async {
     _uid++;
     final _id = _uid;
-    final _c = Completer<SendPort>();
-    App().completers[_id] = _c;
-    final _dir = dir ?? await Directory('tasks').absolute.createTemp();
+    dir ??= await Directory('tasks').absolute.createTemp();
+    final fSets = File(p.join(dir.path, 'settings.json'));
+    if (await fSets.exists()) {
+      settings ??=
+          TaskSettings.fromJson(jsonDecode(await fSets.readAsString()));
+    }
     if (settings != null) {
+      final _c = Completer<SendPort>();
+      App().completers[_id] = _c;
+      await File(p.join(dir.path, 'settings.json'))
+          .writeAsString(jsonEncode(settings));
       final _iso = await Isolate.spawn(
           IsoTask.entryPoint,
           TaskSpawnSets._(
-              _id, App().receivePort.sendPort, settings, Conv().charMaps, _dir),
+              _id, App().receivePort.sendPort, settings, Conv().charMaps, dir),
           debugName: '{$_id}(${settings.name})[${settings.user}');
       final _sendPort = await _c.future;
       App().completers[_id] = Completer<SendPort>();
-      Task(_id, settings, _sendPort, _iso, _dir);
+      Task(_id, settings, _sendPort, _iso, dir);
       App().completers[_id].complete();
       App().completers.remove(_id);
     }

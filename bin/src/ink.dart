@@ -1087,11 +1087,9 @@ class InkData {
     }
     if (b) {
       /// Doc file
-      final newPath =
-          await ss.newerOutInk.lock(p.basename(entity.path) + '.docx');
+      final newPath = '';
       final procRes = await ss.doc2x(entity.path, newPath);
       if (procRes != 0) {
-        await ss.newerOutInk.unlock(newPath);
         return null;
       }
       if (await File(newPath).exists()) {
@@ -1117,14 +1115,12 @@ class InkData {
             await handleErrorCatcher(e);
           }
         }
-        await ss.newerOutInk.unlock(newPath);
         if (ink != null) {
           return [ink];
         } else {
           return null;
         }
       }
-      await ss.newerOutInk.unlock(newPath);
       return null;
     }
 
@@ -1162,7 +1158,7 @@ class InkData {
       final dbf = DbfFile();
       if (dbf.loadByByteData(bytes.buffer.asByteData())) {
         // Dbf file
-        return getByDbf(dbf, ss.inkDbfMap);
+        // return getByDbf(dbf, ss.inkDbfMap);
       } else {
         return null;
       }

@@ -658,6 +658,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
   final curves = List<OneFilesDataCurve>.generate(
       _c_mnems.length,
       (_index) => OneFilesDataCurve(
+          well,
           _c_mnems[_index],
           _c_strt_s[_index],
           _c_stop_s[_index],
@@ -667,7 +668,6 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
 
   return OneFileData(
       fileData.path, fileData.origin, NOneFileDataType.las, fileData.size,
-      well: well,
       curves: curves,
       encode: encode,
       notes: _notes,

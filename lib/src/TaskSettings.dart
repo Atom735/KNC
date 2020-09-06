@@ -79,6 +79,7 @@ class TaskSettings {
 
   Map<String, Object> toJson() => {
         'user': user,
+        'users': users,
         'name': name,
         'path': path,
         'ext_ar': ext_ar,
