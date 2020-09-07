@@ -94,6 +94,8 @@ class OneFileData {
       this.notes,
       this.notesError,
       this.notesWarnings});
+
+  /// Создаёт экземпляр класса, с пустыми заметками, но их верным количеством
   OneFileData.byJson(Map<String, Object> json)
       : path = json['path'],
         origin = json['origin'],
@@ -104,12 +106,39 @@ class OneFileData {
             : (List<OneFilesDataCurve>.generate(
                 (json['curves'] as List).length,
                 (index) =>
-                    OneFilesDataCurve.byJson((json['curves'] as List)[index]))),
+                    OneFilesDataCurve.byJson((json['curves'] as List)[index]),
+                growable: false)),
         encode = json['encode'],
         notes =
             json['notes'] != null ? List<OneFileLineNote>(json['notes']) : null,
         notesError = json['notes-errors'],
         notesWarnings = json['notes-warnings'];
+
+  /// Создаёт экземпляр класса с полных json данных
+  OneFileData.byJsonFull(Map<String, Object> json)
+      : path = json['path'],
+        origin = json['origin'],
+        type = NOneFileDataType.values[json['type']],
+        size = json['size'],
+        curves = json['curves'] == null
+            ? null
+            : (List<OneFilesDataCurve>.generate(
+                (json['curves'] as List).length,
+                (index) =>
+                    OneFilesDataCurve.byJson((json['curves'] as List)[index]),
+                growable: false)),
+        encode = json['encode'],
+        notes = json['notes'] == null
+            ? null
+            : (List<OneFileLineNote>.generate(
+                (json['notes'] as List).length,
+                (index) =>
+                    OneFileLineNote.byJson((json['notes'] as List)[index]),
+                growable: false)),
+        notesError = json['notes-errors'],
+        notesWarnings = json['notes-warnings'];
+
+  /// Обновляет заметки с помощью json данных о заметках
   void updateNotesByJson(Map<String, Object> json) {
     if (json['notes'] != null) {
       for (var i = 0; i < notes.length; i++) {
@@ -118,6 +147,7 @@ class OneFileData {
     }
   }
 
+  /// Получает json объект, без данных заметок
   Map<String, Object> toJson() => {
         'type': type.index,
         'path': path,
@@ -129,4 +159,17 @@ class OneFileData {
       }
         ..addAll(curves != null ? {'curves': curves} : {})
         ..addAll(notes != null ? {'notes': notes.length} : {});
+
+  /// Получает полный json объект, включающий в себя заметки
+  Map<String, Object> toJsonFull() => {
+        'type': type.index,
+        'path': path,
+        'origin': origin,
+        'size': size,
+        'encode': encode,
+        'notes-errors': notesError,
+        'notes-warnings': notesWarnings,
+      }
+        ..addAll(curves != null ? {'curves': curves} : {})
+        ..addAll(notes != null ? {'notes': notes} : {});
 }

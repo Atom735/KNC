@@ -301,41 +301,44 @@ class IsoTask extends SocketWrapper {
       final ph = p.join(dirTemp.path, i.toRadixString(36).padLeft(8, '0'));
       filesSearche.add(OneFileData(
           ph, origin, NOneFileDataType.unknown, await file.length()));
-      var _tryes = 0;
-      while (_tryes < 100) {
-        try {
-          await file.copy(ph);
-          break;
-        } catch (e) {
-          await Future.delayed(Duration(milliseconds: 16));
-          _tryes++;
-        }
-      }
+
+      await tryFunc(() => file.copy(ph), (e) => errorsOut.writeln(e));
     }
   }
 
+  /// Обрабтчик файлов
   Future<void> handleFile(final int _i) async {
     final fileData = filesSearche[_i];
     final file = File(fileData.path);
-    List<int> data;
-    try {
-      data = await file.readAsBytes();
-    } catch (e) {}
+    final data = await tryFunc<List<int>>(() => file.readAsBytes(), (e) {
+      errorsOut.writeln(e);
+      return null;
+    });
+
+    /// Если не удалось считать данные файла
+    if (data == null) {
+      return;
+    }
+
     OneFileData fileDataNew;
     // проверка на совпадения сигнатур
     if (signatureBegining(data, signatureDoc)) {
+      // TODO: обработать doc файл
       worked++;
       return;
     }
     for (final signature in signatureZip) {
       if (signatureBegining(data, signature)) {
+        // TODO: обработать docx файл
         worked++;
         return;
       }
     }
-    // текстовый файл не должен содержать бинарных данных
+    // текстовый файл не должен содержать управляющих символов
     if (data.any((e) =>
         e == 0x7f || (e <= 0x1f && (e != 0x09 && e != 0x0A && e != 0x0D)))) {
+      // TODO: неизвестный бинарный файл
+      // Либо база данных
       worked++;
       return null;
     }
@@ -346,17 +349,26 @@ class IsoTask extends SocketWrapper {
     final buffer = String.fromCharCodes(data.map(
         (i) => i >= 0x80 ? sets.charMaps[encode][i - 0x80].codeUnitAt(0) : i));
 
+    // Пытаемся обработать к LAS файл
     if ((fileDataNew = await parserFileLas(this, fileData, buffer, encode)) !=
         null) {
-      filesSearche[_i] = fileDataNew;
       if (fileDataNew.notes.any((e) => e.text.startsWith('!E'))) {
         errors++;
       } else if (fileDataNew.notes.any((e) => e.text.startsWith('!W'))) {
         warnings++;
       }
+      await tryFunc<File>(
+          () => File(fileDataNew.path + '.json')
+              .writeAsString(jsonEncode(fileDataNew.toJsonFull())), (e) {
+        errorsOut.writeln('!Save FileData');
+        errorsOut.writeln(e);
+        return null;
+      });
+      filesSearche[_i] = fileDataNew;
       worked++;
       return;
     }
+    // TODO: обработать неизвестный текстовый файл
     worked++;
   }
 
@@ -532,6 +544,8 @@ class IsoTask extends SocketWrapper {
     /// Заполняем json объект состояния
     stateMap['id'] = sets.id;
     stateMap['dir'] = sets.dir.path;
+
+    /// Сохраняем настройки файла
     File(p.join(sets.dir.path, 'settings.json'))
         .writeAsString(jsonEncode(settings));
 
