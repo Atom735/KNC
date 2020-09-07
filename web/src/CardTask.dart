@@ -317,10 +317,8 @@ class CardTaskTemplate {
       list[item['id']] = CardTask(item['id'])..byJson(item);
     });
     waitMsgAll(wwwTaskUpdates).listen((msg) {
-      final items = json.decode(msg.s);
-      for (final item in items) {
-        list[item['id']]?.byJson(item);
-      }
+      final item = json.decode(msg.s);
+      list[item['id']]?.byJson(item);
     });
   }
 
