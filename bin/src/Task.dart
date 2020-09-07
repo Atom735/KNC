@@ -71,18 +71,13 @@ class Task extends SocketWrapper {
 
     final settings = await _fileSetting
         .exists()
-        .then<String>((ex) => ex ? _fileState.readAsString() : null)
-        .then<Map<String, Object>>(
-            (data) => data != null ? jsonDecode(data) : null)
-        .then<TaskSettings>(
-            (json) => json != null ? TaskSettings.fromJson(json) : null);
+        .then((ex) => ex ? _fileState.readAsString() : null)
+        .then((data) =>
+            data != null ? TaskSettings.fromJson(jsonDecode(data)) : null);
     if (state != null && settings != null) {
       /// Если хватает всех данных для создания экземпляра
       final task = Task(state['id'], settings, null, null, _dir, closed: true);
       task.map.addAll(state);
-      if (state['raport'] != null) {
-        Server().fileMap[state['raport']] = File(p.join(_dir.path, 'xls.xlsx'));
-      }
       return task;
     }
     return null;
