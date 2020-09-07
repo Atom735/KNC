@@ -510,7 +510,7 @@ class IsoTask extends SocketWrapper {
         dirInk = Directory(p.join(sets.dir.path, 'ink')),
         dirTemp = Directory(p.join(sets.dir.path, 'temp')),
         errorsOut = File(p.join(sets.dir.path, 'errors.txt'))
-            .openWrite(encoding: utf8, mode: FileMode.writeOnly)
+            .openWrite(encoding: utf8, mode: FileMode.writeOnlyAppend)
               ..writeCharCode(unicodeBomCharacterRune),
         super((msg) => sets.sendPort.send([sets.id, msg])) {
     print('$this created');

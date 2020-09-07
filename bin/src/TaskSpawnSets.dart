@@ -31,13 +31,11 @@ class TaskSpawnSets {
   TaskSpawnSets._(
       this.id, this.sendPort, this.settings, this.charMaps, this.dir);
 
-  static var _uid = 0;
-
   /// Запускает новую задачу с указанными настройками
   static Future<void> spawn({TaskSettings settings, Directory dir}) async {
-    _uid++;
-    final _id = _uid;
-    dir ??= await Directory('tasks').absolute.createTemp();
+    App.uidTaskCounter++;
+    final _id = App.uidTaskCounter;
+    dir ??= await Task.dirTasks.createTemp();
     final fSets = File(p.join(dir.path, 'settings.json'));
     if (await fSets.exists()) {
       settings ??=

@@ -16,9 +16,13 @@ class App {
   /// Комплитеры для завершения спавна задачи
   final completers = <int, Completer<SendPort>>{};
 
+  /// Уникальный айди для задачи
+  static var uidTaskCounter = 0;
+
   /// Точка входа для приложения
   Future<void> run() async {
     await Future.wait([User.load(), Conv.init()]);
+    await Task.searchClosed();
 
     receivePort.listen((msg) {
       if (msg is List) {
