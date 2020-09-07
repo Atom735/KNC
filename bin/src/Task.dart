@@ -38,7 +38,6 @@ class Task extends SocketWrapper {
       : sendPort = _sendPort,
         map = {
           'id': id,
-          'name': settings.name,
           'dir': p.basename(dir.path),
         },
         super((msg) => _sendPort.send(msg)) {

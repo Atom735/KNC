@@ -50,14 +50,20 @@ class IsoTask extends SocketWrapper {
   /// Handle таймера
   Future<void> _updatesFuture;
 
+  /// json Объект состояния задачи
+  final stateMap = <String, Object>{};
+
   /// Обновление данных для отправки сообщения об обновлении
   void _update(String n, Object v) {
     _updatesMap[n] = v;
+    stateMap[n] = v;
     _updatesFuture ??=
         Future.delayed(Duration(milliseconds: settings.update_duration))
             .then((_) {
       _updatesMap['id'] = sets.id;
       send(0, wwwTaskUpdates + jsonEncode(_updatesMap));
+      File(p.join(sets.dir.path, 'state.json'))
+          .writeAsString(jsonEncode(stateMap));
       _updatesFuture = null;
       _updatesMap.clear();
     });
@@ -118,8 +124,8 @@ class IsoTask extends SocketWrapper {
     _update('worked', worked);
   }
 
-  final listOfErrors = <CErrorOnLine>[];
-  final listOfFiles = <C_File>[];
+  // final listOfErrors = <CErrorOnLine>[];
+  // final listOfFiles = <C_File>[];
 
   /// Точка входа для изолята
   static Future<void> entryPoint(final TaskSpawnSets sets) async {
@@ -287,11 +293,9 @@ class IsoTask extends SocketWrapper {
 
   /// Обработка файлов во время поиска всех файлов
   Future<void> handleFileSearch(final File file, final String origin) async {
-    // if (filesSearche.length > 1000) {
-    //   return;
-    // }
     final ext = p.extension(file.path).toLowerCase();
     if (settings.ext_files.contains(ext)) {
+      /// Если файл необходимого расширения
       final i = files;
       files++;
       final ph = p.join(dirTemp.path, i.toRadixString(36).padLeft(8, '0'));
@@ -313,7 +317,10 @@ class IsoTask extends SocketWrapper {
   Future<void> handleFile(final int _i) async {
     final fileData = filesSearche[_i];
     final file = File(fileData.path);
-    final data = await file.readAsBytes();
+    List<int> data;
+    try {
+      data = await file.readAsBytes();
+    } catch (e) {}
     OneFileData fileDataNew;
     // проверка на совпадения сигнатур
     if (signatureBegining(data, signatureDoc)) {
@@ -438,12 +445,13 @@ class IsoTask extends SocketWrapper {
                 await listFilesGet(iArchDepth + 1, pathToArch + relPath)(
                     Directory(arch.pathOut), '');
                 await Directory(arch.pathOut).delete(recursive: true);
-                // TODO: удалить вскрытый архив
               } else {
-                // TODO: обработка ошибки
-                listOfErrors.add(CErrorOnLine(arch.pathIn, arch.pathOut,
-                    [ErrorOnLine(KncError.arch, 0, arch.toWrapperMsg())]));
-                errors = listOfErrors.length;
+                errorsOut.writeln(
+                    '!Archive unzip ${arch.pathIn} => ${arch.pathOut}');
+                errorsOut.writeln(arch);
+                // listOfErrors.add(CErrorOnLine(arch.pathIn, arch.pathOut,
+                //     [ErrorOnLine(KncError.arch, 0, arch.toWrapperMsg())]));
+                // errors = listOfErrors.length;
               }
             } else {
               // отбрасываем большой архив или бОльшую глубину вложенности
@@ -494,19 +502,26 @@ class IsoTask extends SocketWrapper {
               ..writeCharCode(unicodeBomCharacterRune),
         super((msg) => sets.sendPort.send([sets.id, msg])) {
     print('$this created');
+
+    /// Обрабатываем все сообщения через Wrapper
     receivePort.listen((final msg) {
       if (msg is String) {
-        recv(msg);
-        return;
+        if (recv(msg)) {
+          return;
+        }
       }
       print('$this recieved unknown msg {$msg}');
     });
 
+    /// Отвечаем на все запросы на получение заметок файла, где аругментом
+    /// указан путь к рабочей копии файла, кодируем их в [json]
     waitMsgAll(wwwFileNotes).listen((msg) {
       send(msg.i,
           jsonEncode(filesSearche.firstWhere((e) => e.path == msg.s).notes));
     });
 
+    /// Отвечаем на все запросы получения списка файлов задачи, кодируем их в
+    /// [json]
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
       send(
           msg.i,
@@ -514,6 +529,13 @@ class IsoTask extends SocketWrapper {
               filesSearche.map((e) => e.toJson()).toList(growable: false)));
     });
 
+    /// Заполняем json объект состояния
+    stateMap['id'] = sets.id;
+    stateMap['dir'] = sets.dir.path;
+    File(p.join(sets.dir.path, 'settings.json'))
+        .writeAsString(jsonEncode(settings));
+
+    /// отправляем порт для связи с запущенным изолятом
     sets.sendPort.send([sets.id, receivePort.sendPort]);
   }
   static IsoTask _instance;

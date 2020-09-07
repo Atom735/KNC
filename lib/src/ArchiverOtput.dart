@@ -29,6 +29,9 @@ class ArchiverOutput {
     }
   }
 
+  @override
+  String toString() => '$resultString\n=> STDOUT\n$stdOut\n=> STDERR\n$stdErr';
+
   factory ArchiverOutput.fromWrapperMsg(final String msg) {
     final i0 = msg.indexOf(msgRecordSeparator);
     final i1 = msg.indexOf(msgRecordSeparator, i0 + msgRecordSeparator.length);
