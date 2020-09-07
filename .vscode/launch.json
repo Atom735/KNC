@@ -10,6 +10,13 @@
             "request": "launch",
             "type": "dart",
             // "preLaunchTask": "dart2js all dev"
+        },
+        {
+            "name": "Dart Webdev Builder",
+            "program": "bin/builder.dart",
+            "request": "launch",
+            "type": "dart",
+            // "preLaunchTask": "dart2js all dev"
         }
     ]
 }
