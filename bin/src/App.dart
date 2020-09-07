@@ -22,7 +22,6 @@ class App {
   /// Точка входа для приложения
   Future<void> run() async {
     await Future.wait([User.load(), Conv.init()]);
-    await Task.searchClosed();
 
     receivePort.listen((msg) {
       if (msg is List) {
@@ -43,6 +42,7 @@ class App {
     }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
 
     await Server.init();
+    await Task.searchClosed();
   }
 
   /// Отправка всем подключенным клиентам
