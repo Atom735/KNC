@@ -11,6 +11,9 @@ class Server {
   /// Собсна сам сервер
   final HttpServer server;
 
+  final mimeResolver = MimeTypeResolver()
+    ..addExtension('map', 'application/json');
+
   final dirs = <Directory>[
     Directory('build').absolute,
     Directory('tasks').absolute,
@@ -28,6 +31,7 @@ class Server {
   void serveFile(HttpRequest request, HttpResponse response, File file) {
     if (file != null) {
       if (fileMapCrc[file] != null &&
+          request.headers.value(HttpHeaders.ifNoneMatchHeader) != null &&
           fileMapCrc[file] ==
               int.tryParse(request.headers.value(HttpHeaders.ifNoneMatchHeader),
                   radix: 16)) {
@@ -45,8 +49,9 @@ class Server {
         /// Файл закеширован
         response
           ..statusCode = HttpStatus.ok
-          ..headers
-              .add(HttpHeaders.contentTypeHeader, lookupMimeType(file.path))
+          ..headers.contentType = mimeResolver.lookup(file.path) != null
+              ? ContentType.parse(mimeResolver.lookup(file.path))
+              : ContentType.binary
           ..headers
               .add(HttpHeaders.etagHeader, fileMapCrc[file].toRadixString(16))
           ..add(fileMapCache[file])
