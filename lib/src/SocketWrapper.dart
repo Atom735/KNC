@@ -53,11 +53,15 @@ class SocketWrapper {
         final msg = msgRaw.substring(i0 + msgIdEnd.length);
         if (_listOfRequest[id] != null) {
           _listOfRequest[id].complete(msg);
+          b = true;
         }
         if (_listOfSubscribers[id] != null) {
           _listOfSubscribers[id].add(msg);
+          b = true;
         }
-        return recv(msg, id);
+        if (!b) {
+          return recv(msg, id);
+        }
       }
     }
     _listOfResponses.forEach((key, value) {
