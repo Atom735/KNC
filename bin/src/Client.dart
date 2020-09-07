@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:path/path.dart' as p;
 import 'package:knc/knc.dart';
@@ -24,7 +25,9 @@ class Client extends SocketWrapper {
 
   @override
   void send(final int id, final String msg) {
-    print('$this: send ($id) => $msg');
+    // todo last infinity wait
+
+    print('$this: send ($id) => ${msg.substring(0, min(msg.length, 60))}');
     super.send(id, msg);
   }
 
