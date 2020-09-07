@@ -165,7 +165,7 @@ class TaskFiles {
             ..append(document.createElement('span')
               ..attributes['tabindex'] = '0'
               ..classes.add('tbl-well')
-              ..innerText = _i.well)
+              ..innerText = c.well)
             ..append(document.createElement('span')
               ..attributes['tabindex'] = '0'
               ..classes.add('tbl-c-name')
@@ -192,7 +192,7 @@ class TaskFiles {
               ..append(document.createElement('span')
                 ..attributes['tabindex'] = '0'
                 ..classes.add('tbl-well')
-                ..innerText = _i.well)
+                ..innerText = c.well)
               ..append(document.createElement('span')
                 ..attributes['tabindex'] = '0'
                 ..classes.add('tbl-c-name')
