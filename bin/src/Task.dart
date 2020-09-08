@@ -105,6 +105,12 @@ class Task extends SocketWrapper {
       /// Если хватает всех данных для создания экземпляра
       final task = Task(state['id'], settings, null, null, _dir, closed: true);
       task.map.addAll(state);
+      if ((task.map['raport'] != null) &&
+          !(task.map['raport'] as String).startsWith('/raport/')) {
+        final xmlUrl = '/raport/${passwordEncode(task.map['raport'])}';
+        Server().fileMap[xmlUrl] = File(task.map['raport']);
+        task.map['raport'] = xmlUrl;
+      }
       return task;
     }
     return null;
