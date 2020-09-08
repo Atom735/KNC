@@ -13,7 +13,7 @@ import 'Server.dart';
 
 class Task extends SocketWrapper {
   /// Уникальный номер задачи
-  final int id;
+  final String id;
 
   /// Портя для связи с изолятом задачи
   final SendPort sendPort;
@@ -28,10 +28,10 @@ class Task extends SocketWrapper {
   final Directory dir;
 
   /// Список всех выполняемых задач
-  static final list = <int, Task>{};
+  static final list = <String, Task>{};
 
   /// Список всех закрытых задач
-  static final listClosed = <int, Task>{};
+  static final listClosed = <String, Task>{};
 
   /// Папка со всеми задачами
   static final dirTasks = Directory('tasks').absolute;
@@ -114,13 +114,12 @@ class Task extends SocketWrapper {
   Task(this.id, this.settings, final SendPort _sendPort, this.isolate, this.dir,
       {bool closed = false})
       : sendPort = _sendPort,
-        map = {'id': id, 'dir': p.basename(dir.path), 'name': settings.name},
+        map = {'id': id, 'name': settings.name},
         super((msg) => _sendPort.send(msg)) {
     if (closed) {
       print('$this created [CLOSED TYPE]');
       listClosed[id] = this;
       map['closed'] = true;
-      App.uidTaskCounter = max(App.uidTaskCounter, id);
     } else {
       print('$this created');
       list[id] = this;

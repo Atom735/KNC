@@ -13,8 +13,8 @@ import 'Task.dart';
 
 /// Данные задачи передаваемые сервером изоляту при запуске
 class TaskSpawnSets {
-  /// Уникальный номер задачи
-  final int id;
+  /// Уникальный номер задачи (Название папки)
+  final String id;
 
   /// Портя для связи с сервером
   final SendPort sendPort;
@@ -33,9 +33,8 @@ class TaskSpawnSets {
 
   /// Запускает новую задачу с указанными настройками
   static Future<void> spawn({TaskSettings settings, Directory dir}) async {
-    App.uidTaskCounter++;
-    final _id = App.uidTaskCounter;
     dir ??= await Task.dirTasks.createTemp();
+    final _id = p.basename(dir.path);
     final fSets = File(p.join(dir.path, 'settings.json'));
     if (await fSets.exists()) {
       settings ??=

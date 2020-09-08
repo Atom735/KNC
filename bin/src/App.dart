@@ -14,10 +14,7 @@ class App {
   final receivePort = ReceivePort();
 
   /// Комплитеры для завершения спавна задачи
-  final completers = <int, Completer<SendPort>>{};
-
-  /// Уникальный айди для задачи
-  static var uidTaskCounter = 0;
+  final completers = <String, Completer<SendPort>>{};
 
   /// Точка входа для приложения
   Future<void> run() async {
@@ -26,10 +23,10 @@ class App {
 
     receivePort.listen((msg) {
       if (msg is List) {
-        if (msg.length == 2 && msg[0] is int && msg[1] is SendPort) {
+        if (msg.length == 2 && msg[0] is String && msg[1] is SendPort) {
           completers[msg[0]].complete(msg[1]);
         }
-        if (msg.length == 2 && msg[0] is int && msg[1] is String) {
+        if (msg.length == 2 && msg[0] is String && msg[1] is String) {
           if (completers[msg[0]] != null) {
             completers[msg[0]].future.then((value) {
               Task.list[msg[0]].recv(msg[1]);

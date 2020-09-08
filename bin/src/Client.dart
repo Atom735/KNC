@@ -25,9 +25,7 @@ class Client extends SocketWrapper {
 
   @override
   void send(final int id, final String msg) {
-    // todo last infinity wait
-
-    print('$this: send ($id) => ${msg.substring(0, min(msg.length, 60))}');
+    print('$this: send ($id) => ${msg.substring(0, min(msg.length, 300))}');
     super.send(id, msg);
   }
 
@@ -81,7 +79,7 @@ class Client extends SocketWrapper {
     /// Получение заметок файла `task.id``file.path`
     waitMsgAll(wwwFileNotes).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);
-      Task.list[int.parse(msg.s.substring(0, i0))]
+      Task.list[msg.s.substring(0, i0)]
           .requestOnce(
               '$wwwFileNotes${msg.s.substring(i0 + msgRecordSeparator.length)}')
           .then((v) => send(msg.i, v));
@@ -90,10 +88,9 @@ class Client extends SocketWrapper {
     /// Получение списка файлов `task.id`
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
       final _id = Task.list.values
-          .firstWhere((e) => msg.s == p.basename(e.dir.path),
-              orElse: () => Task.listClosed.values.firstWhere(
-                  (e) => msg.s == p.basename(e.dir.path),
-                  orElse: () => null))
+          .firstWhere((e) => msg.s == e.id,
+              orElse: () => Task.listClosed.values
+                  .firstWhere((e) => msg.s == e.id, orElse: () => null))
           ?.id;
       if (_id == null) {
         send(msg.i, '');

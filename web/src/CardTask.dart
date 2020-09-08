@@ -10,7 +10,7 @@ import 'TaskFiles.dart';
 import 'misc.dart';
 
 class CardTask {
-  final int uid;
+  final String id;
   final Element eRoot;
   final Element eCard;
   final Element eName;
@@ -106,7 +106,7 @@ class CardTask {
       return;
     }
     _sName = i;
-    eName.innerText = '[$uid] $_sName' + (_bClosed ? ' (Не запущена)' : '');
+    eName.innerText = '[$id] $_sName' + (_bClosed ? ' (Не запущена)' : '');
   }
 
   /// Является ли задача "Мёртвой", т.е. не запущенной
@@ -116,7 +116,7 @@ class CardTask {
       return;
     }
     _bClosed = i;
-    eName.innerText = '[$uid] $_sName' + (_bClosed ? ' (Не запущена)' : '');
+    eName.innerText = '[$id] $_sName' + (_bClosed ? ' (Не запущена)' : '');
     eBtnRestart.hidden = !_bClosed;
     _updateState();
   }
@@ -251,7 +251,7 @@ class CardTask {
     dir = item['dir'];
   }
 
-  CardTask._new(final Element root, this.uid)
+  CardTask._new(final Element root, this.id)
       : eRoot = root,
         eName = root.querySelector('.mdc-card__media-content>div>h2'),
         eState = root.querySelector('.mdc-card__media-content>div>h3'),
@@ -278,30 +278,30 @@ class CardTask {
         ?.transform = 'scale(${eCard.offsetWidth / 48})');
 
     eBtnErrors.onClick.listen((_) {
-      window.history.pushState('data', 'title', '/app/task/$_dir/files/e');
-      TaskFiles().open(_dir, 'e');
+      window.history.pushState('data', 'title', '/app/task/$id/files/e');
+      TaskFiles().open(id, 'e');
     });
     eBtnWarnings.onClick.listen((_) {
-      window.history.pushState('data', 'title', '/app/task/$_dir/files/w');
-      TaskFiles().open(_dir, 'w');
+      window.history.pushState('data', 'title', '/app/task/$id/files/w');
+      TaskFiles().open(id, 'w');
     });
     eBtnFiles.onClick.listen((_) {
-      window.history.pushState('data', 'title', '/app/task/$_dir/files');
-      TaskFiles().open(_dir);
+      window.history.pushState('data', 'title', '/app/task/$id/files');
+      TaskFiles().open(id);
     });
     eBtnRestart.onClick.listen((_) {
-      requestOnce(wwwTaskRestart + uid.toString()).then((msg) {
+      requestOnce(wwwTaskRestart + id).then((msg) {
         // TODO: ответ на перезапуск задачи
       });
     });
   }
 
-  factory CardTask(final int uid) {
+  factory CardTask(final String id) {
     final Element imp = document.importNode(
         CardTaskTemplate().eTemp.content.children.first, true);
     CardTaskTemplate().eTemp.parent.append(imp);
 
-    return CardTask._new(imp, uid);
+    return CardTask._new(imp, id);
   }
 }
 
@@ -309,7 +309,7 @@ class CardTaskTemplate {
   /// Шаблон карточки задачи
   final TemplateElement eTemp;
 
-  final list = <int, CardTask>{};
+  final list = <String, CardTask>{};
 
   /// Запрос на обновление состояния списка всех доступных задач
   void updateTasks() {
