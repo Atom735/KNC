@@ -34,6 +34,9 @@ const wwwUserSignin = 'signin;';
 /// Отправка данных для регистрации
 const wwwUserRegistration = 'registrtion;';
 
+/// Запрос на восстановление "мёртвой" задачи
+const wwwTaskRestart = 'taskrestart;';
+
 const msgDoc2x = 'doc2x;';
 const msgZip = 'zip;';
 const msgUnzip = 'unzip;';

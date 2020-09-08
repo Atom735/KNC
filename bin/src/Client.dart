@@ -63,7 +63,11 @@ class Client extends SocketWrapper {
                   !_id.contains(e.id) &&
                   (e.settings.user == user.mail ||
                       (e.settings.users.contains(user.mail))))
-              .toList(growable: false)));
+              .toList()
+                ..addAll(Task.listClosed.values.where((e) =>
+                    !_id.contains(e.id) &&
+                    (e.settings.user == user.mail ||
+                        (e.settings.users.contains(user.mail)))))));
     });
 
     /// Запуск новой задачи `task.settings`
@@ -87,14 +91,22 @@ class Client extends SocketWrapper {
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
       final _id = Task.list.values
           .firstWhere((e) => msg.s == p.basename(e.dir.path),
-              orElse: () => null)
+              orElse: () => Task.listClosed.values.firstWhere(
+                  (e) => msg.s == p.basename(e.dir.path),
+                  orElse: () => null))
           ?.id;
-      if (_id == null || Task.list[_id] == null) {
+      if (_id == null) {
         send(msg.i, '');
-      } else {
+      } else if (Task.list[_id] != null) {
         Task.list[_id]
             .requestOnce('$wwwTaskGetFiles')
             .then((v) => send(msg.i, v));
+      } else if (Task.listClosed[_id] != null) {
+        Task.listClosed[_id]
+            .getFilesData()
+            .then((v) => send(msg.i, jsonEncode(v)));
+      } else {
+        send(msg.i, '');
       }
     });
 

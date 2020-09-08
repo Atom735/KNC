@@ -20,7 +20,8 @@ class TaskFiles {
     }
   }
 
-  Future<bool> open(final String task, [final String filter]) async {
+  Future<bool> open(final String task, [String filter]) async {
+    filter ??= '';
     print(filter);
     final _msg = await requestOnce('$wwwTaskGetFiles$task');
     if ((e != null && !e.classes.contains('task-$task')) ||
@@ -101,14 +102,21 @@ class TaskFiles {
       for (var i = 0; i < _fL; i++) {
         final _i = f[i];
         if (filter != null &&
-                (filter == 'errors' &&
+            ((filter.contains('e') &&
+                    !filter.contains('w') &&
                     (_i.notes == null ||
                         _i.notes.isEmpty ||
                         _i.notesError == 0)) ||
-            (filter == 'warnings' &&
-                (_i.notes == null ||
-                    _i.notes.isEmpty ||
-                    (_i.notesWarnings == 0 && _i.notesError == 0)))) {
+                (filter.contains('w') &&
+                    !filter.contains('e') &&
+                    (_i.notes == null ||
+                        _i.notes.isEmpty ||
+                        _i.notesWarnings == 0)) ||
+                (filter.contains('e') &&
+                    filter.contains('w') &&
+                    (_i.notes == null ||
+                        _i.notes.isEmpty ||
+                        (_i.notesError == 0 && _i.notesWarnings == 0))))) {
           continue;
         }
         final eRow = document.createElement('div')

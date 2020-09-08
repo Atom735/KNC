@@ -20,23 +20,26 @@ class CardTask {
   final ButtonElement eBtnWarnings;
   final ButtonElement eBtnFiles;
   final ButtonElement eBtnRaport;
+  final ButtonElement eBtnRestart;
   final Element eErrors;
   final Element eWarnings;
   final Element eFiles;
   final MDCLinearProgress eLinearProgress;
 
+  /// Загрузка шаблона и инициализация модуля
   static Future<void> init() async {
     document.body.querySelector('main div.mdc-layout-grid__inner').appendHtml(
         await HttpRequest.getString('/src/CardTask.html'),
         validator: nodeValidator);
   }
 
+  /// Обновление состояния задачи в визуальном представлении
   void _updateState() {
     final s = NTaskState.values[_iState];
     switch (s) {
       case NTaskState.initialization:
         eState
-          ..innerText = 'Запуск задачи' + (_bPause ? '(преостановлено)' : '')
+          ..innerText = 'Запуск задачи'
           ..classes.clear()
           ..classes.addAll(['task-state', 'init']);
         eBgIcon.innerText = 'build_circle';
@@ -44,8 +47,7 @@ class CardTask {
         break;
       case NTaskState.searchFiles:
         eState
-          ..innerText = 'Поиск и подсчёт файлов для обработки' +
-              (_bPause ? '(преостановлено)' : '')
+          ..innerText = 'Поиск и подсчёт файлов для обработки'
           ..classes.clear()
           ..classes.addAll(['task-state', 'search']);
         eBgIcon.innerText = 'track_changes';
@@ -54,7 +56,7 @@ class CardTask {
         break;
       case NTaskState.workFiles:
         eState
-          ..innerText = 'Обработка файлов' + (_bPause ? '(преостановлено)' : '')
+          ..innerText = 'Обработка файлов'
           ..classes.clear()
           ..classes.addAll(['task-state', 'work']);
         eBgIcon.innerText = 'arrow_circle_down';
@@ -63,15 +65,14 @@ class CardTask {
         break;
       case NTaskState.generateTable:
         eState
-          ..innerText =
-              'Генерация таблицы' + (_bPause ? '(преостановлено)' : '')
+          ..innerText = 'Генерация таблицы'
           ..classes.clear()
           ..classes.addAll(['task-state', 'gen-tbl']);
         eBgIcon.innerText = 'motion_photos_on';
         break;
       case NTaskState.completed:
         eState
-          ..innerText = 'Завершена' + (_bPause ? '(преостановлено)' : '')
+          ..innerText = 'Завершена'
           ..classes.clear()
           ..classes.addAll(['task-state', 'completed']);
         eBgIcon.innerText = 'stars';
@@ -79,26 +80,25 @@ class CardTask {
         break;
       case NTaskState.reworkErrors:
         eState
-          ..innerText =
-              'Работа над ошибками' + (_bPause ? '(преостановлено)' : '')
+          ..innerText = 'Работа над ошибками'
           ..classes.clear()
           ..classes.addAll(['task-state', 'rework']);
         eBgIcon.innerText = 'swap_vertical_circle';
         break;
       case NTaskState.waitForCorrectErrors:
         eState
-          ..innerText = 'Ожидание исправления ошибок' +
-              (_bPause ? '(преостановлено)' : '')
+          ..innerText = 'Ожидание исправления ошибок'
           ..classes.clear()
           ..classes.addAll(['task-state', 'wait-errors']);
         eBgIcon.innerText = 'error';
         break;
     }
-    if (_bPause) {
+    if (_bClosed) {
       eBgIcon.innerText = 'pause_circle_outline';
     }
   }
 
+  /// Название задачи
   String _sName;
   String get sName => _sName;
   set sName(final String i) {
@@ -106,18 +106,22 @@ class CardTask {
       return;
     }
     _sName = i;
-    eName.innerText = '[$uid] $_sName';
+    eName.innerText = '[$uid] $_sName' + (_bClosed ? ' (Не запущена)' : '');
   }
 
-  bool _bPause = true;
-  set bPause(final bool i) {
-    if (i == null || _bPause == i) {
+  /// Является ли задача "Мёртвой", т.е. не запущенной
+  bool _bClosed = false;
+  set bClosed(final bool i) {
+    if (i == null || _bClosed == i) {
       return;
     }
-    _bPause = i;
+    _bClosed = i;
+    eName.innerText = '[$uid] $_sName' + (_bClosed ? ' (Не запущена)' : '');
+    eBtnRestart.hidden = !_bClosed;
     _updateState();
   }
 
+  /// Состояние задачи
   int _iState = -1;
   set iState(final int i) {
     if (i == null || _iState == i) {
@@ -127,6 +131,7 @@ class CardTask {
     _updateState();
   }
 
+  /// Количество обработанных файлов с ошибками
   int _iErrors = -1;
   set iErrors(final int i) {
     if (i == null || _iErrors == i) {
@@ -148,6 +153,7 @@ class CardTask {
     }
   }
 
+  /// Количество обработанных файлов с предупреждениями
   int _iWarnings = -1;
   set iWarnings(final int i) {
     if (i == null || _iWarnings == i) {
@@ -169,6 +175,7 @@ class CardTask {
     }
   }
 
+  /// Количество найденных файлов
   int _iFiles = -1;
   int get iFiles => _iFiles;
   set iFiles(final int i) {
@@ -191,6 +198,7 @@ class CardTask {
     }
   }
 
+  /// Количество обработанных файлов
   int _iWorked = -1;
   set iWorked(final int i) {
     if (i == null || _iWorked == i) {
@@ -200,6 +208,7 @@ class CardTask {
     eLinearProgress.progress = _iWorked.toDouble() / _iFiles.toDouble();
   }
 
+  /// Ссылка на отчёт задачи
   String _sRaport;
   StreamSubscription _ssRaport;
   set sRaport(final String i) {
@@ -221,6 +230,7 @@ class CardTask {
     }
   }
 
+  /// Название папки задачи
   String _dir;
   set dir(final String i) {
     if (i == null || _dir == i) {
@@ -236,7 +246,7 @@ class CardTask {
     iWarnings = item['warnings'];
     iFiles = item['files'];
     iWorked = item['worked'];
-    bPause = item['pause'];
+    bClosed = item['closed'];
     sRaport = item['raport'];
     dir = item['dir'];
   }
@@ -251,6 +261,8 @@ class CardTask {
             root.querySelector('.mdc-card__actions button.my-warnings'),
         eBtnFiles = root.querySelector('.mdc-card__actions button.my-files'),
         eBtnRaport = root.querySelector('.mdc-card__actions button.my-raport'),
+        eBtnRestart =
+            root.querySelector('.mdc-card__actions button.my-restart'),
         eErrors = root.querySelector('.mdc-card__actions button.my-errors>i'),
         eWarnings =
             root.querySelector('.mdc-card__actions button.my-warnings>i'),
@@ -266,17 +278,21 @@ class CardTask {
         ?.transform = 'scale(${eCard.offsetWidth / 48})');
 
     eBtnErrors.onClick.listen((_) {
-      window.history.pushState('data', 'title', '/app/task/$_dir/files/errors');
-      TaskFiles().open(_dir, 'errors');
+      window.history.pushState('data', 'title', '/app/task/$_dir/files/e');
+      TaskFiles().open(_dir, 'e');
     });
     eBtnWarnings.onClick.listen((_) {
-      window.history
-          .pushState('data', 'title', '/app/task/$_dir/files/warnings');
-      TaskFiles().open(_dir, 'warnings');
+      window.history.pushState('data', 'title', '/app/task/$_dir/files/w');
+      TaskFiles().open(_dir, 'w');
     });
     eBtnFiles.onClick.listen((_) {
       window.history.pushState('data', 'title', '/app/task/$_dir/files');
       TaskFiles().open(_dir);
+    });
+    eBtnRestart.onClick.listen((_) {
+      requestOnce(wwwTaskRestart + uid.toString()).then((msg) {
+        // TODO: ответ на перезапуск задачи
+      });
     });
   }
 
@@ -290,10 +306,12 @@ class CardTask {
 }
 
 class CardTaskTemplate {
+  /// Шаблон карточки задачи
   final TemplateElement eTemp;
 
   final list = <int, CardTask>{};
 
+  /// Запрос на обновление состояния списка всех доступных задач
   void updateTasks() {
     requestOnce(
             wwwTaskViewUpdate + jsonEncode(list.keys.toList(growable: false)))
@@ -310,12 +328,17 @@ class CardTaskTemplate {
   CardTaskTemplate._init(final TemplateElement temp) : eTemp = temp {
     print('$runtimeType created: $hashCode');
     _instance = this;
+
+    /// Запрос на обновление состояния списка всех доступных задач
     updateTasks();
 
+    /// Реагируем на сообщения о новых задачах
     waitMsgAll(wwwTaskNew).listen((msg) {
       final item = jsonDecode(msg.s);
       list[item['id']] = CardTask(item['id'])..byJson(item);
     });
+
+    /// Реагируем на сообщения об обновлении состояния задачи
     waitMsgAll(wwwTaskUpdates).listen((msg) {
       final item = json.decode(msg.s);
       list[item['id']]?.byJson(item);

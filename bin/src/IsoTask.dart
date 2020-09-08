@@ -291,13 +291,16 @@ class IsoTask extends SocketWrapper {
     _update('raport', xlsPath);
   }
 
+  int _filesSearchId = 0;
+
   /// Обработка файлов во время поиска всех файлов
   Future<void> handleFileSearch(final File file, final String origin) async {
     final ext = p.extension(file.path).toLowerCase();
     if (settings.ext_files.contains(ext)) {
       /// Если файл необходимого расширения
-      final i = files;
-      files++;
+      final i = _filesSearchId;
+      _filesSearchId++;
+      files = _filesSearchId;
       final ph = p.join(dirTemp.path, i.toRadixString(36).padLeft(8, '0'));
       filesSearche.add(OneFileData(
           ph, origin, NOneFileDataType.unknown, await file.length()));
