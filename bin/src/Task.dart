@@ -42,6 +42,7 @@ class Task extends SocketWrapper {
   /// Закешированные данные о файлах, только для закрытой задачи
   List<OneFileData> filesDataCached;
 
+  /// Получение данных о файлах закрытой задачи
   Future<List<OneFileData>> getFilesData() async {
     if (filesDataCached != null) {
       return filesDataCached;
