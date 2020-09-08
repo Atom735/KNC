@@ -3,7 +3,9 @@ import 'package:knc/knc.dart';
 import 'IsoTask.dart';
 
 Future<OneFileData> parserFileLas(final IsoTask kncTask,
-    final OneFileData fileData, final String data, final String encode) async {
+    final OneFileData fileData, final String data, final String encode,
+    {final Map<String, String> mapWells,
+    final Map<String, String> mapCurves}) async {
   final _dataLength = data.length;
   final _notes = <OneFileLineNote>[];
 
@@ -653,6 +655,26 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
   }
   while (iSymbol < _dataLength && !rBeginOfSection()) {}
 
+  if (mapWells != null) {
+    if (mapWells[_w_well] != null) {
+      _w_well = mapWells[_w_well];
+      if (_w_well == '.ignore') {
+        _w_well = _w_well_desc;
+      }
+    }
+    if (mapWells[_w_well] != null) {
+      _w_well = mapWells[_w_well];
+    }
+  }
+
+  if (mapCurves != null) {
+    final _l = _c_mnems.length;
+    for (var i = 0; i < _l; i++) {
+      if (mapCurves[_c_mnems[i]] != null) {
+        _c_mnems[i] = mapCurves[_c_mnems[i]];
+      }
+    }
+  }
   final well = _w_well;
 
   final curves = List<OneFilesDataCurve>.generate(

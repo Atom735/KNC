@@ -189,6 +189,8 @@ class IsoTask extends SocketWrapper {
     /// Список всех названий скважин
     final _wells = <String>[];
 
+    final _addedFiles = <OneFileData>[];
+
     /// Заполняем списки названий скважин и кривых
     final _k = filesSearche.length;
     for (var k = 0; k < _k; k++) {
@@ -203,6 +205,12 @@ class IsoTask extends SocketWrapper {
         for (var i = 0; i < _length; i++) {
           final _name = e.curves[i].name;
           final _well = e.curves[i].well;
+          if (_name == '.ignore') {
+            continue;
+          }
+          if (_well == '.ignore') {
+            continue;
+          }
           if (!_methods.contains(_name)) {
             _methods.add(_name);
           }
@@ -224,9 +232,25 @@ class IsoTask extends SocketWrapper {
         continue;
       }
       final _length = e.curves.length;
+
       for (var i = 0; i < _length; i++) {
-        final _name = e.curves[i].name;
-        final _well = e.curves[i].well;
+        final _curve = e.curves[i];
+        final _name = _curve.name;
+        final _well = _curve.well;
+
+        /// Пропускаем игнорируемые кривые
+        if (_name == '.ignore') {
+          continue;
+        }
+        if (_well == '.ignore') {
+          continue;
+        }
+
+        /// Проверяем есть ли совпадения с уже добавленными в таблицу данными
+        if (_addedFiles.isNotEmpty &&
+            _addedFiles.any((e) => e.curves.any((c) => c == _curve))) {
+          continue;
+        }
 
         /// Подбираем номер колонки в зависимости от названия кривой
         final _i = _methods.indexOf(_name) * 2 + 2;
@@ -244,7 +268,6 @@ class IsoTask extends SocketWrapper {
         _row[_i + 1] = e.curves[i].stop;
       }
     }
-    ;
 
     final _length = _methods.length;
     final _sbMethods = StringBuffer();

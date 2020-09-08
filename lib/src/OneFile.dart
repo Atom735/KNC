@@ -31,6 +31,15 @@ class OneFilesDataCurve {
         data = null;
   Map<String, Object> toJson() =>
       {'well': well, 'name': name, 'strt': strt, 'stop': stop, 'step': step};
+
+  @override
+  bool operator ==(Object _r) =>
+      (_r is OneFilesDataCurve) &&
+      well == _r.well &&
+      name == _r.name &&
+      strt == _r.strt &&
+      stop == _r.stop &&
+      step == _r.step;
 }
 
 class OneFileLineNote {
