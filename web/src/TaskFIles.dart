@@ -44,6 +44,9 @@ class TaskFiles {
     fileOpenQ = null;
     print(filter);
     final _msg = await requestOnce('$wwwTaskGetFiles$task');
+    if (_msg.isEmpty) {
+      return false;
+    }
     if ((e != null && !e.classes.contains('task-$task')) ||
         (lastTask != task) ||
         (lastFilter != filter)) {
@@ -109,9 +112,6 @@ class TaskFiles {
     } else {
       e.classes.add('a-opening');
       e.hidden = false;
-    }
-    if (_msg.isEmpty) {
-      return false;
     }
     closeAll('task-files');
     final f = (jsonDecode(_msg) as List)
