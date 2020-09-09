@@ -37,6 +37,9 @@ const wwwUserRegistration = 'registrtion;';
 /// Запрос на восстановление "мёртвой" задачи
 const wwwTaskRestart = 'taskrestart;';
 
+/// Получение OneFileData файла находящегося по пути `path`
+const wwwGetOneFileData = 'getonefiledata;';
+
 const msgDoc2x = 'doc2x;';
 const msgZip = 'zip;';
 const msgUnzip = 'unzip;';

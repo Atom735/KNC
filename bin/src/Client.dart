@@ -107,6 +107,42 @@ class Client extends SocketWrapper {
       }
     });
 
+    /// Получение списка файлов `file.path`
+    waitMsgAll(wwwGetOneFileData).listen((msg) {
+      /// Путь к файлу, данные которого необходимо получить
+      var _path = msg.s;
+      if (msg.s.startsWith('tasks')) {
+        _path = p.join(Task.dirTasks.path, msg.s.substring(6));
+      }
+      final _fileJson = File(_path + '.json');
+      _fileJson.exists().then((_exist) {
+        if (_exist) {
+          _fileJson.readAsString().then((data) => send(msg.i, data));
+        } else {
+          /// Если файла с данными не нашли
+          final _id =
+              p.split(_path.substring(Task.dirTasks.path.length + 1)).first;
+          if (Task.list[_id] != null) {
+            Task.list[_id]
+                .requestOnce('$wwwGetOneFileData$_path')
+                .then((v) => send(msg.i, v));
+          } else if (Task.listClosed[_id] != null) {
+            Task.listClosed[_id].getFilesData().then((v) {
+              final _ofd =
+                  v.firstWhere((e) => e.path == _path, orElse: () => null);
+              if (_ofd != null) {
+                send(msg.i, jsonEncode(_ofd.toJsonFull()));
+              } else {
+                send(msg.i, '');
+              }
+            });
+          } else {
+            send(msg.i, '');
+          }
+        }
+      });
+    });
+
     /// Получение данных файла `path``codepage`
     waitMsgAll(wwwGetFileData).listen((msg) {
       final i0 = msg.s.indexOf(msgRecordSeparator);

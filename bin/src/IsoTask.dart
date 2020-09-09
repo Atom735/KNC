@@ -561,10 +561,18 @@ class IsoTask extends SocketWrapper {
     /// Отвечаем на все запросы получения списка файлов задачи, кодируем их в
     /// [json]
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
-      send(
-          msg.i,
-          jsonEncode(
-              filesSearche.map((e) => e.toJson()).toList(growable: false)));
+      send(msg.i, jsonEncode(filesSearche));
+    });
+
+    /// Получение списка файлов `file.path`
+    waitMsgAll(wwwGetOneFileData).listen((msg) {
+      final _ofd =
+          filesSearche.firstWhere((e) => e.path == msg.s, orElse: () => null);
+      if (_ofd != null) {
+        send(msg.i, jsonEncode(_ofd.toJsonFull()));
+      } else {
+        send(msg.i, '');
+      }
     });
 
     /// Заполняем json объект состояния

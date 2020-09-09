@@ -7,6 +7,7 @@ import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'CardTask.dart';
+import 'FileLas.dart';
 import 'misc.dart';
 
 class TaskFiles {
@@ -16,9 +17,19 @@ class TaskFiles {
 
   String fileOpenQ;
 
-  void openFile(final String filePath) {
-    print(filePath + (fileOpenQ != null ? ('?' + fileOpenQ) : ''));
-    fileOpenQ = null;
+  void openFile(final OneFileData file) {
+    print(file.path + (fileOpenQ != null ? ('?' + fileOpenQ) : ''));
+    FileLas().open(file, fileOpenQ).then((_b) {
+      if (_b) {
+        var b = false;
+        final _ps = p.joinAll(
+            p.windows.split(file.path).where((e) => (b = (b || e == 'tasks'))));
+        window.history.pushState('data', 'title', '/app/file/$_ps?$fileOpenQ');
+        uri = Uri.parse(document.baseUri);
+        uriPaths = uri.pathSegments;
+      }
+      fileOpenQ = null;
+    });
   }
 
   void close() {
@@ -101,94 +112,171 @@ class TaskFiles {
     }
     if (_msg.isEmpty) {
       return false;
-    } else {
-      closeAll('task-files');
-      final f = (jsonDecode(_msg) as List)
-          .map((e) => OneFileData.byJson(e))
-          .toList(growable: false);
-      final _fL = f.length; //min(f.length, 100);
+    }
+    closeAll('task-files');
+    final f = (jsonDecode(_msg) as List)
+        .map((e) => OneFileData.byJson(e))
+        .toList(growable: false);
+    final _fL = f.length; //min(f.length, 100);
 
-      for (var i = 0; i < _fL; i++) {
-        final _i = f[i];
-        if (filter != null &&
-            ((filter.contains('e') &&
-                    !filter.contains('w') &&
-                    (_i.notes == null ||
-                        _i.notes.isEmpty ||
-                        _i.notesError == 0)) ||
-                (filter.contains('w') &&
-                    !filter.contains('e') &&
-                    (_i.notes == null ||
-                        _i.notes.isEmpty ||
-                        _i.notesWarnings == 0)) ||
-                (filter.contains('e') &&
-                    filter.contains('w') &&
-                    (_i.notes == null ||
-                        _i.notes.isEmpty ||
-                        (_i.notesError == 0 && _i.notesWarnings == 0))))) {
-          continue;
-        }
-        final eRow = DivElement()
-          ..onClick.listen((event) {
-            if (event.ctrlKey) {
-              openFile(_i.path);
-            }
-          })
-          ..onKeyDown.listen((event) {
-            if (event.keyCode == KeyCode.ENTER) {
-              event.target.dispatchEvent(MouseEvent('click', ctrlKey: true));
-            }
-          })
-          ..classes.add('tbl-row')
-          ..append(SpanElement()
-            ..attributes['tabindex'] = '0'
-            ..classes.add('tbl-index')
-            ..innerText = (i + 1).toString())
-          ..append(SpanElement()
-            ..attributes['tabindex'] = '0'
-            ..classes.add('tbl-name')
-            ..innerText = p.windows.basename(_i.origin))
-          ..append(SpanElement()
-            ..attributes['tabindex'] = '0'
-            ..classes.add('tbl-type')
-            ..innerText =
-                _i.type.toString().substring('NOneFileDataType.'.length))
-          ..append(SpanElement()
-            ..attributes['tabindex'] = '0'
-            ..classes.add('tbl-size')
-            ..innerText = _i.size.toString())
-          ..append(SpanElement()
-            ..attributes['tabindex'] = '0'
-            ..classes.add('tbl-origin')
-            ..innerText = _i.origin)
-          ..append(SpanElement()
-            ..attributes['tabindex'] = '0'
-            ..classes.add('tbl-path')
-            ..innerText = _i.path)
-          ..append(SpanElement()
-            ..attributes['tabindex'] = '0'
-            ..classes.add('tbl-encode')
-            ..innerText = _i.encode)
-          ..append((_i.notes == null || _i.notes.isEmpty)
-              ? (SpanElement()
-                ..attributes['tabindex'] = '0'
-                ..classes.add('tbl-notes'))
-              : (SpanElement()
-                ..attributes['tabindex'] = '0'
-                ..classes.add('tbl-notes')
-                ..append(SpanElement()
-                  ..classes.add('tbl-notes-count')
-                  ..innerText = _i.notes.length.toString())
-                ..append(SpanElement()
-                  ..classes.add('tbl-notes-warn')
-                  ..innerText = _i.notesWarnings.toString())
-                ..append(SpanElement()
-                  ..classes.add('tbl-notes-error')
-                  ..innerText = _i.notesError.toString())));
+    for (var i = 0; i < _fL; i++) {
+      final _i = f[i];
+      if (filter != null &&
+          ((filter.contains('e') &&
+                  !filter.contains('w') &&
+                  (_i.notes == null ||
+                      _i.notes.isEmpty ||
+                      _i.notesError == 0)) ||
+              (filter.contains('w') &&
+                  !filter.contains('e') &&
+                  (_i.notes == null ||
+                      _i.notes.isEmpty ||
+                      _i.notesWarnings == 0)) ||
+              (filter.contains('e') &&
+                  filter.contains('w') &&
+                  (_i.notes == null ||
+                      _i.notes.isEmpty ||
+                      (_i.notesError == 0 && _i.notesWarnings == 0))))) {
+        continue;
+      }
+      final eRow = DivElement()
+        ..onClick.listen((event) {
+          if (event.ctrlKey) {
+            openFile(_i);
+          }
+        })
+        ..onKeyDown.listen((event) {
+          if (event.keyCode == KeyCode.ENTER) {
+            event.target.dispatchEvent(MouseEvent('click', ctrlKey: true));
+          }
+        })
+        ..classes.add('tbl-row')
+        ..append(SpanElement()
+          ..attributes['tabindex'] = '0'
+          ..classes.add('tbl-index')
+          ..innerText = (i + 1).toString())
+        ..append(SpanElement()
+          ..attributes['tabindex'] = '0'
+          ..classes.add('tbl-name')
+          ..innerText = p.windows.basename(_i.origin))
+        ..append(SpanElement()
+          ..attributes['tabindex'] = '0'
+          ..classes.add('tbl-type')
+          ..innerText =
+              _i.type.toString().substring('NOneFileDataType.'.length))
+        ..append(SpanElement()
+          ..attributes['tabindex'] = '0'
+          ..classes.add('tbl-size')
+          ..innerText = _i.size.toString())
+        ..append(SpanElement()
+          ..attributes['tabindex'] = '0'
+          ..classes.add('tbl-origin')
+          ..innerText = _i.origin)
+        ..append(SpanElement()
+          ..attributes['tabindex'] = '0'
+          ..classes.add('tbl-path')
+          ..innerText = _i.path)
+        ..append(SpanElement()
+          ..attributes['tabindex'] = '0'
+          ..classes.add('tbl-encode')
+          ..innerText = _i.encode)
+        ..append((_i.notes == null || _i.notes.isEmpty)
+            ? (SpanElement()
+              ..attributes['tabindex'] = '0'
+              ..classes.add('tbl-notes'))
+            : (SpanElement()
+              ..attributes['tabindex'] = '0'
+              ..classes.add('tbl-notes')
+              ..append(SpanElement()
+                ..classes.add('tbl-notes-count')
+                ..innerText = _i.notes.length.toString())
+              ..append(SpanElement()
+                ..classes.add('tbl-notes-warn')
+                ..innerText = _i.notesWarnings.toString())
+              ..append(SpanElement()
+                ..classes.add('tbl-notes-error')
+                ..innerText = _i.notesError.toString())));
 
-        if (_i.curves != null && _i.curves.isNotEmpty) {
-          final c = _i.curves.first;
-          eRow
+      if (_i.curves != null && _i.curves.isNotEmpty) {
+        final c = _i.curves.first;
+        eRow
+          ..append(SpanElement()
+            ..onClick.listen((event) {
+              if (event.ctrlKey) {
+                fileOpenQ = 'well=${c.well}';
+              }
+            })
+            ..onKeyDown.listen((event) {
+              if (event.keyCode == KeyCode.ENTER) {
+                event.target.dispatchEvent(MouseEvent('click', ctrlKey: true));
+              }
+            })
+            ..attributes['tabindex'] = '0'
+            ..classes.add('tbl-well')
+            ..innerText = c.well)
+          ..append(SpanElement()
+            ..onClick.listen((event) {
+              if (event.ctrlKey) {
+                fileOpenQ = 'well=${c.well}&curve=${c.name}';
+              }
+            })
+            ..onKeyDown.listen((event) {
+              if (event.keyCode == KeyCode.ENTER) {
+                event.target.dispatchEvent(MouseEvent('click', ctrlKey: true));
+              }
+            })
+            ..attributes['tabindex'] = '0'
+            ..classes.add('tbl-c-name')
+            ..innerText = c.name)
+          ..append(SpanElement()
+            ..onClick.listen((event) {
+              if (event.ctrlKey) {
+                fileOpenQ = 'well=${c.well}&curve=${c.name}&point=strt';
+              }
+            })
+            ..onKeyDown.listen((event) {
+              if (event.keyCode == KeyCode.ENTER) {
+                event.target.dispatchEvent(MouseEvent('click', ctrlKey: true));
+              }
+            })
+            ..attributes['tabindex'] = '0'
+            ..classes.add('tbl-c-strt')
+            ..innerText = c.strt)
+          ..append(SpanElement()
+            ..onClick.listen((event) {
+              if (event.ctrlKey) {
+                fileOpenQ = 'well=${c.well}&curve=${c.name}&point=stop';
+              }
+            })
+            ..onKeyDown.listen((event) {
+              if (event.keyCode == KeyCode.ENTER) {
+                event.target.dispatchEvent(MouseEvent('click', ctrlKey: true));
+              }
+            })
+            ..attributes['tabindex'] = '0'
+            ..classes.add('tbl-c-stop')
+            ..innerText = c.stop)
+          ..append(SpanElement()
+            ..attributes['tabindex'] = '0'
+            ..classes.add('tbl-c-step')
+            ..innerText = c.step);
+        e.append(eRow);
+        final _l = _i.curves.length;
+        for (var j = 1; j < _l; j++) {
+          final c = _i.curves[j];
+          e.append(DivElement()
+            ..onClick.listen((event) {
+              if (event.ctrlKey) {
+                openFile(_i);
+              }
+            })
+            ..onKeyDown.listen((event) {
+              if (event.keyCode == KeyCode.ENTER) {
+                event.target.dispatchEvent(MouseEvent('click', ctrlKey: true));
+              }
+            })
+            ..classes.add('tbl-row')
+            ..append(SpanElement()..classes.add('tbl-up'))
             ..append(SpanElement()
               ..onClick.listen((event) {
                 if (event.ctrlKey) {
@@ -207,7 +295,7 @@ class TaskFiles {
             ..append(SpanElement()
               ..onClick.listen((event) {
                 if (event.ctrlKey) {
-                  fileOpenQ = 'well=${c.well};curve=${c.name}';
+                  fileOpenQ = 'well=${c.well}&curve=${c.name}';
                 }
               })
               ..onKeyDown.listen((event) {
@@ -222,7 +310,7 @@ class TaskFiles {
             ..append(SpanElement()
               ..onClick.listen((event) {
                 if (event.ctrlKey) {
-                  fileOpenQ = 'well=${c.well};curve=${c.name};strt';
+                  fileOpenQ = 'well=${c.well}&curve=${c.name}&point=strt';
                 }
               })
               ..onKeyDown.listen((event) {
@@ -237,7 +325,7 @@ class TaskFiles {
             ..append(SpanElement()
               ..onClick.listen((event) {
                 if (event.ctrlKey) {
-                  fileOpenQ = 'well=${c.well};curve=${c.name};stop';
+                  fileOpenQ = 'well=${c.well}&curve=${c.name}&point=stop';
                 }
               })
               ..onKeyDown.listen((event) {
@@ -250,17 +338,9 @@ class TaskFiles {
               ..classes.add('tbl-c-stop')
               ..innerText = c.stop)
             ..append(SpanElement()
-              ..attributes['tabindex'] = '0'
-              ..classes.add('tbl-c-step')
-              ..innerText = c.step);
-          e.append(eRow);
-          final _l = _i.curves.length;
-          for (var j = 1; j < _l; j++) {
-            final c = _i.curves[j];
-            e.append(DivElement()
               ..onClick.listen((event) {
                 if (event.ctrlKey) {
-                  openFile(_i.path);
+                  fileOpenQ = 'well=${c.well}&curve=${c.name}';
                 }
               })
               ..onKeyDown.listen((event) {
@@ -269,89 +349,14 @@ class TaskFiles {
                       .dispatchEvent(MouseEvent('click', ctrlKey: true));
                 }
               })
-              ..classes.add('tbl-row')
-              ..append(SpanElement()..classes.add('tbl-up'))
-              ..append(SpanElement()
-                ..onClick.listen((event) {
-                  if (event.ctrlKey) {
-                    fileOpenQ = 'well=${c.well}';
-                  }
-                })
-                ..onKeyDown.listen((event) {
-                  if (event.keyCode == KeyCode.ENTER) {
-                    event.target
-                        .dispatchEvent(MouseEvent('click', ctrlKey: true));
-                  }
-                })
-                ..attributes['tabindex'] = '0'
-                ..classes.add('tbl-well')
-                ..innerText = c.well)
-              ..append(SpanElement()
-                ..onClick.listen((event) {
-                  if (event.ctrlKey) {
-                    fileOpenQ = 'well=${c.well};curve=${c.name}';
-                  }
-                })
-                ..onKeyDown.listen((event) {
-                  if (event.keyCode == KeyCode.ENTER) {
-                    event.target
-                        .dispatchEvent(MouseEvent('click', ctrlKey: true));
-                  }
-                })
-                ..attributes['tabindex'] = '0'
-                ..classes.add('tbl-c-name')
-                ..innerText = c.name)
-              ..append(SpanElement()
-                ..onClick.listen((event) {
-                  if (event.ctrlKey) {
-                    fileOpenQ = 'well=${c.well};curve=${c.name};strt';
-                  }
-                })
-                ..onKeyDown.listen((event) {
-                  if (event.keyCode == KeyCode.ENTER) {
-                    event.target
-                        .dispatchEvent(MouseEvent('click', ctrlKey: true));
-                  }
-                })
-                ..attributes['tabindex'] = '0'
-                ..classes.add('tbl-c-strt')
-                ..innerText = c.strt)
-              ..append(SpanElement()
-                ..onClick.listen((event) {
-                  if (event.ctrlKey) {
-                    fileOpenQ = 'well=${c.well};curve=${c.name};stop';
-                  }
-                })
-                ..onKeyDown.listen((event) {
-                  if (event.keyCode == KeyCode.ENTER) {
-                    event.target
-                        .dispatchEvent(MouseEvent('click', ctrlKey: true));
-                  }
-                })
-                ..attributes['tabindex'] = '0'
-                ..classes.add('tbl-c-stop')
-                ..innerText = c.stop)
-              ..append(SpanElement()
-                ..onClick.listen((event) {
-                  if (event.ctrlKey) {
-                    fileOpenQ = 'well=${c.well};curve=${c.name}';
-                  }
-                })
-                ..onKeyDown.listen((event) {
-                  if (event.keyCode == KeyCode.ENTER) {
-                    event.target
-                        .dispatchEvent(MouseEvent('click', ctrlKey: true));
-                  }
-                })
-                ..attributes['tabindex'] = '0'
-                ..classes.add('tbl-c-step')
-                ..innerText = c.step));
-          }
+              ..attributes['tabindex'] = '0'
+              ..classes.add('tbl-c-step')
+              ..innerText = c.step));
         }
       }
-      document.body.append(e);
-      return true;
     }
+    document.body.append(e);
+    return true;
   }
 
   TaskFiles._init();

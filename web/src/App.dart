@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:html';
 
+import 'package:path/path.dart' as p;
 import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'DialogLogin.dart';
+import 'FileLas.dart';
 import 'TaskFiles.dart';
 import 'User.dart';
 import 'misc.dart';
@@ -129,6 +131,29 @@ class App extends SocketWrapper {
                 uri.pathSegments.length >= 5 ? uri.pathSegments[4] : null)
             .then((b) {
           if (!b) {
+            window.history.pushState('data', 'title', '/app');
+            uri = Uri.parse(document.baseUri);
+            uriPaths = uri.pathSegments;
+            _open();
+          }
+        });
+      }
+      // TODO: другие действия с задачей
+    }
+    if (uri.pathSegments.length >= 4 &&
+        uri.pathSegments[0] == 'app' &&
+        uri.pathSegments[1] == 'file') {
+      if (uri.pathSegments[2] == 'tasks') {
+        FileLas()
+            .open(
+                OneFileData(
+                    p.joinAll(uri.pathSegments.sublist(2)), null, null, null),
+                uri.query)
+            .then((b) {
+          if (!b) {
+            window.history.pushState('data', 'title', '/app');
+            uri = Uri.parse(document.baseUri);
+            uriPaths = uri.pathSegments;
             _open();
           }
         });

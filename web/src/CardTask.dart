@@ -279,15 +279,27 @@ class CardTask {
 
     eBtnErrors.onClick.listen((_) {
       window.history.pushState('data', 'title', '/app/task/$id/files/e');
-      TaskFiles().open(id, 'e');
+      TaskFiles().open(id, 'e').then((_b) {
+        if (!_b) {
+          window.history.back();
+        }
+      });
     });
     eBtnWarnings.onClick.listen((_) {
       window.history.pushState('data', 'title', '/app/task/$id/files/w');
-      TaskFiles().open(id, 'w');
+      TaskFiles().open(id, 'w').then((_b) {
+        if (!_b) {
+          window.history.back();
+        }
+      });
     });
     eBtnFiles.onClick.listen((_) {
       window.history.pushState('data', 'title', '/app/task/$id/files');
-      TaskFiles().open(id);
+      TaskFiles().open(id).then((_b) {
+        if (!_b) {
+          window.history.back();
+        }
+      });
     });
     eBtnRestart.onClick.listen((_) {
       requestOnce(wwwTaskRestart + id).then((msg) {
