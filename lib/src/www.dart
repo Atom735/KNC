@@ -59,7 +59,7 @@ bool signatureBegining(final List<int> data, final List<int> signature) {
     return false;
   }
   for (var i = 0; i < signature.length; i++) {
-    if (data[i] != signatureDoc[i]) {
+    if (data[i] != signature[i]) {
       return false;
     }
   }
