@@ -11,6 +11,7 @@ import 'src/DialogRegistration.dart';
 import 'src/DialogUser.dart';
 
 void main() async {
+  autoInit();
   await Future.wait([
     App.init(),
     CardAddTask.init(),
@@ -20,7 +21,6 @@ void main() async {
     DialogRegistration.init(),
     DialogUser.init()
   ]);
-  autoInit();
   document.querySelectorAll('.mdc-icon-button').forEach((element) {
     MDCRipple(element).unbounded = true;
   });

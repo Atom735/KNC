@@ -21,9 +21,9 @@ class User {
 
   /// Выход из системы
   static void logout() {
-    _instance = null;
     requestOnce('$wwwUserLogout').then((value) {
       _instance = null;
+      window.localStorage['signin'] = null;
       App().eLoginBtn.innerText = 'login';
       App().eLoginMail.innerText = '@guest';
       CardTaskTemplate().removeAllTasks();

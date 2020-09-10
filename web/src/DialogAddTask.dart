@@ -5,6 +5,7 @@ import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'App.dart';
+import 'User.dart';
 import 'misc.dart';
 
 class DialogAddTask extends MDCDialog {
@@ -12,14 +13,43 @@ class DialogAddTask extends MDCDialog {
   final eLinearProgress =
       MDCLinearProgress(eGetById('my-add-task-dialog-linear-progress'));
   final eTabBar = MDCTabBar(eGetById('my-add-task-dialog-tab-bar'));
+  final ButtonElement ePublicSwitch = eGetById('my-atd-public-switch-1');
+
   final Set<MDCTab> eTabs = {};
 
   final eSSName = MDCTextField(eGetById('my-add-task-dialog-task-name'));
   final ButtonElement eSSPathAdd = eGetById('my-add-task-dialog-task-path-add');
   final Set<DialogAddTaskPath> eSSPathSet = {};
 
+  bool _public;
+  set public(final bool _i) {
+    if (_i == null || _i == _public) {
+      return;
+    }
+    _public = _i;
+    if (_public) {
+      ePublicSwitch.classes
+        ..add('mdc-button--raised')
+        ..remove('mdc-button--outlined');
+      ePublicSwitch.querySelector('.mdc-button__label').innerText =
+          'Видима всем';
+    } else {
+      ePublicSwitch.classes
+        ..remove('mdc-button--raised')
+        ..add('mdc-button--outlined');
+      ePublicSwitch.querySelector('.mdc-button__label').innerText =
+          'Видима только мне';
+    }
+  }
+
   void addPath() {
     eSSPathSet.add(DialogAddTaskPath());
+  }
+
+  @override
+  void open() {
+    reset();
+    super.open();
   }
 
   final tabCon = eGetById('my-add-task-dialog-tab-content-container');
@@ -39,6 +69,8 @@ class DialogAddTask extends MDCDialog {
       eSSPathSet.last._close();
     }
     eLinearProgress.close();
+    public = true;
+    ePublicSwitch.disabled = User() == null;
     addPath();
     tabActive = 1;
   }
@@ -53,7 +85,8 @@ class DialogAddTask extends MDCDialog {
             name: eSSName.value.isNotEmpty
                 ? eSSName.value
                 : TaskSettings.def_name,
-            path: path.isNotEmpty ? path : TaskSettings.def_path)
+            path: path.isNotEmpty ? path : TaskSettings.def_path,
+            users: _public ? TaskSettings.def_users : [])
         .toJson();
 
     App().requestOnce('$wwwTaskNew${jsonEncode(v)}').then((msg) => reset());
@@ -87,6 +120,10 @@ class DialogAddTask extends MDCDialog {
     });
     eSSPathAdd.onClick.listen((_) => addPath());
     eSend.onClick.listen((_) => send());
+
+    ePublicSwitch.onClick.listen((e) {
+      public = !_public;
+    });
 
     addPath();
   }
