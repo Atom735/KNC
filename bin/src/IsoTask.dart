@@ -324,7 +324,9 @@ class IsoTask extends SocketWrapper {
       final i = _filesSearchId;
       _filesSearchId++;
       files = _filesSearchId;
-      final ph = p.join(dirTemp.path, i.toRadixString(36).padLeft(8, '0'));
+      final ph =
+          p.join(dirTemp.path, i.toRadixString(36).padLeft(8, '0') + ext);
+
       filesSearche.add(OneFileData(
           ph, origin, NOneFileDataType.unknown, await file.length()));
 
@@ -349,13 +351,31 @@ class IsoTask extends SocketWrapper {
     OneFileData fileDataNew;
     // проверка на совпадения сигнатур
     if (signatureBegining(data, signatureDoc)) {
-      // TODO: обработать doc файл
-      worked++;
+      final _fileDocxPath = file.path + '.docx';
+      await doc2x(file.path, _fileDocxPath);
+      if (await File(_fileDocxPath).exists()) {
+        filesSearche[_i] = OneFileData(
+            _fileDocxPath, fileData.origin, fileData.type, fileData.size);
+        await handleFile(_i);
+      } else {
+        worked++;
+      }
       return;
     }
     for (final signature in signatureZip) {
       if (signatureBegining(data, signature)) {
-        // TODO: обработать docx файл
+        // вскрываем архив если он соотвествует размеру если он установлен и мы не привысили глубину вложенности
+        final arch = await unzip(file.path);
+        final _dirName = fileData.path + '.dir';
+        if (arch.exitCode == 0) {
+          final _dir = Directory(arch.pathOut);
+          await copyDirectoryRecursive(_dir, Directory(_dirName));
+          // TODO: обработать docx файл
+          await _dir.delete(recursive: true);
+        } else {
+          errorsOut.writeln('!Archive unzip ${arch.pathIn} => ${arch.pathOut}');
+          errorsOut.writeln(arch);
+        }
         worked++;
         return;
       }
