@@ -48,7 +48,11 @@ class Task extends SocketWrapper {
     if (filesDataCached != null) {
       return filesDataCached;
     }
-    final data = await File(p.join(dir.path, 'files.txt')).readAsString();
+    final _fileFiles = File(p.join(dir.path, 'files.txt'));
+    if (!await _fileFiles.exists()) {
+      return [];
+    }
+    final data = await _fileFiles.readAsString();
     final lines = LineSplitter.split(data).toList(growable: false);
     final _l = lines.length ~/ 4;
     final _fc = List<OneFileData>(_l);
