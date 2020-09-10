@@ -21,6 +21,13 @@ class DialogAddTask extends MDCDialog {
   final ButtonElement eSSPathAdd = eGetById('my-add-task-dialog-task-path-add');
   final Set<DialogAddTaskPath> eSSPathSet = {};
 
+  final eSSExtAr = MDCTextField(eGetById('my-atd-settings-ext-ar'));
+  final eSSExtFiles = MDCTextField(eGetById('my-atd-settings-ext-files'));
+  final eSSMaxSizeAr = MDCTextField(eGetById('my-atd-settings-maxsize-ar'));
+  final eSSMaxDepthAr = MDCTextField(eGetById('my-atd-settings-maxdepth-ar'));
+  final eSSUpdateDuration =
+      MDCTextField(eGetById('my-atd-settings-update-duration'));
+
   bool _public;
   set public(final bool _i) {
     if (_i == null || _i == _public) {
@@ -86,7 +93,22 @@ class DialogAddTask extends MDCDialog {
                 ? eSSName.value
                 : TaskSettings.def_name,
             path: path.isNotEmpty ? path : TaskSettings.def_path,
-            users: _public ? TaskSettings.def_users : [])
+            users: _public ? TaskSettings.def_users : [],
+            ext_ar: eSSExtAr.value.isEmpty
+                ? TaskSettings.def_ext_ar
+                : eSSExtAr.value.split(';'),
+            ext_files: eSSExtFiles.value.isEmpty
+                ? TaskSettings.def_ext_files
+                : eSSExtFiles.value.split(';'),
+            maxsize_ar: eSSMaxSizeAr.value.isEmpty
+                ? TaskSettings.def_maxsize_ar
+                : int.tryParse(eSSMaxSizeAr.value),
+            maxdepth_ar: eSSMaxDepthAr.value.isEmpty
+                ? TaskSettings.def_maxdepth_ar
+                : int.tryParse(eSSMaxDepthAr.value),
+            update_duration: eSSUpdateDuration.value.isEmpty
+                ? TaskSettings.def_update_duration
+                : int.tryParse(eSSUpdateDuration.value))
         .toJson();
 
     App().requestOnce('$wwwTaskNew${jsonEncode(v)}').then((msg) => reset());
