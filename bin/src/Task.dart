@@ -141,8 +141,10 @@ class Task extends SocketWrapper {
           final xmlUrl = '/raport/${passwordEncode(map['raport'])}';
           Server().fileMap[xmlUrl] = File(map['raport']);
           map['raport'] = xmlUrl;
+          sendForAllClients(wwwTaskUpdates + jsonEncode(map));
+        } else {
+          sendForAllClients(wwwTaskUpdates + msg.s);
         }
-        sendForAllClients(wwwTaskUpdates + msg.s);
       });
 
       /// Просьба задачи на конвертацию doc файла в docx
