@@ -162,8 +162,9 @@ class TaskFiles {
         ..append(SpanElement()
           ..attributes['tabindex'] = '0'
           ..classes.add('tbl-type')
-          ..innerText =
-              _i.type.toString().substring('NOneFileDataType.'.length))
+          ..innerText = _i.type
+              .toString()
+              .substring(_i.type.runtimeType.toString().length))
         ..append(SpanElement()
           ..attributes['tabindex'] = '0'
           ..classes.add('tbl-size')
@@ -353,6 +354,8 @@ class TaskFiles {
               ..classes.add('tbl-c-step')
               ..innerText = c.step));
         }
+      } else {
+        e.append(eRow);
       }
     }
     document.body.append(e);

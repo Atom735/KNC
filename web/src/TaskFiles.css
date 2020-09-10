@@ -51,8 +51,9 @@
 .tbl-head {
     position: sticky;
     background: #fff;
-    top: 0;
+    top: 4px;
     z-index: 1;
+    margin-top: 4px;
 }
 
 .tbl-name {
