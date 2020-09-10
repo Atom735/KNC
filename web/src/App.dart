@@ -6,6 +6,7 @@ import 'package:knc/knc.dart';
 import 'package:mdc_web/mdc_web.dart';
 
 import 'DialogLogin.dart';
+import 'DialogUser.dart';
 import 'FileLas.dart';
 import 'TaskFiles.dart';
 import 'User.dart';
@@ -22,6 +23,7 @@ class App extends SocketWrapper {
   final eLinearProgress = MDCLinearProgress(eGetById('my-app-linear-progress'));
   final eTitle = eGetById('my-app-title');
   final eLoginBtn = eGetById('my-app-login');
+  final eLoginMail = eGetById('my-app-login-mail');
 
   final DivElement eTitleSpinner = eGetById('page-title-spinner');
 
@@ -88,7 +90,8 @@ class App extends SocketWrapper {
     _instance = this;
     _stateConnecting();
 
-    eLoginBtn.onClick.listen((_) => User() == null ? DialogLogin().open() : 0);
+    eLoginBtn.onClick.listen(
+        (_) => User() == null ? DialogLogin().open() : DialogUser().open());
 
     socket.onOpen.listen((_) => _stateConnected());
     socket.onClose.listen((_) => _stateClosed());

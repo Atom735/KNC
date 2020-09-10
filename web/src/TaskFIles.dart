@@ -175,7 +175,7 @@ class TaskFiles {
         ..append(SpanElement()
           ..attributes['tabindex'] = '0'
           ..classes.add('tbl-path')
-          ..innerText = _i.path)
+          ..innerText = _i.path.substring(_i.path.lastIndexOf('tasks')))
         ..append(SpanElement()
           ..attributes['tabindex'] = '0'
           ..classes.add('tbl-encode')

@@ -36,6 +36,7 @@
     max-width: 6rem;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-align: r;
 }
 
 .tbl-index {

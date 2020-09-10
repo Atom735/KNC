@@ -10,6 +10,7 @@ import 'App.dart';
 import 'Client.dart';
 import 'Conv.dart';
 import 'Server.dart';
+import 'User.dart';
 
 class Task extends SocketWrapper {
   /// Уникальный номер задачи
@@ -175,7 +176,9 @@ class Task extends SocketWrapper {
   /// Отправка сообщения всем пользователям, которым доступна задача
   void sendForAllClients(final String msg) => Client.list
       .where((e) =>
-          e.user.mail == settings.user || settings.users.contains(e.user.mail))
+          e.user.mail == settings.user ||
+          settings.users.contains(e.user.mail) ||
+          settings.users.contains(User.guest.mail))
       .forEach((e) => e.send(0, msg));
 
   Map<String, Object> toJson() => map;

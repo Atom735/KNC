@@ -337,6 +337,14 @@ class CardTaskTemplate {
     });
   }
 
+  /// Удаляет все видимые карточки задач
+  void removeAllTasks() {
+    list.values.forEach((e) {
+      e.eRoot.remove();
+    });
+    list.clear();
+  }
+
   CardTaskTemplate._init(final TemplateElement temp) : eTemp = temp {
     print('$runtimeType created: $hashCode');
     _instance = this;

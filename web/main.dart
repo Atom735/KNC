@@ -8,6 +8,7 @@ import 'src/CardTask.dart';
 import 'src/DialogAddTask.dart';
 import 'src/DialogLogin.dart';
 import 'src/DialogRegistration.dart';
+import 'src/DialogUser.dart';
 
 void main() async {
   await Future.wait([
@@ -16,7 +17,8 @@ void main() async {
     CardTask.init(),
     DialogAddTask.init(),
     DialogLogin.init(),
-    DialogRegistration.init()
+    DialogRegistration.init(),
+    DialogUser.init()
   ]);
   autoInit();
   document.querySelectorAll('.mdc-icon-button').forEach((element) {

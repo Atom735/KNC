@@ -34,6 +34,9 @@ const wwwUserSignin = 'signin;';
 /// Отправка данных для регистрации
 const wwwUserRegistration = 'registrtion;';
 
+/// Отправка запроса на выход из системы
+const wwwUserLogout = 'logout;';
+
 /// Запрос на восстановление "мёртвой" задачи
 const wwwTaskRestart = 'taskrestart;';
 

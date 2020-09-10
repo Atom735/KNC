@@ -52,7 +52,7 @@ class Client extends SocketWrapper {
     /// Просьба обновить список задач `task.id...` - которые надо проигнорировать
     waitMsgAll(wwwTaskViewUpdate).listen((msg) {
       final _id = (jsonDecode(msg.s) as List)
-          .map((e) => e as int)
+          .map((e) => e as String)
           .toList(growable: false);
       send(
           msg.i,
@@ -60,12 +60,14 @@ class Client extends SocketWrapper {
               .where((e) =>
                   !_id.contains(e.id) &&
                   (e.settings.user == user.mail ||
-                      (e.settings.users.contains(user.mail))))
+                      (e.settings.users.contains(user.mail)) ||
+                      (e.settings.users.contains(User.guest.mail))))
               .toList()
                 ..addAll(Task.listClosed.values.where((e) =>
                     !_id.contains(e.id) &&
                     (e.settings.user == user.mail ||
-                        (e.settings.users.contains(user.mail)))))));
+                        (e.settings.users.contains(user.mail)) ||
+                        (e.settings.users.contains(User.guest.mail)))))));
     });
 
     /// Запуск новой задачи `task.settings`
@@ -194,6 +196,12 @@ class Client extends SocketWrapper {
       } else {
         send(msg.i, '');
       }
+    });
+
+    /// Выход пользователя
+    waitMsgAll(wwwUserLogout).listen((msg) {
+      user = User.guest;
+      send(msg.i, '');
     });
   }
 }

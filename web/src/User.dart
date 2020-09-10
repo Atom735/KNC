@@ -13,6 +13,7 @@ class User {
   User._(this.mail, this.access) {
     _instance = this;
     App().eLoginBtn.innerText = 'account_circle';
+    App().eLoginMail.innerText = mail;
     CardTaskTemplate().updateTasks();
   }
   static User _instance;
@@ -21,8 +22,13 @@ class User {
   /// Выход из системы
   static void logout() {
     _instance = null;
-    App().eLoginBtn.innerText = 'login';
-    CardTaskTemplate().updateTasks();
+    requestOnce('$wwwUserLogout').then((value) {
+      _instance = null;
+      App().eLoginBtn.innerText = 'login';
+      App().eLoginMail.innerText = '@guest';
+      CardTaskTemplate().removeAllTasks();
+      CardTaskTemplate().updateTasks();
+    });
   }
 
   @override
