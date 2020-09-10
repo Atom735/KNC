@@ -102,13 +102,16 @@ class DialogAddTask extends MDCDialog {
                 : eSSExtFiles.value.split(';'),
             maxsize_ar: eSSMaxSizeAr.value.isEmpty
                 ? TaskSettings.def_maxsize_ar
-                : int.tryParse(eSSMaxSizeAr.value),
+                : int.tryParse(eSSMaxSizeAr.value) ??
+                    TaskSettings.def_maxsize_ar,
             maxdepth_ar: eSSMaxDepthAr.value.isEmpty
                 ? TaskSettings.def_maxdepth_ar
-                : int.tryParse(eSSMaxDepthAr.value),
+                : int.tryParse(eSSMaxDepthAr.value) ??
+                    TaskSettings.def_maxdepth_ar,
             update_duration: eSSUpdateDuration.value.isEmpty
                 ? TaskSettings.def_update_duration
-                : int.tryParse(eSSUpdateDuration.value))
+                : int.tryParse(eSSUpdateDuration.value) ??
+                    TaskSettings.def_update_duration)
         .toJson();
 
     App().requestOnce('$wwwTaskNew${jsonEncode(v)}').then((msg) => reset());
