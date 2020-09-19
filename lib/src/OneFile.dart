@@ -26,7 +26,7 @@ class JOneFilesDataCurve {
   final List<num> data;
   static const jsonKey_data = r'data';
 
-  JOneFilesDataCurve(
+  const JOneFilesDataCurve(
       this.well, this.name, this.strt, this.stop, this.step, this.data);
   JOneFilesDataCurve.byJson(final Map<String, Object> m)
       : well = m[jsonKey_well] as String,
@@ -88,7 +88,7 @@ class JOneFileLineNote {
   final String data;
   static const jsonKey_data = 'data';
 
-  JOneFileLineNote(this.line, this.column, this.text, this.data);
+  const JOneFileLineNote(this.line, this.column, this.text, this.data);
   JOneFileLineNote.byJson(Map<String, Object> m)
       : line = m[jsonKey_line] as int,
         column = m[jsonKey_column] as int,
@@ -143,7 +143,8 @@ class JOneFileData {
   final int? notesWarnings;
   static const jsonKey_notesWarnings = 'n-warn';
 
-  JOneFileData(this.path, this.origin, this.type, this.size,
+  static const empty = JOneFileData('', '', NOneFileDataType.unknown, 0);
+  const JOneFileData(this.path, this.origin, this.type, this.size,
       {this.curves,
       this.encode,
       this.notes,
