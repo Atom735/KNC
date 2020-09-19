@@ -39,7 +39,7 @@ class JUser {
         jsonKey_access: access,
       };
 
-  JUser.fromJson(final Map<String, Object> m)
+  JUser.fromJson(final Map<String, dynamic> m)
       : firstName = m[jsonKey_firstName] as String?,
         secondName = m[jsonKey_secondName] as String?,
         mail = m[jsonKey_mail] as String,
