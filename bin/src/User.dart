@@ -7,25 +7,37 @@ import 'misc.dart';
 
 /// Данные пользователя на сервере
 class User extends JUser {
-  /// База даных всех пользователей
+  /// База даных всех пользователей, ключами является [mail]`.toLowerCase()`
   static final dataBase = <String, User>{};
 
+  /// Планировщик перезаписывания базы данных
+  static Future<void>? _futureSaveBase;
+
   /// Создаёт нового пользователя и регистрирует его в базе данных
-  User.fromJson(Map<String, Object> m) : super.fromJson(m) {
-    if (dataBase[mail] != null) {
+  User.fromJson(final Map<String, Object> m) : super.fromJson(m) {
+    final _mail = (dataBase[mail] as String).toLowerCase();
+    if (dataBase[_mail] != null) {
       throw Exception('Такой пользователь уже существует');
     }
-    dataBase[mail] = this;
+    dataBase[_mail] = this;
+
+    /// Перезаписываем базу данных, через 333мс, после изменений
+    _futureSaveBase =
+        _futureSaveBase ?? Future.delayed(Duration(milliseconds: 333), save);
   }
 
   /// Загружает данные всех пользователей
-  static Future<void> load() =>
-      tryFunc(File('data/users.json').exists).then((b) => b
-          ? tryFunc(File('data/users.json').readAsString).then((data) =>
-              (jsonDecode(data) as List).forEach((m) => User.fromJson(m)))
-          : null);
+  static Future<void> load() async {
+    if (await tryFunc(File('data/users.json').exists)) {
+      (jsonDecode(await tryFunc(File('data/users.json').readAsString)) as List)
+          .forEach((m) => User.fromJson(m));
+    }
+  }
 
   /// Сохраняет данные всех пользователей
-  static Future<void> save() =>
-      File('data/users.json').writeAsString(jsonEncode(dataBase.values));
+  static Future<void> save() {
+    final _data = jsonEncode(dataBase.values);
+    _futureSaveBase = null;
+    return tryFunc(() => File('data/users.json').writeAsString(_data));
+  }
 }
