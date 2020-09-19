@@ -10,11 +10,6 @@ include: package:pedantic/analysis_options.yaml
 #     - camel_case_types
 
 analyzer:
+  enable-experiment:
+    - non-nullable
   exclude:
-    - code_gen/**
-    - angular_tutorial/**
-    - knc.angular.dart/**
-    - knc.main.dart/**
-    - knc.web.dart/**
-    - build/**
-    - build

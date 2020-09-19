@@ -4,7 +4,7 @@ description: A sample command-line application.
 # homepage: https://www.example.com
 
 environment:
-  sdk: '>=2.9.1 <3.0.0'
+  sdk: '>=2.10.0-110.0.dev <2.11.0'
 
 dependencies:
   mime: ^0.9.7
@@ -13,11 +13,9 @@ dependencies:
   path: ^1.7.0
   mdc_web: ^0.4.1
   crypto: ^2.1.5
-  mdc_dart:
-    path: D:\\ARGilyazeev\\github\\mdc_dart
 
 dev_dependencies:
-  pedantic: ^1.9.0
+  pedantic: ^1.10.0-nullsafety
   test: ^1.14.4
   build_runner: ^1.10.0
   build_web_compilers: ^2.11.0

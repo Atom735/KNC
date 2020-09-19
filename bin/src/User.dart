@@ -1,38 +1,44 @@
 import 'dart:convert';
 import 'dart:io';
 
-/// Класс содержащий данные о пользователе, а так же хранящий всех пользователей
-class User {
-  final String mail;
-  final String pass;
-  final String access;
+import 'package:knc/knc.dart';
 
-  Map<String, dynamic> toJson() =>
-      {'mail': mail, 'pass': pass, 'access': access};
+class User extends JUser {
 
-  User._fromJson(final Map v)
-      : mail = v['mail'],
-        pass = v['pass'],
-        access = v['access'];
-  const User._(this.mail, this.pass, [this.access = '']);
+  /// База даных всех пользователей
+  static final dataBase = <User>{};
 
-  @override
-  String toString() => mail;
+  User._fromJson(Map<String, Object> _) : super.fromJson(_);
 
-  static const User guest = User._('@guest', '', 'a');
+  static final
 
-  static final _list = <User>[];
 
   /// Получает данные пользователя, если он существует
-  static User get(final String mail, final String pass) => _list
+  static User? get(final String mail, final String pass) => dataBase
+      .firstWhere((e) => e.mail == mail && e.pass == pass, orElse: () => null);
+
+}
+
+/// Список пользователей
+static final _list = <User>[];
+
+  /// Получает данные пользователя, если он существует
+  static User? get(final String mail, final String pass) => _list
       .firstWhere((e) => e.mail == mail && e.pass == pass, orElse: () => null);
 
   /// Создаёт пользователя, если он не существует, возвращает данные пользователя
-  static User reg(final String mail, final String pass) {
+  static User? reg(final String mail, final String pass,
+      [final String? firstName, final String? secondName]) {
     if (_list.any((e) => e.mail == mail)) {
       return null;
     }
-    final _user = User._(mail, pass, 'a');
+    final _user = User._(
+      mail,
+      pass,
+      '0',
+      firstName: firstName,
+      secondName: secondName,
+    );
     _list.add(_user);
     save();
     return _user;

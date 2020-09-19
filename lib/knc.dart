@@ -7,3 +7,4 @@ export 'src/OneFile.dart';
 export 'src/SocketWrapper.dart';
 export 'src/TaskSettings.dart';
 export 'src/www.dart';
+export 'src/User.dart';

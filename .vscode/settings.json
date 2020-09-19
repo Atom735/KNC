@@ -36,5 +36,6 @@
         // This results in code completion suggesting words when editing comments and
         // strings. This setting will prevent that.
         "editor.wordBasedSuggestions": false,
-    }
+    },
+    "dart.sdkPath": "D:\\dartsdk-windows-x64-release 2.10.0-110.0.dev\\dart-sdk"
 }

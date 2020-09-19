@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:crclib/reveng.dart';
 import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 import 'package:mime/mime.dart';
@@ -66,7 +65,7 @@ class Server {
         /// Файл существует
         file.readAsBytes().then((bytes) {
           fileMapCache[file] = bytes;
-          fileMapCrc[file] = Crc32().convert(bytes);
+          // fileMapCrc[file] = Crc32().convert(bytes);
           print('$file cached #${fileMapCrc[file].toRadixString(16)}');
           serveFile(request, response, file);
         });
