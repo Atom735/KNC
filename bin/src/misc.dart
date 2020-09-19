@@ -25,29 +25,41 @@ const _tryesMax = 128;
 /// Время ожидания для повторной попытки
 const _tryesDuration = 16;
 
-/// Функция попытки выполнения
+/// Функция попытки выполнения.
+///
+/// Цыклически выполняет заданную функцию [func], пока не перестанут выподать
+/// исключения.
+/// * [tryesMax] - задаёт количество попыток
+/// * [tryesDuration] - задаёт время в милисекундах между попытками
 Future<T> tryFunc<T>(Future<T> Function() func,
-    [T Function(dynamic) onError]) async {
+    {T Function(dynamic)? onError,
+    int tryesMax = _tryesMax,
+    int tryesDuration = _tryesDuration}) async {
   /// пытаемся выполнить операцию
-  var _tryes = 0;
-  var _e;
-  var _o;
-  while (_tryes < _tryesMax) {
-    try {
-      /// Если попытка успешная, то выходим из цикла
-      _o = await func();
-      _e = null;
-      break;
-    } catch (e) {
-      /// Ждём повторной попытки
-      await Future.delayed(Duration(milliseconds: _tryesDuration));
-      _tryes++;
-      _e = e;
+  try {
+    /// Если попытка успешная, то выходим
+    return await func();
+  } catch (e) {
+    /// Ждём повторной попытки
+    await Future.delayed(Duration(milliseconds: tryesDuration));
+    var _tryes = 0;
+    while (_tryes < tryesMax) {
+      try {
+        /// Если попытка успешная, то выходим
+        return await func();
+      } catch (e) {
+        /// Ждём повторной попытки
+        await Future.delayed(Duration(milliseconds: tryesDuration));
+        _tryes++;
+        if (_tryes >= tryesMax) {
+          /// Превысили количество попыток
+          if (onError != null) {
+            return onError(e);
+          }
+        }
+        rethrow;
+      }
     }
+    rethrow;
   }
-  if (_tryes >= _tryesMax) {
-    /// Превысили количество попыток
-    _o = onError != null ? onError(_e) : null;
-  }
-  return _o;
 }
