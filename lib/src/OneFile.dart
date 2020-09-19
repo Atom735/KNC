@@ -1,184 +1,177 @@
 enum NOneFileDataType { unknown, las }
 
 /// Значения иследований
-class OneFilesDataCurve {
+class JOneFilesDataCurve {
   /// Наименование скважины
   final String well;
+  static const jsonKey_well = r'well';
 
   /// Наименоваине кривой (.ink - для инклинометрии)
   final String name;
+  static const jsonKey_name = r'name';
 
   /// Глубина начальной точки кривой
-  final String strt;
+  final num strt;
+  static const jsonKey_strt = r'strt';
 
   /// Глубина конечной точки кривой
-  final String stop;
+  final num stop;
+  static const jsonKey_stop = r'stop';
 
-  /// Шаг точек (null для инклинометрии)
-  final String step;
+  /// Шаг точек (0 для инклинометрии)
+  final num step;
+  static const jsonKey_step = r'step';
 
   /// Значения в точках (у инклинометрии по три значения на точку)
-  final List<String> data;
+  final List<num> data;
+  static const jsonKey_data = r'data';
 
-  OneFilesDataCurve(
+  JOneFilesDataCurve(
       this.well, this.name, this.strt, this.stop, this.step, this.data);
-  OneFilesDataCurve.byJson(Map<String, Object> json)
-      : well = json['well'],
-        name = json['name'],
-        strt = json['strt'],
-        stop = json['stop'],
-        step = json['step'],
-        data = null;
-  Map<String, Object> toJson() =>
-      {'well': well, 'name': name, 'strt': strt, 'stop': stop, 'step': step};
+  JOneFilesDataCurve.byJson(final Map<String, Object> m)
+      : well = m[jsonKey_well] as String,
+        name = m[jsonKey_name] as String,
+        strt = m[jsonKey_strt] as num,
+        stop = m[jsonKey_stop] as num,
+        step = m[jsonKey_step] as num,
+        data = (m[jsonKey_data] as List)
+            .map((e) => e as num)
+            .toList(growable: false);
+  Map<String, Object> toJson() => {
+        jsonKey_well: well,
+        jsonKey_name: name,
+        jsonKey_strt: strt,
+        jsonKey_stop: stop,
+        jsonKey_step: step,
+        jsonKey_data: data,
+      };
 
   @override
-  bool operator ==(Object _r) =>
-      (_r is OneFilesDataCurve) &&
-      well == _r.well &&
-      name == _r.name &&
-      strt == _r.strt &&
-      stop == _r.stop &&
-      step == _r.step;
+  bool operator ==(Object _r) {
+    if ((_r is JOneFilesDataCurve) &&
+        well == _r.well &&
+        name == _r.name &&
+        strt == _r.strt &&
+        stop == _r.stop &&
+        step == _r.step &&
+        data.length == _r.data.length) {
+      final _l = data.length;
+      for (var i = 0; i < _l; i++) {
+        if (data[i] != _r.data[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
 }
 
-class OneFileLineNote {
+/// Заметка на одной линии
+class JOneFileLineNote {
   /// Номер линии
   final int line;
+  static const jsonKey_line = 'line';
 
   /// Номер символа в строке
   final int column;
+  static const jsonKey_column = 'column';
 
   /// Текст заметки
   /// * `!E` - ошибка
   /// * `!W` - предупреждение
-  /// * `!P` - разобранная строка, разделяется символом [msgRecordSeparator]
+  /// * `!P` - разобранная строка, разделяется символом [msgRecordSeparator],
   final String text;
+  static const jsonKey_text = 'text';
 
   /// Доп. данные заметки (обычно то что записано в строке)
   final String data;
+  static const jsonKey_data = 'data';
 
-  OneFileLineNote(this.line, this.column, this.text, this.data);
-  OneFileLineNote.byJson(Map<String, Object> json)
-      : line = json['line'],
-        column = json['column'],
-        text = json['text'],
-        data = json['data'];
+  JOneFileLineNote(this.line, this.column, this.text, this.data);
+  JOneFileLineNote.byJson(Map<String, Object> m)
+      : line = m[jsonKey_line] as int,
+        column = m[jsonKey_column] as int,
+        text = m[jsonKey_text] as String,
+        data = m[jsonKey_data] as String;
 
-  Map<String, Object> toJson() =>
-      {'line': line, 'column': column, 'text': text, 'data': data};
+  Map<String, Object> toJson() => {
+        jsonKey_line: line,
+        jsonKey_column: column,
+        jsonKey_text: text,
+        jsonKey_data: data,
+      };
 }
 
-class OneFileData {
+/// Данные связанные с файлом.
+///
+/// Обычно хранятся рядом с самим файлом.
+class JOneFileData {
   /// Путь к сущности обработанного файла
   final String path;
+  static const jsonKey_path = 'path';
 
   /// Путь к оригинальной сущности файла
   final String origin;
+  static const jsonKey_origin = 'origin';
 
   /// Тип файла
   final NOneFileDataType type;
+  static const jsonKey_type = 'type';
 
   /// Размер файла в байтах
   final int size;
+  static const jsonKey_size = 'size';
 
-  /// Название кодировки
-  final String encode;
+  /// Кодировка текстового файла
+  final String? encode;
+  static const jsonKey_encode = 'encode';
 
   /// Кривые найденные в файле
-  final List<OneFilesDataCurve> curves;
+  final List<JOneFilesDataCurve>? curves;
+  static const jsonKey_curves = 'curves';
 
   /// Заметки файла
-  final List<OneFileLineNote> notes;
+  final List<JOneFileLineNote>? notes;
+  static const jsonKey_notes = 'notes';
 
-  /// Заметки в виде ошибок
-  final int notesError;
+  /// Количество ошибок
+  final int? notesError;
+  static const jsonKey_notesError = 'n-errors';
 
-  /// Заметки в виде предупрежений
-  final int notesWarnings;
+  /// Количество предупрежений
+  final int? notesWarnings;
+  static const jsonKey_notesWarnings = 'n-warn';
 
-  OneFileData(this.path, this.origin, this.type, this.size,
+  JOneFileData(this.path, this.origin, this.type, this.size,
       {this.curves,
       this.encode,
       this.notes,
       this.notesError,
       this.notesWarnings});
-
-  /// Создаёт экземпляр класса, с пустыми заметками, но их верным количеством
-  OneFileData.byJson(Map<String, Object> json)
-      : path = json['path'],
-        origin = json['origin'],
-        type = NOneFileDataType.values[json['type']],
-        size = json['size'],
-        curves = json['curves'] == null
-            ? null
-            : (List<OneFilesDataCurve>.generate(
-                (json['curves'] as List).length,
-                (index) =>
-                    OneFilesDataCurve.byJson((json['curves'] as List)[index]),
-                growable: false)),
-        encode = json['encode'],
-        notes =
-            json['notes'] != null ? List<OneFileLineNote>(json['notes']) : null,
-        notesError = json['notes-errors'],
-        notesWarnings = json['notes-warnings'];
-
-  /// Создаёт экземпляр класса с полных json данных
-  OneFileData.byJsonFull(Map<String, Object> json)
-      : path = json['path'],
-        origin = json['origin'],
-        type = NOneFileDataType.values[json['type']],
-        size = json['size'],
-        curves = json['curves'] == null
-            ? null
-            : (List<OneFilesDataCurve>.generate(
-                (json['curves'] as List).length,
-                (index) =>
-                    OneFilesDataCurve.byJson((json['curves'] as List)[index]),
-                growable: false)),
-        encode = json['encode'],
-        notes = json['notes'] == null
-            ? null
-            : (List<OneFileLineNote>.generate(
-                (json['notes'] as List).length,
-                (index) =>
-                    OneFileLineNote.byJson((json['notes'] as List)[index]),
-                growable: false)),
-        notesError = json['notes-errors'],
-        notesWarnings = json['notes-warnings'];
-
-  /// Обновляет заметки с помощью json данных о заметках
-  void updateNotesByJson(Map<String, Object> json) {
-    if (json['notes'] != null) {
-      for (var i = 0; i < notes.length; i++) {
-        notes[i] = OneFileLineNote.byJson((json['notes'] as List<Object>)[i]);
-      }
-    }
-  }
-
-  /// Получает json объект, без данных заметок
-  Map<String, Object> toJson() => {
-        'type': type.index,
-        'path': path,
-        'origin': origin,
-        'size': size,
-        'encode': encode,
-        'notes-errors': notesError,
-        'notes-warnings': notesWarnings,
-      }
-        ..addAll(curves != null ? {'curves': curves} : {})
-        ..addAll(notes != null ? {'notes': notes.length} : {});
-
-  /// Получает полный json объект, включающий в себя заметки
-  Map<String, Object> toJsonFull() => {
-        'type': type.index,
-        'path': path,
-        'origin': origin,
-        'size': size,
-        'encode': encode,
-        'notes-errors': notesError,
-        'notes-warnings': notesWarnings,
-      }
-        ..addAll(curves != null ? {'curves': curves} : {})
-        ..addAll(notes != null ? {'notes': notes} : {});
+  JOneFileData.byJson(final Map<String, dynamic> m)
+      : path = m[jsonKey_path] as String,
+        origin = m[jsonKey_origin] as String,
+        type = NOneFileDataType.values[m[jsonKey_type] as int],
+        size = m[jsonKey_size] as int,
+        encode = m[jsonKey_encode] as String?,
+        curves = (m[jsonKey_curves] as List?)
+            ?.map((e) => JOneFilesDataCurve.byJson(e))
+            .toList(growable: false),
+        notes = (m[jsonKey_notes] as List?)
+            ?.map((e) => JOneFileLineNote.byJson(e))
+            .toList(growable: false),
+        notesError = m[jsonKey_notesError] as int?,
+        notesWarnings = m[jsonKey_notesWarnings] as int?;
+  Map<String, dynamic> toJson() => {
+        jsonKey_path: path,
+        jsonKey_origin: origin,
+        jsonKey_type: type,
+        jsonKey_size: size,
+        jsonKey_encode: encode,
+        jsonKey_curves: curves,
+        jsonKey_notes: notes,
+        jsonKey_notesError: notesError,
+        jsonKey_notesWarnings: notesWarnings,
+      };
 }
