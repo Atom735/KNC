@@ -37,5 +37,14 @@
         // strings. This setting will prevent that.
         "editor.wordBasedSuggestions": false,
     },
-    "dart.sdkPath": "D:\\dartsdk-windows-x64-release 2.10.0-110.0.dev\\dart-sdk"
+    "dart.sdkPath": "D:\\dartsdk-windows-x64-release 2.10.0-110.0.dev\\dart-sdk",
+    "dart.analyzerAdditionalArgs": [
+        "--enable-experiment=non-nullable"
+    ],
+    "dart.vmAdditionalArgs": [
+        "--enable-experiment=non-nullable"
+    ],
+    "terminal.integrated.env.windows": {
+        "path": "${env:path};D:\\dartsdk-windows-x64-release 2.10.0-110.0.dev\\dart-sdk\\bin"
+    }
 }
