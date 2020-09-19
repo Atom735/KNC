@@ -13,8 +13,10 @@ class User extends JUser {
   /// Планировщик перезаписывания базы данных
   static Future<void>? _futureSaveBase;
 
+  static final _fileBase = File('data/users.json');
+
   /// Создаёт нового пользователя и регистрирует его в базе данных
-  User.fromJson(final Map<String, Object> m) : super.fromJson(m) {
+  User.fromJson(final Map<String, dynamic> m) : super.fromJson(m) {
     final _mail = (dataBase[mail] as String).toLowerCase();
     if (dataBase[_mail] != null) {
       throw Exception('Такой пользователь уже существует');
@@ -28,8 +30,8 @@ class User extends JUser {
 
   /// Загружает данные всех пользователей
   static Future<void> load() async {
-    if (await tryFunc(File('data/users.json').exists)) {
-      (jsonDecode(await tryFunc(File('data/users.json').readAsString)) as List)
+    if (await _fileBase.exists()) {
+      (jsonDecode(await tryFunc(_fileBase.readAsString)) as List)
           .forEach((m) => User.fromJson(m));
     }
   }
@@ -38,6 +40,6 @@ class User extends JUser {
   static Future<void> save() {
     final _data = jsonEncode(dataBase.values);
     _futureSaveBase = null;
-    return tryFunc(() => File('data/users.json').writeAsString(_data));
+    return tryFunc(() => _fileBase.writeAsString(_data));
   }
 }
