@@ -19,7 +19,7 @@ class SocketWrapper {
   final String streamCloseMsg;
   final String msgIdBegin;
   final String msgIdEnd;
-  Future signal;
+  Future? signal;
 
   int _requestID = 0;
   final _listOfRequest = <int, Completer<String>>{};
@@ -34,48 +34,51 @@ class SocketWrapper {
       this.msgIdBegin = '\u0001',
       this.msgIdEnd = '\u0002',
       this.signal}) {
-    if (signal != null) {
-      signal.then((_) => signal = null);
-    }
+    signal?.then((_) => signal = null);
   }
 
   /// Функция отправки сообщений с уникальным айди
-  void send(final int id, final String msg) => signal == null
-      ? sender('$msgIdBegin$id$msgIdEnd$msg')
-      : signal.then((_) => sender('$msgIdBegin$id$msgIdEnd$msg'));
+  void send(final int id, final String msg) =>
+      signal?.then((_) => sender('$msgIdBegin$id$msgIdEnd$msg')) ??
+      sender('$msgIdBegin$id$msgIdEnd$msg');
 
-  bool recv(final String msgRaw, [final int id]) {
+  /// Возвращает `false` если на сообщение не вызвано реакции
+  bool recv(final String msgRaw, [final int id = 0]) {
     var b = false;
+
+    /// Если сообщение содержит идетнификатор, то разбираем его
     if (msgRaw.startsWith(msgIdBegin)) {
       final i0 = msgRaw.indexOf(msgIdEnd, msgIdBegin.length);
       if (i0 != -1) {
-        final id = int.tryParse(msgRaw.substring(msgIdBegin.length, i0));
+        final id = int.parse(msgRaw.substring(msgIdBegin.length, i0));
         final msg = msgRaw.substring(i0 + msgIdEnd.length);
-        if (_listOfRequest[id] != null) {
-          _listOfRequest[id].complete(msg);
-          b = true;
-        }
-        if (_listOfSubscribers[id] != null) {
-          _listOfSubscribers[id].add(msg);
-          b = true;
-        }
+        b |= _listOfRequest[id] != null;
+        _listOfRequest[id]?.complete(msg);
+        b |= _listOfSubscribers[id] != null;
+        _listOfSubscribers[id]?.add(msg);
         if (!b) {
+          /// Если сообщение не обработанно, то значит это не ответ на запрос
+          /// а уведомитенльное, или сообщение команды...
           return recv(msg, id);
         }
+      } else {
+        throw Exception('Сообщение без идентификатора:\n$msgRaw');
       }
+    } else {
+      _listOfResponses.forEach((key, value) {
+        if (msgRaw.startsWith(key)) {
+          value.complete(
+              SocketWrapperResponse(msgRaw.substring(key.length), id));
+          b = true;
+        }
+      });
+      _listOfRespSubers.forEach((key, value) {
+        if (msgRaw.startsWith(key)) {
+          value.add(SocketWrapperResponse(msgRaw.substring(key.length), id));
+          b = true;
+        }
+      });
     }
-    _listOfResponses.forEach((key, value) {
-      if (msgRaw.startsWith(key)) {
-        value.complete(SocketWrapperResponse(msgRaw.substring(key.length), id));
-        b = true;
-      }
-    });
-    _listOfRespSubers.forEach((key, value) {
-      if (msgRaw.startsWith(key)) {
-        value.add(SocketWrapperResponse(msgRaw.substring(key.length), id));
-        b = true;
-      }
-    });
     return b;
   }
 
