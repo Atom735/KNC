@@ -19,7 +19,7 @@ class IsoTask extends SocketWrapper {
   final TaskSpawnSets sets;
 
   /// Копия ссылки на настройки
-  final TaskSettings settings;
+  final JTaskSettings settings;
 
   /// Папка со всеми обработанными Las файлами
   final Directory dirLas;
@@ -41,7 +41,7 @@ class IsoTask extends SocketWrapper {
 
   // final lasCurvesNameOriginals = <String>[];
 
-  final filesSearche = <OneFileData>[];
+  final filesSearche = <JOneFileData>[];
   KncXlsBuilder xls;
 
   /// Данные подготовляемые для отправки как обновление состояния задачи
@@ -147,8 +147,8 @@ class IsoTask extends SocketWrapper {
     settings.path.forEach((element) {
       if (element.isNotEmpty) {
         print('$this scan $element');
-        fs.add(FileSystemEntity.type(element).then((value) =>
-            value == FileSystemEntityType.file
+        fs.add(FileSystemEntity.type(element)
+            .then((value) => value == FileSystemEntityType.file
                 ? func(File(element), element)
                 : value == FileSystemEntityType.directory
                     ? func(Directory(element), element)
@@ -189,7 +189,7 @@ class IsoTask extends SocketWrapper {
     /// Список всех названий скважин
     final _wells = <String>[];
 
-    final _addedFiles = <OneFileData>[];
+    final _addedFiles = <JOneFileData>[];
 
     /// Заполняем списки названий скважин и кривых
     final _k = filesSearche.length;
@@ -327,7 +327,7 @@ class IsoTask extends SocketWrapper {
       final ph =
           p.join(dirTemp.path, i.toRadixString(36).padLeft(8, '0') + ext);
 
-      filesSearche.add(OneFileData(
+      filesSearche.add(JOneFileData(
           ph, origin, NOneFileDataType.unknown, await file.length()));
 
       await tryFunc(() => file.copy(ph), (e) => errorsOut.writeln(e));
@@ -348,13 +348,13 @@ class IsoTask extends SocketWrapper {
       return;
     }
 
-    OneFileData fileDataNew;
+    JOneFileData fileDataNew;
     // проверка на совпадения сигнатур
     if (signatureBegining(data, signatureDoc)) {
       final _fileDocxPath = file.path + '.docx';
       await doc2x(file.path, _fileDocxPath);
       if (await File(_fileDocxPath).exists()) {
-        filesSearche[_i] = OneFileData(
+        filesSearche[_i] = JOneFileData(
             _fileDocxPath, fileData.origin, fileData.type, fileData.size);
         await handleFile(_i);
       } else {

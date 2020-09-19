@@ -7,10 +7,10 @@ import 'misc.dart';
 
 class FileLas {
   Element e;
-  OneFileData oneFileData;
+  JOneFileData oneFileData;
   List<String> fileData;
 
-  Future<bool> open(OneFileData file, [final String query]) async {
+  Future<bool> open(JOneFileData file, [final String query]) async {
     if (file == null || file.path == null) {
       return false;
     }
@@ -23,7 +23,7 @@ class FileLas {
         return false;
       }
 
-      oneFileData = OneFileData.byJsonFull(jsonDecode(_msg));
+      oneFileData = JOneFileData.byJsonFull(jsonDecode(_msg));
       file = oneFileData;
       e?.remove();
       fileData = LineSplitter.split(await requestOnce(

@@ -10,18 +10,24 @@ import 'Task.dart';
 import 'TaskSpawnSets.dart';
 import 'User.dart';
 
+/// Связующий класс между веб-клиентом (браузером) и сервером...
+///
+/// Связь происходит через `WebSocket`.
+///
+/// * [user] - конкретный авторизированный пользователь данного подключения
 class Client extends SocketWrapper {
   /// Сокет для связи с клиентом
-  final WebSocket socket;
+  final WebSocket _socket;
 
-  /// Пользователь подключённого клиента
-  User user;
+  /// Пользователь подключённого клиента, при отсуствии считается гостем
+  User? user;
 
   /// Список подключенных клиентов
   static final list = <Client>[];
+
   @override
   String toString() =>
-      '$runtimeType($hashCode)[$user].WebSocket(${socket.hashCode})';
+      '$runtimeType($hashCode)[$user].WebSocket(${_socket.hashCode})';
 
   @override
   void send(final int id, final String msg) {
@@ -31,16 +37,17 @@ class Client extends SocketWrapper {
 
   /// Создание нового клиента с указанным сокетом и
   /// пользователем, если он был задан
-  Client(this.socket, [this.user = User.guest])
-      : super((msg) => socket.add(msg)) {
+  Client(this._socket, [this.user]) : super((msg) => _socket.add(msg)) {
     print('$this created');
     list.add(this);
 
-    socket.listen(
+    _socket.listen(
         (event) {
           if (event is String) {
             print('$this: recv => $event');
             recv(event);
+          } else {
+            print('$this: recv unknown => $event');
           }
         },
         onError: getErrorFunc('Ошибка в прослушке $this'),
@@ -59,7 +66,7 @@ class Client extends SocketWrapper {
           jsonEncode(Task.list.values
               .where((e) =>
                   !_id.contains(e.id) &&
-                  (e.settings.user == user.mail ||
+                  (user != null && e.settings.user == user.mail ||
                       (e.settings.users.contains(user.mail)) ||
                       (e.settings.users.contains(User.guest.mail))))
               .toList()
@@ -74,7 +81,7 @@ class Client extends SocketWrapper {
     waitMsgAll(wwwTaskNew).listen((msg) {
       final v = jsonDecode(msg.s);
       v['user'] = user.mail;
-      TaskSpawnSets.spawn(settings: TaskSettings.fromJson(v))
+      TaskSpawnSets.spawn(settings: JTaskSettings.fromJson(v))
           .then((_) => send(msg.i, ''));
     });
 

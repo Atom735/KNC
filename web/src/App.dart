@@ -149,7 +149,7 @@ class App extends SocketWrapper {
       if (uri.pathSegments[2] == 'tasks') {
         FileLas()
             .open(
-                OneFileData(
+                JOneFileData(
                     p.joinAll(uri.pathSegments.sublist(2)), null, null, null),
                 uri.query)
             .then((b) {

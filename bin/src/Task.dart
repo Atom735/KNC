@@ -11,19 +11,24 @@ import 'Client.dart';
 import 'Conv.dart';
 import 'Server.dart';
 import 'User.dart';
+import 'misc.dart';
 
+/// Класс задачи находящийся на сервере...
+/// Все взаимдействия с задачами происходят через него, также через него
+/// происходит общение с запущенной задачей, у которой работает свой `Isolate`
+/// (Поток исполнения)
 class Task extends SocketWrapper {
-  /// Уникальный номер задачи
+  /// Уникальный номер задачи (имя рабочей папки)
   final String id;
 
-  /// Портя для связи с изолятом задачи
-  final SendPort sendPort;
+  /// Порт для связи с изолятом задачи
+  SendPort? sendPort;
 
   /// Настройки задачи
-  final TaskSettings settings;
+  JTaskSettings? settings;
 
   /// Изолят выполнения задачи
-  final Isolate isolate;
+  Isolate? isolate;
 
   /// Папка задачи
   final Directory dir;
@@ -41,13 +46,15 @@ class Task extends SocketWrapper {
   final Map<String, Object> map;
 
   /// Закешированные данные о файлах, только для закрытой задачи
-  List<OneFileData> filesDataCached;
+  List<JOneFileData>? _filesDataCached;
 
   /// Получение данных о файлах закрытой задачи
-  Future<List<OneFileData>> getFilesData() async {
-    if (filesDataCached != null) {
-      return filesDataCached;
+  Future<List<JOneFileData>> getFilesData() async {
+    /// отправляем кешированные данные если они есть
+    if (_filesDataCached != null) {
+      return _filesDataCached!;
     }
+    /// Восстанавливаем все найденные файлы задачи
     final _fileFiles = File(p.join(dir.path, 'files.txt'));
     if (!await _fileFiles.exists()) {
       return [];
@@ -55,24 +62,27 @@ class Task extends SocketWrapper {
     final data = await _fileFiles.readAsString();
     final lines = LineSplitter.split(data).toList(growable: false);
     final _l = lines.length ~/ 4;
-    final _fc = List<OneFileData>(_l);
+
+    final _fc = List<JOneFileData>.filled(_l, JOneFileData.empty);
+
+    /// Ищем индивидуальные данные о файле каждого файла
     for (var i = 0; i < _l; i++) {
       final _path = lines[i * 4 + 2];
       final _origin = lines[i * 4 + 1];
       final _fileJson = File(_path + '.json');
       if (await _fileJson.exists()) {
         _fc[i] =
-            OneFileData.byJsonFull(jsonDecode(await _fileJson.readAsString()));
+            JOneFileData.byJson(jsonDecode(await tryFunc(_fileJson.readAsString));
       } else {
-        _fc[i] = OneFileData(_path, _origin, NOneFileDataType.unknown,
-            await File(_path).length());
+        _fc[i] = JOneFileData(_path, _origin, NOneFileDataType.unknown,
+            await tryFunc(File(_path).length));
       }
     }
-    return filesDataCached = _fc;
+    return _filesDataCached = _fc;
   }
 
   @override
-  String toString() => '$runtimeType{$id}(${settings.name})[${settings.user}]';
+  String toString() => '$runtimeType{$id}(${settings?.name})[${settings?.user}]';
 
   /// Поиск всех закрытых задач и регистрация их в системе
   static Future<void> searchClosed() async {
@@ -105,7 +115,7 @@ class Task extends SocketWrapper {
         .exists()
         .then((ex) => ex ? _fileSetting.readAsString() : null)
         .then((data) =>
-            data != null ? TaskSettings.fromJson(jsonDecode(data)) : null);
+            data != null ? JTaskSettings.fromJson(jsonDecode(data)) : null);
     if (state != null && settings != null) {
       /// Если хватает всех данных для создания экземпляра
       final task = Task(state['id'], settings, null, null, _dir, closed: true);

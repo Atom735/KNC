@@ -20,7 +20,7 @@ class TaskSpawnSets {
   final SendPort sendPort;
 
   /// Настройки задачи
-  final TaskSettings settings;
+  final JTaskSettings settings;
 
   /// Кодировки
   final Map<String, List<String>> charMaps;
@@ -32,13 +32,13 @@ class TaskSpawnSets {
       this.id, this.sendPort, this.settings, this.charMaps, this.dir);
 
   /// Запускает новую задачу с указанными настройками
-  static Future<void> spawn({TaskSettings settings, Directory dir}) async {
+  static Future<void> spawn({JTaskSettings settings, Directory dir}) async {
     dir ??= await Task.dirTasks.createTemp();
     final _id = p.basename(dir.path);
     final fSets = File(p.join(dir.path, 'settings.json'));
     if (await fSets.exists()) {
       settings ??=
-          TaskSettings.fromJson(jsonDecode(await fSets.readAsString()));
+          JTaskSettings.fromJson(jsonDecode(await fSets.readAsString()));
     }
     if (settings != null) {
       final _c = Completer<SendPort>();

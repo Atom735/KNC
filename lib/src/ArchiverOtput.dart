@@ -8,7 +8,11 @@ class ArchiverOutput {
   final String stdOut;
   final String stdErr;
   ArchiverOutput(
-      {this.exitCode, this.pathIn, this.pathOut, this.stdOut, this.stdErr});
+      {required this.exitCode,
+      required this.pathIn,
+      required this.pathOut,
+      required this.stdOut,
+      required this.stdErr});
 
   String get resultString {
     switch (exitCode) {

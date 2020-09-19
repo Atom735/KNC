@@ -17,7 +17,7 @@ class TaskFiles {
 
   String fileOpenQ;
 
-  void openFile(final OneFileData file) {
+  void openFile(final JOneFileDataa file) {
     print(file.path + (fileOpenQ != null ? ('?' + fileOpenQ) : ''));
     FileLas().open(file, fileOpenQ).then((_b) {
       if (_b) {
@@ -115,7 +115,7 @@ class TaskFiles {
     }
     closeAll('task-files');
     final f = (jsonDecode(_msg) as List)
-        .map((e) => OneFileData.byJson(e))
+        .map((e) => JOneFileDataa.byJson(e))
         .toList(growable: false);
     final _fL = f.length; //min(f.length, 100);
 

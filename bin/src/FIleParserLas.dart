@@ -2,12 +2,12 @@ import 'package:knc/knc.dart';
 
 import 'IsoTask.dart';
 
-Future<OneFileData> parserFileLas(final IsoTask kncTask,
-    final OneFileData fileData, final String data, final String encode,
+Future<JOneFileData> parserFileLas(final IsoTask kncTask,
+    final JOneFileData fileData, final String data, final String encode,
     {final Map<String, String> mapWells,
     final Map<String, String> mapCurves}) async {
   final _dataLength = data.length;
-  final _notes = <OneFileLineNote>[];
+  final _notes = <JOneFileLineNote>[];
 
   var bNewLine = true;
   var iSymbol = 0;
@@ -18,17 +18,17 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
   var _noteErrors = 0;
 
   void _addNoteError(final String _text, [final String _data]) {
-    _notes.add(OneFileLineNote(iLine, iColumn, '!E$_text', _data));
+    _notes.add(JOneFileLineNote(iLine, iColumn, '!E$_text', _data));
     _noteErrors++;
   }
 
   void _addNoteWarning(final String _text, [final String _data]) {
-    _notes.add(OneFileLineNote(iLine, iColumn, '!W$_text', _data));
+    _notes.add(JOneFileLineNote(iLine, iColumn, '!W$_text', _data));
     _noteWarnings++;
   }
 
   void _addNoteParsed(final List<String> _text, [final String _data]) =>
-      _notes.add(OneFileLineNote(
+      _notes.add(JOneFileLineNote(
           iLine, iColumn, '!P${_text.join(msgRecordSeparator)}', _data));
 
   int _v_iSymbol;
@@ -677,9 +677,9 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
   }
   final well = _w_well;
 
-  final curves = List<OneFilesDataCurve>.generate(
+  final curves = List<JOneFilesDataCurve>.generate(
       _c_mnems.length,
-      (_index) => OneFilesDataCurve(
+      (_index) => JOneFilesDataCurve(
           well,
           _c_mnems[_index],
           _c_strt_s[_index],
@@ -688,7 +688,7 @@ Future<OneFileData> parserFileLas(final IsoTask kncTask,
           List.generate(_c_stop_i[_index] - _c_strt_i[_index],
               (_i) => _a_data_s[_index][_i + _c_strt_i[_index]])));
 
-  return OneFileData(
+  return JOneFileData(
       fileData.path, fileData.origin, NOneFileDataType.las, fileData.size,
       curves: curves,
       encode: encode,
