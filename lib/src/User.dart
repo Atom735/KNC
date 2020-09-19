@@ -39,12 +39,12 @@ class JUser {
         jsonKey_access: access,
       };
 
-  JUser.fromJson(final Map<String, Object> _)
-      : firstName = _[jsonKey_firstName] as String?,
-        secondName = _[jsonKey_secondName] as String?,
-        mail = _[jsonKey_mail] as String,
-        pass = _[jsonKey_pass] as String,
-        access = _[jsonKey_access] as String;
+  JUser.fromJson(final Map<String, Object> m)
+      : firstName = m[jsonKey_firstName] as String?,
+        secondName = m[jsonKey_secondName] as String?,
+        mail = m[jsonKey_mail] as String,
+        pass = m[jsonKey_pass] as String,
+        access = m[jsonKey_access] as String;
   const JUser(
     this.mail,
     this.pass,

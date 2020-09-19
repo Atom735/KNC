@@ -3,54 +3,29 @@ import 'dart:io';
 
 import 'package:knc/knc.dart';
 
+import 'misc.dart';
+
+/// Данные пользователя на сервере
 class User extends JUser {
-
   /// База даных всех пользователей
-  static final dataBase = <User>{};
+  static final dataBase = <String, User>{};
 
-  User._fromJson(Map<String, Object> _) : super.fromJson(_);
-
-  static final
-
-
-  /// Получает данные пользователя, если он существует
-  static User? get(final String mail, final String pass) => dataBase
-      .firstWhere((e) => e.mail == mail && e.pass == pass, orElse: () => null);
-
-}
-
-/// Список пользователей
-static final _list = <User>[];
-
-  /// Получает данные пользователя, если он существует
-  static User? get(final String mail, final String pass) => _list
-      .firstWhere((e) => e.mail == mail && e.pass == pass, orElse: () => null);
-
-  /// Создаёт пользователя, если он не существует, возвращает данные пользователя
-  static User? reg(final String mail, final String pass,
-      [final String? firstName, final String? secondName]) {
-    if (_list.any((e) => e.mail == mail)) {
-      return null;
+  /// Создаёт нового пользователя и регистрирует его в базе данных
+  User.fromJson(Map<String, Object> m) : super.fromJson(m) {
+    if (dataBase[mail] != null) {
+      throw Exception('Такой пользователь уже существует');
     }
-    final _user = User._(
-      mail,
-      pass,
-      '0',
-      firstName: firstName,
-      secondName: secondName,
-    );
-    _list.add(_user);
-    save();
-    return _user;
+    dataBase[mail] = this;
   }
 
   /// Загружает данные всех пользователей
-  static Future<void> load() => File('data/users.json').exists().then((b) => b
-      ? File('data/users.json').readAsString().then((data) => _list
-          .addAll((jsonDecode(data) as List).map((e) => User._fromJson(e))))
-      : null);
+  static Future<void> load() =>
+      tryFunc(File('data/users.json').exists).then((b) => b
+          ? tryFunc(File('data/users.json').readAsString).then((data) =>
+              (jsonDecode(data) as List).forEach((m) => User.fromJson(m)))
+          : null);
 
   /// Сохраняет данные всех пользователей
   static Future<void> save() =>
-      File('data/users.json').writeAsString(jsonEncode(_list));
+      File('data/users.json').writeAsString(jsonEncode(dataBase.values));
 }
