@@ -2,7 +2,21 @@
 @TestOn('vm')
 import 'package:test/test.dart';
 
+class S {
+  final int i;
+
+  S(this.i) {
+    print('$runtimeType: $hashCode created with($i)');
+  }
+}
+
+final _final = S(512);
+
 void main() {
+  print('begin');
+  print('use class ${_final.i}');
+  print('end');
+
   test('Json Null safety', () {
     JOneFileData.byJson({
       JOneFileData.jsonKey_path: '#',
