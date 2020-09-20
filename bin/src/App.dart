@@ -25,16 +25,16 @@ class App {
     receivePort.listen((msg) {
       if (msg is List) {
         if (msg.length == 2 && msg[0] is String && msg[1] is SendPort) {
-          completers[msg[0]].complete(msg[1]);
+          completers[msg[0]]?.complete(msg[1]);
         }
         if (msg.length == 2 && msg[0] is String && msg[1] is String) {
           if (completers[msg[0]] != null) {
-            completers[msg[0]].future.then((value) {
-              Task.list[msg[0]].recv(msg[1]);
+            completers[msg[0]]!.future.then((value) {
+              Task.list[msg[0]]?.recv(msg[1]);
               completers.remove(msg[0]);
             });
           } else {
-            Task.list[msg[0]].recv(msg[1]);
+            Task.list[msg[0]]?.recv(msg[1]);
           }
         }
       }
@@ -48,12 +48,11 @@ class App {
     });
   }
 
+  App._create() {
+    print('$this: created');
+  }
   @override
   String toString() => '${runtimeType.toString()}($hashCode)';
-  App._init() {
-    print('$this: created');
-    _instance = this;
-  }
-  static App _instance;
-  factory App() => _instance ?? (_instance = App._init());
+  static final App _instance = App._create();
+  factory App() => _instance;
 }

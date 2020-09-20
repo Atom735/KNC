@@ -55,7 +55,7 @@ class Client extends SocketWrapper {
           list.remove(this);
           print('$this released');
         });
-
+/*
     /// Просьба обновить список задач `task.id...` - которые надо проигнорировать
     waitMsgAll(wwwTaskViewUpdate).listen((msg) {
       final _id = (jsonDecode(msg.s) as List)
@@ -210,5 +210,6 @@ class Client extends SocketWrapper {
       user = User.guest;
       send(msg.i, '');
     });
+    */
   }
 }
