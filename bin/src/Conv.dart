@@ -7,6 +7,20 @@ import 'package:path/path.dart' as p;
 
 import 'ProcessManager.dart';
 
+/// Данные о подборе кодировок и сами данные файла
+class ConvDecodeData {
+  /// Значение рейтинга кодировок
+  final Map<String, int>? codePageRaiting;
+
+  /// Конечная подобранная кодировка
+  final String codePage;
+
+  /// Перекодированные данные
+  final String data;
+
+  const ConvDecodeData(this.data, this.codePage, [this.codePageRaiting]);
+}
+
 /// Класс содержащий всевохможные методы преобразования, а именно:
 /// * Работа с архиватором: распаковка и запаковка
 /// * Коневертирование старого `.doc` файла в новый `.docx`
@@ -27,19 +41,13 @@ class Conv extends ProcessManager {
   @override
   String toString() =>
       '$runtimeType($hashCode)[$pathArchiver;$pathWordConv]{${charMaps.keys.join(";")}}';
-  Conv._init(
+  Conv._create(
       this.dirTemp, this.pathArchiver, this.pathWordConv, this.charMaps) {
     print('$this created');
     _instance = this;
   }
-  static Conv _instance;
+  static late Conv _instance;
   factory Conv() => _instance;
-
-  /// Значение рейтинга кодировок
-  Map<String, int> codePageRaiting;
-
-  /// Конечная подобранная кодировка
-  String codePage;
 
   /// создаёт экземпляр объекта
   static Future<Conv> init() {
@@ -53,22 +61,22 @@ class Conv extends ProcessManager {
       _searchProgram_7Zip(),
       _searchProgram_WordConv(),
       _loadCharMaps()
-    ]).then((f) => Conv._init(f[0], f[1], f[2], f[3]));
+    ]).then((f) => Conv._create(f[0] as Directory, f[1] as String,
+        f[2] as String, f[3] as Map<String, List<String>>));
   }
 
   /// Подбирает кодировку и конвертирует в строку, подобранная кодировка
   /// будет записана в переменную [this.codePage]
-  String decode(final List<int> bytes, [final String _codePage]) {
+  ConvDecodeData decode(final List<int> bytes, [final String? _codePage]) {
     if (_codePage == null) {
       // Подбираем кодировку
-      codePageRaiting = getMappingRaitings(bytes);
-      codePage = convGetMappingMax(codePageRaiting);
+      final codePageRaiting = getMappingRaitings(bytes);
+      final codePage = convGetMappingMax(codePageRaiting);
+      return ConvDecodeData(
+          convDecode(bytes, charMaps[codePage]!), codePage, codePageRaiting);
     } else {
-      codePageRaiting = null;
-      codePage = _codePage;
+      return ConvDecodeData(convDecode(bytes, charMaps[_codePage]!), _codePage);
     }
-    // Преобразуем байты из кодировки в символы
-    return convDecode(bytes, charMaps[codePage]);
   }
 
   /// Конвертирует старый `.doc` файл в новый `.docx`
@@ -86,7 +94,7 @@ class Conv extends ProcessManager {
   /// Распаковывает архив [pathToArchive] в папку [pathToOutDir] если она указана.
   /// Если папка [pathToOutDir] не задана, то будет создана
   /// внутреняя временная папка, которая будет удалена по завершению работ
-  Future<ArchiverOutput> unzip(String pathToArchive, [String pathToOutDir]) =>
+  Future<ArchiverOutput> unzip(String pathToArchive, [String? pathToOutDir]) =>
       pathToOutDir == null
           ? (dirTemp
               .createTemp('arch.')
@@ -108,11 +116,10 @@ class Conv extends ProcessManager {
           .then((value) => archiverResults(value, pathToData, pathToOutput));
 
   /// Ищет где находися программа 7Zip
-  static Future<String> _searchProgram_7Zip() => Future.wait(
-      _SearchPath_7Zip.map(
-          (e) => File(e).exists().then((exist) => exist ? e : null))).then(
-      (list) =>
-          list.firstWhere((element) => element != null, orElse: () => null));
+  static Future<String> _searchProgram_7Zip() =>
+      Future.wait(_SearchPath_7Zip.map(
+              (e) => File(e).exists().then((exist) => exist ? e : '')))
+          .then((list) => list.firstWhere((element) => element.isNotEmpty));
 
   static const _SearchPath_WordConv = [
     r'C:\Program Files\Microsoft Office',
@@ -120,17 +127,17 @@ class Conv extends ProcessManager {
   ];
 
   /// Ищет где находися программа WordConv
-  static Future<String> _searchProgram_WordConv() => Future.wait(
-          _SearchPath_WordConv.map((e) => Directory(e).exists().then((exist) =>
-              exist
+  static Future<String> _searchProgram_WordConv() =>
+      Future.wait(_SearchPath_WordConv.map((e) => Directory(e).exists().then(
+              (exist) => exist
                   ? Directory(e)
                       .list(recursive: true, followLinks: false)
-                      .firstWhere((file) => file is File && p.basename(file.path).toLowerCase() == 'wordconv.exe',
-                          orElse: () => null)
+                      .firstWhere((file) =>
+                          file is File &&
+                          p.basename(file.path).toLowerCase() == 'wordconv.exe')
                   : null)))
-      .then(
-          (list) => list.firstWhere((element) => element != null, orElse: () => null))
-      .then((entity) => entity != null ? entity.path : null);
+          .then((list) => list.firstWhere((element) => element != null)!)
+          .then((entity) => entity.path);
 
   /// Поиск кодировок
   static Future<Map<String, List<String>>> _loadMappings(
@@ -141,7 +148,8 @@ class Conv extends ProcessManager {
         final name = e.path.substring(
             max(e.path.lastIndexOf('/'), e.path.lastIndexOf('\\')) + 1,
             e.path.lastIndexOf('.'));
-        map[name] = List<String>(0x80);
+        final _map = List<String>.filled(
+            0x80, String.fromCharCode(unicodeReplacementCharacterRune));
         for (final line in await e.readAsLines()) {
           if (line.startsWith('#')) {
             continue;
@@ -149,18 +157,12 @@ class Conv extends ProcessManager {
           final lineCeils = line.split('\t');
           if (lineCeils.length >= 2) {
             final i = int.parse(lineCeils[0]);
-            if (i >= 0x80) {
-              if (lineCeils[1].startsWith('0x')) {
-                map[name][i - 0x80] =
-                    String.fromCharCode(int.parse(lineCeils[1]));
-              } else {
-                map[name][i - 0x80] =
-                    String.fromCharCode(unicodeReplacementCharacterRune);
-              }
+            if (i >= 0x80 && lineCeils[1].startsWith('0x')) {
+              _map[i - 0x80] = String.fromCharCode(int.parse(lineCeils[1]));
             }
           }
         }
-        map[name] = List.unmodifiable(map[name]);
+        map[name] = List.unmodifiable(_map);
       }
     }
     return map;
@@ -177,28 +179,18 @@ class Conv extends ProcessManager {
       return ArchiverOutput(
           exitCode: exitCode, pathIn: pathIn, pathOut: pathOut);
     }
-    String stdOut;
-    String stdErr;
+    String? stdOut;
+    String? stdErr;
     if (res.stdout != null) {
-      if (res.stdout is List<int> && charMaps != null) {
-        final encodesRaiting = convGetMappingRaitings(charMaps, res.stdout);
-        final encode = convGetMappingMax(encodesRaiting);
-        // Преобразуем байты из кодировки в символы
-        final buffer = String.fromCharCodes(res.stdout.map(
-            (i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
-        stdOut = buffer;
+      if (res.stdout is List<int>) {
+        stdOut = decode(res.stdout).data;
       } else if (res.stdout is String) {
         stdOut = res.stdout;
       }
     }
     if (res.stderr != null) {
-      if (res.stderr is List<int> && charMaps != null) {
-        final encodesRaiting = convGetMappingRaitings(charMaps, res.stderr);
-        final encode = convGetMappingMax(encodesRaiting);
-        // Преобразуем байты из кодировки в символы
-        final buffer = String.fromCharCodes(res.stderr.map(
-            (i) => i >= 0x80 ? charMaps[encode][i - 0x80].codeUnitAt(0) : i));
-        stdErr = buffer;
+      if (res.stderr is List<int>) {
+        stdErr = decode(res.stderr).data;
       } else if (res.stderr is String) {
         stdErr = res.stderr;
       }
