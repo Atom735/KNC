@@ -4,15 +4,15 @@ class ArchiverOutput {
   /// Имя выходного файла
   final int exitCode;
   final String pathIn;
-  final String pathOut;
-  final String stdOut;
-  final String stdErr;
+  final String? pathOut;
+  final String? stdOut;
+  final String? stdErr;
   ArchiverOutput(
       {required this.exitCode,
       required this.pathIn,
-      required this.pathOut,
-      required this.stdOut,
-      required this.stdErr});
+      this.pathOut,
+      this.stdOut,
+      this.stdErr});
 
   String get resultString {
     switch (exitCode) {
@@ -39,7 +39,7 @@ class ArchiverOutput {
   factory ArchiverOutput.fromWrapperMsg(final String msg) {
     final i0 = msg.indexOf(msgRecordSeparator);
     final i1 = msg.indexOf(msgRecordSeparator, i0 + msgRecordSeparator.length);
-    final exitCode = int.tryParse(msg.substring(0, i0));
+    final exitCode = int.parse(msg.substring(0, i0));
     if (exitCode == 0) {
       return ArchiverOutput(
           exitCode: exitCode,

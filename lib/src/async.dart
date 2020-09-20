@@ -53,24 +53,22 @@ class AsyncTaskQueue {
         final task = _tasks[i];
         if (task.run == false) {
           task.run = true;
-          if (task.func != null) {
-            task.func().then((value) {
-              task.completer.complete(value);
-              _tasks.remove(task);
-              tryProc();
-            });
-          }
+          task.func().then((value) {
+            task.completer.complete(value);
+            _tasks.remove(task);
+            tryProc();
+          });
         }
       }
     }
   }
 
   /// Добавить задачу в очередь
-  Future<R> addTask<R>(Future<R> Function() func) {
+  Future addTask(Future Function() func) {
     if (_max == 0) {
       return func();
     }
-    final task = AsyncTask<R>(func);
+    final task = AsyncTask(func);
     _tasks.add(task);
     tryProc();
     return task.completer.future;
