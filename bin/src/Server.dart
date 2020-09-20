@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:crclib/reveng.dart';
 import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 import 'package:mime/mime.dart';
@@ -10,80 +11,78 @@ class Server {
   /// Собсна сам сервер
   final HttpServer server;
 
+  /// Помошник по mime типам
   final mimeResolver = MimeTypeResolver()
     ..addExtension('map', 'application/json');
 
+  /// Корневые каталоги, где будут искаться файлы в первую очередь
   final dirs = <Directory>[
     Directory('build').absolute,
     Directory('tasks').absolute,
     Directory('web').absolute,
   ];
+
+  /// Маппинг ссылок на файлам
   final fileMap = <String, File>{'/': File('web/index.html').absolute};
+
+  /// `RegExp` Маппинг ссылок на файлам
   final reMap = <RegExp, File>{
     RegExp(r'^\/app(\/.+)?', caseSensitive: false):
         File('web/index.html').absolute
   };
 
+  /// Закешированные файлы
   final fileMapCache = <File, List<int>>{};
-  final fileMapCrc = <File, int>{};
+
+  /// Контрольная сумма закешированных файлов
+  final fileMapCrc = <File, String>{};
 
   void serveFile(HttpRequest request, HttpResponse response, File file) {
-    if (file != null) {
-      if (fileMapCrc[file] != null &&
-          request.headers.value(HttpHeaders.ifNoneMatchHeader) != null &&
-          fileMapCrc[file] ==
-              int.tryParse(request.headers.value(HttpHeaders.ifNoneMatchHeader),
-                  radix: 16)) {
-        /// Если E-tag совпадает
-        response
-          ..statusCode = HttpStatus.notModified
-          ..flush().then((_) {
-            response.close().then((_) {
-              iReq -= 1;
-              print(
-                  'http(${request.hashCode}): ${request.uri.path} closed ($iReq) not modified');
-            });
+    if (fileMapCrc[file] != null &&
+        request.headers.value(HttpHeaders.ifNoneMatchHeader) != null &&
+        fileMapCrc[file] ==
+            (request.headers
+                    .value(HttpHeaders.ifNoneMatchHeader)
+                    ?.toLowerCase() ??
+                'ETAG is EMPTY')) {
+      /// Если E-tag совпадает
+      response
+        ..statusCode = HttpStatus.notModified
+        ..flush().then((_) {
+          response.close().then((_) {
+            iReq -= 1;
+            print(
+                'http(${request.hashCode}): ${request.uri.path} closed ($iReq) not modified');
           });
-      } else if (fileMapCache[file] != null) {
-        /// Файл закеширован
-        response
-          ..statusCode = HttpStatus.ok
-          ..headers.contentType = mimeResolver.lookup(file.path) != null
-              ? ContentType.parse(mimeResolver.lookup(file.path))
-              : ContentType.binary
-          ..headers
-              .add(HttpHeaders.etagHeader, fileMapCrc[file].toRadixString(16))
-          ..add(fileMapCache[file])
-          ..flush().then((_) {
-            response.close().then((_) {
-              iReq -= 1;
-              print(
-                  'http(${request.hashCode}): ${request.uri.path} closed ($iReq) from cache #${fileMapCrc[file].toRadixString(16)}');
-            });
-          });
-      } else if (file.existsSync()) {
-        /// Файл существует
-        file.readAsBytes().then((bytes) {
-          fileMapCache[file] = bytes;
-          // fileMapCrc[file] = Crc32().convert(bytes);
-          print('$file cached #${fileMapCrc[file].toRadixString(16)}');
-          serveFile(request, response, file);
         });
-      } else {
-        /// Файл не наден
-        response
-          ..statusCode = HttpStatus.notFound
-          ..write('404: Not Found')
-          ..flush().then((_) {
-            response.close().then((_) {
-              iReq -= 1;
-              print(
-                  'http(${request.hashCode}): ${request.uri.path} closed ($iReq)');
-            });
+    } else if (fileMapCache[file] != null) {
+      final mime = mimeResolver.lookup(file.path) as String?;
+
+      /// Файл закеширован
+      response
+        ..statusCode = HttpStatus.ok
+        ..headers.contentType =
+            mime == null ? ContentType.parse(mime!) : ContentType.binary
+        ..headers.add(HttpHeaders.etagHeader, fileMapCrc[file]!)
+        ..add(fileMapCache[file]!)
+        ..flush().then((_) {
+          response.close().then((_) {
+            iReq -= 1;
+            print(
+                'http(${request.hashCode}): ${request.uri.path} closed ($iReq) from cache #${fileMapCrc[file]!}');
           });
-      }
+        });
+    } else if (file.existsSync()) {
+      /// Файл существует
+      file.readAsBytes().then((bytes) {
+        fileMapCache[file] = bytes;
+        fileMapCrc[file] =
+            Crc64().convert(bytes).toRadixString(35).toLowerCase();
+        print('$file cached #${fileMapCrc[file]!}');
+        serveFile(request, response, file);
+      });
     } else {
-      /// Файл не задан
+      /// Файл не наден
       response
         ..statusCode = HttpStatus.notFound
         ..write('404: Not Found')
@@ -100,12 +99,14 @@ class Server {
   @override
   String toString() =>
       '$runtimeType($hashCode)[${server.address.address}:${server.port}]';
+
+  /// Количество активных подключений
   int iReq = 0;
   static Future<Server> init() async =>
-      Server._init(await HttpServer.bind(InternetAddress.anyIPv4, wwwPort));
-  static Server _instance;
+      Server._create(await HttpServer.bind(InternetAddress.anyIPv4, wwwPort));
+  static late Server _instance;
   factory Server() => _instance;
-  Server._init(this.server) {
+  Server._create(this.server) {
     print('$this created');
     print('Listening on http://${server.address.address}:${server.port}/');
     print('For connect use http://localhost:${server.port}/');
@@ -142,13 +143,13 @@ class Server {
         });
       } else if (fileMap[request.uri.path] != null) {
         /// если есть ремап кнкретной ссылки на файл
-        serveFile(request, response, fileMap[request.uri.path]);
+        serveFile(request, response, fileMap[request.uri.path]!);
         return;
       } else {
         /// если есть ремап шаблона ссылки на файл
         for (final key in reMap.keys) {
           if (key.hasMatch(request.uri.path)) {
-            serveFile(request, response, reMap[key]);
+            serveFile(request, response, reMap[key]!);
             return;
           }
         }
@@ -161,7 +162,7 @@ class Server {
             return;
           }
         }
-        serveFile(request, response, null);
+        serveFile(request, response, File('not-found'));
       }
     },
         onError: getErrorFunc(
