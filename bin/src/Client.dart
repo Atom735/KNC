@@ -170,46 +170,36 @@ class Client extends SocketWrapper {
         });
       }
     });
+    */
 
     /// Регистрация нового пользователя `mail``pass`
-    waitMsgAll(wwwUserRegistration).listen((msg) {
-      final i0 = msg.s.indexOf(msgRecordSeparator);
-      if (i0 == -1) {
+    waitMsgAll(JMsgUserRegistration.msgId).listen((msg) {
+      final _msg = JMsgUserRegistration.fromString(msg.s);
+      final _mail = _msg.user.mail.toLowerCase();
+      if (User.dataBase[_mail] != null) {
         send(msg.i, '');
-        return;
-      }
-      final _user = User.reg(msg.s.substring(0, i0),
-          msg.s.substring(i0 + msgRecordSeparator.length));
-      if (_user != null) {
-        user = _user;
-        send(msg.i, user.access);
       } else {
-        send(msg.i, '');
+        user = User.fromJson(_msg.user.toJson());
+        send(msg.i, jsonEncode(user));
       }
     });
 
     /// Вход пользователя `mail``pass`
-    waitMsgAll(wwwUserSignin).listen((msg) {
-      final i0 = msg.s.indexOf(msgRecordSeparator);
-      if (i0 == -1) {
+    waitMsgAll(JMsgUserSignin.msgId).listen((msg) {
+      final _msg = JMsgUserSignin.fromString(msg.s);
+      final _mail = _msg.mail.toLowerCase();
+      if (User.dataBase[_mail] == null) {
         send(msg.i, '');
-        return;
-      }
-      final _user = User.get(msg.s.substring(0, i0),
-          msg.s.substring(i0 + msgRecordSeparator.length));
-      if (_user != null) {
-        user = _user;
-        send(msg.i, user.access);
       } else {
-        send(msg.i, '');
+        user = User.dataBase[_mail];
+        send(msg.i, jsonEncode(user!));
       }
     });
 
     /// Выход пользователя
-    waitMsgAll(wwwUserLogout).listen((msg) {
-      user = User.guest;
+    waitMsgAll(JMsgUserLogout.msgId).listen((msg) {
+      user = null;
       send(msg.i, '');
     });
-    */
   }
 }
