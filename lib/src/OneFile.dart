@@ -28,7 +28,7 @@ class JOneFilesDataCurve {
 
   const JOneFilesDataCurve(
       this.well, this.name, this.strt, this.stop, this.step, this.data);
-  JOneFilesDataCurve.byJson(final Map<String, Object> m)
+  JOneFilesDataCurve.byJson(final Map<String, dynamic> m)
       : well = m[jsonKey_well] as String,
         name = m[jsonKey_name] as String,
         strt = m[jsonKey_strt] as num,
@@ -37,7 +37,7 @@ class JOneFilesDataCurve {
         data = (m[jsonKey_data] as List)
             .map((e) => e as num)
             .toList(growable: false);
-  Map<String, Object> toJson() => {
+  Map<String, dynamic> toJson() => {
         jsonKey_well: well,
         jsonKey_name: name,
         jsonKey_strt: strt,
@@ -85,17 +85,28 @@ class JOneFileLineNote {
   static const jsonKey_text = 'text';
 
   /// Доп. данные заметки (обычно то что записано в строке)
-  final String data;
+  final String? data;
   static const jsonKey_data = 'data';
 
-  const JOneFileLineNote(this.line, this.column, this.text, this.data);
-  JOneFileLineNote.byJson(Map<String, Object> m)
+  const JOneFileLineNote(this.line, this.column, this.text, [this.data]);
+
+  const JOneFileLineNote.error(this.line, this.column, final String text,
+      [this.data])
+      : text = '!E$text';
+  const JOneFileLineNote.warn(this.line, this.column, final String text,
+      [this.data])
+      : text = '!W$text';
+  const JOneFileLineNote.parse(this.line, this.column, final String text,
+      [this.data])
+      : text = '!P$text';
+
+  JOneFileLineNote.byJson(Map<String, dynamic> m)
       : line = m[jsonKey_line] as int,
         column = m[jsonKey_column] as int,
         text = m[jsonKey_text] as String,
         data = m[jsonKey_data] as String;
 
-  Map<String, Object> toJson() => {
+  Map<String, dynamic> toJson() => {
         jsonKey_line: line,
         jsonKey_column: column,
         jsonKey_text: text,

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+/// Преобразует число в Буквенное название клетки как в Excel
 String numToXlsAlpha(int i) {
   return ((i >= 26) ? numToXlsAlpha((i ~/ 26) - 1) : '') +
       String.fromCharCode('A'.codeUnits[0] + (i % 26));
