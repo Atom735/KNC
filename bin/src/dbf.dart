@@ -1,3 +1,4 @@
+import 'dart:html';
 import 'dart:typed_data';
 
 /// https://www.clicketyclick.dk/databases/xbase/format/dbf.html
@@ -6,11 +7,11 @@ import 'dart:typed_data';
 /// http://www.autopark.ru/ASBProgrammerGuide/DBFSTRUC.HTM
 
 class DbfFieldDesc {
-  String name;
-  String type;
-  int address;
-  int length;
-  int decimalCount;
+  late String name;
+  late String type;
+  late int address;
+  late int length;
+  late int decimalCount;
 
   /// Загружает данные из буффера байтов
   ///
@@ -41,24 +42,26 @@ class DbfFieldDesc {
 
 class DbfFile {
   /// Путь к оригиналу файла
-  String origin;
+  final String origin;
 
-  int version;
-  int lastUpdateYY;
-  int lastUpdateMM;
-  int lastUpdateDD;
-  int numberOfRecords;
-  int lengthOfHeader;
-  int lengthOfEachRecord;
-  int incompleteTransac;
-  int ecryptionFlag;
-  int freeRecordThread;
-  int mdxFlag;
-  int laguageDriver;
+  late int version;
+  late int lastUpdateYY;
+  late int lastUpdateMM;
+  late int lastUpdateDD;
+  late int numberOfRecords;
+  late int lengthOfHeader;
+  late int lengthOfEachRecord;
+  late int incompleteTransac;
+  late int ecryptionFlag;
+  late int freeRecordThread;
+  late int mdxFlag;
+  late int laguageDriver;
 
   final fields = <DbfFieldDesc>[];
 
-  List<List<String>> records;
+  late List<List<String>> records;
+
+  DbfFile(this.origin);
 
   /// Загружает данные из буффера байтов
   ///
@@ -99,17 +102,20 @@ class DbfFile {
     }
 
     offset = lengthOfHeader;
-    records = List(numberOfRecords);
-    for (var i = 0; i < numberOfRecords; i++) {
-      records[i] = List(fields.length + 1);
-      records[i][0] = String.fromCharCode(bytes.getUint8(offset));
+    final _filedsLength = fields.length;
+    // final _recordOffset = fields.fold<int>(1, (v, e) => v += e.length);
+    records = List.generate(numberOfRecords, (i) {
+      final _list = List.filled(_filedsLength + 1, '');
+      offset = lengthOfHeader + lengthOfEachRecord * i;
+      _list[0] = String.fromCharCode(bytes.getUint8(offset));
       offset += 1;
-      for (var j = 0; j < fields.length; j++) {
-        records[i][j + 1] = String.fromCharCodes(bytes.buffer
+      for (var j = 0; j < _filedsLength; j++) {
+        _list[j + 1] = String.fromCharCodes(bytes.buffer
             .asUint8List(bytes.offsetInBytes + offset, fields[j].length));
         offset += fields[j].length;
       }
-    }
+      return _list;
+    });
 
     return true;
   }
