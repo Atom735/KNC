@@ -8,3 +8,4 @@ export 'src/SocketWrapper.dart';
 export 'src/TaskSettings.dart';
 export 'src/www.dart';
 export 'src/User.dart';
+export 'src/msgs.dart';

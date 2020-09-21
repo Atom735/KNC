@@ -2,10 +2,10 @@ import 'package:knc/knc.dart';
 
 import 'IsoTask.dart';
 
-Future<JOneFileData> parserFileLas(final IsoTask kncTask,
+Future<JOneFileData?> parserFileLas(final IsoTask kncTask,
     final JOneFileData fileData, final String data, final String encode,
-    {final Map<String, String> mapWells,
-    final Map<String, String> mapCurves}) async {
+    {final Map<String, String> mapWells = const {},
+    final Map<String, String> mapCurves = const {}}) async {
   final _dataLength = data.length;
   final _notes = <JOneFileLineNote>[];
 
@@ -17,49 +17,50 @@ Future<JOneFileData> parserFileLas(final IsoTask kncTask,
   var _noteWarnings = 0;
   var _noteErrors = 0;
 
-  void _addNoteError(final String _text, [final String _data]) {
-    _notes.add(JOneFileLineNote(iLine, iColumn, '!E$_text', _data));
+  void _addNoteError(final String _text, [final String? _data]) {
+    _notes.add(JOneFileLineNote.error(iLine, iColumn, _text, _data));
     _noteErrors++;
   }
 
-  void _addNoteWarning(final String _text, [final String _data]) {
-    _notes.add(JOneFileLineNote(iLine, iColumn, '!W$_text', _data));
+  void _addNoteWarning(final String _text, [final String? _data]) {
+    _notes.add(JOneFileLineNote.warn(iLine, iColumn, _text, _data));
     _noteWarnings++;
   }
 
-  void _addNoteParsed(final List<String> _text, [final String _data]) =>
-      _notes.add(JOneFileLineNote(
-          iLine, iColumn, '!P${_text.join(msgRecordSeparator)}', _data));
+  void _addNoteParsed(final List<String> _text, [final String? _data]) {
+    _notes.add(JOneFileLineNote.parse(
+        iLine, iColumn, _text.join(msgRecordSeparator), _data));
+  }
 
-  int _v_iSymbol;
-  int _v_vers;
-  bool _v_wrap;
+  int? _v_iSymbol;
+  int? _v_vers;
+  bool? _v_wrap;
 
-  int _w_iSymbol;
-  String _w_strt;
-  double _w_strt_n;
-  String _w_stop;
-  double _w_stop_n;
-  String _w_step;
-  double _w_step_n;
-  String _w_null;
-  double _w_null_n;
-  String _w_well;
-  String _w_well_desc;
+  int? _w_iSymbol;
+  String? _w_strt;
+  double? _w_strt_n;
+  String? _w_stop;
+  double? _w_stop_n;
+  String? _w_step;
+  double? _w_step_n;
+  String? _w_null;
+  double? _w_null_n;
+  String? _w_well;
+  String? _w_well_desc;
 
-  int _c_iSymbol;
+  int? _c_iSymbol;
   final _c_mnems = <String>[];
-  List<String> _c_strt_s;
-  List<String> _c_stop_s;
-  List<double> _c_strt_n;
-  List<double> _c_stop_n;
-  List<int> _c_strt_i;
-  List<int> _c_stop_i;
+  late List<String> _c_strt_s;
+  late List<String> _c_stop_s;
+  late List<double> _c_strt_n;
+  late List<double> _c_stop_n;
+  late List<int> _c_strt_i;
+  late List<int> _c_stop_i;
 
-  int _a_iSymbol;
+  int? _a_iSymbol;
   var _a_iNum = 0;
-  List<List<String>> _a_data_s;
-  List<List<double>> _a_data_n;
+  late List<List<String>> _a_data_s;
+  late List<List<double>> _a_data_n;
 
   void rNextSymbol() {
     iSymbol++;
@@ -424,7 +425,7 @@ Future<JOneFileData> parserFileLas(final IsoTask kncTask,
             _colon ? iLineEndSymbol : iSeparatorColon + 1, iLineEndSymbol)
         .trim();
     // TODO: обработка well
-    _addNoteParsed(['WELL', _w_well]);
+    _addNoteParsed(['WELL', _w_well!]);
   }
 
   bool rSectionW() {
@@ -531,12 +532,12 @@ Future<JOneFileData> parserFileLas(final IsoTask kncTask,
     if (_a_iSymbol != null) {
       _addNoteWarning('повтороная секция');
     } else {
-      _c_strt_s = List(_curves);
-      _c_stop_s = List(_curves);
-      _c_strt_n = List(_curves);
-      _c_stop_n = List(_curves);
-      _c_strt_i = List(_curves);
-      _c_stop_i = List(_curves);
+      _c_strt_s = List.filled(_curves, '');
+      _c_stop_s = List.filled(_curves, '');
+      _c_strt_n = List.filled(_curves, 0.0);
+      _c_stop_n = List.filled(_curves, 0.0);
+      _c_strt_i = List.filled(_curves, 0);
+      _c_stop_i = List.filled(_curves, 0);
       _a_data_s = List.generate(_curves, (_) => []);
       _a_data_n = List.generate(_curves, (_) => []);
     }
@@ -570,6 +571,10 @@ Future<JOneFileData> parserFileLas(final IsoTask kncTask,
         } else {
           final _depth_s = _nums[0];
           final _depth_n = double.tryParse(_depth_s);
+          if (_depth_n == null) {
+            _addNoteError('невозможно разобрать число');
+            continue loop;
+          }
           final _index = _a_data_s[0].length;
           for (var i = 0; i < _curves; i++) {
             final _val = double.tryParse(_nums[i]);
@@ -577,9 +582,9 @@ Future<JOneFileData> parserFileLas(final IsoTask kncTask,
               _addNoteError('невозможно разобрать число');
             }
             _a_data_s[i].add(_nums[i]);
-            _a_data_n[i].add(_val);
+            _a_data_n[i].add(_val ?? _w_null_n ?? 0.0);
             if (_val != null && _val != _w_null_n) {
-              if (_c_strt_s[i] == null) {
+              if (_c_strt_s[i].isEmpty) {
                 _c_strt_i[i] = _index;
                 _c_strt_s[i] = _depth_s;
                 _c_strt_n[i] = _depth_n;
@@ -655,38 +660,33 @@ Future<JOneFileData> parserFileLas(final IsoTask kncTask,
   }
   while (iSymbol < _dataLength && !rBeginOfSection()) {}
 
-  if (mapWells != null) {
-    if (mapWells[_w_well] != null) {
-      _w_well = mapWells[_w_well];
-      if (_w_well == '.ignore') {
-        _w_well = _w_well_desc;
-      }
+  if (mapWells[_w_well] != null) {
+    _w_well = mapWells[_w_well]!;
+    if (_w_well == '.ignore') {
+      _w_well = _w_well_desc;
     }
-    if (mapWells[_w_well] != null) {
-      _w_well = mapWells[_w_well];
-    }
+  }
+  if (mapWells[_w_well] != null) {
+    _w_well = mapWells[_w_well]!;
   }
 
-  if (mapCurves != null) {
-    final _l = _c_mnems.length;
-    for (var i = 0; i < _l; i++) {
-      if (mapCurves[_c_mnems[i]] != null) {
-        _c_mnems[i] = mapCurves[_c_mnems[i]];
-      }
+  final _l = _c_mnems.length;
+  for (var i = 0; i < _l; i++) {
+    if (mapCurves[_c_mnems[i]] != null) {
+      _c_mnems[i] = mapCurves[_c_mnems[i]]!;
     }
   }
-  final well = _w_well;
 
   final curves = List<JOneFilesDataCurve>.generate(
       _c_mnems.length,
       (_index) => JOneFilesDataCurve(
-          well,
+          _w_well!,
           _c_mnems[_index],
-          _c_strt_s[_index],
-          _c_stop_s[_index],
-          _w_step,
+          _c_strt_n[_index],
+          _c_stop_n[_index],
+          _w_step_n!,
           List.generate(_c_stop_i[_index] - _c_strt_i[_index],
-              (_i) => _a_data_s[_index][_i + _c_strt_i[_index]])));
+              (_i) => _a_data_n[_index][_i + _c_strt_i[_index]])));
 
   return JOneFileData(
       fileData.path, fileData.origin, NOneFileDataType.las, fileData.size,
