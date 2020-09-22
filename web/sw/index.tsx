@@ -18,8 +18,6 @@
       case '/signin':
         event.respondWith(fetch(event.request.url.replace('/signin', '/')));
         break;
-
-
       default:
         break;
     }
