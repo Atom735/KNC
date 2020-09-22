@@ -61,8 +61,10 @@ class Conv extends ProcessManager {
       _searchProgram_7Zip(),
       _searchProgram_WordConv(),
       _loadCharMaps()
-    ]).then((f) => Conv._create(f[0] as Directory, f[1] as String,
-        f[2] as String, f[3] as Map<String, List<String>>));
+    ]).then((f) {
+      return Conv._create(f[0] as Directory, f[1] as String, f[2] as String,
+          f[3] as Map<String, List<String>>);
+    });
   }
 
   /// Подбирает кодировку и конвертирует в строку, подобранная кодировка

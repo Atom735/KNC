@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:knc/knc.dart';
 
 import 'Conv.dart';
-import 'Task.dart';
+import 'TaskController.dart';
 import 'TaskSpawnSets.dart';
 import 'User.dart';
 

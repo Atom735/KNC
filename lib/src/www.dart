@@ -66,16 +66,6 @@ bool signatureBegining(final List<int> data, final List<int> signature) {
   return true;
 }
 
-enum NTaskState {
-  initialization,
-  searchFiles,
-  workFiles,
-  generateTable,
-  waitForCorrectErrors,
-  reworkErrors,
-  completed,
-}
-
 String passwordEncode(final String pass) => sha256.convert([
       ...'0x834^'.codeUnits,
       ...pass.codeUnits,

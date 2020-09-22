@@ -1,8 +1,8 @@
 import 'package:knc/knc.dart';
 
-import 'IsoTask.dart';
+import 'TaskIso.dart';
 
-Future<JOneFileData?> parserFileLas(final IsoTask kncTask,
+Future<JOneFileData?> parserFileLas(final TaskIso kncTask,
     final JOneFileData fileData, final String data, final String encode,
     {final Map<String, String> mapWells = const {},
     final Map<String, String> mapCurves = const {}}) async {

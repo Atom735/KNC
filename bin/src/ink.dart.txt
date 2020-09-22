@@ -7,7 +7,7 @@ import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 
 import 'dbf.dart';
-import 'IsoTask.dart';
+import 'IsoTask.dart.';
 
 /// преобразует число из минут в доли градуса
 /// - `1.30` в минутах => `1.50` в градусах
@@ -20,7 +20,7 @@ double convertAngleMinuts2Gradus(final double val) {
 /// - `true` - минуты
 /// - `false` - градусы
 /// - `null` - неудалось разобрать
-bool parseAngleType(final String txt) {
+bool? parseAngleType(final String txt) {
   // 11.30 град'мин.
   var k = txt.indexOf("'");
   if (k == -1) {
@@ -29,10 +29,8 @@ bool parseAngleType(final String txt) {
   switch (txt[k + 1].toLowerCase()) {
     case 'м':
       return true;
-      break;
     case 'г':
       return false;
-      break;
     default:
       return null;
   }

@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:mime/mime.dart';
 
 import 'Client.dart';
+import 'TaskController.dart';
 
 class Server {
   /// Собсна сам сервер
@@ -18,8 +19,8 @@ class Server {
   /// Корневые каталоги, где будут искаться файлы в первую очередь
   final dirs = <Directory>[
     Directory('build').absolute,
-    Directory('tasks').absolute,
     Directory('web').absolute,
+    TaskController.dirTasks,
   ];
 
   /// Маппинг ссылок на файлам
@@ -77,7 +78,7 @@ class Server {
       file.readAsBytes().then((bytes) {
         fileMapCache[file] = bytes;
         fileMapCrc[file] =
-            Crc64().convert(bytes).toRadixString(35).toLowerCase();
+            Crc64().convert(bytes).toRadixString(36).toLowerCase();
         print('$file cached #${fileMapCrc[file]!}');
         serveFile(request, response, file);
       });

@@ -4,8 +4,8 @@ import 'dart:math';
 
 import 'package:path/path.dart' as p;
 
-import 'las.dart';
-import 'ink.dart';
+import 'las.';
+import 'ink.dart.x';
 
 class XlsCell {
   /// Позиция ячейки (от 0,0)

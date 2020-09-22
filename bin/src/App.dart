@@ -7,7 +7,7 @@ import 'Server.dart';
 import 'User.dart';
 import 'Client.dart';
 import 'Conv.dart';
-import 'Task.dart';
+import 'TaskController.dart';
 
 class App {
   /// Порт прослушиваемый главным изолятом
@@ -18,27 +18,35 @@ class App {
 
   /// Точка входа для приложения
   Future<void> run() async {
-    await Future.wait([User.load(), Conv.init()]);
-    await Server.init();
-    await Task.searchClosed();
-
+    /// Слушаем входящие сообщения от [TaskIso]
     receivePort.listen((msg) {
       if (msg is List) {
         if (msg.length == 2 && msg[0] is String && msg[1] is SendPort) {
+          /// Передаём порт связи перехватчику
           completers[msg[0]]?.complete(msg[1]);
         }
+
+        /// Сообщение созданые [SocketWrapper] пересылаем на обработку
+        /// [TaskController]
         if (msg.length == 2 && msg[0] is String && msg[1] is String) {
           if (completers[msg[0]] != null) {
+            /// Если задача запущена а [TaskController] для неё ещё не
+            /// существует
             completers[msg[0]]!.future.then((value) {
-              Task.list[msg[0]]?.recv(msg[1]);
+              TaskController.list[msg[0]]?.recv(msg[1]);
               completers.remove(msg[0]);
             });
           } else {
-            Task.list[msg[0]]?.recv(msg[1]);
+            TaskController.list[msg[0]]?.recv(msg[1]);
           }
         }
       }
     }, onError: getErrorFunc('Ошибка в прослушке ReceivePort:'));
+
+    await Conv.init();
+    await User.load();
+    await Server.init();
+    await TaskController.init();
   }
 
   /// Отправка всем подключенным клиентам

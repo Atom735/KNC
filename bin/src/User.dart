@@ -33,6 +33,7 @@ class User extends JUser {
     if (await _fileBase.exists()) {
       (jsonDecode(await tryFunc(_fileBase.readAsString)) as List)
           .forEach((m) => User.fromJson(m));
+      print('База данных пользователей загружена!');
     }
   }
 

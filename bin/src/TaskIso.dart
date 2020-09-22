@@ -7,31 +7,23 @@ import 'package:knc/knc.dart';
 import 'package:path/path.dart' as p;
 
 import 'FIleParserLas.dart';
+import 'TaskController.dart';
 import 'TaskSpawnSets.dart';
 import 'misc.dart';
 import 'xls.dart';
 
-class IsoTask extends SocketWrapper {
+class TaskIso extends SocketWrapper {
   /// Порт для получение сообщений этим изолятом
   final ReceivePort receivePort = ReceivePort();
 
   /// Данные полученные при спавне задачи
   final TaskSpawnSets sets;
 
-  /// Копия ссылки на настройки
-  final JTaskSettings settings;
-
-  /// Папка со всеми обработанными Las файлами
-  final Directory dirLas;
-
-  /// Папка со всеми обработанными Ink файлами
-  final Directory dirInk;
+  /// Настройки задачи
+  JTaskSettings settings;
 
   /// Папка со всеми временными файлами (рабочими копиями)
-  final Directory dirTemp;
-
-  /// Поток для записи иформации об ошибках в файл
-  final IOSink errorsOut;
+  final Directory dirFiles;
 
   // final lasDB = LasDataBase();
   // dynamic lasIgnore;
@@ -41,107 +33,43 @@ class IsoTask extends SocketWrapper {
 
   // final lasCurvesNameOriginals = <String>[];
 
-  final filesSearche = <JOneFileData>[];
-  KncXlsBuilder xls;
+  /// Поток для записи иформации об ошибках в файл
+  final IOSink errorsOut;
 
-  /// Данные подготовляемые для отправки как обновление состояния задачи
-  final _updatesMap = <String, Object>{};
+  /// Список всех найденных файлов
+  final files = <JOneFileData>[];
 
-  /// Handle таймера
-  Future<void> _updatesFuture;
-
-  /// json Объект состояния задачи
-  final stateMap = <String, Object>{};
-
-  /// Обновление данных для отправки сообщения об обновлении
-  void _update(String n, Object v) {
-    _updatesMap[n] = v;
-    stateMap[n] = v;
-    _updatesFuture ??=
-        Future.delayed(Duration(milliseconds: settings.update_duration))
-            .then((_) {
-      _updatesMap['id'] = sets.id;
-      send(0, wwwTaskUpdates + jsonEncode(_updatesMap));
-      File(p.join(sets.dir.path, 'state.json'))
-          .writeAsString(jsonEncode(stateMap));
-      _updatesFuture = null;
-      _updatesMap.clear();
-    });
-  }
+  /// Генератор Таблицы XLS
+  final KncXlsBuilder xls;
 
   /// Состояние задачи
-  int get state => _state;
-  int _state = 0;
-  set state(final int i) {
-    if (i == null || _state == i) {
-      return;
-    }
-    _state = i;
-    _update('state', state);
-  }
+  final JTaskState state;
 
-  /// Количество обработанных файлов с ошибками
-  int get errors => _errors;
-  int _errors = 0;
-  set errors(final int i) {
-    if (i == null || _errors == i) {
-      return;
-    }
-    _errors = i;
-    _update('errors', errors);
-  }
-
-  /// Количество найденных файлов для обработки
-  int get files => _files;
-  int _files = 0;
-  set files(final int i) {
-    if (i == null || _files == i) {
-      return;
-    }
-    _files = i;
-    _update('files', files);
-  }
-
-  /// Количество обработанных файлов с предупреждениями и/или ошибками
-  int get warnings => _warnings;
-  int _warnings = 0;
-  set warnings(final int i) {
-    if (i == null || _warnings == i) {
-      return;
-    }
-    _warnings = i;
-    _update('warnings', warnings);
-  }
-
-  /// Количество обработанных файлов
-  int get worked => _worked;
-  int _worked = 0;
-  set worked(final int i) {
-    if (i == null || _worked == i) {
-      return;
-    }
-    _worked = i;
-    _update('worked', worked);
-  }
+  /// Полный абсолютный путь к папке задачи
+  final String pathAbsolute;
 
   // final listOfErrors = <CErrorOnLine>[];
   // final listOfFiles = <C_File>[];
 
   /// Точка входа для изолята
   static Future<void> entryPoint(final TaskSpawnSets sets) async {
-    await IsoTask(sets).entryPointInClass();
+    await TaskIso._init(sets, p.join(TaskController.dirTasks.path, sets.id))
+        .entryPointInClass();
   }
 
   /// Точка входа изолята внутри класса
   Future<void> entryPointInClass() async {
-    await Future.wait([
-      dirTemp.create(),
-      dirLas.create(),
-      dirInk.create(),
-    ]);
+    await dirFiles.create();
+    await runSearchFiles();
+    await runWorkFiles();
+    await runGenerateTable();
+    state.state = NTaskState.completed;
+  }
 
+  /// Процедура поиска файлов
+  Future<void> runSearchFiles() async {
     /// Смена состояния на поиск файлов
-    state = NTaskState.searchFiles.index;
+    state.state = NTaskState.searchFiles;
     final fs = <Future>[];
     final func = listFilesGet(0, '');
     settings.path.forEach((element) {
@@ -156,25 +84,29 @@ class IsoTask extends SocketWrapper {
       }
     });
     await Future.wait(fs);
-    await File(p.join(sets.dir.path, 'files.txt')).writeAsString(filesSearche
-        .map((e) => '${e.type.toString()}\n${e.origin}\n${e.path}\n')
+    await File(p.join(pathAbsolute, 'files.txt')).writeAsString(files
+        .map((e) =>
+            '${e.type.toString().substring(e.type.runtimeType.toString().length)}\n'
+            '${e.origin}\n'
+            '${p.relative(e.path, from: pathAbsolute)}\n'
+            '${e.size}')
         .join('\n'));
-    state = NTaskState.workFiles.index;
-    final _l = filesSearche.length;
+  }
+
+  /// Процедура обработки файлов
+  Future<void> runWorkFiles() async {
+    state.state = NTaskState.workFiles;
+    final _l = files.length;
     for (var i = 0; i < _l; i++) {
       await handleFile(i);
     }
-    state = NTaskState.generateTable.index;
-    // TODO: Генерация таблицы
-    await _generateTable();
-    // xls.
-    state = NTaskState.completed.index;
   }
 
   /// Генерация таблицы
-  Future<void> _generateTable() async {
+  Future<void> runGenerateTable() async {
+    state.state = NTaskState.generateTable;
     final xlsDataIn = Directory(p.join('data', 'xls')).absolute;
-    final xlsDataOut = Directory(p.join(sets.dir.path, 'xls')).absolute;
+    final xlsDataOut = Directory(p.join(pathAbsolute, 'xls')).absolute;
     await copyDirectoryRecursive(xlsDataIn, xlsDataOut);
     final xlsSheet =
         File(p.join(xlsDataOut.path, 'xl', 'worksheets', 'sheet1.xml'));
@@ -192,19 +124,18 @@ class IsoTask extends SocketWrapper {
     final _addedFiles = <JOneFileData>[];
 
     /// Заполняем списки названий скважин и кривых
-    final _k = filesSearche.length;
+    final _k = files.length;
     for (var k = 0; k < _k; k++) {
-      final e = filesSearche[k];
+      final e = files[k];
 
       /// Пропускаем файлы без кривых
       if (e.curves == null) {
         continue;
-      }
-      if (e.curves != null && e.curves.length >= 2) {
-        final _length = e.curves.length;
+      } else if (e.curves!.length >= 2) {
+        final _length = e.curves!.length;
         for (var i = 0; i < _length; i++) {
-          final _name = e.curves[i].name;
-          final _well = e.curves[i].well;
+          final _name = e.curves![i].name;
+          final _well = e.curves![i].well;
           if (_name == '.ignore') {
             continue;
           }
@@ -222,19 +153,19 @@ class IsoTask extends SocketWrapper {
     }
 
     /// Заполняем строки
-    final _rows = <List<String>>[]; // WELL, INK, GISx2...
+    final _rows = <List<String?>>[]; // WELL, INK, GISx2...
     final _methodsLength = _methods.length;
     for (var k = 0; k < _k; k++) {
-      final e = filesSearche[k];
+      final e = files[k];
 
       /// Пропускаем файлы без кривых
       if (e.curves == null) {
         continue;
       }
-      final _length = e.curves.length;
+      final _length = e.curves!.length;
 
       for (var i = 0; i < _length; i++) {
-        final _curve = e.curves[i];
+        final _curve = e.curves![i];
         final _name = _curve.name;
         final _well = _curve.well;
 
@@ -248,7 +179,7 @@ class IsoTask extends SocketWrapper {
 
         /// Проверяем есть ли совпадения с уже добавленными в таблицу данными
         if (_addedFiles.isNotEmpty &&
-            _addedFiles.any((e) => e.curves.any((c) => c == _curve))) {
+            _addedFiles.any((e) => e.curves!.any((c) => c == _curve))) {
           continue;
         }
 
@@ -259,13 +190,13 @@ class IsoTask extends SocketWrapper {
         /// и выбранная колонка была пустая, иначе создаём новую строку
         var _row = _rows.firstWhere((_e) => _e[0] == _well && _e[_i] == null,
             orElse: () {
-          _rows.add(List(_methodsLength * 2 + 2));
+          _rows.add(List.filled(_methodsLength * 2 + 2, null));
           return _rows.last..[0] = _well;
         });
 
         /// Записываем значения кривых в эти ячейки
-        _row[_i] = e.curves[i].strt;
-        _row[_i + 1] = e.curves[i].stop;
+        _row[_i] = e.curves![i].strt.toString();
+        _row[_i + 1] = e.curves![i].stop.toString();
       }
     }
 
@@ -311,54 +242,54 @@ class IsoTask extends SocketWrapper {
 
     final xlsPath = xlsDataOut.path + '.xlsx';
     await zip(xlsDataOut.path, xlsPath);
-    _update('raport', xlsPath);
+    state.raport = xlsPath;
   }
-
-  int _filesSearchId = 0;
 
   /// Обработка файлов во время поиска всех файлов
   Future<void> handleFileSearch(final File file, final String origin) async {
     final ext = p.extension(file.path).toLowerCase();
     if (settings.ext_files.contains(ext)) {
       /// Если файл необходимого расширения
-      final i = _filesSearchId;
-      _filesSearchId++;
-      files = _filesSearchId;
-      final ph =
-          p.join(dirTemp.path, i.toRadixString(36).padLeft(8, '0') + ext);
+      final i = state.files;
+      state.files = state.files + 1;
+      final pathToWorkingCopy =
+          p.join(dirFiles.path, i.toRadixString(36).padLeft(8, '0') + ext);
 
-      filesSearche.add(JOneFileData(
-          ph, origin, NOneFileDataType.unknown, await file.length()));
+      files.add(JOneFileData(pathToWorkingCopy, origin,
+          NOneFileDataType.unknown, await file.length()));
 
-      await tryFunc(() => file.copy(ph), (e) => errorsOut.writeln(e));
+      await tryFunc(() => file.copy(pathToWorkingCopy),
+          onError: errorsOut.writeln);
     }
   }
 
   /// Обрабтчик файлов
   Future<void> handleFile(final int _i) async {
-    final fileData = filesSearche[_i];
+    final fileData = files[_i];
     final file = File(fileData.path);
-    final data = await tryFunc<List<int>>(() => file.readAsBytes(), (e) {
+    final data =
+        await tryFunc<List<int>>(() => file.readAsBytes(), onError: (e) {
       errorsOut.writeln(e);
-      return null;
+      return [];
     });
 
-    /// Если не удалось считать данные файла
-    if (data == null) {
+    /// Если не удалось считать данные файла или файл пустой,
+    /// то пропускаем его
+    if (data.isEmpty) {
       return;
     }
 
-    JOneFileData fileDataNew;
+    JOneFileData? fileDataNew;
     // проверка на совпадения сигнатур
     if (signatureBegining(data, signatureDoc)) {
       final _fileDocxPath = file.path + '.docx';
       await doc2x(file.path, _fileDocxPath);
       if (await File(_fileDocxPath).exists()) {
-        filesSearche[_i] = JOneFileData(
+        files[_i] = JOneFileData(
             _fileDocxPath, fileData.origin, fileData.type, fileData.size);
         await handleFile(_i);
       } else {
-        worked++;
+        state.worked = state.worked + 1;
       }
       return;
     }
@@ -368,7 +299,7 @@ class IsoTask extends SocketWrapper {
         final arch = await unzip(file.path);
         final _dirName = fileData.path + '.dir';
         if (arch.exitCode == 0) {
-          final _dir = Directory(arch.pathOut);
+          final _dir = Directory(arch.pathOut!);
           await copyDirectoryRecursive(_dir, Directory(_dirName));
           // TODO: обработать docx файл
           await _dir.delete(recursive: true);
@@ -376,7 +307,7 @@ class IsoTask extends SocketWrapper {
           errorsOut.writeln('!Archive unzip ${arch.pathIn} => ${arch.pathOut}');
           errorsOut.writeln(arch);
         }
-        worked++;
+        state.worked = state.worked + 1;
         return;
       }
     }
@@ -385,37 +316,39 @@ class IsoTask extends SocketWrapper {
         e == 0x7f || (e <= 0x1f && (e != 0x09 && e != 0x0A && e != 0x0D)))) {
       // TODO: неизвестный бинарный файл
       // Либо база данных
-      worked++;
+      state.worked = state.worked + 1;
       return null;
     }
     // Подбираем кодировку
     final encodesRaiting = convGetMappingRaitings(sets.charMaps, data);
     final encode = convGetMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
-    final buffer = String.fromCharCodes(data.map(
-        (i) => i >= 0x80 ? sets.charMaps[encode][i - 0x80].codeUnitAt(0) : i));
+    final buffer = convDecode(data, sets.charMaps[encode]!);
 
     // Пытаемся обработать к LAS файл
     if ((fileDataNew = await parserFileLas(this, fileData, buffer, encode)) !=
         null) {
-      if (fileDataNew.notes.any((e) => e.text.startsWith('!E'))) {
-        errors++;
-      } else if (fileDataNew.notes.any((e) => e.text.startsWith('!W'))) {
-        warnings++;
+      if (fileDataNew!.notes != null) {
+        if ((fileDataNew.notesError ?? 0) > 0) {
+          state.errors = state.errors + 1;
+        }
+        if ((fileDataNew.notesWarnings ?? 0) > 0) {
+          state.warnings = state.warnings + 1;
+        }
       }
-      await tryFunc<File>(
-          () => File(fileDataNew.path + '.json')
-              .writeAsString(jsonEncode(fileDataNew.toJsonFull())), (e) {
+      await tryFunc<File?>(
+          () => File(fileDataNew!.path + '.json')
+              .writeAsString(jsonEncode(fileDataNew)), onError: (e) {
         errorsOut.writeln('!Save FileData');
         errorsOut.writeln(e);
         return null;
       });
-      filesSearche[_i] = fileDataNew;
-      worked++;
+      files[_i] = fileDataNew;
+      state.worked = state.worked + 1;
       return;
     }
     // TODO: обработать неизвестный текстовый файл
-    worked++;
+    state.worked = state.worked + 1;
   }
 
   /// == INK FILES == Begin
@@ -501,8 +434,8 @@ class IsoTask extends SocketWrapper {
               final arch = await unzip(entity.path);
               if (arch.exitCode == 0) {
                 await listFilesGet(iArchDepth + 1, pathToArch + relPath)(
-                    Directory(arch.pathOut), '');
-                await Directory(arch.pathOut).delete(recursive: true);
+                    Directory(arch.pathOut!), '');
+                await Directory(arch.pathOut!).delete(recursive: true);
               } else {
                 errorsOut.writeln(
                     '!Archive unzip ${arch.pathIn} => ${arch.pathOut}');
@@ -533,33 +466,38 @@ class IsoTask extends SocketWrapper {
 
   /// Преобразует данные
   Future<int> doc2x(final String path2doc, final String path2out) =>
-      requestOnce('$msgDoc2x$path2doc$msgRecordSeparator$path2out')
-          .then((msg) => int.tryParse(msg));
+      requestOnce(JMsgDoc2X(path2doc, path2out).toString())
+          .then((msg) => int.parse(msg));
 
   /// Запекает данные в zip архиф с помощью 7zip
   Future<ArchiverOutput> zip(
           final String pathToData, final String pathToOutput) =>
-      requestOnce('$msgZip$pathToData$msgRecordSeparator$pathToOutput')
+      requestOnce(JMsgZip(pathToData, pathToOutput).toString())
           .then((value) => ArchiverOutput.fromWrapperMsg(value));
 
   /// Распаковывает архив [pathToArchive]
   Future<ArchiverOutput> unzip(final String pathToArchive) =>
-      requestOnce('$msgUnzip$pathToArchive')
+      requestOnce(JMsgUnzip(pathToArchive).toString())
           .then((value) => ArchiverOutput.fromWrapperMsg(value));
 
   @override
   String toString() =>
       '$runtimeType{${sets.id}}(${settings.name})[${settings.user}]';
-  IsoTask._init(this.sets)
+  TaskIso._init(this.sets, this.pathAbsolute)
       : settings = sets.settings,
-        dirLas = Directory(p.join(sets.dir.path, 'las')),
-        dirInk = Directory(p.join(sets.dir.path, 'ink')),
-        dirTemp = Directory(p.join(sets.dir.path, 'temp')),
-        errorsOut = File(p.join(sets.dir.path, 'errors.txt'))
+        state = JTaskState({'id': sets.id},
+            Duration(milliseconds: sets.settings.update_duration)),
+        dirFiles =
+            Directory(p.join(TaskController.dirTasks.path, sets.id, 'temp')),
+        xls = KncXlsBuilder(
+            Directory(p.join(TaskController.dirTasks.path, sets.id, 'raport'))),
+        errorsOut = File(p.join(sets.id, 'errors.txt'))
             .openWrite(encoding: utf8, mode: FileMode.writeOnlyAppend)
               ..writeCharCode(unicodeBomCharacterRune),
         super((msg) => sets.sendPort.send([sets.id, msg])) {
     print('$this created');
+    instance = this;
+    state.onUpdate = () => send(0, JMsgTaskUpdate(state).toString());
 
     /// Обрабатываем все сообщения через Wrapper
     receivePort.listen((final msg) {
@@ -574,20 +512,18 @@ class IsoTask extends SocketWrapper {
     /// Отвечаем на все запросы на получение заметок файла, где аругментом
     /// указан путь к рабочей копии файла, кодируем их в [json]
     waitMsgAll(wwwFileNotes).listen((msg) {
-      send(msg.i,
-          jsonEncode(filesSearche.firstWhere((e) => e.path == msg.s).notes));
+      send(msg.i, jsonEncode(files.firstWhere((e) => e.path == msg.s).notes));
     });
 
     /// Отвечаем на все запросы получения списка файлов задачи, кодируем их в
     /// [json]
     waitMsgAll(wwwTaskGetFiles).listen((msg) {
-      send(msg.i, jsonEncode(filesSearche));
+      send(msg.i, jsonEncode(files));
     });
 
     /// Получение списка файлов `file.path`
     waitMsgAll(wwwGetOneFileData).listen((msg) {
-      final _ofd =
-          filesSearche.firstWhere((e) => e.path == msg.s, orElse: () => null);
+      final _ofd = files.firstWhere((e) => e.path == msg.s, orElse: () => null);
       if (_ofd != null) {
         send(msg.i, jsonEncode(_ofd.toJsonFull()));
       } else {
@@ -606,9 +542,7 @@ class IsoTask extends SocketWrapper {
     /// отправляем порт для связи с запущенным изолятом
     sets.sendPort.send([sets.id, receivePort.sendPort]);
   }
-  static IsoTask _instance;
-  factory IsoTask([final TaskSpawnSets sets]) =>
-      _instance ?? (_instance = IsoTask._init(sets));
+  static late TaskIso instance;
 
   // /// Загрузкить все данные
   // Future get loadAll => Future.wait([loadLasIgnore(), loadInkDbfMap()]);
