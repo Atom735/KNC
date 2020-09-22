@@ -4,20 +4,22 @@ description: A sample command-line application.
 # homepage: https://www.example.com
 
 environment:
-  sdk: '>=2.10.0-110.0.dev <2.11.0'
+  sdk: '^2.9.0'
 
 dependencies:
   mime: ^0.9.7
   crclib: ^1.1.0
   xml: ^4.2.0
   path: ^1.7.0
-  mdc_web: ^0.4.1
   crypto: ^2.1.5
+  mdc_web: ^0.4.1
+
+
 
 dev_dependencies:
-  pedantic: ^1.10.0-nullsafety
-  test: ^1.16.0-nullsafety.4
-  build_runner: ^1.10.2
+  pedantic: ^1.9.0
+  test: ^1.15.0
+  build_runner: ^1.9.0
   build_web_compilers: ^2.11.0
-  sass_builder: ^2.1.2
+  sass_builder: ^2.1.0
   nnbd_migration: ^0.1.0

@@ -10,6 +10,9 @@ include: package:pedantic/analysis_options.yaml
 #     - camel_case_types
 
 analyzer:
-  enable-experiment:
-    - non-nullable
   exclude:
+    - .vscode/**
+    - data/**
+    - node_modules/**
+    - public/**
+    - src/**
