@@ -9,6 +9,11 @@
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "incremental": true,
+    "lib": [
+      "DOM",
+      "WebWorker"
+    ]
   }
 }

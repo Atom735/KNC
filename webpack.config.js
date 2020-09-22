@@ -1,7 +1,10 @@
 const path = require('path');
 
 module.exports = {
-    entry: './web/ts/index.tsx',
+    entry: {
+        app: './web/ts/index.tsx',
+        sw: './web/sw/index.tsx',
+    },
     devtool: 'inline-source-map',
     module: {
         rules: [
@@ -16,7 +19,7 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        filename: 'bundle.js',
+        filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'web'),
     },
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development'

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import theme from './theme';
 import { makeStyles, Theme, createStyles, ThemeProvider } from '@material-ui/core/styles';
 import useScrollTrigger from '@material-ui/core/useScrollTrigger';
@@ -11,9 +11,11 @@ import Box from '@material-ui/core/Box';
 import Container from '@material-ui/core/Container';
 import Fab from '@material-ui/core/Fab';
 import Zoom from '@material-ui/core/Zoom';
-
+import Link from '@material-ui/core/Link';
 
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+
+import SignIn from './Signin';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -58,7 +60,40 @@ function ScrollTop() {
 }
 
 
-export default function App() {
+function Copyright() {
+  return (
+    <Typography variant="body2" color="textSecondary" align="center">
+      {'Copyright © '}
+      <Link color="inherit" href="https://github.com/Atom735/KNC/projects/3">
+        Atom735
+      </Link>{' '}
+      {new Date().getFullYear()}
+      {'.'}
+    </Typography>
+  );
+}
+
+
+// our components props accept a number for the initial value
+const Counter: FunctionComponent<{ initial?: number }> = ({ initial = 0 }) => {
+  // since we pass a number here, clicks is going to be a number.
+  // setClicks is a function that accepts either a number or a function returning
+  // a number
+  const [clicks, setClicks] = useState(initial);
+  return <>
+    <p>Clicks: {clicks}</p>
+    <button onClick={() => setClicks(clicks + 1)}>+</button>
+    <button onClick={() => setClicks(clicks - 1)}>-</button>
+  </>
+}
+
+const App: FunctionComponent = () => {
+  /// Указанная ссылка в приложении
+  const [location, setLocation] = useState(window.location);
+  let page;
+  if (location.pathname.startsWith('/signin')) {
+    page = <SignIn />;
+  }
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -68,19 +103,12 @@ export default function App() {
         </Toolbar>
       </AppBar>
       <Toolbar id="back-to-top-anchor" />
-      <Container>
-        <Box my={2}>
-          {[...new Array(12)]
-            .map(
-              () => `Cras mattis consectetur purus sit amet fermentum.
-Cras justo odio, dapibus ac facilisis in, egestas eget quam.
-Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
-Praesent commodo cursus magna, vel scelerisque nisl consectetur et.`
-            )
-            .join('\n')}
-        </Box>
-      </Container>
+      {page}
+      <Box mt={8}>
+        <Copyright />
+      </Box>
       <ScrollTop />
     </ThemeProvider>
   );
 }
+export default App;

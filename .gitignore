@@ -16,6 +16,7 @@ data/users_.json
 tasks
 
 web/ts/*.js
+*bundle.js
 
 
 # See https://www.dartlang.org/guides/libraries/private-files

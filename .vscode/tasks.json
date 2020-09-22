@@ -45,6 +45,16 @@
             "group": "build"
         },
         {
+            "label": "webpack build",
+            "type": "shell",
+            "command": "npx webpack",
+            "problemMatcher": [],
+            "options": {
+                "cwd": "."
+            },
+            "group": "build"
+        },
+        {
             "label": "webdev build",
             "type": "shell",
             "command": "webdev",
