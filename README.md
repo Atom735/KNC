@@ -15,3 +15,8 @@
 * [ ] разбираем файлы баз данных DBF
 
 * [ ] формируем таблицу XLSX
+
+# Запускаем препроцессор JSX
+```
+npx babel --watch src --out-dir . --presets react-app/prod
+```

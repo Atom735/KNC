@@ -10,6 +10,7 @@ import 'src/DialogLogin.dart';
 import 'src/DialogRegistration.dart';
 import 'src/DialogUser.dart';
 
+/// webdev serve --auto refresh --debug --launch-in-chrome --log-requests
 void main() async {
   autoInit();
   await Future.wait([
