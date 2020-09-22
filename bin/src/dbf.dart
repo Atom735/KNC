@@ -7,11 +7,11 @@ import 'dart:typed_data';
 /// http://www.autopark.ru/ASBProgrammerGuide/DBFSTRUC.HTM
 
 class DbfFieldDesc {
-  late String name;
-  late String type;
-  late int address;
-  late int length;
-  late int decimalCount;
+  /*late*/ String name;
+  /*late*/ String type;
+  /*late*/ int address;
+  /*late*/ int length;
+  /*late*/ int decimalCount;
 
   /// Загружает данные из буффера байтов
   ///
@@ -44,22 +44,22 @@ class DbfFile {
   /// Путь к оригиналу файла
   final String origin;
 
-  late int version;
-  late int lastUpdateYY;
-  late int lastUpdateMM;
-  late int lastUpdateDD;
-  late int numberOfRecords;
-  late int lengthOfHeader;
-  late int lengthOfEachRecord;
-  late int incompleteTransac;
-  late int ecryptionFlag;
-  late int freeRecordThread;
-  late int mdxFlag;
-  late int laguageDriver;
+  /*late*/ int version;
+  /*late*/ int lastUpdateYY;
+  /*late*/ int lastUpdateMM;
+  /*late*/ int lastUpdateDD;
+  /*late*/ int numberOfRecords;
+  /*late*/ int lengthOfHeader;
+  /*late*/ int lengthOfEachRecord;
+  /*late*/ int incompleteTransac;
+  /*late*/ int ecryptionFlag;
+  /*late*/ int freeRecordThread;
+  /*late*/ int mdxFlag;
+  /*late*/ int laguageDriver;
 
   final fields = <DbfFieldDesc>[];
 
-  late List<List<String>> records;
+  /*late*/ List<List<String>> records;
 
   DbfFile(this.origin);
 

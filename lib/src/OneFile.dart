@@ -85,7 +85,7 @@ class JOneFileLineNote {
   static const jsonKey_text = 'text';
 
   /// Доп. данные заметки (обычно то что записано в строке)
-  final String? data;
+  final String /*?*/ data;
   static const jsonKey_data = 'data';
 
   const JOneFileLineNote(this.line, this.column, this.text, [this.data]);
@@ -135,23 +135,23 @@ class JOneFileData {
   static const jsonKey_size = 'size';
 
   /// Кодировка текстового файла
-  final String? encode;
+  final String /*?*/ encode;
   static const jsonKey_encode = 'encode';
 
   /// Кривые найденные в файле
-  final List<JOneFilesDataCurve>? curves;
+  final List<JOneFilesDataCurve> /*?*/ curves;
   static const jsonKey_curves = 'curves';
 
   /// Заметки файла
-  final List<JOneFileLineNote>? notes;
+  final List<JOneFileLineNote> /*?*/ notes;
   static const jsonKey_notes = 'notes';
 
   /// Количество ошибок
-  final int? notesError;
+  final int /*?*/ notesError;
   static const jsonKey_notesError = 'n-errors';
 
   /// Количество предупрежений
-  final int? notesWarnings;
+  final int /*?*/ notesWarnings;
   static const jsonKey_notesWarnings = 'n-warn';
 
   static const empty = JOneFileData('', '', NOneFileDataType.unknown, 0);
@@ -166,15 +166,15 @@ class JOneFileData {
         origin = m[jsonKey_origin] as String,
         type = NOneFileDataType.values[m[jsonKey_type] as int],
         size = m[jsonKey_size] as int,
-        encode = m[jsonKey_encode] as String?,
-        curves = (m[jsonKey_curves] as List?)
+        encode = m[jsonKey_encode] as String /*?*/,
+        curves = (m[jsonKey_curves] as List /*?*/)
             ?.map((e) => JOneFilesDataCurve.byJson(e))
             .toList(growable: false),
-        notes = (m[jsonKey_notes] as List?)
+        notes = (m[jsonKey_notes] as List /*?*/)
             ?.map((e) => JOneFileLineNote.byJson(e))
             .toList(growable: false),
-        notesError = m[jsonKey_notesError] as int?,
-        notesWarnings = m[jsonKey_notesWarnings] as int?;
+        notesError = m[jsonKey_notesError] as int /*?*/,
+        notesWarnings = m[jsonKey_notesWarnings] as int /*?*/;
   Map<String, dynamic> toJson() => {
         jsonKey_path: path,
         jsonKey_origin: origin,

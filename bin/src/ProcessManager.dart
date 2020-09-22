@@ -10,7 +10,7 @@ class _AsyncTask {
   final completer = Completer<ProcessResult>();
 
   /// Функция исполнения задачи
-  final Future<ProcessResult> Function()? func;
+  final Future<ProcessResult> Function() /*?*/ func;
 
   /// Флаг выполнения
   bool run = false;
@@ -44,12 +44,12 @@ class ProcessManager {
 
   /// Добавляет процесс в очередь на запуск
   Future<ProcessResult> run(String executable, List<String> arguments,
-      {String? workingDirectory,
-      Map<String, String>? environment,
+      {String /*?*/ workingDirectory,
+      Map<String, String> /*?*/ environment,
       bool includeParentEnvironment = true,
       bool runInShell = false,
-      Encoding? stdoutEncoding = systemEncoding,
-      Encoding? stderrEncoding = systemEncoding}) {
+      Encoding /*?*/ stdoutEncoding = systemEncoding,
+      Encoding /*?*/ stderrEncoding = systemEncoding}) {
     final task = _AsyncTask(() => Process.run(executable, arguments,
         workingDirectory: workingDirectory,
         environment: environment,
@@ -70,7 +70,7 @@ class ProcessManager {
       if (task.run == false) {
         task.run = true;
         if (task.func != null) {
-          task.func!().then((value) {
+          task.func /*!*/ ().then((value) {
             task.completer.complete(value);
             _tasks.remove(task);
             tryProc();

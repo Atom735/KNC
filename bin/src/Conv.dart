@@ -10,7 +10,7 @@ import 'ProcessManager.dart';
 /// Данные о подборе кодировок и сами данные файла
 class ConvDecodeData {
   /// Значение рейтинга кодировок
-  final Map<String, int>? codePageRaiting;
+  final Map<String, int> /*?*/ codePageRaiting;
 
   /// Конечная подобранная кодировка
   final String codePage;
@@ -46,7 +46,7 @@ class Conv extends ProcessManager {
     print('$this created');
     _instance = this;
   }
-  static late Conv _instance;
+  static /*late*/ Conv _instance;
   factory Conv() => _instance;
 
   /// создаёт экземпляр объекта
@@ -69,15 +69,16 @@ class Conv extends ProcessManager {
 
   /// Подбирает кодировку и конвертирует в строку, подобранная кодировка
   /// будет записана в переменную [this.codePage]
-  ConvDecodeData decode(final List<int> bytes, [final String? _codePage]) {
+  ConvDecodeData decode(final List<int> bytes, [final String /*?*/ _codePage]) {
     if (_codePage == null) {
       // Подбираем кодировку
       final codePageRaiting = getMappingRaitings(bytes);
       final codePage = convGetMappingMax(codePageRaiting);
-      return ConvDecodeData(
-          convDecode(bytes, charMaps[codePage]!), codePage, codePageRaiting);
+      return ConvDecodeData(convDecode(bytes, charMaps[codePage] /*!*/),
+          codePage, codePageRaiting);
     } else {
-      return ConvDecodeData(convDecode(bytes, charMaps[_codePage]!), _codePage);
+      return ConvDecodeData(
+          convDecode(bytes, charMaps[_codePage] /*!*/), _codePage);
     }
   }
 
@@ -96,7 +97,8 @@ class Conv extends ProcessManager {
   /// Распаковывает архив [pathToArchive] в папку [pathToOutDir] если она указана.
   /// Если папка [pathToOutDir] не задана, то будет создана
   /// внутреняя временная папка, которая будет удалена по завершению работ
-  Future<ArchiverOutput> unzip(String pathToArchive, [String? pathToOutDir]) =>
+  Future<ArchiverOutput> unzip(String pathToArchive,
+          [String /*?*/ pathToOutDir]) =>
       pathToOutDir == null
           ? (dirTemp
               .createTemp('arch.')
@@ -138,7 +140,7 @@ class Conv extends ProcessManager {
                           file is File &&
                           p.basename(file.path).toLowerCase() == 'wordconv.exe')
                   : null)))
-          .then((list) => list.firstWhere((element) => element != null)!)
+          .then((list) => list.firstWhere((element) => element != null) /*!*/)
           .then((entity) => entity.path);
 
   /// Поиск кодировок
@@ -181,8 +183,8 @@ class Conv extends ProcessManager {
       return ArchiverOutput(
           exitCode: exitCode, pathIn: pathIn, pathOut: pathOut);
     }
-    String? stdOut;
-    String? stdErr;
+    String /*?*/ stdOut;
+    String /*?*/ stdErr;
     if (res.stdout != null) {
       if (res.stdout is List<int>) {
         stdOut = decode(res.stdout).data;

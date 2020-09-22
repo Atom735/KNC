@@ -19,7 +19,7 @@ class SocketWrapper {
   final String streamCloseMsg;
   final String msgIdBegin;
   final String msgIdEnd;
-  Future? signal;
+  Future /*?*/ signal;
 
   int _requestID = 0;
   final _listOfRequest = <int, Completer<String>>{};

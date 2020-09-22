@@ -1,7 +1,7 @@
 import 'dart:html';
 
 main(List<String> args) {
-  print('Hello World!');
+  print('Hello World/*!*/');
 
   window.onPopState.listen((event) {
     print(event.state);

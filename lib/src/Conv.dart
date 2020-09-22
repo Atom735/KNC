@@ -4,7 +4,7 @@ import 'freq_2letters.dart';
 String convGetMappingMax(final Map<String, int> r) {
   var o = '';
   r.forEach((final k, final v) {
-    if (r[o] == null || r[o]! < v) {
+    if (r[o] == null || r[o] /*!*/ < v) {
       o = k;
     }
   });
@@ -22,7 +22,7 @@ Map<String, int> convGetMappingRaitings(
   for (final byte in bytes) {
     if (byte >= 0x80 && byteLast >= 0x80) {
       map.forEach((final k, final v) {
-        r[k] = r[k]! + freq_2letters(v[byteLast - 0x80] + v[byte - 0x80]);
+        r[k] = r[k] /*!*/ + freq_2letters(v[byteLast - 0x80] + v[byte - 0x80]);
       });
     }
     byteLast = byte;

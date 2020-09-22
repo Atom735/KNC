@@ -8,7 +8,7 @@ const map = <String, List<String>>{
 };
 
 Future main(List<String> args) async {
-  print('sass begin watch!');
+  print('sass begin watch/*!*/');
   final packageResolver =
       await SyncPackageResolver.loadConfig(Uri.file('.packages'));
   final dir = Directory(p.join(Directory.current.path, 'web'));

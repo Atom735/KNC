@@ -9,6 +9,12 @@ import 'Client.dart';
 import 'Conv.dart';
 import 'TaskController.dart';
 
+/// RegExp for migrate
+/// ```
+/// (?<!\*)((?:\brequired\b)|(?:\blate\b)|(?:(?<=[\w\]\)>])(?:(?:!)|(?:\?(?!\.)))))
+/// ```
+/// /*$1*/
+
 class App {
   /// Порт прослушиваемый главным изолятом
   final receivePort = ReceivePort();
@@ -32,7 +38,7 @@ class App {
           if (completers[msg[0]] != null) {
             /// Если задача запущена а [TaskController] для неё ещё не
             /// существует
-            completers[msg[0]]!.future.then((value) {
+            completers[msg[0]] /*!*/ .future.then((value) {
               TaskController.list[msg[0]]?.recv(msg[1]);
               completers.remove(msg[0]);
             });

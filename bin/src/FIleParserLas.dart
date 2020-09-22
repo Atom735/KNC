@@ -2,7 +2,7 @@ import 'package:knc/knc.dart';
 
 import 'TaskIso.dart';
 
-Future<JOneFileData?> parserFileLas(final TaskIso kncTask,
+Future<JOneFileData /*?*/ > parserFileLas(final TaskIso kncTask,
     final JOneFileData fileData, final String data, final String encode,
     {final Map<String, String> mapWells = const {},
     final Map<String, String> mapCurves = const {}}) async {
@@ -17,50 +17,50 @@ Future<JOneFileData?> parserFileLas(final TaskIso kncTask,
   var _noteWarnings = 0;
   var _noteErrors = 0;
 
-  void _addNoteError(final String _text, [final String? _data]) {
+  void _addNoteError(final String _text, [final String /*?*/ _data]) {
     _notes.add(JOneFileLineNote.error(iLine, iColumn, _text, _data));
     _noteErrors++;
   }
 
-  void _addNoteWarning(final String _text, [final String? _data]) {
+  void _addNoteWarning(final String _text, [final String /*?*/ _data]) {
     _notes.add(JOneFileLineNote.warn(iLine, iColumn, _text, _data));
     _noteWarnings++;
   }
 
-  void _addNoteParsed(final List<String> _text, [final String? _data]) {
+  void _addNoteParsed(final List<String> _text, [final String /*?*/ _data]) {
     _notes.add(JOneFileLineNote.parse(
         iLine, iColumn, _text.join(msgRecordSeparator), _data));
   }
 
-  int? _v_iSymbol;
-  int? _v_vers;
-  bool? _v_wrap;
+  int /*?*/ _v_iSymbol;
+  int /*?*/ _v_vers;
+  bool /*?*/ _v_wrap;
 
-  int? _w_iSymbol;
-  String? _w_strt;
-  double? _w_strt_n;
-  String? _w_stop;
-  double? _w_stop_n;
-  String? _w_step;
-  double? _w_step_n;
-  String? _w_null;
-  double? _w_null_n;
-  String? _w_well;
-  String? _w_well_desc;
+  int /*?*/ _w_iSymbol;
+  String /*?*/ _w_strt;
+  double /*?*/ _w_strt_n;
+  String /*?*/ _w_stop;
+  double /*?*/ _w_stop_n;
+  String /*?*/ _w_step;
+  double /*?*/ _w_step_n;
+  String /*?*/ _w_null;
+  double /*?*/ _w_null_n;
+  String /*?*/ _w_well;
+  String /*?*/ _w_well_desc;
 
-  int? _c_iSymbol;
+  int /*?*/ _c_iSymbol;
   final _c_mnems = <String>[];
-  late List<String> _c_strt_s;
-  late List<String> _c_stop_s;
-  late List<double> _c_strt_n;
-  late List<double> _c_stop_n;
-  late List<int> _c_strt_i;
-  late List<int> _c_stop_i;
+  /*late*/ List<String> _c_strt_s;
+  /*late*/ List<String> _c_stop_s;
+  /*late*/ List<double> _c_strt_n;
+  /*late*/ List<double> _c_stop_n;
+  /*late*/ List<int> _c_strt_i;
+  /*late*/ List<int> _c_stop_i;
 
-  int? _a_iSymbol;
+  int /*?*/ _a_iSymbol;
   var _a_iNum = 0;
-  late List<List<String>> _a_data_s;
-  late List<List<double>> _a_data_n;
+  /*late*/ List<List<String>> _a_data_s;
+  /*late*/ List<List<double>> _a_data_n;
 
   void rNextSymbol() {
     iSymbol++;
@@ -425,7 +425,7 @@ Future<JOneFileData?> parserFileLas(final TaskIso kncTask,
             _colon ? iLineEndSymbol : iSeparatorColon + 1, iLineEndSymbol)
         .trim();
     // TODO: обработка well
-    _addNoteParsed(['WELL', _w_well!]);
+    _addNoteParsed(['WELL', _w_well /*!*/]);
   }
 
   bool rSectionW() {
@@ -661,30 +661,30 @@ Future<JOneFileData?> parserFileLas(final TaskIso kncTask,
   while (iSymbol < _dataLength && !rBeginOfSection()) {}
 
   if (mapWells[_w_well] != null) {
-    _w_well = mapWells[_w_well]!;
+    _w_well = mapWells[_w_well] /*!*/;
     if (_w_well == '.ignore') {
       _w_well = _w_well_desc;
     }
   }
   if (mapWells[_w_well] != null) {
-    _w_well = mapWells[_w_well]!;
+    _w_well = mapWells[_w_well] /*!*/;
   }
 
   final _l = _c_mnems.length;
   for (var i = 0; i < _l; i++) {
     if (mapCurves[_c_mnems[i]] != null) {
-      _c_mnems[i] = mapCurves[_c_mnems[i]]!;
+      _c_mnems[i] = mapCurves[_c_mnems[i]] /*!*/;
     }
   }
 
   final curves = List<JOneFilesDataCurve>.generate(
       _c_mnems.length,
       (_index) => JOneFilesDataCurve(
-          _w_well!,
+          _w_well /*!*/,
           _c_mnems[_index],
           _c_strt_n[_index],
           _c_stop_n[_index],
-          _w_step_n!,
+          _w_step_n /*!*/,
           List.generate(_c_stop_i[_index] - _c_strt_i[_index],
               (_i) => _a_data_n[_index][_i + _c_strt_i[_index]])));
 

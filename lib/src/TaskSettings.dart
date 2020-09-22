@@ -5,7 +5,7 @@ class JTaskSettings {
   static const jsonKey_user = 'user';
 
   /// Почта пользователей которым доступна задача
-  final List<String>? users;
+  final List<String> /*?*/ users;
   static const jsonKey_users = 'users';
   static const def_users = ['@guest'];
 
@@ -58,7 +58,7 @@ class JTaskSettings {
   static const def_update_duration = 333;
 
   JTaskSettings(
-      {required this.user,
+      {/*required*/ this.user,
       this.users = def_users,
       this.name = def_name,
       this.path = def_path,
@@ -70,22 +70,22 @@ class JTaskSettings {
 
   JTaskSettings.fromJson(final Map<String, dynamic> m)
       : user = m[jsonKey_user] as String,
-        users = (m[jsonKey_users] as List?)
+        users = (m[jsonKey_users] as List /*?*/)
                 ?.map((e) => e as String)
                 .toList(growable: false) ??
             def_users,
-        name = (m[jsonKey_name] as String?) ?? def_name,
-        path = (m[jsonKey_path] as List?)
+        name = (m[jsonKey_name] as String /*?*/) ?? def_name,
+        path = (m[jsonKey_path] as List /*?*/)
                 ?.map((e) => e as String)
                 .toList(growable: false) ??
             def_path,
-        ext_ar = (m[jsonKey_ext_ar] as String?)?.split(';') ?? def_ext_ar,
+        ext_ar = (m[jsonKey_ext_ar] as String /*?*/)?.split(';') ?? def_ext_ar,
         ext_files =
-            (m[jsonKey_ext_files] as String?)?.split(';') ?? def_ext_files,
-        maxsize_ar = (m[jsonKey_maxsize_ar] as int?) ?? def_maxsize_ar,
-        maxdepth_ar = (m[jsonKey_maxdepth_ar] as int?) ?? def_maxdepth_ar,
+            (m[jsonKey_ext_files] as String /*?*/)?.split(';') ?? def_ext_files,
+        maxsize_ar = (m[jsonKey_maxsize_ar] as int /*?*/) ?? def_maxsize_ar,
+        maxdepth_ar = (m[jsonKey_maxdepth_ar] as int /*?*/) ?? def_maxdepth_ar,
         update_duration =
-            (m[jsonKey_update_duration] as int?) ?? def_update_duration;
+            (m[jsonKey_update_duration] as int /*?*/) ?? def_update_duration;
 
   Map<String, dynamic> toJson() => {
         jsonKey_user: user,

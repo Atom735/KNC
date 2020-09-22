@@ -37,10 +37,10 @@ class MDCSnackbar extends MDCComponent {
   static const openingEvent = 'MDCDialog:opening';
   static const openedEvent = 'MDCDialog:opened';
 
-  /// `event.detail`: {action: string?}
+  /// `event.detail`: {action: string/*?*/}
   static const closingEvent = 'MDCDialog:closing';
 
-  /// `event.detail`: {action: string?}
+  /// `event.detail`: {action: string/*?*/}
   static const closedEvent = 'MDCDialog:closed';
 }
 

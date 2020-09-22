@@ -71,8 +71,8 @@ class TaskIso extends SocketWrapper {
     settings.path.forEach((element) {
       if (element.isNotEmpty) {
         print('$this scan $element');
-        fs.add(FileSystemEntity.type(element)
-            .then((value) => value == FileSystemEntityType.file
+        fs.add(FileSystemEntity.type(element).then((value) =>
+            value == FileSystemEntityType.file
                 ? func(File(element), element)
                 : value == FileSystemEntityType.directory
                     ? func(Directory(element), element)
@@ -127,11 +127,11 @@ class TaskIso extends SocketWrapper {
       /// Пропускаем файлы без кривых
       if (e.curves == null) {
         continue;
-      } else if (e.curves!.length >= 2) {
-        final _length = e.curves!.length;
+      } else if (e.curves /*!*/ .length >= 2) {
+        final _length = e.curves /*!*/ .length;
         for (var i = 0; i < _length; i++) {
-          final _name = e.curves![i].name;
-          final _well = e.curves![i].well;
+          final _name = e.curves /*!*/ [i].name;
+          final _well = e.curves /*!*/ [i].well;
           if (_name == '.ignore') {
             continue;
           }
@@ -149,7 +149,7 @@ class TaskIso extends SocketWrapper {
     }
 
     /// Заполняем строки
-    final _rows = <List<String?>>[]; // WELL, INK, GISx2...
+    final _rows = <List<String /*?*/ >>[]; // WELL, INK, GISx2...
     final _methodsLength = _methods.length;
     for (var k = 0; k < _k; k++) {
       final e = files[k];
@@ -158,10 +158,10 @@ class TaskIso extends SocketWrapper {
       if (e.curves == null) {
         continue;
       }
-      final _length = e.curves!.length;
+      final _length = e.curves /*!*/ .length;
 
       for (var i = 0; i < _length; i++) {
-        final _curve = e.curves![i];
+        final _curve = e.curves /*!*/ [i];
         final _name = _curve.name;
         final _well = _curve.well;
 
@@ -175,7 +175,7 @@ class TaskIso extends SocketWrapper {
 
         /// Проверяем есть ли совпадения с уже добавленными в таблицу данными
         if (_addedFiles.isNotEmpty &&
-            _addedFiles.any((e) => e.curves!.any((c) => c == _curve))) {
+            _addedFiles.any((e) => e.curves /*!*/ .any((c) => c == _curve))) {
           continue;
         }
 
@@ -191,8 +191,8 @@ class TaskIso extends SocketWrapper {
         });
 
         /// Записываем значения кривых в эти ячейки
-        _row[_i] = e.curves![i].strt.toString();
-        _row[_i + 1] = e.curves![i].stop.toString();
+        _row[_i] = e.curves /*!*/ [i].strt.toString();
+        _row[_i + 1] = e.curves /*!*/ [i].stop.toString();
       }
     }
 
@@ -275,7 +275,7 @@ class TaskIso extends SocketWrapper {
       return;
     }
 
-    JOneFileData? fileDataNew;
+    JOneFileData /*?*/ fileDataNew;
     // проверка на совпадения сигнатур
     if (signatureBegining(data, signatureDoc)) {
       final _fileDocxPath = file.path + '.docx';
@@ -295,7 +295,7 @@ class TaskIso extends SocketWrapper {
         final arch = await unzip(file.path);
         final _dirName = fileData.path + '.dir';
         if (arch.exitCode == 0) {
-          final _dir = Directory(arch.pathOut!);
+          final _dir = Directory(arch.pathOut /*!*/);
           await copyDirectoryRecursive(_dir, Directory(_dirName));
           // TODO: обработать docx файл
           await _dir.delete(recursive: true);
@@ -319,12 +319,12 @@ class TaskIso extends SocketWrapper {
     final encodesRaiting = convGetMappingRaitings(sets.charMaps, data);
     final encode = convGetMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
-    final buffer = convDecode(data, sets.charMaps[encode]!);
+    final buffer = convDecode(data, sets.charMaps[encode] /*!*/);
 
     // Пытаемся обработать к LAS файл
     if ((fileDataNew = await parserFileLas(this, fileData, buffer, encode)) !=
         null) {
-      if (fileDataNew!.notes != null) {
+      if (fileDataNew /*!*/ .notes != null) {
         if ((fileDataNew.notesError ?? 0) > 0) {
           state.errors = state.errors + 1;
         }
@@ -332,8 +332,8 @@ class TaskIso extends SocketWrapper {
           state.warnings = state.warnings + 1;
         }
       }
-      await tryFunc<File?>(
-          () => File(fileDataNew!.path + '.json')
+      await tryFunc<File /*?*/ >(
+          () => File(fileDataNew /*!*/ .path + '.json')
               .writeAsString(jsonEncode(fileDataNew)), onError: (e) {
         errorsOut.writeln('!Save FileData');
         errorsOut.writeln(e);
@@ -430,8 +430,8 @@ class TaskIso extends SocketWrapper {
               final arch = await unzip(entity.path);
               if (arch.exitCode == 0) {
                 await listFilesGet(iArchDepth + 1, pathToArch + relPath)(
-                    Directory(arch.pathOut!), '');
-                await Directory(arch.pathOut!).delete(recursive: true);
+                    Directory(arch.pathOut /*!*/), '');
+                await Directory(arch.pathOut /*!*/).delete(recursive: true);
               } else {
                 errorsOut.writeln(
                     '!Archive unzip ${arch.pathIn} => ${arch.pathOut}');
@@ -532,7 +532,7 @@ class TaskIso extends SocketWrapper {
     /// отправляем порт для связи с запущенным изолятом
     sets.sendPort.send([sets.id, receivePort.sendPort]);
   }
-  static late TaskIso instance;
+  static /*late*/ TaskIso instance;
 
   // /// Загрузкить все данные
   // Future get loadAll => Future.wait([loadLasIgnore(), loadInkDbfMap()]);

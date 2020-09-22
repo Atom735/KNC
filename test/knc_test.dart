@@ -25,7 +25,7 @@ void main() {
       JOneFileData.jsonKey_size: null,
       JOneFileData.jsonKey_encode: null,
       JOneFileData.jsonKey_curves: null,
-      // JOneFileData.jsonKey_notes] as List?)
+      // JOneFileData.jsonKey_notes] as List/*?*/)
     });
   });
 }

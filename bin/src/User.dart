@@ -11,7 +11,7 @@ class User extends JUser {
   static final dataBase = <String, User>{};
 
   /// Планировщик перезаписывания базы данных
-  static Future<void>? _futureSaveBase;
+  static Future<void> /*?*/ _futureSaveBase;
 
   static final _fileBase = File('data/users.json');
 

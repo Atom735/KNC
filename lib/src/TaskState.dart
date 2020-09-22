@@ -18,13 +18,13 @@ class JTaskState {
   final mapUpdates = <String, dynamic>{};
 
   /// Handle таймера
-  Future<void>? _updatesFuture;
+  Future<void> /*?*/ _updatesFuture;
 
   /// Частота обновления
   Duration duration;
 
   /// Функция обновления данных
-  void Function()? onUpdate;
+  void Function() /*?*/ onUpdate;
 
   void _onUpdateEnd(void _) {
     mapUpdates.clear();
@@ -33,9 +33,10 @@ class JTaskState {
   }
 
   /// Состояние задачи
-  NTaskState get state => NTaskState.values[(map[jsonKey_state] as int?) ?? 0];
+  NTaskState get state =>
+      NTaskState.values[(map[jsonKey_state] as int /*?*/) ?? 0];
   static const jsonKey_state = 'state';
-  set state(final NTaskState? i) {
+  set state(final NTaskState /*?*/ i) {
     if (i == null || state == i) {
       return;
     }
@@ -45,9 +46,9 @@ class JTaskState {
   }
 
   /// Количество обработанных файлов с ошибками
-  int get errors => (map[jsonKey_errors] as int?) ?? 0;
+  int get errors => (map[jsonKey_errors] as int /*?*/) ?? 0;
   static const jsonKey_errors = 'errors';
-  set errors(final int? i) {
+  set errors(final int /*?*/ i) {
     if (i == null || errors == i) {
       return;
     }
@@ -57,9 +58,9 @@ class JTaskState {
   }
 
   /// Количество найденных файлов для обработки
-  int get files => (map[jsonKey_files] as int?) ?? 0;
+  int get files => (map[jsonKey_files] as int /*?*/) ?? 0;
   static const jsonKey_files = 'files';
-  set files(final int? i) {
+  set files(final int /*?*/ i) {
     if (i == null || files == i) {
       return;
     }
@@ -69,9 +70,9 @@ class JTaskState {
   }
 
   /// Количество обработанных файлов с предупреждениями и/или ошибками
-  int get warnings => (map[jsonKey_warnings] as int?) ?? 0;
+  int get warnings => (map[jsonKey_warnings] as int /*?*/) ?? 0;
   static const jsonKey_warnings = 'files';
-  set warnings(final int? i) {
+  set warnings(final int /*?*/ i) {
     if (i == null || warnings == i) {
       return;
     }
@@ -81,9 +82,9 @@ class JTaskState {
   }
 
   /// Количество обработанных файлов
-  int get worked => (map[jsonKey_worked] as int?) ?? 0;
+  int get worked => (map[jsonKey_worked] as int /*?*/) ?? 0;
   static const jsonKey_worked = 'worked';
-  set worked(final int? i) {
+  set worked(final int /*?*/ i) {
     if (i == null || worked == i) {
       return;
     }
@@ -93,9 +94,9 @@ class JTaskState {
   }
 
   /// Ссылка на отчётную таблицу
-  String get raport => (map[jsonKey_raport] as String?) ?? '';
+  String get raport => (map[jsonKey_raport] as String /*?*/) ?? '';
   static const jsonKey_raport = 'raport';
-  set raport(final String? i) {
+  set raport(final String /*?*/ i) {
     if (i == null || raport == i) {
       return;
     }

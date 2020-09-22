@@ -24,7 +24,8 @@ class TaskFiles {
         var b = false;
         final _ps = p.joinAll(
             p.windows.split(file.path).where((e) => (b = (b || e == 'tasks'))));
-        window.history.pushState('data', 'title', '/app/file/$_ps?$fileOpenQ');
+        window.history
+            .pushState('data', 'title', '/app/file/$_ps/*?*/$fileOpenQ');
         uri = Uri.parse(document.baseUri);
         uriPaths = uri.pathSegments;
       }

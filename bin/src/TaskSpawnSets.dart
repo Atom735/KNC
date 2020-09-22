@@ -36,7 +36,8 @@ class TaskSpawnSets {
   ///
   /// * [dir] - восстанавливает задачу из папки
   /// * [settings] - запускает новую задачу с указанными настройками
-  static Future<void> spawn({JTaskSettings? settings, Directory? dir}) async {
+  static Future<void> spawn(
+      {JTaskSettings /*?*/ settings, Directory /*?*/ dir}) async {
     /// Если папки не существует, то создаём её
     dir ??= await TaskController.dirTasks.createTemp();
     final _id = p.basename(dir.path);
@@ -80,7 +81,7 @@ class TaskSpawnSets {
 
     /// Завершаем перехватчик, после чего все ожидающие сообщения тут же
     /// отправятся только что созданному контроллеру задачи
-    App().completers[_id]!.complete();
+    App().completers[_id] /*!*/ .complete();
 
     /// Удаляем перехватчик, так как теперь сообщения можно перенаправялть
     /// на прямую задаче

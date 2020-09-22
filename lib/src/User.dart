@@ -9,11 +9,11 @@
 /// Класс содержащий данные о пользователе
 class JUser {
   /// Имя пользователя
-  final String? firstName;
+  final String /*?*/ firstName;
   static const jsonKey_firstName = r'first_name';
 
   /// Фамилия пользователя
-  final String? secondName;
+  final String /*?*/ secondName;
   static const jsonKey_secondName = r'second_name';
 
   /// Почта пользователя
@@ -40,8 +40,8 @@ class JUser {
       };
 
   JUser.fromJson(final Map<String, dynamic> m)
-      : firstName = m[jsonKey_firstName] as String?,
-        secondName = m[jsonKey_secondName] as String?,
+      : firstName = m[jsonKey_firstName] as String /*?*/,
+        secondName = m[jsonKey_secondName] as String /*?*/,
         mail = m[jsonKey_mail] as String,
         pass = m[jsonKey_pass] as String,
         access = m[jsonKey_access] as String;

@@ -20,7 +20,7 @@ class Client extends SocketWrapper {
   final WebSocket _socket;
 
   /// Пользователь подключённого клиента, при отсуствии считается гостем
-  User? user;
+  User /*?*/ user;
 
   /// Список подключенных клиентов
   static final list = <Client>[];
@@ -192,7 +192,7 @@ class Client extends SocketWrapper {
         send(msg.i, '');
       } else {
         user = User.dataBase[_mail];
-        send(msg.i, jsonEncode(user!));
+        send(msg.i, jsonEncode(user /*!*/));
       }
     });
 

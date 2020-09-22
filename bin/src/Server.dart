@@ -28,7 +28,7 @@ class Server {
 
   /// `RegExp` Маппинг ссылок на файлам
   final reMap = <RegExp, File>{
-    RegExp(r'^\/app(\/.+)?', caseSensitive: false):
+    RegExp(r'^\/app(\/.+)/*?*/', caseSensitive: false):
         File('web/index.html').absolute
   };
 
@@ -57,20 +57,20 @@ class Server {
           });
         });
     } else if (fileMapCache[file] != null) {
-      final mime = mimeResolver.lookup(file.path) as String?;
+      final mime = mimeResolver.lookup(file.path) as String /*?*/;
 
       /// Файл закеширован
       response
         ..statusCode = HttpStatus.ok
         ..headers.contentType =
-            mime == null ? ContentType.parse(mime!) : ContentType.binary
-        ..headers.add(HttpHeaders.etagHeader, fileMapCrc[file]!)
-        ..add(fileMapCache[file]!)
+            mime == null ? ContentType.parse(mime /*!*/) : ContentType.binary
+        ..headers.add(HttpHeaders.etagHeader, fileMapCrc[file] /*!*/)
+        ..add(fileMapCache[file] /*!*/)
         ..flush().then((_) {
           response.close().then((_) {
             iReq -= 1;
             print(
-                'http(${request.hashCode}): ${request.uri.path} closed ($iReq) from cache #${fileMapCrc[file]!}');
+                'http(${request.hashCode}): ${request.uri.path} closed ($iReq) from cache #${fileMapCrc[file] /*!*/}');
           });
         });
     } else if (file.existsSync()) {
@@ -79,7 +79,7 @@ class Server {
         fileMapCache[file] = bytes;
         fileMapCrc[file] =
             Crc64().convert(bytes).toRadixString(36).toLowerCase();
-        print('$file cached #${fileMapCrc[file]!}');
+        print('$file cached #${fileMapCrc[file] /*!*/}');
         serveFile(request, response, file);
       });
     } else {
@@ -105,7 +105,7 @@ class Server {
   int iReq = 0;
   static Future<Server> init() async =>
       Server._create(await HttpServer.bind(InternetAddress.anyIPv4, wwwPort));
-  static late Server _instance;
+  static /*late*/ Server _instance;
   factory Server() => _instance;
   Server._create(this.server) {
     print('$this created');
@@ -144,13 +144,13 @@ class Server {
         });
       } else if (fileMap[request.uri.path] != null) {
         /// если есть ремап кнкретной ссылки на файл
-        serveFile(request, response, fileMap[request.uri.path]!);
+        serveFile(request, response, fileMap[request.uri.path] /*!*/);
         return;
       } else {
         /// если есть ремап шаблона ссылки на файл
         for (final key in reMap.keys) {
           if (key.hasMatch(request.uri.path)) {
-            serveFile(request, response, reMap[key]!);
+            serveFile(request, response, reMap[key] /*!*/);
             return;
           }
         }

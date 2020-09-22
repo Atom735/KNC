@@ -4,12 +4,12 @@ class ArchiverOutput {
   /// Имя выходного файла
   final int exitCode;
   final String pathIn;
-  final String? pathOut;
-  final String? stdOut;
-  final String? stdErr;
+  final String /*?*/ pathOut;
+  final String /*?*/ stdOut;
+  final String /*?*/ stdErr;
   ArchiverOutput(
-      {required this.exitCode,
-      required this.pathIn,
+      {/*required*/ this.exitCode,
+      /*required*/ this.pathIn,
       this.pathOut,
       this.stdOut,
       this.stdErr});

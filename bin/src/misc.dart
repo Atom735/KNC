@@ -33,7 +33,7 @@ const _tryesDuration = 16;
 /// * [tryesMax] - задаёт количество попыток
 /// * [tryesDuration] - задаёт время в милисекундах между попытками
 Future<T> tryFunc<T>(Future<T> Function() func,
-    {T Function(dynamic)? onError,
+    {T Function(dynamic) /*?*/ onError,
     int tryesMax = _tryesMax,
     int tryesDuration = _tryesDuration}) async {
   /// пытаемся выполнить операцию
