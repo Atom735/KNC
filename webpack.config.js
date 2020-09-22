@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-    entry: './web/ts/index.ts',
+    entry: './web/ts/index.tsx',
     devtool: 'inline-source-map',
     module: {
         rules: [
@@ -19,4 +19,5 @@ module.exports = {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'web'),
     },
+    mode: process.env.NODE_ENV === 'production' ? 'production' : 'development'
 };
