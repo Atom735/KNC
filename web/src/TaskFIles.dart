@@ -17,7 +17,7 @@ class TaskFiles {
 
   String fileOpenQ;
 
-  void openFile(final JOneFileDataa file) {
+  void openFile(final JOneFileData file) {
     print(file.path + (fileOpenQ != null ? ('?' + fileOpenQ) : ''));
     FileLas().open(file, fileOpenQ).then((_b) {
       if (_b) {
@@ -116,7 +116,7 @@ class TaskFiles {
     }
     closeAll('task-files');
     final f = (jsonDecode(_msg) as List)
-        .map((e) => JOneFileDataa.byJson(e))
+        .map((e) => JOneFileData.byJson(e))
         .toList(growable: false);
     final _fL = f.length; //min(f.length, 100);
 
@@ -243,7 +243,7 @@ class TaskFiles {
             })
             ..attributes['tabindex'] = '0'
             ..classes.add('tbl-c-strt')
-            ..innerText = c.strt)
+            ..innerText = c.strt.toString())
           ..append(SpanElement()
             ..onClick.listen((event) {
               if (event.ctrlKey) {
@@ -257,11 +257,11 @@ class TaskFiles {
             })
             ..attributes['tabindex'] = '0'
             ..classes.add('tbl-c-stop')
-            ..innerText = c.stop)
+            ..innerText = c.stop.toString())
           ..append(SpanElement()
             ..attributes['tabindex'] = '0'
             ..classes.add('tbl-c-step')
-            ..innerText = c.step);
+            ..innerText = c.step.toString());
         e.append(eRow);
         final _l = _i.curves.length;
         for (var j = 1; j < _l; j++) {
@@ -323,7 +323,7 @@ class TaskFiles {
               })
               ..attributes['tabindex'] = '0'
               ..classes.add('tbl-c-strt')
-              ..innerText = c.strt)
+              ..innerText = c.strt.toString())
             ..append(SpanElement()
               ..onClick.listen((event) {
                 if (event.ctrlKey) {
@@ -338,7 +338,7 @@ class TaskFiles {
               })
               ..attributes['tabindex'] = '0'
               ..classes.add('tbl-c-stop')
-              ..innerText = c.stop)
+              ..innerText = c.stop.toString())
             ..append(SpanElement()
               ..onClick.listen((event) {
                 if (event.ctrlKey) {
@@ -353,7 +353,7 @@ class TaskFiles {
               })
               ..attributes['tabindex'] = '0'
               ..classes.add('tbl-c-step')
-              ..innerText = c.step));
+              ..innerText = c.step.toString()));
         }
       } else {
         e.append(eRow);

@@ -23,7 +23,7 @@ class FileLas {
         return false;
       }
 
-      oneFileData = JOneFileData.byJsonFull(jsonDecode(_msg));
+      oneFileData = JOneFileData.byJson(jsonDecode(_msg));
       file = oneFileData;
       e?.remove();
       fileData = LineSplitter.split(await requestOnce(
