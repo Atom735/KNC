@@ -10,7 +10,6 @@ import 'FIleParserLas.dart';
 import 'TaskController.dart';
 import 'TaskSpawnSets.dart';
 import 'misc.dart';
-import 'xls.dart';
 
 class TaskIso extends SocketWrapper {
   /// Порт для получение сообщений этим изолятом
@@ -38,9 +37,6 @@ class TaskIso extends SocketWrapper {
 
   /// Список всех найденных файлов
   final files = <JOneFileData>[];
-
-  /// Генератор Таблицы XLS
-  final KncXlsBuilder xls;
 
   /// Состояние задачи
   final JTaskState state;
@@ -105,8 +101,8 @@ class TaskIso extends SocketWrapper {
   /// Генерация таблицы
   Future<void> runGenerateTable() async {
     state.state = NTaskState.generateTable;
-    final xlsDataIn = Directory(p.join('data', 'xls')).absolute;
-    final xlsDataOut = Directory(p.join(pathAbsolute, 'xls')).absolute;
+    final xlsDataIn = Directory(p.join('data', 'raport')).absolute;
+    final xlsDataOut = Directory(p.join(pathAbsolute, 'raport')).absolute;
     await copyDirectoryRecursive(xlsDataIn, xlsDataOut);
     final xlsSheet =
         File(p.join(xlsDataOut.path, 'xl', 'worksheets', 'sheet1.xml'));
@@ -489,8 +485,6 @@ class TaskIso extends SocketWrapper {
             Duration(milliseconds: sets.settings.update_duration)),
         dirFiles =
             Directory(p.join(TaskController.dirTasks.path, sets.id, 'temp')),
-        xls = KncXlsBuilder(
-            Directory(p.join(TaskController.dirTasks.path, sets.id, 'raport'))),
         errorsOut = File(p.join(sets.id, 'errors.txt'))
             .openWrite(encoding: utf8, mode: FileMode.writeOnlyAppend)
               ..writeCharCode(unicodeBomCharacterRune),
@@ -508,7 +502,7 @@ class TaskIso extends SocketWrapper {
       }
       print('$this recieved unknown msg {$msg}');
     });
-
+/*
     /// Отвечаем на все запросы на получение заметок файла, где аругментом
     /// указан путь к рабочей копии файла, кодируем их в [json]
     waitMsgAll(wwwFileNotes).listen((msg) {
@@ -530,13 +524,9 @@ class TaskIso extends SocketWrapper {
         send(msg.i, '');
       }
     });
-
-    /// Заполняем json объект состояния
-    stateMap['id'] = sets.id;
-    stateMap['dir'] = sets.dir.path;
-
+*/
     /// Сохраняем настройки файла
-    File(p.join(sets.dir.path, 'settings.json'))
+    File(p.join(pathAbsolute, 'settings.json'))
         .writeAsString(jsonEncode(settings));
 
     /// отправляем порт для связи с запущенным изолятом
