@@ -16,6 +16,7 @@ import Link from '@material-ui/core/Link';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 
 import SignIn from './Signin';
+import SignUp from './Signup';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

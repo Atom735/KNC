@@ -15,28 +15,24 @@ import Container from '@material-ui/core/Container';
 
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 
-const useStyles = makeStyles((theme) => ({
-  paper: {
-    marginTop: theme.spacing(8),
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  avatar: {
-    margin: theme.spacing(1),
-    backgroundColor: theme.palette.secondary.main,
-  },
-  form: {
-    width: '100%', // Fix IE 11 issue.
-    marginTop: theme.spacing(1),
-  },
-  submit: {
-    margin: theme.spacing(3, 0, 2),
-  },
-}));
+
+import useStyles from './styles';
 
 const SignIn: FunctionComponent = () => {
   const classes = useStyles();
+
+  const [email, setEmail] = useState('');
+  const handleChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+  };
+  const [pass, setPasss] = useState('');
+  const handleChangePass = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPasss(event.target.value);
+  };
+  const [remem, setRemem] = useState(true);
+  const handleChangeRemem = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRemem(event.target.checked);
+  };
 
   return (
     <Container component="main" maxWidth="xs" >
@@ -46,7 +42,7 @@ const SignIn: FunctionComponent = () => {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Sign in
+          Вход в систему
         </Typography>
         <form className={classes.form} noValidate>
           <TextField
@@ -55,10 +51,11 @@ const SignIn: FunctionComponent = () => {
             required
             fullWidth
             id="email"
-            label="Email Address"
+            label="Телефон или Email"
             name="email"
             autoComplete="email"
             autoFocus
+            value={email} onChange={handleChangeEmail}
           />
           <TextField
             variant="outlined"
@@ -66,14 +63,16 @@ const SignIn: FunctionComponent = () => {
             required
             fullWidth
             name="password"
-            label="Password"
+            label="Пароль"
             type="password"
             id="password"
-            autoComplete="current-password"
+            autoComplete="password"
+            value={pass} onChange={handleChangePass}
           />
           <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
-            label="Remember me"
+            control={<Checkbox value="remember" color="primary"
+              checked={remem} onChange={handleChangeRemem} />}
+            label="Запомнить меня"
           />
           <Button
             type="submit"
@@ -82,17 +81,17 @@ const SignIn: FunctionComponent = () => {
             color="primary"
             className={classes.submit}
           >
-            Sign In
+            Войти
           </Button>
           <Grid container>
             <Grid item xs>
               <Link href="#" variant="body2">
-                Forgot password?
+                Забыли пароль?
               </Link>
             </Grid>
             <Grid item>
-              <Link href="#" variant="body2">
-                {"Don't have an account? Sign Up"}
+              <Link href="/signup" variant="body2">
+                {"Нет аккаунта? Зрегестрируйтесь"}
               </Link>
             </Grid>
           </Grid>
@@ -103,3 +102,4 @@ const SignIn: FunctionComponent = () => {
 }
 
 export default SignIn;
+// export useStyles;
