@@ -94,6 +94,8 @@ const App: FunctionComponent = () => {
   let page;
   if (location.pathname.startsWith('/signin')) {
     page = <SignIn />;
+  } else if (location.pathname.startsWith('/signup')) {
+    page = <SignUp />;
   }
   return (
     <ThemeProvider theme={theme}>
