@@ -226,8 +226,9 @@ const App: FunctionComponent = () => {
       <RouteSwitch>
         <Route
           path="/signin"
-          component={PageSignIn}
-          callback={handleOnSignIn}
+          render={(props) => (
+            <PageSignIn {...props} callback={handleOnSignIn} />
+          )}
         />
         <Route path="/signup" component={PageSignUp} />
         <Route path="/test" component={PageTest} />

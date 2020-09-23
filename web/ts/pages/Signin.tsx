@@ -19,7 +19,14 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import useStyles from "./../styles";
 import { msgRequest, JMsgUserSignin } from "./../dartRequester";
 
-const PageSignIn: FunctionComponent = (props: any) => {
+interface PageSignInProps {
+  children?: React.ReactNode;
+  callback?: CallableFunction;
+}
+
+const PageSignIn: FunctionComponent<PageSignInProps> = (
+  props: PageSignInProps
+) => {
   const classes = useStyles();
 
   const [email, setEmail] = useState("");
