@@ -12,6 +12,7 @@
     "moduleResolution": "Node",
     "incremental": true,
     "lib": [
+      "ES6",
       "DOM",
       "WebWorker"
     ]
