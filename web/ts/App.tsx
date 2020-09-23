@@ -150,7 +150,9 @@ const App: FunctionComponent = () => {
   const handleSocketOnError = (event: ErrorEvent) => {
     enqueueSnackbar("Ошибка в Сокете", { variant: "error" });
   };
-  const handleSocketOnMessage = (event: MessageEvent) => {};
+  const handleSocketOnMessage = (event: MessageEvent) => {
+    enqueueSnackbar("Сообщения от сокета", { variant: "success" });
+  };
 
   let pageHome;
   let userAction;
