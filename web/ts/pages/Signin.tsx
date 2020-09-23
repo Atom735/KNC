@@ -11,6 +11,8 @@ import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import Container from "@material-ui/core/Container";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Backdrop from "@material-ui/core/Backdrop";
 
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
@@ -32,6 +34,12 @@ const PageSignIn: FunctionComponent = () => {
     setRemem(event.target.checked);
   };
 
+  const [submit, setSubmit] = useState(false);
+  const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    setSubmit(true);
+    event.preventDefault();
+  };
+
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -42,7 +50,7 @@ const PageSignIn: FunctionComponent = () => {
         <Typography component="h1" variant="h5">
           Вход в систему
         </Typography>
-        <form className={classes.form} noValidate>
+        <form className={classes.form} noValidate onSubmit={handleOnSubmit}>
           <TextField
             variant="outlined"
             margin="normal"
@@ -55,6 +63,7 @@ const PageSignIn: FunctionComponent = () => {
             autoFocus
             value={email}
             onChange={handleChangeEmail}
+            disabled={submit}
           />
           <TextField
             variant="outlined"
@@ -68,6 +77,7 @@ const PageSignIn: FunctionComponent = () => {
             autoComplete="current-password"
             value={pass}
             onChange={handleChangePass}
+            disabled={submit}
           />
           <FormControlLabel
             control={
@@ -76,9 +86,11 @@ const PageSignIn: FunctionComponent = () => {
                 color="primary"
                 checked={remem}
                 onChange={handleChangeRemem}
+                disabled={submit}
               />
             }
             label="Запомнить меня"
+            disabled={submit}
           />
           <Button
             type="submit"
@@ -86,6 +98,7 @@ const PageSignIn: FunctionComponent = () => {
             variant="contained"
             color="primary"
             className={classes.submit}
+            disabled={submit}
           >
             Войти
           </Button>
@@ -103,6 +116,10 @@ const PageSignIn: FunctionComponent = () => {
           </Grid>
         </form>
       </div>
+
+      <Backdrop className={classes.backdrop} open={submit}>
+        <CircularProgress color="secondary" />
+      </Backdrop>
     </Container>
   );
 };

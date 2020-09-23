@@ -11,6 +11,8 @@ import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import Container from "@material-ui/core/Container";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Backdrop from "@material-ui/core/Backdrop";
 
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
@@ -42,6 +44,12 @@ const PageSignUp: FunctionComponent = () => {
     setRemem(event.target.checked);
   };
 
+  const [submit, setSubmit] = useState(false);
+  const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    setSubmit(true);
+    event.preventDefault();
+  };
+
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -52,7 +60,7 @@ const PageSignUp: FunctionComponent = () => {
         <Typography component="h1" variant="h5">
           Регистрация
         </Typography>
-        <form className={classes.form} noValidate>
+        <form className={classes.form} noValidate onSubmit={handleOnSubmit}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -66,6 +74,7 @@ const PageSignUp: FunctionComponent = () => {
                 autoFocus
                 value={fname}
                 onChange={handleChangeFName}
+                disabled={submit}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -79,6 +88,7 @@ const PageSignUp: FunctionComponent = () => {
                 autoComplete="family-name"
                 value={lname}
                 onChange={handleChangeLName}
+                disabled={submit}
               />
             </Grid>
             <Grid item xs={12}>
@@ -92,6 +102,7 @@ const PageSignUp: FunctionComponent = () => {
                 autoComplete="username"
                 value={email}
                 onChange={handleChangeEmail}
+                disabled={submit}
               />
             </Grid>
             <Grid item xs={12}>
@@ -106,11 +117,19 @@ const PageSignUp: FunctionComponent = () => {
                 autoComplete="new-password"
                 value={pass}
                 onChange={handleChangePass}
+                disabled={submit}
               />
             </Grid>
             <Grid item xs={12}>
               <FormControlLabel
-                control={<Checkbox value="allowExtraEmails" color="primary" />}
+                control={
+                  <Checkbox
+                    value="allowExtraEmails"
+                    color="primary"
+                    disabled={submit}
+                  />
+                }
+                disabled={submit}
                 label="I want to receive inspiration, marketing promotions and updates via email."
               />
             </Grid>{" "}
@@ -121,6 +140,7 @@ const PageSignUp: FunctionComponent = () => {
             variant="contained"
             color="primary"
             className={classes.submit}
+            disabled={submit}
           >
             Зарегистрироваться
           </Button>
@@ -133,6 +153,9 @@ const PageSignUp: FunctionComponent = () => {
           </Grid>
         </form>
       </div>
+      <Backdrop className={classes.backdrop} open={submit}>
+        <CircularProgress color="secondary" />
+      </Backdrop>
     </Container>
   );
 };
