@@ -1,13 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from "react";
-import theme from "./theme";
-import {
-  makeStyles,
-  Theme,
-  createStyles,
-  ThemeProvider
-} from "@material-ui/core/styles";
+import { makeStyles, Theme, createStyles } from "@material-ui/core/styles";
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
-import CssBaseline from "@material-ui/core/CssBaseline";
 
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -24,6 +17,8 @@ import Menu from "@material-ui/core/Menu";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import HomeIcon from "@material-ui/icons/Home";
 import AccountCircle from "@material-ui/icons/AccountCircle";
+
+import { VariantType, useSnackbar } from "notistack";
 
 import Home from "./Home";
 import SignIn from "./Signin";
@@ -111,12 +106,13 @@ function Example() {
 
 const App: FunctionComponent = () => {
   const classes = useStylesApp();
+  const { enqueueSnackbar } = useSnackbar();
 
   const [location, setLocation] = useState(new URL(document.location.href));
   const [username, setUsername] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [socket, setSocket] = useState(
-    new WebSocket("ws://" + document.location.host + "/ws")
+    new WebSocket("wss://" + document.location.host + "/wss")
   );
   const open = Boolean(anchorEl);
 
@@ -128,7 +124,16 @@ const App: FunctionComponent = () => {
   }, []);
 
   useEffect(() => {
+    socket.addEventListener("onopen", handleSocketOnOpen);
     socket.addEventListener("onclose", handleSocketOnClose);
+    socket.addEventListener("onerror", handleSocketOnError);
+    socket.addEventListener("onmessage", handleSocketOnMessage);
+    return () => {
+      socket.removeEventListener("onopen", handleSocketOnOpen);
+      socket.removeEventListener("onclose", handleSocketOnClose);
+      socket.removeEventListener("onerror", handleSocketOnError);
+      socket.removeEventListener("onmessage", handleSocketOnMessage);
+    };
 
     // onclose	EventListener	Обработчик событий, вызываемый, когда readyState WebSocket соединения изменяется на CLOSED. Наблюдатель получает CloseEvent с именем "close".
     // onerror	EventListener
@@ -141,7 +146,16 @@ const App: FunctionComponent = () => {
     // Наблюдатель событий, вызываемый, когда readyState WebSocket - соединения изменяется на OPEN; это показывает, что соединение готово отсылать и принимать данные. Это простое событие, называемое "open".
   }, [socket]);
 
-  const handleSocketOnClose = () => {};
+  const handleSocketOnOpen = (event: Event) => {
+    enqueueSnackbar("Соединение установлено", { variant: "info" });
+  };
+  const handleSocketOnClose = (event: CloseEvent) => {
+    enqueueSnackbar("Сокет был закрыт", { variant: "warning" });
+  };
+  const handleSocketOnError = (event: ErrorEvent) => {
+    enqueueSnackbar("Ошибка в Сокете", { variant: "error" });
+  };
+  const handleSocketOnMessage = (event: MessageEvent) => {};
 
   const handleOnPopState = (event: PopStateEvent) => {
     console.log(document.location.href);
@@ -226,8 +240,7 @@ const App: FunctionComponent = () => {
     );
   }
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <>
       <AppBar>
         <Toolbar>
           {pageHome || (
@@ -254,7 +267,7 @@ const App: FunctionComponent = () => {
       </Box>
       <Example />
       <ScrollTop />
-    </ThemeProvider>
+    </>
   );
 };
 export default App;

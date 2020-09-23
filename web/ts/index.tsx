@@ -1,5 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import theme from "./theme";
+import CssBaseline from "@material-ui/core/CssBaseline";
+
+import { ThemeProvider } from "@material-ui/core/styles";
+import { SnackbarProvider } from "notistack";
+import { BrowserRouter } from "react-router-dom";
+
 import App from "./App";
 
 navigator.serviceWorker
@@ -13,4 +20,14 @@ navigator.serviceWorker
     console.error("Registration failed with " + error);
   });
 
-ReactDOM.render(<App />, document.querySelector("#root"));
+ReactDOM.render(
+  <ThemeProvider theme={theme}>
+    <SnackbarProvider maxSnack={4}>
+      <CssBaseline />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </SnackbarProvider>
+  </ThemeProvider>,
+  document.querySelector("#root")
+);
