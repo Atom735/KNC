@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from "react";
+import React, { FunctionComponent, useState, useEffect } from "react";
 import theme from "./theme";
 import {
   makeStyles,
@@ -98,13 +98,56 @@ const useStylesApp = makeStyles((theme: Theme) =>
   })
 );
 
+function Example() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>Вы кликнули {count} раз(а)</p>
+      <button onClick={() => setCount(count + 1)}>Нажми на меня</button>
+    </div>
+  );
+}
+
 const App: FunctionComponent = () => {
   const classes = useStylesApp();
 
-  const [location, setLocation] = useState(window.location);
+  const [location, setLocation] = useState(new URL(document.location.href));
   const [username, setUsername] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [socket, setSocket] = useState(
+    new WebSocket("ws://" + document.location.host + "/ws")
+  );
   const open = Boolean(anchorEl);
+
+  useEffect(() => {
+    window.addEventListener("popstate", handleOnPopState);
+    return () => {
+      window.removeEventListener("popstate", handleOnPopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    socket.addEventListener("onclose", handleSocketOnClose);
+
+    // onclose	EventListener	Обработчик событий, вызываемый, когда readyState WebSocket соединения изменяется на CLOSED. Наблюдатель получает CloseEvent с именем "close".
+    // onerror	EventListener
+    // Обработчик событий, вызываемый, когда происходит ошибка. Это простое событие, называемое "error".
+
+    // onmessage	EventListener
+    // Обработчик событий , вызываемый, когда получается сообщение с сервера. Наблюдатель получает MessageEvent,  называемое "message".
+
+    // onopen	EventListener
+    // Наблюдатель событий, вызываемый, когда readyState WebSocket - соединения изменяется на OPEN; это показывает, что соединение готово отсылать и принимать данные. Это простое событие, называемое "open".
+  }, [socket]);
+
+  const handleSocketOnClose = () => {};
+
+  const handleOnPopState = (event: PopStateEvent) => {
+    console.log(document.location.href);
+    console.dir(event.state);
+    setLocation(new URL(document.location.href));
+  };
 
   let page;
   let pageHome;
@@ -126,13 +169,20 @@ const App: FunctionComponent = () => {
   const handleUserMenuClose = () => {
     setAnchorEl(null);
   };
-  const handleSignIn = () => {};
+  const handleSignIn = () => {
+    window.history.pushState(location.href, "Вход", "/signin");
+    setLocation(new URL(document.location.href));
+  };
   const handleSignOut = () => {
     handleUserMenuClose();
     setUsername("");
   };
   const handleSettings = () => {
     handleUserMenuClose();
+  };
+  const handleHome = () => {
+    window.history.pushState(location.href, "Главная", "/");
+    setLocation(new URL(document.location.href));
   };
 
   if (username) {
@@ -180,18 +230,19 @@ const App: FunctionComponent = () => {
       <CssBaseline />
       <AppBar>
         <Toolbar>
-          {pageHome && (
+          {pageHome || (
             <IconButton
               edge="start"
               className={classes.homeButton}
               color="inherit"
               aria-label="home"
+              onClick={handleHome}
             >
               <HomeIcon />
             </IconButton>
           )}
           <Typography variant="h6" className={classes.title}>
-            Пункт приёма стеклотары
+            {"Пункт приёма стеклотары" + location.href}
           </Typography>
           {userAction}
         </Toolbar>
@@ -201,6 +252,7 @@ const App: FunctionComponent = () => {
       <Box mt={8}>
         <Copyright />
       </Box>
+      <Example />
       <ScrollTop />
     </ThemeProvider>
   );

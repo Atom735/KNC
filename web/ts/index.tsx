@@ -13,9 +13,4 @@ navigator.serviceWorker
     console.error("Registration failed with " + error);
   });
 
-window.onpopstate = function (event: PopStateEvent) {
-  console.log(document.location.toString());
-  console.dir(event.state);
-};
-
 ReactDOM.render(<App />, document.querySelector("#root"));
