@@ -15,9 +15,9 @@ import Container from "@material-ui/core/Container";
 
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
-import useStyles from "./styles";
+import useStyles from "./../styles";
 
-const Test: FunctionComponent = () => {
+const PageTest: FunctionComponent = () => {
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -25,4 +25,4 @@ const Test: FunctionComponent = () => {
   );
 };
 
-export default Test;
+export default PageTest;

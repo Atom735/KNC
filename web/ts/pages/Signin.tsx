@@ -14,9 +14,9 @@ import Container from "@material-ui/core/Container";
 
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
-import useStyles from "./styles";
+import useStyles from "./../styles";
 
-const SignIn: FunctionComponent = () => {
+const PageSignIn: FunctionComponent = () => {
   const classes = useStyles();
 
   const [email, setEmail] = useState("");
@@ -107,5 +107,5 @@ const SignIn: FunctionComponent = () => {
   );
 };
 
-export default SignIn;
+export default PageSignIn;
 // export useStyles;

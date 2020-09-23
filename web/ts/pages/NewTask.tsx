@@ -12,11 +12,11 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import Container from "@material-ui/core/Container";
 
-import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
+import PostAddIcon from "@material-ui/icons/PostAdd";
 
-import useStyles from "./styles";
+import useStyles from "./../styles";
 
-const NewTask: FunctionComponent = () => {
+const PageNewTask: FunctionComponent = () => {
   const classes = useStyles();
 
   const [email, setEmail] = useState("");
@@ -37,10 +37,10 @@ const NewTask: FunctionComponent = () => {
       <CssBaseline />
       <div className={classes.paper}>
         <Avatar className={classes.avatar}>
-          <LockOutlinedIcon />
+          <PostAddIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Вход в систему
+          Добавление задачи
         </Typography>
         <form className={classes.form} noValidate>
           <TextField
@@ -107,5 +107,5 @@ const NewTask: FunctionComponent = () => {
   );
 };
 
-export default NewTask;
+export default PageNewTask;
 // export useStyles;

@@ -1,8 +1,12 @@
 import React, { FunctionComponent, useState, useEffect } from "react";
-import { Switch, Route, Link as RouterLink } from "react-router-dom";
-
-import { makeStyles, Theme, createStyles } from "@material-ui/core/styles";
+import {
+  Switch as RouteSwitch,
+  Route,
+  Link as RouterLink
+} from "react-router-dom";
+import { makeStyles, createStyles } from "@material-ui/core/styles";
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
+import { useSnackbar } from "notistack";
 
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -20,15 +24,13 @@ import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import HomeIcon from "@material-ui/icons/Home";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 
-import { useSnackbar } from "notistack";
+import PageHome from "./pages/Home";
+import PageSignIn from "./pages/Signin";
+import PageSignUp from "./pages/Signup";
+import PageTest from "./pages/Test";
+import PageNewTask from "./pages/NewTask";
 
-import Home from "./Home";
-import SignIn from "./Signin";
-import SignUp from "./Signup";
-import Test from "./Test";
-import NewTask from "./NewTask";
-
-const useStylesScrollTop = makeStyles((theme: Theme) =>
+const useStylesScrollTop = makeStyles((theme) =>
   createStyles({
     root: {
       position: "fixed",
@@ -82,7 +84,7 @@ function Copyright() {
   );
 }
 
-const useStylesApp = makeStyles((theme: Theme) =>
+const useStylesApp = makeStyles((theme) =>
   createStyles({
     root: {
       flexGrow: 1
@@ -95,17 +97,6 @@ const useStylesApp = makeStyles((theme: Theme) =>
     }
   })
 );
-
-function Example() {
-  const [count, setCount] = useState(0);
-
-  return (
-    <div>
-      <p>Вы кликнули {count} раз(а)</p>
-      <button onClick={() => setCount(count + 1)}>Нажми на меня</button>
-    </div>
-  );
-}
 
 const App: FunctionComponent = () => {
   const classes = useStylesApp();
@@ -155,7 +146,6 @@ const App: FunctionComponent = () => {
   };
 
   let pageHome;
-  let userAction;
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -171,46 +161,6 @@ const App: FunctionComponent = () => {
     handleUserMenuClose();
   };
 
-  if (username) {
-    userAction = (
-      <div>
-        <Typography variant="h6">{username}</Typography>
-        <IconButton
-          aria-label="account of current user"
-          aria-controls="menu-appbar"
-          aria-haspopup="true"
-          onClick={handleUserMenuOpen}
-          color="inherit"
-        >
-          <AccountCircle />
-        </IconButton>
-        <Menu
-          id="menu-appbar"
-          anchorEl={anchorEl}
-          anchorOrigin={{
-            vertical: "top",
-            horizontal: "right"
-          }}
-          keepMounted
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "right"
-          }}
-          open={open}
-          onClose={handleUserMenuClose}
-        >
-          <MenuItem onClick={handleSettings}>Настройки</MenuItem>
-          <MenuItem onClick={handleSignOut}>Выход</MenuItem>
-        </Menu>
-      </div>
-    );
-  } else {
-    userAction = (
-      <Button color="inherit" component={RouterLink} to="/signin">
-        Вход
-      </Button>
-    );
-  }
   return (
     <>
       <AppBar>
@@ -230,21 +180,55 @@ const App: FunctionComponent = () => {
           <Typography variant="h6" className={classes.title}>
             Пункт приёма стеклотары
           </Typography>
-          {userAction}
+          {username ? (
+            <>
+              <Typography variant="h6">{username}</Typography>
+              <IconButton
+                aria-label="account of current user"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleUserMenuOpen}
+                color="inherit"
+              >
+                <AccountCircle />
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: "top",
+                  horizontal: "right"
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right"
+                }}
+                open={open}
+                onClose={handleUserMenuClose}
+              >
+                <MenuItem onClick={handleSettings}>Настройки</MenuItem>
+                <MenuItem onClick={handleSignOut}>Выход</MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <Button color="inherit" component={RouterLink} to="/signin">
+              Вход
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
       <Toolbar id="back-to-top-anchor" />
-      <Switch>
-        <Route path="/signin" component={SignIn} />
-        <Route path="/signup" component={SignUp} />
-        <Route path="/test" component={Test} />
-        <Route path="/newtask" component={NewTask} />
-        <Route path="/" component={Home} />
-      </Switch>
+      <RouteSwitch>
+        <Route path="/signin" component={PageSignIn} />
+        <Route path="/signup" component={PageSignUp} />
+        <Route path="/test" component={PageTest} />
+        <Route path="/newtask" component={PageNewTask} />
+        <Route path="/" component={PageHome} />
+      </RouteSwitch>
       <Box mt={8}>
         <Copyright />
       </Box>
-      <Example />
       <ScrollTop />
     </>
   );
