@@ -90,7 +90,7 @@ const SignUp: FunctionComponent = () => {
                 id="email"
                 label="Телефон или Email"
                 name="email"
-                autoComplete="email"
+                autoComplete="username"
                 value={email}
                 onChange={handleChangeEmail}
               />
@@ -104,7 +104,7 @@ const SignUp: FunctionComponent = () => {
                 label="Пароль"
                 type="password"
                 id="password"
-                autoComplete="password"
+                autoComplete="new-password"
                 value={pass}
                 onChange={handleChangePass}
               />
