@@ -1,4 +1,5 @@
 import React, { FunctionComponent, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
 
 import Avatar from "@material-ui/core/Avatar";
@@ -90,12 +91,12 @@ const SignIn: FunctionComponent = () => {
           </Button>
           <Grid container>
             <Grid item xs>
-              <Link href="#" variant="body2">
+              <Link component={RouterLink} to="/" variant="body2">
                 Забыли пароль?
               </Link>
             </Grid>
             <Grid item>
-              <Link href="/signup" variant="body2">
+              <Link component={RouterLink} to="/signup" variant="body2">
                 {"Нет аккаунта? Зрегестрируйтесь"}
               </Link>
             </Grid>

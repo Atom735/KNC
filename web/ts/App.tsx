@@ -1,4 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from "react";
+import { Switch, Route, Link as RouterLink } from "react-router-dom";
+
 import { makeStyles, Theme, createStyles } from "@material-ui/core/styles";
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 
@@ -18,12 +20,13 @@ import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import HomeIcon from "@material-ui/icons/Home";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 
-import { VariantType, useSnackbar } from "notistack";
+import { useSnackbar } from "notistack";
 
 import Home from "./Home";
 import SignIn from "./Signin";
 import SignUp from "./Signup";
 import Test from "./Test";
+import NewTask from "./NewTask";
 
 const useStylesScrollTop = makeStyles((theme: Theme) =>
   createStyles({
@@ -108,20 +111,12 @@ const App: FunctionComponent = () => {
   const classes = useStylesApp();
   const { enqueueSnackbar } = useSnackbar();
 
-  const [location, setLocation] = useState(new URL(document.location.href));
   const [username, setUsername] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [socket, setSocket] = useState(
     new WebSocket("wss://" + document.location.host + "/wss")
   );
   const open = Boolean(anchorEl);
-
-  useEffect(() => {
-    window.addEventListener("popstate", handleOnPopState);
-    return () => {
-      window.removeEventListener("popstate", handleOnPopState);
-    };
-  }, []);
 
   useEffect(() => {
     socket.addEventListener("onopen", handleSocketOnOpen);
@@ -157,25 +152,8 @@ const App: FunctionComponent = () => {
   };
   const handleSocketOnMessage = (event: MessageEvent) => {};
 
-  const handleOnPopState = (event: PopStateEvent) => {
-    console.log(document.location.href);
-    console.dir(event.state);
-    setLocation(new URL(document.location.href));
-  };
-
-  let page;
   let pageHome;
   let userAction;
-  if (location.pathname.startsWith("/signin")) {
-    page = <SignIn />;
-  } else if (location.pathname.startsWith("/signup")) {
-    page = <SignUp />;
-  } else if (location.pathname.startsWith("/test")) {
-    page = <Test />;
-  } else {
-    page = <Home />;
-    pageHome = true;
-  }
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -183,20 +161,12 @@ const App: FunctionComponent = () => {
   const handleUserMenuClose = () => {
     setAnchorEl(null);
   };
-  const handleSignIn = () => {
-    window.history.pushState(location.href, "Вход", "/signin");
-    setLocation(new URL(document.location.href));
-  };
   const handleSignOut = () => {
     handleUserMenuClose();
     setUsername("");
   };
   const handleSettings = () => {
     handleUserMenuClose();
-  };
-  const handleHome = () => {
-    window.history.pushState(location.href, "Главная", "/");
-    setLocation(new URL(document.location.href));
   };
 
   if (username) {
@@ -234,7 +204,7 @@ const App: FunctionComponent = () => {
     );
   } else {
     userAction = (
-      <Button color="inherit" onClick={handleSignIn}>
+      <Button color="inherit" component={RouterLink} to="/signin">
         Вход
       </Button>
     );
@@ -249,19 +219,26 @@ const App: FunctionComponent = () => {
               className={classes.homeButton}
               color="inherit"
               aria-label="home"
-              onClick={handleHome}
+              component={RouterLink}
+              to="/"
             >
               <HomeIcon />
             </IconButton>
           )}
           <Typography variant="h6" className={classes.title}>
-            {"Пункт приёма стеклотары" + location.href}
+            Пункт приёма стеклотары
           </Typography>
           {userAction}
         </Toolbar>
       </AppBar>
       <Toolbar id="back-to-top-anchor" />
-      {page}
+      <Switch>
+        <Route path="/signin" component={SignIn} />
+        <Route path="/signup" component={SignUp} />
+        <Route path="/test" component={Test} />
+        <Route path="/newtask" component={NewTask} />
+        <Route path="/" component={Home} />
+      </Switch>
       <Box mt={8}>
         <Copyright />
       </Box>

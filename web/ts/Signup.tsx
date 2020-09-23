@@ -1,4 +1,5 @@
 import React, { FunctionComponent, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
 
 import Avatar from "@material-ui/core/Avatar";
@@ -125,7 +126,7 @@ const SignUp: FunctionComponent = () => {
           </Button>
           <Grid container justify="flex-end">
             <Grid item>
-              <Link href="#" variant="body2">
+              <Link component={RouterLink} to="/signin" variant="body2">
                 Уже есть аккаунт? Войдите
               </Link>
             </Grid>
