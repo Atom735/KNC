@@ -1,40 +1,40 @@
-import React, { FunctionComponent, useState } from 'react';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import { makeStyles } from '@material-ui/core/styles';
+import React, { FunctionComponent, useState } from "react";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import { makeStyles } from "@material-ui/core/styles";
 
-import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-import Link from '@material-ui/core/Link';
-import Grid from '@material-ui/core/Grid';
-import Box from '@material-ui/core/Box';
-import Typography from '@material-ui/core/Typography';
-import Container from '@material-ui/core/Container';
+import Avatar from "@material-ui/core/Avatar";
+import Button from "@material-ui/core/Button";
+import TextField from "@material-ui/core/TextField";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Checkbox from "@material-ui/core/Checkbox";
+import Link from "@material-ui/core/Link";
+import Grid from "@material-ui/core/Grid";
+import Box from "@material-ui/core/Box";
+import Typography from "@material-ui/core/Typography";
+import Container from "@material-ui/core/Container";
 
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
-import useStyles from './styles';
+import useStyles from "./styles";
 
 const SignUp: FunctionComponent = () => {
   const classes = useStyles();
 
-  const [fname, setFName] = useState('');
+  const [fname, setFName] = useState("");
   const handleChangeFName = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFName(event.target.value);
   };
 
-  const [lname, setLName] = useState('');
+  const [lname, setLName] = useState("");
   const handleChangeLName = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLName(event.target.value);
   };
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const handleChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
   };
-  const [pass, setPasss] = useState('');
+  const [pass, setPasss] = useState("");
   const handleChangePass = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPasss(event.target.value);
   };
@@ -65,7 +65,8 @@ const SignUp: FunctionComponent = () => {
                 id="firstName"
                 label="Имя"
                 autoFocus
-                value={fname} onChange={handleChangeFName}
+                value={fname}
+                onChange={handleChangeFName}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -77,7 +78,8 @@ const SignUp: FunctionComponent = () => {
                 label="Фамилия"
                 name="lastName"
                 autoComplete="lname"
-                value={lname} onChange={handleChangeLName}
+                value={lname}
+                onChange={handleChangeLName}
               />
             </Grid>
             <Grid item xs={12}>
@@ -89,7 +91,8 @@ const SignUp: FunctionComponent = () => {
                 label="Телефон или Email"
                 name="email"
                 autoComplete="email"
-                value={email} onChange={handleChangeEmail}
+                value={email}
+                onChange={handleChangeEmail}
               />
             </Grid>
             <Grid item xs={12}>
@@ -102,7 +105,8 @@ const SignUp: FunctionComponent = () => {
                 type="password"
                 id="password"
                 autoComplete="password"
-                value={pass} onChange={handleChangePass}
+                value={pass}
+                onChange={handleChangePass}
               />
             </Grid>
             {/* <Grid item xs={12}>
@@ -132,6 +136,6 @@ const SignUp: FunctionComponent = () => {
       </div>
     </Container>
   );
-}
+};
 
 export default SignUp;
