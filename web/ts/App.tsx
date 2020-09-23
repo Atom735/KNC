@@ -17,6 +17,7 @@ import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 
 import SignIn from './Signin';
 import SignUp from './Signup';
+import Test from './Test';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -96,6 +97,8 @@ const App: FunctionComponent = () => {
     page = <SignIn />;
   } else if (location.pathname.startsWith('/signup')) {
     page = <SignUp />;
+  } else if (location.pathname.startsWith('/test')) {
+    page = <Test />;
   }
   return (
     <ThemeProvider theme={theme}>
