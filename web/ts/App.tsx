@@ -161,6 +161,10 @@ const App: FunctionComponent = () => {
     handleUserMenuClose();
   };
 
+  const handleOnSignIn = (msg: String) => {
+    console.log("Привет мир: " + msg);
+  };
+
   return (
     <>
       <AppBar>
@@ -220,7 +224,11 @@ const App: FunctionComponent = () => {
       </AppBar>
       <Toolbar id="back-to-top-anchor" />
       <RouteSwitch>
-        <Route path="/signin" component={PageSignIn} />
+        <Route
+          path="/signin"
+          component={PageSignIn}
+          callback={handleOnSignIn}
+        />
         <Route path="/signup" component={PageSignUp} />
         <Route path="/test" component={PageTest} />
         <Route path="/newtask" component={PageNewTask} />
