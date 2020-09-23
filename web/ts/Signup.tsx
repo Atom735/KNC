@@ -57,7 +57,7 @@ const SignUp: FunctionComponent = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
-                autoComplete="fname"
+                autoComplete="given-name"
                 name="firstName"
                 variant="outlined"
                 required
@@ -77,7 +77,7 @@ const SignUp: FunctionComponent = () => {
                 id="lastName"
                 label="Фамилия"
                 name="lastName"
-                autoComplete="lname"
+                autoComplete="family-name"
                 value={lname}
                 onChange={handleChangeLName}
               />
