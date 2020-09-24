@@ -20,6 +20,9 @@ class JMsgUserSignin {
 
   @override
   String toString() => '$msgId$mail$msgRecordSeparator$pass';
+
+  static String jsFunc(String mail, String pass) =>
+      JMsgUserSignin(mail, pass).toString();
 }
 
 /// Выход пользователя из системы.
@@ -27,6 +30,12 @@ class JMsgUserSignin {
 /// Клиент отправляет запрос серверу, в ответ приходит пустая строка.
 class JMsgUserLogout {
   static const msgId = 'JMsgUserLogout:';
+
+  const JMsgUserLogout();
+  @override
+  String toString() => '$msgId';
+
+  static String jsFunc() => JMsgUserLogout().toString();
 }
 
 /// Регистрация нового пользователя и вход.
@@ -44,6 +53,16 @@ class JMsgUserRegistration {
 
   @override
   String toString() => msgId + jsonEncode(user);
+
+  static String jsFunc(String mail, String pass, String access,
+          String firstName, String secondName) =>
+      JMsgUserRegistration(JUser(
+        mail,
+        pass,
+        access,
+        firstName: firstName,
+        secondName: secondName,
+      )).toString();
 }
 
 /// Сообщение об обновлении состояния задачи.
@@ -83,6 +102,9 @@ class JMsgDoc2X {
   const JMsgDoc2X(this.doc, this.docx);
   @override
   String toString() => '$msgId$doc$msgRecordSeparator$docx';
+
+  static String jsFunc(String doc, String docx) =>
+      JMsgDoc2X(doc, docx).toString();
 }
 
 /// Запрос на запаковку файлов находящихся в [dir], в файл [zip]
@@ -105,6 +127,8 @@ class JMsgZip {
   const JMsgZip(this.dir, this.zip);
   @override
   String toString() => '$msgId$dir$msgRecordSeparator$zip';
+
+  static String jsFunc(String dir, String zip) => JMsgZip(dir, zip).toString();
 }
 
 /// Запрос на распаковку файлов находящихся в [zip], в папку [dir], который
@@ -129,4 +153,7 @@ class JMsgUnzip {
   const JMsgUnzip(this.zip, [this.dir = '']);
   @override
   String toString() => '$msgId$zip$msgRecordSeparator$dir';
+
+  static String jsFunc(String zip, String dir) =>
+      JMsgUnzip(zip, dir).toString();
 }

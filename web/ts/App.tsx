@@ -160,7 +160,7 @@ const App: FunctionComponent = () => {
   };
 
   const handleOnSignIn = (msg: String) => {
-    console.log("Привет мир: " + msg);
+    socket.send(msg.toString());
   };
 
   return (

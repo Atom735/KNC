@@ -17,7 +17,8 @@ import Backdrop from "@material-ui/core/Backdrop";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
 import useStyles from "./../styles";
-import { msgRequest, JMsgUserSignin } from "./../dartRequester";
+
+import window from "./../dartWrapper";
 
 interface PageSignInProps {
   children?: React.ReactNode;
@@ -46,7 +47,7 @@ const PageSignIn: FunctionComponent<PageSignInProps> = (
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     setSubmit(true);
     console.dir(props);
-    props.dartRequest(JMsgUserSignin(email, pass));
+    props.dartRequest(window.dartJMsgUserSignin(email, pass));
     event.preventDefault();
   };
 
