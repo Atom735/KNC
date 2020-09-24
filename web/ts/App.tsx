@@ -1,8 +1,9 @@
 import React, { FunctionComponent, useState, useEffect } from "react";
+import { RouterProps } from "react-router";
 import {
   Switch as RouteSwitch,
   Route,
-  Link as RouterLink
+  Link as RouterLink,
 } from "react-router-dom";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
@@ -98,51 +99,49 @@ const useStylesApp = makeStyles((theme) =>
   })
 );
 
-const App: FunctionComponent = () => {
+
+interface AppProps extends RouterProps {
+  props?: React.ReactNode;
+}
+
+const App: FunctionComponent<AppProps> = (props: AppProps) => {
   const classes = useStylesApp();
   const { enqueueSnackbar } = useSnackbar();
 
   const [username, setUsername] = useState("");
+  const [soketMsgRequsters, setSoketMsgRequsters] = useState(new Map<string, any>());
+  const [soketMsgId, setSoketMsgId] = useState(1);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [socket, setSocket] = useState(
     new WebSocket("ws://" + document.location.host + "/ws")
   );
   const open = Boolean(anchorEl);
 
-  useEffect(() => {
-    socket.addEventListener("onopen", handleSocketOnOpen);
-    socket.addEventListener("onclose", handleSocketOnClose);
-    socket.addEventListener("onerror", handleSocketOnError);
-    socket.addEventListener("onmessage", handleSocketOnMessage);
-    return () => {
-      socket.removeEventListener("onopen", handleSocketOnOpen);
-      socket.removeEventListener("onclose", handleSocketOnClose);
-      socket.removeEventListener("onerror", handleSocketOnError);
-      socket.removeEventListener("onmessage", handleSocketOnMessage);
-    };
-
-    // onclose	EventListener	Обработчик событий, вызываемый, когда readyState WebSocket соединения изменяется на CLOSED. Наблюдатель получает CloseEvent с именем "close".
-    // onerror	EventListener
-    // Обработчик событий, вызываемый, когда происходит ошибка. Это простое событие, называемое "error".
-
-    // onmessage	EventListener
-    // Обработчик событий , вызываемый, когда получается сообщение с сервера. Наблюдатель получает MessageEvent,  называемое "message".
-
-    // onopen	EventListener
-    // Наблюдатель событий, вызываемый, когда readyState WebSocket - соединения изменяется на OPEN; это показывает, что соединение готово отсылать и принимать данные. Это простое событие, называемое "open".
-  }, [socket]);
-
   const handleSocketOnOpen = (event: Event) => {
     enqueueSnackbar("Соединение установлено", { variant: "info" });
+    console.log("Соединение установлено");
   };
   const handleSocketOnClose = (event: CloseEvent) => {
     enqueueSnackbar("Сокет был закрыт", { variant: "warning" });
+    console.log("Сокет был закрыт");
   };
   const handleSocketOnError = (event: ErrorEvent) => {
     enqueueSnackbar("Ошибка в Сокете", { variant: "error" });
+    console.log("Ошибка в Сокете: " + event.error);
   };
   const handleSocketOnMessage = (event: MessageEvent) => {
     enqueueSnackbar("Сообщения от сокета", { variant: "success" });
+    console.log("Сообщения от сокета: " + event.data);
+    console.dir(event.data);
+    const msg = event.data as String;
+    if (msg.startsWith("\u0001")) {
+      const i0 = msg.indexOf("\u0002");
+      const callback =
+        soketMsgRequsters.get(msg.substring(1, i0));
+      if (callback) {
+        callback(msg.substring(i0 + 1));
+      }
+    }
   };
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -159,9 +158,37 @@ const App: FunctionComponent = () => {
     handleUserMenuClose();
   };
 
-  const handleOnSignIn = (msg: String) => {
-    socket.send(msg.toString());
+  const soketRequest = (msg: String, callback: any) => {
+    const msgIdString = soketMsgId.toString();
+    setSoketMsgRequsters(prevData => prevData.set(msgIdString, callback));
+    socket.send("\u0001" + msgIdString + "\u0002" + msg.toString());
   };
+
+  const callbackSignIn = (msg: String) => {
+    console.log("Успешный вход!: " + msg);
+    setUsername(msg.toString());
+    props.history.push('/');
+  };
+
+  const handleOnSignIn = (msg: String) => {
+    soketRequest(msg, callbackSignIn);
+  };
+
+
+  useEffect(() => {
+    socket.onopen = handleSocketOnOpen;
+    socket.onclose = handleSocketOnClose;
+    socket.onerror = handleSocketOnError;
+    socket.onmessage = handleSocketOnMessage;
+    return () => {
+      socket.onopen = null;
+      socket.onclose = null;
+      socket.onerror = null;
+      socket.onmessage = null;
+    };
+
+  }, [socket]);
+
 
   return (
     <>

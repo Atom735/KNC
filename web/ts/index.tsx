@@ -5,7 +5,7 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 
 import { ThemeProvider } from "@material-ui/core/styles";
 import { SnackbarProvider } from "notistack";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Route } from "react-router-dom";
 
 import App from "./App";
 
@@ -25,7 +25,7 @@ ReactDOM.render(
     <SnackbarProvider maxSnack={4}>
       <CssBaseline />
       <BrowserRouter>
-        <App />
+        <Route path="/" component={App} />
       </BrowserRouter>
     </SnackbarProvider>
   </ThemeProvider>,
