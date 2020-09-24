@@ -9,7 +9,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
 
-navigator.serviceWorker
+/*SECURE*navigator.serviceWorker
   .register("./sw.bundle.js", { scope: "./" })
   .then((reg) => {
     // регистрация сработала
@@ -18,7 +18,7 @@ navigator.serviceWorker
   .catch((error) => {
     // регистрация прошла неудачно
     console.error("Registration failed with " + error);
-  });
+  });*/
 
 ReactDOM.render(
   <ThemeProvider theme={theme}>

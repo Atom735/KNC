@@ -16,3 +16,4 @@ analyzer:
     - node_modules/**
     - public/**
     - src/**
+    - build/**

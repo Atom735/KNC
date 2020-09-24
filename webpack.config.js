@@ -1,10 +1,10 @@
+"use strict";
+
+// import { path } from "path";
 const path = require('path');
 
 module.exports = {
-    entry: {
-        app: './web/ts/index.tsx',
-        sw: './web/sw/index.tsx',
-    },
+    entry: './web/ts/index.tsx',
     devtool: 'inline-source-map',
     module: {
         rules: [
@@ -19,8 +19,14 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        filename: '[name].bundle.js',
+        filename: 'app.bundle.js',
         path: path.resolve(__dirname, 'web'),
     },
-    mode: process.env.NODE_ENV === 'production' ? 'production' : 'development'
+    mode: 'development',
+    watch: true,
+    watchOptions: {
+        aggregateTimeout: 500,
+        poll: 1000 // порверяем измемения раз в секунду
+    }
+
 };

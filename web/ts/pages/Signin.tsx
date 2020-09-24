@@ -21,7 +21,7 @@ import { msgRequest, JMsgUserSignin } from "./../dartRequester";
 
 interface PageSignInProps {
   children?: React.ReactNode;
-  callback?: CallableFunction;
+  dartRequest?: CallableFunction;
 }
 
 const PageSignIn: FunctionComponent<PageSignInProps> = (
@@ -46,7 +46,7 @@ const PageSignIn: FunctionComponent<PageSignInProps> = (
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     setSubmit(true);
     console.dir(props);
-    msgRequest(JMsgUserSignin(email, pass), props.callback);
+    props.dartRequest(JMsgUserSignin(email, pass));
     event.preventDefault();
   };
 

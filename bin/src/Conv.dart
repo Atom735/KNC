@@ -50,21 +50,14 @@ class Conv extends ProcessManager {
   factory Conv() => _instance;
 
   /// создаёт экземпляр объекта
-  static Future<Conv> init() {
+  static Future<Conv> init() async {
     final dirTemp = Directory('temp').absolute;
-    return Future.wait([
-      dirTemp.exists().then((exist) => exist
-          ? dirTemp
-              .delete(recursive: true)
-              .then((_) => dirTemp.create(recursive: true))
-          : dirTemp.create(recursive: true)),
-      _searchProgram_7Zip(),
-      _searchProgram_WordConv(),
-      _loadCharMaps()
-    ]).then((f) {
-      return Conv._create(f[0] as Directory, f[1] as String, f[2] as String,
-          f[3] as Map<String, List<String>>);
-    });
+    if (await dirTemp.exists()) {
+      await dirTemp.delete();
+    }
+
+    return Conv._create(await dirTemp.create(), await _searchProgram_7Zip(),
+        await _searchProgram_WordConv(), await _loadCharMaps());
   }
 
   /// Подбирает кодировку и конвертирует в строку, подобранная кодировка
@@ -131,17 +124,24 @@ class Conv extends ProcessManager {
   ];
 
   /// Ищет где находися программа WordConv
-  static Future<String> _searchProgram_WordConv() =>
-      Future.wait(_SearchPath_WordConv.map((e) => Directory(e).exists().then(
-              (exist) => exist
-                  ? Directory(e)
-                      .list(recursive: true, followLinks: false)
-                      .firstWhere((file) =>
-                          file is File &&
-                          p.basename(file.path).toLowerCase() == 'wordconv.exe')
-                  : null)))
-          .then((list) => list.firstWhere((element) => element != null) /*!*/)
-          .then((entity) => entity.path);
+  static Future<String> _searchProgram_WordConv() async {
+    for (var path in _SearchPath_WordConv) {
+      final _dir = Directory(path);
+      if (await _dir.exists()) {
+        final _file = (await _dir
+            .list(recursive: true, followLinks: false)
+            .firstWhere(
+                (file) =>
+                    file is File &&
+                    p.basename(file.path).toLowerCase() == 'wordconv.exe',
+                orElse: () => File(''))) as File;
+        if (_file.path.isNotEmpty) {
+          return _file.path;
+        }
+      }
+    }
+    return '';
+  }
 
   /// Поиск кодировок
   static Future<Map<String, List<String>>> _loadMappings(

@@ -105,7 +105,7 @@ const App: FunctionComponent = () => {
   const [username, setUsername] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [socket, setSocket] = useState(
-    new WebSocket("wss://" + document.location.host + "/wss")
+    new WebSocket("ws://" + document.location.host + "/ws")
   );
   const open = Boolean(anchorEl);
 
@@ -145,8 +145,6 @@ const App: FunctionComponent = () => {
     enqueueSnackbar("Сообщения от сокета", { variant: "success" });
   };
 
-  let pageHome;
-
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -169,18 +167,16 @@ const App: FunctionComponent = () => {
     <>
       <AppBar>
         <Toolbar>
-          {pageHome || (
-            <IconButton
-              edge="start"
-              className={classes.homeButton}
-              color="inherit"
-              aria-label="home"
-              component={RouterLink}
-              to="/"
-            >
-              <HomeIcon />
-            </IconButton>
-          )}
+          <IconButton
+            edge="start"
+            className={classes.homeButton}
+            color="inherit"
+            aria-label="home"
+            component={RouterLink}
+            to="/"
+          >
+            <HomeIcon />
+          </IconButton>
           <Typography variant="h6" className={classes.title}>
             Пункт приёма стеклотары
           </Typography>
@@ -216,10 +212,10 @@ const App: FunctionComponent = () => {
               </Menu>
             </>
           ) : (
-            <Button color="inherit" component={RouterLink} to="/signin">
-              Вход
-            </Button>
-          )}
+              <Button color="inherit" component={RouterLink} to="/signin">
+                Вход
+              </Button>
+            )}
         </Toolbar>
       </AppBar>
       <Toolbar id="back-to-top-anchor" />
@@ -227,7 +223,7 @@ const App: FunctionComponent = () => {
         <Route
           path="/signin"
           render={(props) => (
-            <PageSignIn {...props} callback={handleOnSignIn} />
+            <PageSignIn {...props} dartRequest={handleOnSignIn} />
           )}
         />
         <Route path="/signup" component={PageSignUp} />
