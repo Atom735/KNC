@@ -15,6 +15,9 @@
       "ES6",
       "DOM",
       "WebWorker"
-    ]
-  }
+    ],
+  },
+  "exclude": [
+    "node_modules/**"
+  ]
 }
