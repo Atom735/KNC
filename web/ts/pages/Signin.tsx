@@ -18,11 +18,11 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
 import useStyles from "./../styles";
 
-import window from "./../dartWrapper";
+import { funcs, requestOnce } from "./../dartWrapper";
 
 interface PageSignInProps {
   children?: React.ReactNode;
-  dartRequest?: CallableFunction;
+  callback?: (username: string) => void;
 }
 
 const PageSignIn: FunctionComponent<PageSignInProps> = (
@@ -45,10 +45,15 @@ const PageSignIn: FunctionComponent<PageSignInProps> = (
 
   const [submit, setSubmit] = useState(false);
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setSubmit(true);
     console.dir(props);
-    props.dartRequest(window.dartJMsgUserSignin(email, pass));
-    event.preventDefault();
+    console.dir(funcs.dartJMsgUserSignin);
+    const c = funcs.dartJMsgUserSignin(email, pass);
+    requestOnce(c, (msg) => {
+      setSubmit(false);
+      props.callback(msg);
+    });
   };
 
   return (

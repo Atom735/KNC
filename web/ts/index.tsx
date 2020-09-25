@@ -8,6 +8,7 @@ import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route } from "react-router-dom";
 
 import App from "./App";
+import { dartConnect } from "./dartWrapper";
 
 /*SECURE*navigator.serviceWorker
   .register("./sw.bundle.js", { scope: "./" })
@@ -20,6 +21,7 @@ import App from "./App";
     console.error("Registration failed with " + error);
   });*/
 
+
 ReactDOM.render(
   <ThemeProvider theme={theme}>
     <SnackbarProvider maxSnack={4}>
@@ -31,3 +33,5 @@ ReactDOM.render(
   </ThemeProvider>,
   document.querySelector("#root")
 );
+
+dartConnect();

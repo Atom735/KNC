@@ -31,6 +31,9 @@ import PageSignUp from "./pages/Signup";
 import PageTest from "./pages/Test";
 import PageNewTask from "./pages/NewTask";
 
+import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen } from "./dartWrapper";
+
+
 const useStylesScrollTop = makeStyles((theme) =>
   createStyles({
     root: {
@@ -107,42 +110,21 @@ interface AppProps extends RouterProps {
 const App: FunctionComponent<AppProps> = (props: AppProps) => {
   const classes = useStylesApp();
   const { enqueueSnackbar } = useSnackbar();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const [username, setUsername] = useState("");
-  const [soketMsgRequsters, setSoketMsgRequsters] = useState(new Map<string, any>());
-  const [soketMsgId, setSoketMsgId] = useState(1);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [socket, setSocket] = useState(
-    new WebSocket("ws://" + document.location.host + "/ws")
-  );
-  const open = Boolean(anchorEl);
-
-  const handleSocketOnOpen = (event: Event) => {
+  dartSetSocketOnOpen(() => {
     enqueueSnackbar("Соединение установлено", { variant: "info" });
-    console.log("Соединение установлено");
-  };
-  const handleSocketOnClose = (event: CloseEvent) => {
-    enqueueSnackbar("Сокет был закрыт", { variant: "warning" });
-    console.log("Сокет был закрыт");
-  };
-  const handleSocketOnError = (event: ErrorEvent) => {
-    enqueueSnackbar("Ошибка в Сокете", { variant: "error" });
-    console.log("Ошибка в Сокете: " + event.error);
-  };
-  const handleSocketOnMessage = (event: MessageEvent) => {
-    enqueueSnackbar("Сообщения от сокета", { variant: "success" });
-    console.log("Сообщения от сокета: " + event.data);
-    console.dir(event.data);
-    const msg = event.data as String;
-    if (msg.startsWith("\u0001")) {
-      const i0 = msg.indexOf("\u0002");
-      const callback =
-        soketMsgRequsters.get(msg.substring(1, i0));
-      if (callback) {
-        callback(msg.substring(i0 + 1));
-      }
-    }
-  };
+  });
+
+  dartSetSocketOnClose((reason) => {
+    enqueueSnackbar("Соединение было закрыто: " + reason, { variant: "warning" });
+  });
+
+  dartSetSocketOnError((error) => {
+    enqueueSnackbar("Ошибка в соединении: " + error, { variant: "error" });
+  });
+
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -158,36 +140,13 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
     handleUserMenuClose();
   };
 
-  const soketRequest = (msg: String, callback: any) => {
-    const msgIdString = soketMsgId.toString();
-    setSoketMsgRequsters(prevData => prevData.set(msgIdString, callback));
-    socket.send("\u0001" + msgIdString + "\u0002" + msg.toString());
+  const callbackSignIn = (username: string) => {
+    if (username) {
+      console.log("Успешный вход!: " + username);
+      setUsername(username.toString());
+      props.history.push('/');
+    }
   };
-
-  const callbackSignIn = (msg: String) => {
-    console.log("Успешный вход!: " + msg);
-    setUsername(msg.toString());
-    props.history.push('/');
-  };
-
-  const handleOnSignIn = (msg: String) => {
-    soketRequest(msg, callbackSignIn);
-  };
-
-
-  useEffect(() => {
-    socket.onopen = handleSocketOnOpen;
-    socket.onclose = handleSocketOnClose;
-    socket.onerror = handleSocketOnError;
-    socket.onmessage = handleSocketOnMessage;
-    return () => {
-      socket.onopen = null;
-      socket.onclose = null;
-      socket.onerror = null;
-      socket.onmessage = null;
-    };
-
-  }, [socket]);
 
 
   return (
@@ -231,7 +190,7 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
                   vertical: "top",
                   horizontal: "right"
                 }}
-                open={open}
+                open={anchorEl && true}
                 onClose={handleUserMenuClose}
               >
                 <MenuItem onClick={handleSettings}>Настройки</MenuItem>
@@ -250,7 +209,7 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
         <Route
           path="/signin"
           render={(props) => (
-            <PageSignIn {...props} dartRequest={handleOnSignIn} />
+            <PageSignIn {...props} callback={callbackSignIn} />
           )}
         />
         <Route path="/signup" component={PageSignUp} />
