@@ -54,12 +54,12 @@ class JMsgUserRegistration {
   @override
   String toString() => msgId + jsonEncode(user);
 
-  static String jsFunc(String mail, String pass, String access,
+  static String jsFunc(String mail, String pass,
           String firstName, String secondName) =>
       JMsgUserRegistration(JUser(
         mail,
         pass,
-        access,
+        'a',
         firstName: firstName,
         secondName: secondName,
       )).toString();

@@ -31,7 +31,7 @@ import PageSignUp from "./pages/Signup";
 import PageTest from "./pages/Test";
 import PageNewTask from "./pages/NewTask";
 
-import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen } from "./dartWrapper";
+import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen } from "./dart/SocketWrapper";
 
 
 const useStylesScrollTop = makeStyles((theme) =>

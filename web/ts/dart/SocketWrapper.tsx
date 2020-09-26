@@ -135,15 +135,6 @@ export function requestSubscribe(msg: string, callback: (msg: string) => any): v
   }
   send(id, msg);
 }
-interface DartFuncs {
-  dartJMsgUserSignin: (mail: string, pass: string) => string;
-  dartJMsgUserLogout: () => string;
-  dartJMsgUserRegistration: () => string;
-  dartJMsgDoc2X: () => string;
-  dartJMsgZip: () => string;
-  dartJMsgUnzip: () => string;
-}
-export const funcs = (window as undefined as DartFuncs);
 
 
 const senderQuie = new Array<string>();

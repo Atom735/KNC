@@ -18,6 +18,12 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
 import useStyles from "./../styles";
 
+
+interface PageSignUpProps {
+  children?: React.ReactNode;
+  callback?: (username: string) => void;
+}
+
 const PageSignUp: FunctionComponent = () => {
   const classes = useStyles();
 

@@ -18,7 +18,8 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
 import useStyles from "./../styles";
 
-import { funcs, requestOnce } from "./../dartWrapper";
+import { funcs } from "./../dart/Lib";
+import { requestOnce } from "./../dart/SocketWrapper";
 
 interface PageSignInProps {
   children?: React.ReactNode;
