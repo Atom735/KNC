@@ -23,7 +23,7 @@ import { requestOnce } from "./../dart/SocketWrapper";
 
 interface PageSignInProps {
   children?: React.ReactNode;
-  callback?: (username: string) => void;
+  callback?: (msg: string) => void;
 }
 
 const PageSignIn: FunctionComponent<PageSignInProps> = (

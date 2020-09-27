@@ -19,12 +19,16 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import useStyles from "./../styles";
 
 
+import { funcs } from "./../dart/Lib";
+import { requestOnce } from "./../dart/SocketWrapper";
+
+
 interface PageSignUpProps {
   children?: React.ReactNode;
-  callback?: (username: string) => void;
+  callback?: (msg: string) => void;
 }
 
-const PageSignUp: FunctionComponent = () => {
+const PageSignUp: FunctionComponent<PageSignUpProps> = (props) => {
   const classes = useStyles();
 
   const [fname, setFName] = useState("");
@@ -45,15 +49,18 @@ const PageSignUp: FunctionComponent = () => {
   const handleChangePass = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPasss(event.target.value);
   };
-  const [remem, setRemem] = useState(true);
-  const handleChangeRemem = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRemem(event.target.checked);
-  };
 
   const [submit, setSubmit] = useState(false);
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    setSubmit(true);
     event.preventDefault();
+    setSubmit(true);
+    console.dir(props);
+    console.dir(funcs.dartJMsgUserRegistration);
+    const c = funcs.dartJMsgUserRegistration(email, pass, fname, lname);
+    requestOnce(c, (msg) => {
+      setSubmit(false);
+      props.callback(msg);
+    });
   };
 
   return (

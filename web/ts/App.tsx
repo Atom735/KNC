@@ -140,10 +140,18 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
     handleUserMenuClose();
   };
 
-  const callbackSignIn = (username: string) => {
-    if (username) {
-      console.log("Успешный вход!: " + username);
-      setUsername(username.toString());
+  const callbackSignIn = (msg: string) => {
+    if (msg) {
+      console.log("Успешный вход!: " + msg);
+      setUsername(msg.toString());
+      props.history.push('/');
+    }
+  };
+
+  const callbackSignUp = (msg: string) => {
+    if (msg) {
+      console.log("Успешная регистрация!: " + msg);
+      setUsername(msg.toString());
       props.history.push('/');
     }
   };
@@ -212,7 +220,10 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
             <PageSignIn {...props} callback={callbackSignIn} />
           )}
         />
-        <Route path="/signup" component={PageSignUp} />
+        <Route path="/signup"
+          render={(props) => (
+            <PageSignUp {...props} callback={callbackSignUp} />
+          )} />
         <Route path="/test" component={PageTest} />
         <Route path="/newtask" component={PageNewTask} />
         <Route path="/" component={PageHome} />
