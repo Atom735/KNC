@@ -8,7 +8,7 @@ import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route } from "react-router-dom";
 
 import App from "./App";
-import { dartConnect } from "./dartWrapper";
+import { dartConnect } from "./dart/SocketWrapper";
 
 /*SECURE*navigator.serviceWorker
   .register("./sw.bundle.js", { scope: "./" })
