@@ -9,3 +9,12 @@ interface DartFuncs {
   dartJMsgUnzip: (zip: string, dir: string) => string;
 }
 export const funcs = (window as undefined as DartFuncs);
+
+
+export interface JUser {
+  access: string,
+  mail: string,
+  pass: string,
+  first_name?: string,
+  second_name?: string,
+}

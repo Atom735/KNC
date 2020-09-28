@@ -17,7 +17,7 @@ class User extends JUser {
 
   /// Создаёт нового пользователя и регистрирует его в базе данных
   User.fromJson(final Map<String, dynamic> m) : super.fromJson(m) {
-    final _mail = (dataBase[mail] as String).toLowerCase();
+    final _mail = mail.toLowerCase();
     if (dataBase[_mail] != null) {
       throw Exception('Такой пользователь уже существует');
     }
@@ -27,6 +27,9 @@ class User extends JUser {
     _futureSaveBase =
         _futureSaveBase ?? Future.delayed(Duration(milliseconds: 333), save);
   }
+
+  // @override
+  // Map<String, dynamic> toJson() => super.toJson();
 
   /// Загружает данные всех пользователей
   static Future<void> load() async {
@@ -39,7 +42,7 @@ class User extends JUser {
 
   /// Сохраняет данные всех пользователей
   static Future<void> save() {
-    final _data = jsonEncode(dataBase.values);
+    final _data = jsonEncode(dataBase.values.toList(growable: false));
     _futureSaveBase = null;
     return tryFunc(() => _fileBase.writeAsString(_data));
   }

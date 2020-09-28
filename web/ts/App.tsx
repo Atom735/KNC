@@ -32,6 +32,7 @@ import PageTest from "./pages/Test";
 import PageNewTask from "./pages/NewTask";
 
 import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen } from "./dart/SocketWrapper";
+import { JUser } from "./dart/Lib";
 
 
 const useStylesScrollTop = makeStyles((theme) =>
@@ -112,7 +113,7 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const [username, setUsername] = useState("");
+  const [user, setUser] = useState<JUser | null>(null);
   dartSetSocketOnOpen(() => {
     enqueueSnackbar("Соединение установлено", { variant: "info" });
   });
@@ -134,7 +135,7 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
   };
   const handleSignOut = () => {
     handleUserMenuClose();
-    setUsername("");
+    setUser(null);
   };
   const handleSettings = () => {
     handleUserMenuClose();
@@ -142,17 +143,23 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
 
   const callbackSignIn = (msg: string) => {
     if (msg) {
-      console.log("Успешный вход!: " + msg);
-      setUsername(msg.toString());
+      console.log("Успешный вход: " + msg);
+      const _user = JSON.parse(msg) as JUser;
+      console.dir(_user);
+      setUser(_user);
+      enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
       props.history.push('/');
+    } else {
+      enqueueSnackbar("Неверные логин и/или пароль", { variant: "error" });
     }
   };
 
   const callbackSignUp = (msg: string) => {
     if (msg) {
-      console.log("Успешная регистрация!: " + msg);
-      setUsername(msg.toString());
+      console.log("Успешная регистрация: " + msg);
       props.history.push('/');
+    } else {
+      enqueueSnackbar("Эта почта уже зарегестрированна", { variant: "error" });
     }
   };
 
@@ -174,20 +181,18 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
           <Typography variant="h6" className={classes.title}>
             Пункт приёма стеклотары
           </Typography>
-          {username ? (
+          {user ? (
             <>
-              <Typography variant="h6">{username}</Typography>
+              <Typography variant="h6">{user.mail}</Typography>
               <IconButton
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
                 onClick={handleUserMenuOpen}
                 color="inherit"
+              // aria-controls="simple-menu" aria-haspopup="true"
               >
                 <AccountCircle />
               </IconButton>
               <Menu
-                id="menu-appbar"
+                // id="simple-menu"
                 anchorEl={anchorEl}
                 anchorOrigin={{
                   vertical: "top",
@@ -198,7 +203,7 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
                   vertical: "top",
                   horizontal: "right"
                 }}
-                open={anchorEl && true}
+                open={Boolean(anchorEl)}
                 onClose={handleUserMenuClose}
               >
                 <MenuItem onClick={handleSettings}>Настройки</MenuItem>
