@@ -32,9 +32,9 @@ import PageSignUp from "./pages/Signup";
 import PageTest from "./pages/Test";
 import PageNewTask from "./pages/NewTask";
 
-import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen } from "./dart/SocketWrapper";
-import { JUser } from "./dart/Lib";
-import { AppState } from "./redux";
+import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen, requestOnce } from "./dart/SocketWrapper";
+import { funcs, JUser } from "./dart/Lib";
+import { AppState, fetchSignOut } from "./redux";
 
 
 const useStylesScrollTop = makeStyles((theme) =>
@@ -107,20 +107,7 @@ const useStylesApp = makeStyles((theme) =>
 
 
 
-// Separate state props + dispatch props to their own interfaces.
-interface PropsFromState {
-  user: JUser
-}
-
-// We can use `typeof` here to map our dispatch types to the props, like so.
-interface PropsFromDispatch {
-}
-
-// Combine both state + dispatch props - as well as any props we want to pass - in a union type.
-type AppProps = PropsFromState & PropsFromDispatch & RouterProps;
-
-
-const App: React.FC<AppProps> = (props: AppProps) => {
+const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = (props) => {
   const classes = useStylesApp();
   const { enqueueSnackbar } = useSnackbar();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -154,23 +141,26 @@ const App: React.FC<AppProps> = (props: AppProps) => {
   const handleUserMenuClose = () => {
     setAnchorEl(null);
   };
+
+
+
+
+  const [submitLogOut, setSubmitLogOut] = useState(false);
   const handleSignOut = () => {
     handleUserMenuClose();
-    // setUser(null);
+    setSubmitLogOut(true);
+    requestOnce(funcs.dartJMsgUserLogout(), (msg) => {
+      setSubmitLogOut(false);
+      console.log("Вы вышли из системы");
+      enqueueSnackbar("Вы вышли из системы", { variant: "info" });
+      props.fetchSignOut();
+    });
   };
   const handleSettings = () => {
     handleUserMenuClose();
   };
 
 
-  const callbackSignUp = (msg: string) => {
-    if (msg) {
-      console.log("Успешная регистрация: " + msg);
-      props.history.push('/');
-    } else {
-      enqueueSnackbar("Эта почта уже зарегестрированна", { variant: "error" });
-    }
-  };
 
   const { user } = props;
 
@@ -231,10 +221,7 @@ const App: React.FC<AppProps> = (props: AppProps) => {
       <Toolbar id="back-to-top-anchor" />
       <RouteSwitch>
         <Route path="/signin" component={PageSignIn} />
-        <Route path="/signup"
-          render={(props) => (
-            <PageSignUp {...props} callback={callbackSignUp} />
-          )} />
+        <Route path="/signup" component={PageSignUp} />
         <Route path="/test" component={PageTest} />
         <Route path="/newtask" component={PageNewTask} />
         <Route path="/" component={PageHome} />
@@ -246,7 +233,12 @@ const App: React.FC<AppProps> = (props: AppProps) => {
     </>
   );
 };
+interface PropsFromState {
+  user: JUser
+}
+const mapStateToProps = ({ user }: AppState): PropsFromState => ({ user: user })
+const mapDispatchToProps = {
+  fetchSignOut: fetchSignOut
+}
 
-const mapStateToProps = ({ user }: AppState) => ({ user: user })
-
-export default connect(mapStateToProps)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(App);

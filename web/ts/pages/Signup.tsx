@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
+import { RouterProps } from "react-router";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
@@ -19,17 +20,17 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import useStyles from "./../styles";
 
 
-import { funcs } from "./../dart/Lib";
+import { funcs, JUser } from "./../dart/Lib";
 import { requestOnce } from "./../dart/SocketWrapper";
+import { fetchSignIn } from "../redux";
+import { connect } from "react-redux";
+import { useSnackbar } from "notistack";
 
 
-interface PageSignUpProps {
-  children?: React.ReactNode;
-  callback?: (msg: string) => void;
-}
-
-const PageSignUp: FunctionComponent<PageSignUpProps> = (props) => {
+const PageSignUp: React.FC<typeof mapDispatchToProps & RouterProps> = (props) => {
   const classes = useStyles();
+
+  const { enqueueSnackbar } = useSnackbar();
 
   const [fname, setFName] = useState("");
   const handleChangeFName = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,12 +55,18 @@ const PageSignUp: FunctionComponent<PageSignUpProps> = (props) => {
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmit(true);
-    console.dir(props);
-    console.dir(funcs.dartJMsgUserRegistration);
-    const c = funcs.dartJMsgUserRegistration(email, pass, fname, lname);
-    requestOnce(c, (msg) => {
+    requestOnce(funcs.dartJMsgUserRegistration(email, pass, fname, lname), (msg) => {
       setSubmit(false);
-      // props.callback(msg);
+      if (msg) {
+        console.log("Успешная регистрация: " + msg);
+        const _user = JSON.parse(msg) as JUser;
+        console.dir(_user);
+        props.signin(_user);
+        enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
+        props.history.push('/');
+      } else {
+        enqueueSnackbar("Эта почта уже зарегестрированна", { variant: "error" });
+      }
     });
   };
 
@@ -173,4 +180,7 @@ const PageSignUp: FunctionComponent<PageSignUpProps> = (props) => {
   );
 };
 
-export default PageSignUp;
+const mapDispatchToProps = {
+  signin: fetchSignIn
+}
+export default connect(null, mapDispatchToProps)(PageSignUp);

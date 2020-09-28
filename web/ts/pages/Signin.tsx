@@ -50,29 +50,23 @@ const PageSignIn: React.FC<typeof mapDispatchToProps & RouterProps> = (
   };
 
 
-  const callbackSignIn = (msg: string) => {
-    setSubmit(false);
-    if (msg) {
-      console.log("Успешный вход: " + msg);
-      const _user = JSON.parse(msg) as JUser;
-      console.dir(_user);
-      // setUser(_user);
-      props.signin(_user);
-      enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
-      props.history.push('/');
-    } else {
-      enqueueSnackbar("Неверные логин и/или пароль", { variant: "error" });
-    }
-  };
-
   const [submit, setSubmit] = useState(false);
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmit(true);
-    console.dir(props);
-    console.dir(funcs.dartJMsgUserSignin);
-    const c = funcs.dartJMsgUserSignin(email, pass);
-    requestOnce(c, callbackSignIn);
+    requestOnce(funcs.dartJMsgUserSignin(email, pass), (msg) => {
+      setSubmit(false);
+      if (msg) {
+        console.log("Успешный вход: " + msg);
+        const _user = JSON.parse(msg) as JUser;
+        console.dir(_user);
+        props.signin(_user);
+        enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
+        props.history.push('/');
+      } else {
+        enqueueSnackbar("Неверные логин и/или пароль", { variant: "error" });
+      }
+    });
   };
 
   return (
