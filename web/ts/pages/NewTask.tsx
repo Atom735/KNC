@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
+import { RouterProps } from "react-router";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
@@ -15,24 +16,30 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import Backdrop from "@material-ui/core/Backdrop";
 
 import PostAddIcon from "@material-ui/icons/PostAdd";
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
-import useStyles from "./../styles";
+import useStylesPage from "./../styles";
+import { makeStyles } from "@material-ui/core/styles";
+import Accordion from "@material-ui/core/Accordion";
+import AccordionSummary from "@material-ui/core/AccordionSummary";
+import AccordionDetails from "@material-ui/core/AccordionDetails";
+import { connect } from "react-redux";
+import { AppState } from "../redux";
+import { JUser } from "../dart/Lib";
+import Autocomplete from '@material-ui/lab/Autocomplete';
 
-const PageNewTask: FunctionComponent = () => {
+const useStyles = makeStyles((theme) => ({
+  root: {
+    width: '100%',
+  }
+}));
+
+
+const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = (props) => {
+  const classesPage = useStylesPage();
   const classes = useStyles();
 
-  const [email, setEmail] = useState("");
-  const handleChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(event.target.value);
-  };
-  const [pass, setPasss] = useState("");
-  const handleChangePass = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPasss(event.target.value);
-  };
-  const [remem, setRemem] = useState(true);
-  const handleChangeRemem = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRemem(event.target.checked);
-  };
+  const { user } = props;
 
   const [submit, setSubmit] = useState(false);
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -43,85 +50,65 @@ const PageNewTask: FunctionComponent = () => {
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
-      <div className={classes.paper}>
-        <Avatar className={classes.avatar}>
+      <div className={classesPage.paper}>
+        <Avatar className={classesPage.avatar}>
           <PostAddIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
           Добавление задачи
         </Typography>
-        <form className={classes.form} noValidate onSubmit={handleOnSubmit}>
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Телефон или Email"
-            name="email"
-            autoComplete="username"
-            autoFocus
-            value={email}
-            onChange={handleChangeEmail}
-            disabled={submit}
-          />
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Пароль"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={pass}
-            onChange={handleChangePass}
-            disabled={submit}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                value="remember"
-                color="primary"
-                checked={remem}
-                onChange={handleChangeRemem}
-                disabled={submit}
-              />
-            }
-            label="Запомнить меня"
-            disabled={submit}
-          />
+        <form className={classesPage.form} noValidate onSubmit={handleOnSubmit}>
           <Button
             type="submit"
             fullWidth
             variant="contained"
             color="primary"
-            className={classes.submit}
+            className={classesPage.submit}
             disabled={submit}
           >
-            Войти
+            Добавить задачу
           </Button>
-          <Grid container>
-            <Grid item xs>
-              <Link component={RouterLink} to="/" variant="body2">
-                Забыли пароль?
-              </Link>
-            </Grid>
-            <Grid item>
-              <Link component={RouterLink} to="/signup" variant="body2">
-                {"Нет аккаунта? Зрегестрируйтесь"}
-              </Link>
-            </Grid>
-          </Grid>
+          <div className={classes.root}>
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} >
+                <Typography>Основный настройки</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {/* //TODO */}
+              </AccordionDetails>
+            </Accordion>
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} >
+                <Typography>Дополнительные настройки</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {/* //TODO */}
+              </AccordionDetails>
+            </Accordion>
+            <Accordion disabled={user == null}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} >
+                <Typography>Настройки доступа</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {/* //TODO */}
+              </AccordionDetails>
+            </Accordion>
+          </div>
         </form>
       </div>
-      <Backdrop className={classes.backdrop} open={submit}>
+      <Backdrop className={classesPage.backdrop} open={submit}>
         <CircularProgress color="secondary" />
       </Backdrop>
     </Container>
   );
 };
 
-export default PageNewTask;
+interface PropsFromState {
+  user: JUser
+}
+const mapStateToProps = ({ user }: AppState): PropsFromState => ({ user: user });
+const mapDispatchToProps = {
+  // fetchSignOut: fetchSignOut
+}
+export default connect(mapStateToProps)(PageNewTask);
 // export useStyles;
