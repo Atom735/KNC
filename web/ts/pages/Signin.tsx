@@ -1,4 +1,5 @@
-import React, { FunctionComponent, useState } from "react";
+import React, { useState } from "react";
+import { RouterProps } from "react-router";
 import { Link as RouterLink } from "react-router-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
 
@@ -18,18 +19,22 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
 import useStyles from "./../styles";
 
-import { funcs } from "./../dart/Lib";
+import { funcs, JUser } from "./../dart/Lib";
 import { requestOnce } from "./../dart/SocketWrapper";
+import { fetchSignIn } from "../redux";
+import { connect } from "react-redux";
+import { useSnackbar } from "notistack";
 
-interface PageSignInProps {
-  children?: React.ReactNode;
-  callback?: (msg: string) => void;
-}
 
-const PageSignIn: FunctionComponent<PageSignInProps> = (
-  props: PageSignInProps
+
+
+
+const PageSignIn: React.FC<typeof mapDispatchToProps & RouterProps> = (
+  props
 ) => {
   const classes = useStyles();
+
+  const { enqueueSnackbar } = useSnackbar();
 
   const [email, setEmail] = useState("");
   const handleChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +49,22 @@ const PageSignIn: FunctionComponent<PageSignInProps> = (
     setRemem(event.target.checked);
   };
 
+
+  const callbackSignIn = (msg: string) => {
+    setSubmit(false);
+    if (msg) {
+      console.log("Успешный вход: " + msg);
+      const _user = JSON.parse(msg) as JUser;
+      console.dir(_user);
+      // setUser(_user);
+      props.signin(_user);
+      enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
+      props.history.push('/');
+    } else {
+      enqueueSnackbar("Неверные логин и/или пароль", { variant: "error" });
+    }
+  };
+
   const [submit, setSubmit] = useState(false);
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -51,10 +72,7 @@ const PageSignIn: FunctionComponent<PageSignInProps> = (
     console.dir(props);
     console.dir(funcs.dartJMsgUserSignin);
     const c = funcs.dartJMsgUserSignin(email, pass);
-    requestOnce(c, (msg) => {
-      setSubmit(false);
-      props.callback(msg);
-    });
+    requestOnce(c, callbackSignIn);
   };
 
   return (
@@ -141,5 +159,8 @@ const PageSignIn: FunctionComponent<PageSignInProps> = (
   );
 };
 
-export default PageSignIn;
+const mapDispatchToProps = {
+  signin: fetchSignIn
+}
+export default connect(null, mapDispatchToProps)(PageSignIn);
 // export useStyles;

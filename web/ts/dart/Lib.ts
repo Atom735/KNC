@@ -8,7 +8,7 @@ interface DartFuncs {
   dartJMsgZip: (dir: string, zip: string) => string;
   dartJMsgUnzip: (zip: string, dir: string) => string;
 }
-export const funcs = (window as undefined as DartFuncs);
+export const funcs = (window as unknown as DartFuncs);
 
 
 export interface JUser {

@@ -9,6 +9,8 @@ import { BrowserRouter, Route } from "react-router-dom";
 
 import App from "./App";
 import { dartConnect } from "./dart/SocketWrapper";
+import { Provider } from 'react-redux'
+import store from "./redux";
 
 /*SECURE*navigator.serviceWorker
   .register("./sw.bundle.js", { scope: "./" })
@@ -23,14 +25,16 @@ import { dartConnect } from "./dart/SocketWrapper";
 
 
 ReactDOM.render(
-  <ThemeProvider theme={theme}>
-    <SnackbarProvider maxSnack={4}>
-      <CssBaseline />
-      <BrowserRouter>
-        <Route path="/" component={App} />
-      </BrowserRouter>
-    </SnackbarProvider>
-  </ThemeProvider>,
+  <Provider store={store}>
+    <ThemeProvider theme={theme}>
+      <SnackbarProvider maxSnack={4}>
+        <CssBaseline />
+        <BrowserRouter>
+          <Route path="/" component={App} />
+        </BrowserRouter>
+      </SnackbarProvider>
+    </ThemeProvider>
+  </Provider>,
   document.querySelector("#root")
 );
 

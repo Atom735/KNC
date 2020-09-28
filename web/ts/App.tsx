@@ -1,10 +1,11 @@
-import React, { FunctionComponent, useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { RouterProps } from "react-router";
 import {
   Switch as RouteSwitch,
   Route,
   Link as RouterLink,
 } from "react-router-dom";
+import { connect } from 'react-redux';
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 import { useSnackbar } from "notistack";
@@ -33,6 +34,7 @@ import PageNewTask from "./pages/NewTask";
 
 import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen } from "./dart/SocketWrapper";
 import { JUser } from "./dart/Lib";
+import { AppState } from "./redux";
 
 
 const useStylesScrollTop = makeStyles((theme) =>
@@ -104,27 +106,46 @@ const useStylesApp = makeStyles((theme) =>
 );
 
 
-interface AppProps extends RouterProps {
-  props?: React.ReactNode;
+
+// Separate state props + dispatch props to their own interfaces.
+interface PropsFromState {
+  user: JUser
 }
 
-const App: FunctionComponent<AppProps> = (props: AppProps) => {
+// We can use `typeof` here to map our dispatch types to the props, like so.
+interface PropsFromDispatch {
+}
+
+// Combine both state + dispatch props - as well as any props we want to pass - in a union type.
+type AppProps = PropsFromState & PropsFromDispatch & RouterProps;
+
+
+const App: React.FC<AppProps> = (props: AppProps) => {
   const classes = useStylesApp();
   const { enqueueSnackbar } = useSnackbar();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const [user, setUser] = useState<JUser | null>(null);
-  dartSetSocketOnOpen(() => {
-    enqueueSnackbar("Соединение установлено", { variant: "info" });
-  });
+  useEffect(() => {
+    dartSetSocketOnOpen(() => {
+      enqueueSnackbar("Соединение установлено", { variant: "info" });
+    });
 
-  dartSetSocketOnClose((reason) => {
-    enqueueSnackbar("Соединение было закрыто: " + reason, { variant: "warning" });
-  });
+    dartSetSocketOnClose((reason) => {
+      enqueueSnackbar("Соединение было закрыто: " + reason, { variant: "warning" });
+    });
 
-  dartSetSocketOnError((error) => {
-    enqueueSnackbar("Ошибка в соединении: " + error, { variant: "error" });
-  });
+    dartSetSocketOnError(() => {
+      enqueueSnackbar("Ошибка в соединении", { variant: "error" });
+    });
+    return () => {
+      dartSetSocketOnOpen(null);
+      dartSetSocketOnClose(null);
+      dartSetSocketOnError(null);
+    };
+  }, []);
+
+  // const [user, setUser] = useState<JUser | null>(null);
+
 
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -135,24 +156,12 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
   };
   const handleSignOut = () => {
     handleUserMenuClose();
-    setUser(null);
+    // setUser(null);
   };
   const handleSettings = () => {
     handleUserMenuClose();
   };
 
-  const callbackSignIn = (msg: string) => {
-    if (msg) {
-      console.log("Успешный вход: " + msg);
-      const _user = JSON.parse(msg) as JUser;
-      console.dir(_user);
-      setUser(_user);
-      enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
-      props.history.push('/');
-    } else {
-      enqueueSnackbar("Неверные логин и/или пароль", { variant: "error" });
-    }
-  };
 
   const callbackSignUp = (msg: string) => {
     if (msg) {
@@ -162,6 +171,8 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
       enqueueSnackbar("Эта почта уже зарегестрированна", { variant: "error" });
     }
   };
+
+  const { user } = props;
 
 
   return (
@@ -219,12 +230,7 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
       </AppBar>
       <Toolbar id="back-to-top-anchor" />
       <RouteSwitch>
-        <Route
-          path="/signin"
-          render={(props) => (
-            <PageSignIn {...props} callback={callbackSignIn} />
-          )}
-        />
+        <Route path="/signin" component={PageSignIn} />
         <Route path="/signup"
           render={(props) => (
             <PageSignUp {...props} callback={callbackSignUp} />
@@ -240,4 +246,7 @@ const App: FunctionComponent<AppProps> = (props: AppProps) => {
     </>
   );
 };
-export default App;
+
+const mapStateToProps = ({ user }: AppState) => ({ user: user })
+
+export default connect(mapStateToProps)(App);

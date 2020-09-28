@@ -11,6 +11,11 @@
     "esModuleInterop": true,
     "moduleResolution": "Node",
     "incremental": true,
+    // "strict": true,
+    // "forceConsistentCasingInFileNames": true,
+    // "resolveJsonModule": true,
+    // "isolatedModules": true,
+    // "noEmit": true,
     "lib": [
       "ES6",
       "DOM",

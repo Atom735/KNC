@@ -59,7 +59,7 @@ const PageSignUp: FunctionComponent<PageSignUpProps> = (props) => {
     const c = funcs.dartJMsgUserRegistration(email, pass, fname, lname);
     requestOnce(c, (msg) => {
       setSubmit(false);
-      props.callback(msg);
+      // props.callback(msg);
     });
   };
 

@@ -144,25 +144,25 @@ const senderWaiter = (msg: string) => {
 sender = senderWaiter;
 export var dartSocket: WebSocket;
 
-export function dartSetSocketOnOpen(callback: () => void) {
+export function dartSetSocketOnOpen(callback: typeof dartSocketOnOpen) {
   dartSocketOnOpen = callback;
 }
-export function dartSetSocketOnClose(callback: (reason: string) => void) {
+export function dartSetSocketOnClose(callback: typeof dartSocketOnClose) {
   dartSocketOnClose = callback;
 }
-export function dartSetSocketOnError(callback: (error: any) => void) {
+export function dartSetSocketOnError(callback: typeof dartSocketOnError) {
   dartSocketOnError = callback;
 }
-export function dartSetSocketOnMessage(callback: (data: any) => void) {
+export function dartSetSocketOnMessage(callback: typeof dartSocketOnMessage) {
   dartSocketOnMessage = callback;
 }
 
-var dartSocketOnOpen: () => void;
-var dartSocketOnClose: (reason: string) => void;
-var dartSocketOnError: (error: any) => void;
-var dartSocketOnMessage: (data: any) => void;
+var dartSocketOnOpen: null | (() => void);
+var dartSocketOnClose: null | ((reason: string) => void);
+var dartSocketOnError: null | (() => void);
+var dartSocketOnMessage: null | ((data: any) => void);
 
-const handleSocketOnOpen = (event: Event) => {
+const handleSocketOnOpen = () => {
   console.log("Соединение установлено");
   for (const msg of senderQuie) {
     dartSocket.send(msg);
@@ -180,10 +180,10 @@ const handleSocketOnClose = (event: CloseEvent) => {
     dartSocketOnClose(event.reason);
   }
 };
-const handleSocketOnError = (event: ErrorEvent) => {
-  console.error("Ошибка в Сокете: " + event.error);
+const handleSocketOnError = () => {
+  console.error("Ошибка в Сокете: ");
   if (dartSocketOnError) {
-    dartSocketOnError(event.error);
+    dartSocketOnError();
   }
 };
 const handleSocketOnMessage = (event: MessageEvent) => {
@@ -198,10 +198,10 @@ const handleSocketOnMessage = (event: MessageEvent) => {
 
 export function dartConnect() {
   if (dartSocket) {
-    dartSocket.onopen = undefined;
-    dartSocket.onclose = undefined;
-    dartSocket.onerror = undefined;
-    dartSocket.onmessage = undefined;
+    dartSocket.onopen = null;
+    dartSocket.onclose = null;
+    dartSocket.onerror = null;
+    dartSocket.onmessage = null;
   }
   dartSocket = new WebSocket("ws://" + document.location.host + "/ws");
   dartSocket.onopen = handleSocketOnOpen;
