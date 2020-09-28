@@ -25,15 +25,21 @@ import AccordionSummary from "@material-ui/core/AccordionSummary";
 import AccordionDetails from "@material-ui/core/AccordionDetails";
 import { connect } from "react-redux";
 import { AppState } from "../redux";
-import { JUser } from "../dart/Lib";
+import { JTaskSettings, JUser } from "../dart/Lib";
 import Autocomplete from '@material-ui/lab/Autocomplete';
+import Switch from "@material-ui/core/Switch";
+import { dartSetSocketOnClose } from "../dart/SocketWrapper";
 
 const useStyles = makeStyles((theme) => ({
-  root: {
+  fullWidth: {
     width: '100%',
   }
 }));
 
+interface TaskSets {
+  public: boolean;
+  settings: JTaskSettings;
+};
 
 const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = (props) => {
   const classesPage = useStylesPage();
@@ -41,10 +47,21 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
 
   const { user } = props;
 
-  const [submit, setSubmit] = useState(false);
+  const [sets, setSets] = useState<TaskSets>({ public: user == null, settings: { user: user != null ? user.mail : "Гость" } });
+
+  const [submit, setSubmit] = useState<boolean>(false);
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     setSubmit(true);
     event.preventDefault();
+  };
+
+
+  const handleSwitchPublic = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSets({ ...sets, [event.target.name]: event.target.checked });
+  };
+
+  const handleChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSets({ ...sets, settings: { ...sets.settings, [event.target.name]: event.target.value } });
   };
 
   return (
@@ -68,18 +85,48 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
           >
             Добавить задачу
           </Button>
-          <div className={classes.root}>
+          <div className={classes.fullWidth}>
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} >
-                <Typography>Основный настройки</Typography>
+                <Typography variant="h5">Основный настройки</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                {/* //TODO */}
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField className={classes.fullWidth}
+                      label="Название задачи"
+                      name="name"
+                      onChange={handleChangeName}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField className={classes.fullWidth}
+                      disabled={user == null || !user.access.includes("x")}
+                      label="Пользователь"
+                      defaultValue={sets.settings.user}
+                      helperText="Почта пользователя запустившего задачу"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControlLabel disabled={user == null}
+                      control={
+                        <Switch
+                          checked={sets.public}
+                          name="public"
+                          onChange={handleSwitchPublic} />}
+                      label={sets.public ? "Публичная задача" : "Приватная задача"} />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField className={classes.fullWidth}
+                      label="Сканируемый путь"
+                    />
+                  </Grid>
+                </Grid>
               </AccordionDetails>
             </Accordion>
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} >
-                <Typography>Дополнительные настройки</Typography>
+                <Typography variant="h5">Дополнительные настройки</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 {/* //TODO */}
@@ -87,7 +134,7 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
             </Accordion>
             <Accordion disabled={user == null}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} >
-                <Typography>Настройки доступа</Typography>
+                <Typography variant="h5">Настройки доступа</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 {/* //TODO */}
