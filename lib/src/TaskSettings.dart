@@ -72,12 +72,12 @@ class JTaskSettings {
       : user = m[jsonKey_user] as String,
         users = (m[jsonKey_users] as List /*?*/)
                 ?.map((e) => e as String)
-                .toList(growable: false) ??
+                ?.toList(growable: false) ??
             def_users,
         name = (m[jsonKey_name] as String /*?*/) ?? def_name,
         path = (m[jsonKey_path] as List /*?*/)
                 ?.map((e) => e as String)
-                .toList(growable: false) ??
+                ?.toList(growable: false) ??
             def_path,
         ext_ar = (m[jsonKey_ext_ar] as String /*?*/)?.split(';') ?? def_ext_ar,
         ext_files =

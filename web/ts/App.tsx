@@ -207,7 +207,7 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
                 open={Boolean(anchorEl)}
                 onClose={handleUserMenuClose}
               >
-                <MenuItem onClick={handleSettings}>Настройки</MenuItem>
+                <MenuItem onClick={handleSettings} disabled>Настройки</MenuItem>
                 <MenuItem onClick={handleSignOut}>Выход</MenuItem>
               </Menu>
             </>
