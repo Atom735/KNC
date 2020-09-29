@@ -5,7 +5,7 @@ import { RouterProps } from "react-router";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
+import TextField, { TextFieldProps } from "@material-ui/core/TextField";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
 import Link from "@material-ui/core/Link";
@@ -244,7 +244,61 @@ const NewTaskPaths: React.FC<NewTaskSetsChldProps> = (props) => {
   </>);
 };
 
+interface NumberTextFieldProps {
+  value?: number;
+  setValue: (value: number) => any;
+  default: number;
+  textFieldProps: TextFieldProps;
+};
 
+const NumberTextField: React.FC<NumberTextFieldProps> = (props) => {
+
+  const [state, setState] = useState<string>(props.value ? props.value.toString() : '');
+
+  const handlePreventEvent = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const _valS = event.target.value.trim();
+    setState(_valS);
+    if (_valS.endsWith('k') || _valS.endsWith('K') || _valS.endsWith('к') || _valS.endsWith('К')) {
+      props.setValue(parseInt(_valS.substring(0, _valS.length - 1)) * 1024);
+    } else if (_valS.endsWith('m') || _valS.endsWith('M') || _valS.endsWith('м') || _valS.endsWith('М')) {
+      props.setValue(parseInt(_valS.substring(0, _valS.length - 1)) * 1024 * 1024);
+    } else if (_valS.endsWith('g') || _valS.endsWith('G') || _valS.endsWith('г') || _valS.endsWith('Г')) {
+      props.setValue(parseInt(_valS.substring(0, _valS.length - 1)) * 1024 * 1024 * 1024);
+    } else {
+      props.setValue(parseInt(_valS));
+    }
+  };
+
+  const handleSetDefault = () => {
+    setState(props.default.toString());
+    props.setValue(props.default);
+  }
+
+  return (<TextField {...props.textFieldProps}
+    value={state}
+    onChange={handleChange}
+    InputProps={{
+      endAdornment: <InputAdornment position="end">
+        <Tooltip title={<>{props.children}<br />
+Если в конце написать букву 'K' - то значение будет умножено на 2^10, 'М' - на 2^20, 'Г' - на 2^30.
+          <br />
+          <br />
+Чтобы настройки остались по умолчанию, оставте поле пустым или
+нажмите чтобы заменить настройками по умолчанию.</>}>
+          <IconButton
+            onClick={handleSetDefault}
+            onMouseDown={handlePreventEvent}
+          >
+            <HelpOutlineIcon />
+          </IconButton>
+        </Tooltip>
+      </InputAdornment>,
+    }}
+  />);
+}
 
 
 
@@ -276,16 +330,8 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
     setSets({ ...sets, settings: { ...sets.settings, [event.target.name]: event.target.value } });
   };
 
-  const handlePreventEvent = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-  };
-
-  const handleSetDefaultArSize = () => {
-    setSets({ ...sets, settings: { ...sets.settings, "ar-s": JTaskSettings_defs["ar-s"] } });
-  }
-
-  const handleChangeArSize = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSets({ ...sets, settings: { ...sets.settings, "ar-s": parseInt(event.target.value) } });
+  const handleChangeArSize = (value: number) => {
+    setSets({ ...sets, settings: { ...sets.settings, "ar-s": value } });
   }
 
   return (
@@ -375,29 +421,12 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
               <AccordionDetails>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Максимальный размер вскрываемого архива"
-                      value={sets.settings["ar-s"] ? sets.settings["ar-s"] : ''}
-                      onChange={handleChangeArSize}
-                      InputProps={{
-                        endAdornment: <InputAdornment position="end">
-                          Байты
-                          <Tooltip title={<>
-                            Указывает файлы какого максимального размера будут вскрыты архиватором.<br />
-                            <br />
-        Чтобы настройки остались по умолчанию, оставте поле пустым или
-        нажмите чтобы заменить настройками по умолчанию.</>}>
-                            <IconButton
-                              onClick={handleSetDefaultArSize}
-                              onMouseDown={handlePreventEvent}
-                            >
-                              <HelpOutlineIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </InputAdornment>,
-                      }}
-                    />
+                    <NumberTextField setValue={handleChangeArSize} default={JTaskSettings_defs["ar-s"]}
+                      textFieldProps={{ fullWidth: true, label: "Максимальный размер вскрвываемого архива" }}>
+                      Указывает файлы какого максимального размера будут вскрыты архиватором.<br />
+                      Размер задаётся в байтах.<br />
+                      Сейчас введено {sets.settings["ar-s"] ? sets.settings["ar-s"].toString() : JTaskSettings_defs["ar-s"]} байт.
+                      </NumberTextField>
                   </Grid>
                   <Grid item xs={12}>
                     <Typography variant="h6">Расширения архивных файлов</Typography>
