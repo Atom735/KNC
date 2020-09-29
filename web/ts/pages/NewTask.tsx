@@ -25,7 +25,7 @@ import AccordionSummary from "@material-ui/core/AccordionSummary";
 import AccordionDetails from "@material-ui/core/AccordionDetails";
 import { connect } from "react-redux";
 import { AppState } from "../redux";
-import { JTaskSettings, JUser } from "../dart/Lib";
+import { JTaskSettings, JTaskSettings_defs, JUser } from "../dart/Lib";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import Switch from "@material-ui/core/Switch";
 import { dartSetSocketOnClose } from "../dart/SocketWrapper";
@@ -39,6 +39,7 @@ import InputLabel from "@material-ui/core/InputLabel";
 import Input from "@material-ui/core/Input";
 import Tooltip from "@material-ui/core/Tooltip";
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -54,16 +55,211 @@ interface TaskSets {
 };
 
 
+interface NewTaskSetsChldProps {
+  sets: TaskSets,
+  setSets: React.Dispatch<React.SetStateAction<TaskSets>>,
+};
+
+const NewTaskArchiveExt: React.FC<NewTaskSetsChldProps> = (props) => {
+
+  const {
+    sets: sets,
+    setSets: setSets,
+  } = props;
+
+  const [indexesNew, setIndexesNew] = useState<number>(sets.settings["ar-e"].length + 1);
+  const [indexes, setIndexes] = useState<number[]>(sets.settings["ar-e"].map((value, index) => index));
+
+  const handleChangeValue = (id: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, "ar-e": sets.settings["ar-e"].map(
+          (value, index) => id == index ? event.target.value : value)
+      }
+    });
+  };
+
+  const handlePreventEvent = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+
+  const handleClickRemove = (id: number) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, "ar-e": sets.settings["ar-e"].filter((value, index) => index != id)
+      }
+    });
+    setIndexes(indexes.filter((value, index) => index != id));
+  };
+
+  const handleClickAddNewPath = () => {
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, "ar-e": [...sets.settings["ar-e"], '']
+      }
+    });
+    setIndexes([...indexes, indexesNew]);
+    setIndexesNew(indexesNew + 1);
+  };
+
+  const handleSetDefault = () => {
+
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, "ar-e": JTaskSettings_defs["ar-e"].map((value) => value)
+      }
+    });
+    setIndexes(JTaskSettings_defs["ar-e"].map((value, index) => indexesNew + index));
+    setIndexesNew(indexesNew + JTaskSettings_defs["ar-e"].length);
+  };
+
+  return (<>
+    {
+      sets.settings["ar-e"].map((value, index) =>
+        <Grid item xs={6} sm={3} lg={2} key={indexes[index]} >
+          <FormControl fullWidth>
+            <Input
+              id={"ar-e-" + indexes[index]}
+              onChange={handleChangeValue(index)}
+              value={value}
+              endAdornment={
+                <InputAdornment position="end">
+                  <Tooltip title="Удалить поле">
+                    <IconButton
+                      onClick={handleClickRemove(index)}
+                      onMouseDown={handlePreventEvent}
+                    >
+                      <RemoveCircleOutlineIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              }
+            />
+          </FormControl>
+        </Grid>
+      )
+    }
+    <Grid item xs={12}>
+      <Tooltip title="Добавить новое поле">
+        <IconButton
+          onClick={handleClickAddNewPath}
+        >
+          <AddCircleOutlineIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip title={<>
+        Указывает файлы с каким расширением будут вскрываться архиватором.<br />
+        <br />
+        Чтобы настройки остались по умолчанию, оставте поля пустыми или удалите все поля или
+        Нажмите чтобы заменить настройками по умолчанию.</>}>
+        <IconButton onClick={handleSetDefault}>
+          <HelpOutlineIcon />
+        </IconButton>
+      </Tooltip>
+
+    </Grid>
+  </>);
+};
+
+
+
+const NewTaskPaths: React.FC<NewTaskSetsChldProps> = (props) => {
+
+  const {
+    sets: sets,
+    setSets: setSets,
+  } = props;
+
+  const [indexesNew, setIndexesNew] = useState<number>(sets.settings.path.length + 1);
+  const [indexes, setIndexes] = useState<number[]>(sets.settings.path.map((value, index) => index));
+
+  const handleChangeValue = (id: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, path: sets.settings.path.map(
+          (value, index) => id == index ? event.target.value : value)
+      }
+    });
+  };
+
+  const handlePreventEvent = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+
+  const handleClickRemove = (id: number) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, path: sets.settings.path.filter((value, index) => index != id)
+      }
+    });
+    setIndexes(indexes.filter((value, index) => index != id));
+  };
+
+  const handleClickAddNewPath = () => {
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, path: [...sets.settings.path, '']
+      }
+    });
+    setIndexes([...indexes, indexesNew]);
+    setIndexesNew(indexesNew + 1);
+  };
+
+  return (<>{
+    sets.settings.path.map((value, index) =>
+      <Grid item xs={12} key={indexes[index]} >
+        <FormControl fullWidth>
+          <InputLabel htmlFor={"path-" + indexes[index]}>Сканируемый путь</InputLabel>
+          <Input
+            id={"path-" + indexes[index]}
+            onChange={handleChangeValue(index)}
+            value={value}
+            endAdornment={
+              <InputAdornment position="end">
+                <Tooltip title="Удалить поле">
+                  <IconButton
+                    onClick={handleClickRemove(index)}
+                    onMouseDown={handlePreventEvent}
+                  >
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
+                </Tooltip>
+              </InputAdornment>
+            }
+          />
+        </FormControl>
+      </Grid>
+    )
+  }
+    <Grid item>
+      <Tooltip title="Добавить новое поле">
+        <IconButton
+          onClick={handleClickAddNewPath}
+        >
+          <AddCircleOutlineIcon />
+        </IconButton>
+      </Tooltip>
+    </Grid>
+  </>);
+};
+
+
+
+
 
 const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = (props) => {
   const classesPage = useStylesPage();
   const classes = useStyles();
   const { user } = props;
 
-  const [sets, setSets] = useState<TaskSets>({ public: user == null, settings: { user: user != null ? user.mail : "Гость", path: [''] } });
+  const [sets, setSets] = useState<TaskSets>({
+    public: user == null, settings: {
+      user: user != null ? user.mail : "Гость", path: [''],
+      "ar-e": [], "ar-s": null, "ar-d": null
+    }
+  });
 
-  const [pathsIndexNew, setPathsIndexNew] = useState<number>(2);
-  const [pathsIndex, setPathsIndex] = useState<number[]>([1]);
 
   const [submit, setSubmit] = useState<boolean>(false);
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -80,43 +276,20 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
     setSets({ ...sets, settings: { ...sets.settings, [event.target.name]: event.target.value } });
   };
 
-  const handlePathEdit = (id: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const _id = pathsIndex.indexOf(id);
-    setSets({
-      ...sets, settings: {
-        ...sets.settings, path: sets.settings.path.map(
-          (value, index) => _id == index ? event.target.value : value)
-      }
-    });
-  };
-
   const handlePreventEvent = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
   };
 
-  const handleClickRemove = (id: number) => (event: React.MouseEvent<HTMLButtonElement>) => {
-    const _id = pathsIndex.indexOf(id);
-    setSets({
-      ...sets, settings: {
-        ...sets.settings, path: sets.settings.path.filter((value, index) => index != _id)
-      }
-    });
-    setPathsIndex(pathsIndex.filter((value, index) => index != _id));
-    // setPathsIndexNew(pathsIndexNew + 1);
-  };
+  const handleSetDefaultArSize = () => {
+    setSets({ ...sets, settings: { ...sets.settings, "ar-s": JTaskSettings_defs["ar-s"] } });
+  }
 
-  const handleClickAddNewPath = () => {
-    setSets({
-      ...sets, settings: {
-        ...sets.settings, path: [...sets.settings.path, '']
-      }
-    });
-    setPathsIndex([...pathsIndex, pathsIndexNew]);
-    setPathsIndexNew(pathsIndexNew + 1);
-  };
+  const handleChangeArSize = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSets({ ...sets, settings: { ...sets.settings, "ar-s": parseInt(event.target.value) } });
+  }
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="lg">
       <CssBaseline />
       <div className={classesPage.paper}>
         <Avatar className={classesPage.avatar}>
@@ -168,45 +341,12 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
                           onChange={handleSwitchPublic} />}
                       label={sets.public ? "Публичная задача" : "Приватная задача"} />
                   </Grid>
-                  {
-                    sets.settings.path.map((path, index) =>
-                      <Grid item xs={12} key={pathsIndex[index]} >
-                        <FormControl fullWidth>
-                          <InputLabel htmlFor={"path-" + pathsIndex[index]}>Сканируемый путь</InputLabel>
-                          <Input
-                            id={"path-" + pathsIndex[index]}
-                            onChange={handlePathEdit(pathsIndex[index])}
-                            endAdornment={
-                              <InputAdornment position="end">
-                                <Tooltip title="Удалить поле">
-                                  <IconButton
-                                    onClick={handleClickRemove(pathsIndex[index])}
-                                    onMouseDown={handlePreventEvent}
-                                  >
-                                    <RemoveCircleOutlineIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              </InputAdornment>
-                            }
-                          />
-                        </FormControl>
-                      </Grid>
-                    )
-                  }
 
+                  <NewTaskPaths sets={sets} setSets={setSets} />
 
-                  <Grid item>
-                    <Tooltip title="Добавить новое поле">
-                      <IconButton
-                        onClick={handleClickAddNewPath}
-                      >
-                        <AddCircleOutlineIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Grid>
                   <Grid item>
                     <input
-                      accept="image/*"
+                      accept="*"
                       className={classes.input}
                       id="contained-button-file"
                       multiple
@@ -233,15 +373,49 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
                 <Typography variant="h5">Дополнительные настройки</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                {/* //TODO */}
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Максимальный размер вскрываемого архива"
+                      value={sets.settings["ar-s"] ? sets.settings["ar-s"] : ''}
+                      onChange={handleChangeArSize}
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">
+                          Байты
+                          <Tooltip title={<>
+                            Указывает файлы какого максимального размера будут вскрыты архиватором.<br />
+                            <br />
+        Чтобы настройки остались по умолчанию, оставте поле пустым или
+        нажмите чтобы заменить настройками по умолчанию.</>}>
+                            <IconButton
+                              onClick={handleSetDefaultArSize}
+                              onMouseDown={handlePreventEvent}
+                            >
+                              <HelpOutlineIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>,
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="h6">Расширения архивных файлов</Typography>
+                  </Grid>
+                  <NewTaskArchiveExt sets={sets} setSets={setSets} />
+                </Grid>
               </AccordionDetails>
             </Accordion>
             <Accordion disabled={user == null}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} >
                 <Typography variant="h5">Настройки доступа</Typography>
+
               </AccordionSummary>
               <AccordionDetails>
-                {/* //TODO */}
+                <Grid container spacing={2}>
+                  <Grid item>
+                  </Grid>
+                </Grid>
               </AccordionDetails>
             </Accordion>
           </div>
