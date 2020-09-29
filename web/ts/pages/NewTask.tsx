@@ -163,7 +163,6 @@ const NewTaskArchiveExt: React.FC<NewTaskSetsChldProps> = (props) => {
 };
 
 
-
 const NewTaskPaths: React.FC<NewTaskSetsChldProps> = (props) => {
 
   const {
@@ -423,6 +422,13 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <NumberTextField setValue={handleChangeArSize} default={JTaskSettings_defs.ud}
+                      textFieldProps={{ fullWidth: true, label: "Интервал обновления" }}>
+                      Указывает время в миллисекундах между отправками обновлённых данных задачи.<br />
+                      Сейчас введено {sets.settings.ud ? sets.settings.ud.toString() : JTaskSettings_defs.ud} мс.
+                      </NumberTextField>
+                  </Grid>
                   <Grid item xs={12} sm={6}>
                     <NumberTextField setValue={handleChangeArSize} default={JTaskSettings_defs["ar-d"]}
                       textFieldProps={{ fullWidth: true, label: "Вложенность архивов" }}>
