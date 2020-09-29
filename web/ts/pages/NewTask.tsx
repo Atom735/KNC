@@ -19,7 +19,7 @@ import PostAddIcon from "@material-ui/icons/PostAdd";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import useStylesPage from "./../styles";
-import { makeStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles } from "@material-ui/core/styles";
 import Accordion from "@material-ui/core/Accordion";
 import AccordionSummary from "@material-ui/core/AccordionSummary";
 import AccordionDetails from "@material-ui/core/AccordionDetails";
@@ -30,24 +30,40 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import Switch from "@material-ui/core/Switch";
 import { dartSetSocketOnClose } from "../dart/SocketWrapper";
 
-const useStyles = makeStyles((theme) => ({
-  fullWidth: {
-    width: '100%',
-  }
-}));
+import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
+import IconButton from "@material-ui/core/IconButton";
+import AttachFileIcon from '@material-ui/icons/AttachFile';
+import InputAdornment from "@material-ui/core/InputAdornment";
+import FormControl from "@material-ui/core/FormControl";
+import InputLabel from "@material-ui/core/InputLabel";
+import Input from "@material-ui/core/Input";
+import Tooltip from "@material-ui/core/Tooltip";
+import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
+
+const useStyles = makeStyles((theme) =>
+  createStyles({
+    input: {
+      display: 'none',
+    },
+  }),
+);
 
 interface TaskSets {
   public: boolean;
   settings: JTaskSettings;
 };
 
+
+
 const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = (props) => {
   const classesPage = useStylesPage();
   const classes = useStyles();
-
   const { user } = props;
 
-  const [sets, setSets] = useState<TaskSets>({ public: user == null, settings: { user: user != null ? user.mail : "Гость" } });
+  const [sets, setSets] = useState<TaskSets>({ public: user == null, settings: { user: user != null ? user.mail : "Гость", path: [''] } });
+
+  const [pathsIndexNew, setPathsIndexNew] = useState<number>(2);
+  const [pathsIndex, setPathsIndex] = useState<number[]>([1]);
 
   const [submit, setSubmit] = useState<boolean>(false);
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -62,6 +78,41 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
 
   const handleChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSets({ ...sets, settings: { ...sets.settings, [event.target.name]: event.target.value } });
+  };
+
+  const handlePathEdit = (id: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const _id = pathsIndex.indexOf(id);
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, path: sets.settings.path.map(
+          (value, index) => _id == index ? event.target.value : value)
+      }
+    });
+  };
+
+  const handlePreventEvent = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+
+  const handleClickRemove = (id: number) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    const _id = pathsIndex.indexOf(id);
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, path: sets.settings.path.filter((value, index) => index != _id)
+      }
+    });
+    setPathsIndex(pathsIndex.filter((value, index) => index != _id));
+    // setPathsIndexNew(pathsIndexNew + 1);
+  };
+
+  const handleClickAddNewPath = () => {
+    setSets({
+      ...sets, settings: {
+        ...sets.settings, path: [...sets.settings.path, '']
+      }
+    });
+    setPathsIndex([...pathsIndex, pathsIndexNew]);
+    setPathsIndexNew(pathsIndexNew + 1);
   };
 
   return (
@@ -85,7 +136,7 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
           >
             Добавить задачу
           </Button>
-          <div className={classes.fullWidth}>
+          <div>
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} >
                 <Typography variant="h5">Основный настройки</Typography>
@@ -93,14 +144,15 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
               <AccordionDetails>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
-                    <TextField className={classes.fullWidth}
+                    <TextField fullWidth
                       label="Название задачи"
                       name="name"
                       onChange={handleChangeName}
                     />
                   </Grid>
                   <Grid item xs={12}>
-                    <TextField className={classes.fullWidth}
+
+                    <TextField fullWidth
                       disabled={user == null || !user.access.includes("x")}
                       label="Пользователь"
                       defaultValue={sets.settings.user}
@@ -116,11 +168,63 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
                           onChange={handleSwitchPublic} />}
                       label={sets.public ? "Публичная задача" : "Приватная задача"} />
                   </Grid>
-                  <Grid item xs={12}>
-                    <TextField className={classes.fullWidth}
-                      label="Сканируемый путь"
-                    />
+                  {
+                    sets.settings.path.map((path, index) =>
+                      <Grid item xs={12} key={pathsIndex[index]} >
+                        <FormControl fullWidth>
+                          <InputLabel htmlFor={"path-" + pathsIndex[index]}>Сканируемый путь</InputLabel>
+                          <Input
+                            id={"path-" + pathsIndex[index]}
+                            onChange={handlePathEdit(pathsIndex[index])}
+                            endAdornment={
+                              <InputAdornment position="end">
+                                <Tooltip title="Удалить поле">
+                                  <IconButton
+                                    onClick={handleClickRemove(pathsIndex[index])}
+                                    onMouseDown={handlePreventEvent}
+                                  >
+                                    <RemoveCircleOutlineIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </InputAdornment>
+                            }
+                          />
+                        </FormControl>
+                      </Grid>
+                    )
+                  }
+
+
+                  <Grid item>
+                    <Tooltip title="Добавить новое поле">
+                      <IconButton
+                        onClick={handleClickAddNewPath}
+                      >
+                        <AddCircleOutlineIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Grid>
+                  <Grid item>
+                    <input
+                      accept="image/*"
+                      className={classes.input}
+                      id="contained-button-file"
+                      multiple
+                      type="file"
+                    />
+                    <label htmlFor="contained-button-file">
+
+                      <Tooltip title="Прикрепить файл">
+                        <IconButton component="span">
+                          <AttachFileIcon />
+                        </IconButton>
+                      </Tooltip>
+
+                    </label>
+                  </Grid>
+
+
+
                 </Grid>
               </AccordionDetails>
             </Accordion>
@@ -146,7 +250,7 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
       <Backdrop className={classesPage.backdrop} open={submit}>
         <CircularProgress color="secondary" />
       </Backdrop>
-    </Container>
+    </Container >
   );
 };
 
