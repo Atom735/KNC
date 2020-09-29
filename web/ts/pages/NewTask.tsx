@@ -333,6 +333,9 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
   const handleChangeArSize = (value: number) => {
     setSets({ ...sets, settings: { ...sets.settings, "ar-s": value } });
   }
+  const handleChangeArDepth = (value: number) => {
+    setSets({ ...sets, settings: { ...sets.settings, "ar-d": value } });
+  }
 
   return (
     <Container component="main" maxWidth="lg">
@@ -420,9 +423,19 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                  <Grid item xs={12} sm={6}>
+                    <NumberTextField setValue={handleChangeArSize} default={JTaskSettings_defs["ar-d"]}
+                      textFieldProps={{ fullWidth: true, label: "Вложенность архивов" }}>
+                      Указывает глубину раскрытия архивов. Если `1` то архивы внутри архивов не будут вскрываться.<br />
+                      `-1` - для бесконечной вложенности<br />
+                      `0` - для отбрасывания всех архивов<br />
+                      `1` - для входа на один уровень архива<br />
+                      Сейчас введено {sets.settings["ar-d"] ? sets.settings["ar-d"].toString() : JTaskSettings_defs["ar-d"]}.
+                      </NumberTextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
                     <NumberTextField setValue={handleChangeArSize} default={JTaskSettings_defs["ar-s"]}
-                      textFieldProps={{ fullWidth: true, label: "Максимальный размер вскрвываемого архива" }}>
+                      textFieldProps={{ fullWidth: true, label: "Размер архива" }}>
                       Указывает файлы какого максимального размера будут вскрыты архиватором.<br />
                       Размер задаётся в байтах.<br />
                       Сейчас введено {sets.settings["ar-s"] ? sets.settings["ar-s"].toString() : JTaskSettings_defs["ar-s"]} байт.
