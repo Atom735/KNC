@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from "react";
+import React, { FunctionComponent, useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import { RouterProps } from "react-router";
@@ -248,7 +248,7 @@ const NewTaskPaths: React.FC<NewTaskSetsChldProps> = (props) => {
 
 interface NumberTextFieldProps {
   value?: number;
-  setValue: (value: number) => any;
+  setValue: React.Dispatch<React.SetStateAction<number>>;
   default?: number;
   textFieldProps?: TextFieldProps;
 };
@@ -263,7 +263,9 @@ const NumberTextField: React.FC<NumberTextFieldProps> = (props) => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const _valS = event.target.value.trim();
     setState(_valS);
-    if (_valS.endsWith('k') || _valS.endsWith('K') || _valS.endsWith('к') || _valS.endsWith('К')) {
+    if (!_valS) {
+      props.setValue(props.default ? props.default : 0);
+    } else if (_valS.endsWith('k') || _valS.endsWith('K') || _valS.endsWith('к') || _valS.endsWith('К')) {
       props.setValue(parseInt(_valS.substring(0, _valS.length - 1)) * 1024);
     } else if (_valS.endsWith('m') || _valS.endsWith('M') || _valS.endsWith('м') || _valS.endsWith('М')) {
       props.setValue(parseInt(_valS.substring(0, _valS.length - 1)) * 1024 * 1024);
@@ -309,7 +311,7 @@ const NumberTextField: React.FC<NumberTextFieldProps> = (props) => {
 
 interface ArrayOfTextFieldsProps {
   value?: string[];
-  setValue: (value: string[]) => any;
+  setValue: React.Dispatch<React.SetStateAction<string[]>>;
   default?: string[];
   itemProps?: GridProps;
   textFieldProps?: TextFieldProps;
@@ -322,11 +324,15 @@ const ArrayOfTextFields: React.FC<ArrayOfTextFieldsProps> = (props) => {
   const [indexes, setIndexes] = useState<number[]>(state.map((value, index) => index + 1));
 
   const handleChange = (id: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setState(state.map(
-      (value, index) => id == index ? event.target.value : value));
-    props.setValue(state.map(
-      (value, index) => id == index ? event.target.value : value));
-  };
+    const newState = state.map(
+      (value, index) => id == index ? event.target.value : value);
+    setState([...newState]);
+
+    props.setValue(() => !newState.every((value) => !value) ?
+      newState
+      : props.default ? [...props.default] : []);
+  }
+
 
   const handlePreventEvent = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -414,8 +420,8 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
 
   const [sets, setSets] = useState<TaskSets>({
     public: user == null, settings: {
-      user: user != null ? user.mail : "Гость", path: [''],
-      "ar-e": [], "ar-s": null, "ar-d": null
+      ...JTaskSettings_defs,
+      user: user != null ? user.mail : "Гость"
     }
   });
 
@@ -541,9 +547,8 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
 
                       </label></>}>
                     Указывает пути к файлам и папкам, которые просканируем.<br />
-                      Сейчас введено: {sets.settings.path && !sets.settings.path.every((value) => !value) ?
-                      sets.settings.path.map((value, index) => <span key={index}><br />[{index}] {value}</span>)
-                      : JTaskSettings_defs.path.map((value, index) => <span key={index}><br />[{index}] {value}</span>)}
+                      Сейчас введено:
+                      {sets.settings.path.map((value, index) => <span key={index}><br />[{index}] {value}</span>)}
                   </ArrayOfTextFields>
                 </Grid>
               </AccordionDetails>
@@ -560,15 +565,14 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
                   <ArrayOfTextFields setValue={handleChangeFileExt} default={JTaskSettings_defs["f-e"]} itemProps={{ xs: 6, sm: 3, lg: 2 }}
                     textFieldProps={{ fullWidth: true }}>
                     Указывает файлы с каким расширением будут обработаны программой.<br />
-                      Сейчас введено: {sets.settings["f-e"] && !sets.settings["f-e"].every((value) => !value) ?
-                      sets.settings["f-e"].map((value, index) => <span key={index}><br />[{index}] {value}</span>)
-                      : JTaskSettings_defs["f-e"].map((value, index) => <span key={index}><br />[{index}] {value}</span>)}
+                      Сейчас введено: {
+                      sets.settings["f-e"].map((value, index) => <span key={index}><br />[{index}] {value}</span>)}
                   </ArrayOfTextFields>
                   <Grid item xs={12} sm={4}>
                     <NumberTextField setValue={handleChangeUpdateDuration} default={JTaskSettings_defs.ud}
                       textFieldProps={{ fullWidth: true, label: "Интервал обновления" }}>
                       Указывает время в миллисекундах между отправками обновлённых данных задачи.<br />
-                      Сейчас введено {sets.settings.ud ? sets.settings.ud.toString() : JTaskSettings_defs.ud} мс.
+                      Сейчас введено {sets.settings.ud.toString()} мс.
                       </NumberTextField>
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -578,7 +582,7 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
                       `-1` - для бесконечной вложенности<br />
                       `0` - для отбрасывания всех архивов<br />
                       `1` - для входа на один уровень архива<br />
-                      Сейчас введено {sets.settings["ar-d"] ? sets.settings["ar-d"].toString() : JTaskSettings_defs["ar-d"]}.
+                      Сейчас введено {sets.settings["ar-d"].toString()}.
                       </NumberTextField>
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -586,7 +590,7 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
                       textFieldProps={{ fullWidth: true, label: "Размер архива" }}>
                       Указывает файлы какого максимального размера будут вскрыты архиватором.<br />
                       Размер задаётся в байтах.<br />
-                      Сейчас введено {sets.settings["ar-s"] ? sets.settings["ar-s"].toString() : JTaskSettings_defs["ar-s"]} байт.
+                      Сейчас введено {sets.settings["ar-s"].toString()} байт.
                       </NumberTextField>
                   </Grid>
                   <Grid item xs={12}>
@@ -595,9 +599,8 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
                   <ArrayOfTextFields setValue={handleChangeArExt} default={JTaskSettings_defs["ar-e"]} itemProps={{ xs: 6, sm: 3, lg: 2 }}
                     textFieldProps={{ fullWidth: true }}>
                     Указывает файлы с каким расширением будут вскрываться архиватором.<br />
-                      Сейчас введено: {sets.settings["ar-e"] && !sets.settings["ar-e"].every((value) => !value) ?
-                      sets.settings["ar-e"].map((value, index) => <span key={index}><br />[{index}] {value}</span>)
-                      : JTaskSettings_defs["ar-e"].map((value, index) => <span key={index}><br />[{index}] {value}</span>)}
+                      Сейчас введено: {
+                      sets.settings["ar-e"].map((value, index) => <span key={index}><br />[{index}] {value}</span>)}
                   </ArrayOfTextFields>
                 </Grid>
               </AccordionDetails>

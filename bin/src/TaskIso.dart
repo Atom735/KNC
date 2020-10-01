@@ -63,11 +63,12 @@ class TaskIso extends SocketWrapper {
       await runWorkFiles();
       await runGenerateTable();
       state.state = NTaskState.completed;
-    } catch (e) {
+    } catch (e, s) {
       if (errorsOut != null) {
         errorsOut.writeln(DateTime.now().toIso8601String());
         errorsOut.writeln('!Isolate');
         errorsOut.writeln(e);
+        errorsOut.writeln(s);
       }
     }
   }
@@ -507,7 +508,9 @@ class TaskIso extends SocketWrapper {
         super((msg) => sets.sendPort.send([sets.id, msg])) {
     print('$this created');
     instance = this;
-    state.onUpdate = () => send(0, JMsgTaskUpdate(state).toString());
+    state.onUpdate = () {
+      send(0, JMsgTaskUpdate(state).toString());
+    };
 
     /// Обрабатываем все сообщения через Wrapper
     receivePort.listen((final msg) {

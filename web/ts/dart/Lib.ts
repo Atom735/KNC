@@ -63,7 +63,7 @@ export interface JTaskSettings {
 }
 
 export const JTaskSettings_defs: JTaskSettings = {
-  user: "any",
+  user: "Гость",
   users: ['@guest'],
   name: '@unnamed',
   path: ['D:\\Искринское м-е'],

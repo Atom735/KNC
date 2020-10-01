@@ -94,7 +94,7 @@ class JTaskState {
   }
 
   /// Ссылка на отчётную таблицу
-  bool get raport => (map[jsonKey_raport] as bool /*?*/) ?? '';
+  bool get raport => (map[jsonKey_raport] as bool /*?*/) ?? false;
   static const jsonKey_raport = 'raport';
   set raport(final bool /*?*/ i) {
     if (i == null || raport == i) {
