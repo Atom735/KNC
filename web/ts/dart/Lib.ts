@@ -7,6 +7,7 @@ interface DartFuncs {
   dartJMsgDoc2X: (doc: string, docx: string) => string;
   dartJMsgZip: (dir: string, zip: string) => string;
   dartJMsgUnzip: (zip: string, dir: string) => string;
+  dartJMsgNewTask: (settings: string) => string;
 }
 export const funcs = (window as unknown as DartFuncs);
 

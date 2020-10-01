@@ -158,3 +158,23 @@ class JMsgUnzip {
   static String jsFunc(String zip, String dir) =>
       JMsgUnzip(zip, dir).toString();
 }
+
+/// Запрос на создание новой задачи... Настройки задачи передаются параметром.
+///
+/// Клиент отправляет запрос серверу с настройками новой задачи,
+/// в ответ приходит идентификатор новой задачи, в случае неудачи пустая строка.
+class JMsgNewTask {
+  static const msgId = 'JMsgNewTask:';
+
+  /// Путь к архиву
+  final JTaskSettings settings;
+
+  factory JMsgNewTask.fromString(final String str) =>
+      JMsgNewTask(JTaskSettings.fromJson(jsonDecode(str)));
+  const JMsgNewTask(this.settings);
+  @override
+  String toString() => msgId + jsonEncode(settings);
+
+  static String jsFunc(String settings) =>
+      JMsgNewTask.fromString(settings).toString();
+}

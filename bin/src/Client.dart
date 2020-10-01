@@ -77,13 +77,6 @@ class Client extends SocketWrapper {
                         (e.settings.users.contains(User.guest.mail)))))));
     });
 
-    /// Запуск новой задачи `task.settings`
-    waitMsgAll(wwwTaskNew).listen((msg) {
-      final v = jsonDecode(msg.s);
-      v['user'] = user.mail;
-      TaskSpawnSets.spawn(settings: JTaskSettings.fromJson(v))
-          .then((_) => send(msg.i, ''));
-    });
 
     /// Получение заметок файла `task.id``file.path`
     waitMsgAll(wwwFileNotes).listen((msg) {
@@ -200,6 +193,18 @@ class Client extends SocketWrapper {
     waitMsgAll(JMsgUserLogout.msgId).listen((msg) {
       user = null;
       send(msg.i, '');
+    });
+
+    /// Запуск новой задачи `task.settings`
+    waitMsgAll(JMsgNewTask.msgId).listen((msg) {
+      final v = jsonDecode(msg.s);
+      if (user == null || !user.access.contains('x')) {
+        v['user'] = user.mail;
+      } else if (user == null) {
+        v['users'] = JTaskSettings.def_users;
+      }
+      TaskSpawnSets.spawn(settings: JTaskSettings.fromJson(v))
+          .then((_) => send(msg.i, ''));
     });
   }
 }

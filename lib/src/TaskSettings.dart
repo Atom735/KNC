@@ -79,9 +79,14 @@ class JTaskSettings {
                 ?.map((e) => e as String)
                 ?.toList(growable: false) ??
             def_path,
-        ext_ar = (m[jsonKey_ext_ar] as String /*?*/)?.split(';') ?? def_ext_ar,
-        ext_files =
-            (m[jsonKey_ext_files] as String /*?*/)?.split(';') ?? def_ext_files,
+        ext_ar = (m[jsonKey_ext_ar] as List /*?*/)
+                ?.map((e) => e as String)
+                ?.toList(growable: false) ??
+            def_ext_ar,
+        ext_files = (m[jsonKey_ext_files] as List /*?*/)
+                ?.map((e) => e as String)
+                ?.toList(growable: false) ??
+            def_ext_files,
         maxsize_ar = (m[jsonKey_maxsize_ar] as int /*?*/) ?? def_maxsize_ar,
         maxdepth_ar = (m[jsonKey_maxdepth_ar] as int /*?*/) ?? def_maxdepth_ar,
         update_duration =

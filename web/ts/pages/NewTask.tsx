@@ -27,10 +27,10 @@ import AccordionSummary from "@material-ui/core/AccordionSummary";
 import AccordionDetails from "@material-ui/core/AccordionDetails";
 import { connect } from "react-redux";
 import { AppState } from "../redux";
-import { JTaskSettings, JTaskSettings_defs, JUser } from "../dart/Lib";
+import { funcs, JTaskSettings, JTaskSettings_defs, JUser } from "../dart/Lib";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import Switch from "@material-ui/core/Switch";
-import { dartSetSocketOnClose } from "../dart/SocketWrapper";
+import { dartSetSocketOnClose, requestOnce } from "../dart/SocketWrapper";
 
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import IconButton from "@material-ui/core/IconButton";
@@ -42,6 +42,7 @@ import Input from "@material-ui/core/Input";
 import Tooltip from "@material-ui/core/Tooltip";
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
+import { useSnackbar } from "notistack";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -409,6 +410,7 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
   const classesPage = useStylesPage();
   const classes = useStyles();
   const { user } = props;
+  const { enqueueSnackbar } = useSnackbar();
 
   const [sets, setSets] = useState<TaskSets>({
     public: user == null, settings: {
@@ -422,6 +424,16 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     setSubmit(true);
     event.preventDefault();
+    requestOnce(funcs.dartJMsgNewTask(JSON.stringify(sets.settings)), (msg) => {
+      setSubmit(false);
+      if (msg) {
+        console.log("Добавлена задача: " + msg);
+        enqueueSnackbar("Задача добавлена: " + msg, { variant: "info" });
+        props.history.push('/');
+      } else {
+        enqueueSnackbar("Неудалось добавить задачу", { variant: "error" });
+      }
+    });
   };
 
 

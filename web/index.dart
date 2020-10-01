@@ -17,6 +17,8 @@ external set _jsJMsgDoc2X(Function f);
 external set _jsJMsgZip(Function f);
 @JS('dartJMsgUnzip')
 external set _jsJMsgUnzip(Function f);
+@JS('dartJMsgNewTask')
+external set _jsJMsgNewTask(Function f);
 
 void main() {
   _jsJMsgUserSignin = allowInterop(JMsgUserSignin.jsFunc);
@@ -25,4 +27,5 @@ void main() {
   _jsJMsgDoc2X = allowInterop(JMsgDoc2X.jsFunc);
   _jsJMsgZip = allowInterop(JMsgZip.jsFunc);
   _jsJMsgUnzip = allowInterop(JMsgUnzip.jsFunc);
+  _jsJMsgNewTask = allowInterop(JMsgNewTask.jsFunc);
 }

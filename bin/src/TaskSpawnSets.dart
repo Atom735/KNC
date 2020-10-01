@@ -36,7 +36,10 @@ class TaskSpawnSets {
   ///
   /// * [dir] - восстанавливает задачу из папки
   /// * [settings] - запускает новую задачу с указанными настройками
-  static Future<void> spawn(
+  ///
+  /// Возврашает строку с идентификатором задачи, либо пустую строку в случае
+  /// неудачи.
+  static Future<String> spawn(
       {JTaskSettings /*?*/ settings, Directory /*?*/ dir}) async {
     /// Если папки не существует, то создаём её
     dir ??= await TaskController.dirTasks.createTemp();
@@ -50,7 +53,7 @@ class TaskSpawnSets {
       _bExistsTask = true;
     }
     if (settings == null) {
-      return;
+      return '';
     }
 
     await File(p.join(dir.path, 'settings.json'))
@@ -86,5 +89,7 @@ class TaskSpawnSets {
     /// Удаляем перехватчик, так как теперь сообщения можно перенаправялть
     /// на прямую задаче
     App().completers.remove(_id);
+
+    return _id;
   }
 }
