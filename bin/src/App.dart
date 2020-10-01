@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:knc/knc.dart';
 
@@ -22,6 +23,16 @@ class App {
   /// Комплитеры для завершения спавна задачи
   final completers = <String, Completer<SendPort>>{};
 
+  void _recvMsg(String id, String msg) {
+    final _task = TaskController.list[msg[0]];
+    if (_task != null) {
+      if (!_task.recv(msg[1])) {
+        final _o = 'UNKNOWN MSG from ${_task.toString()}:\n${msg[2]}';
+        print(_o.substring(0, min(256, _o.length)));
+      }
+    }
+  }
+
   /// Точка входа для приложения
   Future<void> run() async {
     /// Слушаем входящие сообщения от [TaskIso]
@@ -39,11 +50,11 @@ class App {
             /// Если задача запущена а [TaskController] для неё ещё не
             /// существует
             completers[msg[0]] /*!*/ .future.then((value) {
-              TaskController.list[msg[0]]?.recv(msg[1]);
+              _recvMsg(msg[0], msg[1]);
               completers.remove(msg[0]);
             });
           } else {
-            TaskController.list[msg[0]]?.recv(msg[1]);
+            _recvMsg(msg[0], msg[1]);
           }
         }
       }

@@ -149,7 +149,7 @@ class JMsgUnzip {
 
   factory JMsgUnzip.fromString(final String str) {
     final s = str.split(msgRecordSeparator);
-    return JMsgUnzip(s[0], s[1]);
+    return JMsgUnzip(s[0], s.length > 1 ? s[1] : '');
   }
   const JMsgUnzip(this.zip, [this.dir = '']);
   @override

@@ -70,46 +70,47 @@ class TaskController extends SocketWrapper {
     print('$this created');
     list[id] = this;
 
-/*
-    /// Перенаправление сообщений об обновлённом состоянии
-    /// задачи всем доступныым клиентам
-    waitMsgAll(wwwTaskUpdates).listen((msg) {
-      map.addAll(jsonDecode(msg.s));
-      if ((map['raport'] != null) &&
-          !(map['raport'] as String).startsWith('/raport/')) {
-        final xmlUrl = '/raport/${passwordEncode(map['raport'])}';
-        Server().fileMap[xmlUrl] = File(map['raport']);
-        map['raport'] = xmlUrl;
-        sendForAllClients(wwwTaskUpdates + jsonEncode(map));
-      } else {
-        sendForAllClients(wwwTaskUpdates + msg.s);
-      }
-    });
-
     /// Просьба задачи на конвертацию doc файла в docx
-    waitMsgAll(msgDoc2x).listen((msg) {
-      final i0 = msg.s.indexOf(msgRecordSeparator);
-      final pIn = msg.s.substring(0, i0);
-      final pOut = msg.s.substring(i0 + msgRecordSeparator.length);
-      Conv().doc2x(pIn, pOut).then((value) => send(msg.i, value.toString()));
+    waitMsgAll(JMsgDoc2X.msgId).listen((msg) {
+      final _msg = JMsgDoc2X.fromString(msg.s);
+      Conv()
+          .doc2x(_msg.doc, _msg.docx)
+          .then((value) => send(msg.i, value.toString()));
     });
 
     /// Просьба задачи на запаковку внутренностей папки $1 в zip архив $2
-    waitMsgAll(msgZip).listen((msg) {
-      final i0 = msg.s.indexOf(msgRecordSeparator);
-      final pIn = msg.s.substring(0, i0);
-      final pOut = msg.s.substring(i0 + msgRecordSeparator.length);
-      Conv().zip(pIn, pOut).then((value) => send(msg.i, value.toWrapperMsg()));
+    waitMsgAll(JMsgZip.msgId).listen((msg) {
+      final _msg = JMsgZip.fromString(msg.s);
+      Conv()
+          .zip(_msg.dir, _msg.zip)
+          .then((value) => send(msg.i, value.toWrapperMsg()));
     });
 
     /// Просьба задачи на распаковку архива $1
-    waitMsgAll(msgUnzip).listen((msg) {
-      Conv().unzip(msg.s).then((value) => send(msg.i, value.toWrapperMsg()));
+    waitMsgAll(JMsgUnzip.msgId).listen((msg) {
+      final _msg = JMsgUnzip.fromString(msg.s);
+      Conv()
+          .unzip(_msg.zip, _msg.dir)
+          .then((value) => send(msg.i, value.toWrapperMsg()));
     });
 
+    // /// Перенаправление сообщений об обновлённом состоянии
+    // /// задачи всем доступныым клиентам
+    // waitMsgAll(wwwTaskUpdates).listen((msg) {
+    //   map.addAll(jsonDecode(msg.s));
+    //   if ((map['raport'] != null) &&
+    //       !(map['raport'] as String).startsWith('/raport/')) {
+    //     final xmlUrl = '/raport/${passwordEncode(map['raport'])}';
+    //     Server().fileMap[xmlUrl] = File(map['raport']);
+    //     map['raport'] = xmlUrl;
+    //     sendForAllClients(wwwTaskUpdates + jsonEncode(map));
+    //   } else {
+    //     sendForAllClients(wwwTaskUpdates + msg.s);
+    //   }
+    // });
+
     // уведомить клиентов о старте новой задачи
-    sendForAllClients(wwwTaskNew + jsonEncode(this));
-*/
+    // sendForAllClients(wwwTaskNew + jsonEncode(this));
   }
 
   /// Отправка сообщения всем пользователям, которым доступна задача

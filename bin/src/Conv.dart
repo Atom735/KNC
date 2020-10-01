@@ -91,8 +91,8 @@ class Conv extends ProcessManager {
   /// Если папка [pathToOutDir] не задана, то будет создана
   /// внутреняя временная папка, которая будет удалена по завершению работ
   Future<ArchiverOutput> unzip(String pathToArchive,
-          [String /*?*/ pathToOutDir]) =>
-      pathToOutDir == null
+          [String pathToOutDir = '']) =>
+      pathToOutDir.isEmpty
           ? (dirTemp
               .createTemp('arch.')
               .then((temp) => unzip(pathToArchive, temp.path)))
