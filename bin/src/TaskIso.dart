@@ -55,11 +55,19 @@ class TaskIso extends SocketWrapper {
 
   /// Точка входа изолята внутри класса
   Future<void> entryPointInClass() async {
-    await dirFiles.create();
-    await runSearchFiles();
-    await runWorkFiles();
-    await runGenerateTable();
-    state.state = NTaskState.completed;
+    try {
+      await dirFiles.create();
+      await runSearchFiles();
+      await runWorkFiles();
+      await runGenerateTable();
+      state.state = NTaskState.completed;
+    } catch (e) {
+      if (errorsOut != null) {
+        errorsOut.writeln(DateTime.now().toIso8601String());
+        errorsOut.writeln('!Isolate');
+        errorsOut.writeln(e);
+      }
+    }
   }
 
   /// Процедура поиска файлов
@@ -265,6 +273,8 @@ class TaskIso extends SocketWrapper {
     final file = File(fileData.path);
     final data =
         await tryFunc<List<int>>(() => file.readAsBytes(), onError: (e) {
+      errorsOut.writeln(DateTime.now().toIso8601String());
+      errorsOut.writeln('!Handle File');
       errorsOut.writeln(e);
       return [];
     });
@@ -300,6 +310,7 @@ class TaskIso extends SocketWrapper {
           // TODO: обработать docx файл
           await _dir.delete(recursive: true);
         } else {
+          errorsOut.writeln(DateTime.now().toIso8601String());
           errorsOut.writeln('!Archive unzip ${arch.pathIn} => ${arch.pathOut}');
           errorsOut.writeln(arch);
         }
@@ -335,6 +346,7 @@ class TaskIso extends SocketWrapper {
       await tryFunc<File /*?*/ >(
           () => File(fileDataNew /*!*/ .path + '.json')
               .writeAsString(jsonEncode(fileDataNew)), onError: (e) {
+        errorsOut.writeln(DateTime.now().toIso8601String());
         errorsOut.writeln('!Save FileData');
         errorsOut.writeln(e);
         return null;
@@ -433,6 +445,7 @@ class TaskIso extends SocketWrapper {
                     Directory(arch.pathOut /*!*/), '');
                 await Directory(arch.pathOut /*!*/).delete(recursive: true);
               } else {
+                errorsOut.writeln(DateTime.now().toIso8601String());
                 errorsOut.writeln(
                     '!Archive unzip ${arch.pathIn} => ${arch.pathOut}');
                 errorsOut.writeln(arch);
