@@ -101,7 +101,7 @@ class TaskIso extends SocketWrapper {
   /// Генерация таблицы
   Future<void> runGenerateTable() async {
     state.state = NTaskState.generateTable;
-    final xlsDataIn = Directory(p.join('data', 'raport')).absolute;
+    final xlsDataIn = Directory(p.join('data', 'xls')).absolute;
     final xlsDataOut = Directory(p.join(pathAbsolute, 'raport')).absolute;
     await copyDirectoryRecursive(xlsDataIn, xlsDataOut);
     final xlsSheet =
@@ -485,9 +485,10 @@ class TaskIso extends SocketWrapper {
             Duration(milliseconds: sets.settings.update_duration)),
         dirFiles =
             Directory(p.join(TaskController.dirTasks.path, sets.id, 'temp')),
-        errorsOut = File(p.join(sets.id, 'errors.txt'))
-            .openWrite(encoding: utf8, mode: FileMode.writeOnlyAppend)
-              ..writeCharCode(unicodeBomCharacterRune),
+        errorsOut =
+            File(p.join(TaskController.dirTasks.path, sets.id, 'errors.txt'))
+                .openWrite(encoding: utf8, mode: FileMode.writeOnlyAppend)
+                  ..writeCharCode(unicodeBomCharacterRune),
         super((msg) => sets.sendPort.send([sets.id, msg])) {
     print('$this created');
     instance = this;

@@ -3,6 +3,7 @@ class JTaskSettings {
   /// Почта пользователя запустившего задачу.
   final String user;
   static const jsonKey_user = 'user';
+  static const def_user = '@guest';
 
   /// Почта пользователей которым доступна задача
   final List<String> /*?*/ users;

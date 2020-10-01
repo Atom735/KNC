@@ -9,6 +9,9 @@ String numToXlsAlpha(int i) {
 Future<void> copyDirectoryRecursive(
     final Directory i, final Directory o) async {
   await o.create();
+  if (!(await i.exists())) {
+    return;
+  }
   final entitys = await i.list();
   await for (var entity in entitys) {
     if (entity is File) {

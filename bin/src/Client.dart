@@ -198,13 +198,14 @@ class Client extends SocketWrapper {
     /// Запуск новой задачи `task.settings`
     waitMsgAll(JMsgNewTask.msgId).listen((msg) {
       final v = jsonDecode(msg.s);
-      if (user == null || !user.access.contains('x')) {
-        v['user'] = user.mail;
-      } else if (user == null) {
+      if (user == null) {
+        v['user'] = JTaskSettings.def_user;
         v['users'] = JTaskSettings.def_users;
+      } else if (!user.access.contains('x')) {
+        v['user'] = user.mail;
       }
       TaskSpawnSets.spawn(settings: JTaskSettings.fromJson(v))
-          .then((_) => send(msg.i, ''));
+          .then((_id) => send(msg.i, _id));
     });
   }
 }

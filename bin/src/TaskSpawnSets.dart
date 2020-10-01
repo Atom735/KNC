@@ -48,8 +48,12 @@ class TaskSpawnSets {
     var _bExistsTask = false;
     if (await _fileSettings.exists()) {
       /// Если найден файл настроек, то загружаем его
-      settings = JTaskSettings.fromJson(
-          jsonDecode(await _fileSettings.readAsString()));
+      try {
+        settings = JTaskSettings.fromJson(
+            jsonDecode(await _fileSettings.readAsString()));
+      } catch (e) {
+        settings = null;
+      }
       _bExistsTask = true;
     }
     if (settings == null) {
