@@ -94,23 +94,13 @@ class TaskController extends SocketWrapper {
           .then((value) => send(msg.i, value.toWrapperMsg()));
     });
 
-    // /// Перенаправление сообщений об обновлённом состоянии
-    // /// задачи всем доступныым клиентам
-    // waitMsgAll(wwwTaskUpdates).listen((msg) {
-    //   map.addAll(jsonDecode(msg.s));
-    //   if ((map['raport'] != null) &&
-    //       !(map['raport'] as String).startsWith('/raport/')) {
-    //     final xmlUrl = '/raport/${passwordEncode(map['raport'])}';
-    //     Server().fileMap[xmlUrl] = File(map['raport']);
-    //     map['raport'] = xmlUrl;
-    //     sendForAllClients(wwwTaskUpdates + jsonEncode(map));
-    //   } else {
-    //     sendForAllClients(wwwTaskUpdates + msg.s);
-    //   }
-    // });
+    /// Перенаправление сообщений об обновлённом состоянии
+    /// задачи всем доступныым клиентам
+    waitMsgAll(JMsgTaskUpdate.msgId)
+        .listen((msg) => sendForAllClients(JMsgTaskUpdate.msgId + msg.s));
 
     // уведомить клиентов о старте новой задачи
-    // sendForAllClients(wwwTaskNew + jsonEncode(this));
+    sendForAllClients(JMsgTaskNew(id).toString());
   }
 
   /// Отправка сообщения всем пользователям, которым доступна задача
@@ -118,12 +108,15 @@ class TaskController extends SocketWrapper {
       .where((e) =>
 
           /// Клиенты запустившие задачу
-          (e.user?.mail ?? '') == settings.user ||
+          (e.user?.mail ?? '@guest') == settings.user ||
 
           /// Клиенты находящиеся в списке доступа
-          (settings.users?.contains(e.user?.mail ?? '') ?? false) ||
+          (settings.users?.contains(e.user?.mail ?? '@guest') ?? false) ||
 
           /// Доступность неавторизированным пользователям
-          (settings.users?.contains('') ?? true))
+          (settings.users?.contains('@guest') ?? true) ||
+
+          /// Доступность суперпользавателю
+          (e.user?.access?.contains('x') ?? false))
       .forEach((e) => e.send(0, msg));
 }

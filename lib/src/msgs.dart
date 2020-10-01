@@ -82,6 +82,20 @@ class JMsgTaskUpdate {
   String toString() => msgId + jsonEncode(state.mapUpdates);
 }
 
+/// Сообщение о создании новой задачи.
+///
+/// Приходит как уведомление от сервера клиенту. Передаётся идентификатор
+/// новой задачи.
+class JMsgTaskNew {
+  static const msgId = 'JMsgTaskNew:';
+  final String id;
+
+  factory JMsgTaskNew.fromString(final String str) => JMsgTaskNew(str);
+  const JMsgTaskNew(this.id);
+  @override
+  String toString() => msgId + id;
+}
+
 /// Запрос на преобразование старого `*.doc` файла по пути [doc] в современный
 /// `*.docx` файл по пути [docx].
 ///

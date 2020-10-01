@@ -34,7 +34,7 @@ export function send(id: number, msg: string): void {
 }
 
 /// Возвращает `false` если на сообщение не вызвано реакции
-export function recv(msgRaw: string, id: number = 0): boolean {
+export function recv(msgRaw: string, id: number = -1): boolean {
   if (id == undefined) {
     id = 0;
   }
@@ -86,6 +86,9 @@ export function recv(msgRaw: string, id: number = 0): boolean {
         }
       }
     });
+  }
+  if (!b) {
+    console.warn("Неизвестное сообщение: " + id.toString());
   }
   return b;
 }

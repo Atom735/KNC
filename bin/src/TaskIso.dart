@@ -39,6 +39,8 @@ class TaskIso extends SocketWrapper {
   final files = <JOneFileData>[];
 
   /// Состояние задачи
+  ///
+  ///
   final JTaskState state;
 
   /// Полный абсолютный путь к папке задачи
@@ -246,7 +248,7 @@ class TaskIso extends SocketWrapper {
 
     final xlsPath = xlsDataOut.path + '.xlsx';
     await zip(xlsDataOut.path, xlsPath);
-    state.raport = xlsPath;
+    state.raport = true;
   }
 
   /// Обработка файлов во время поиска всех файлов
