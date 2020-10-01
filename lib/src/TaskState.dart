@@ -71,7 +71,7 @@ class JTaskState {
 
   /// Количество обработанных файлов с предупреждениями и/или ошибками
   int get warnings => (map[jsonKey_warnings] as int /*?*/) ?? 0;
-  static const jsonKey_warnings = 'files';
+  static const jsonKey_warnings = 'warnings';
   set warnings(final int /*?*/ i) {
     if (i == null || warnings == i) {
       return;

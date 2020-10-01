@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 import Link from "@material-ui/core/Link";
@@ -10,7 +10,7 @@ import CardMedia from "@material-ui/core/CardMedia";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 
-const CardNewTask: FunctionComponent = () => {
+const CardNewTask: React.FC = () => {
   return (
     <Card>
       <CardActionArea component={RouterLink} to="/newtask">

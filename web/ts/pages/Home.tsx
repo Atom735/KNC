@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 
@@ -6,6 +6,9 @@ import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
 
 import CardNewTask from "./../cards/NewTask";
+import { AppState, fetchTaskUpdate, TaskState } from "../redux";
+import { connect } from "react-redux";
+import CardTask from "../cards/Task";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -15,7 +18,7 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const PageHome: FunctionComponent = () => {
+const PageHome: React.FC<PropsFromState & typeof mapDispatchToProps> = (props) => {
   const classes = useStyles();
   return (
     <Container component="main">
@@ -23,11 +26,23 @@ const PageHome: FunctionComponent = () => {
       <Grid container spacing={3} className={classes.root}>
         <Grid item xs={12} sm={6} xl={4}>
           <CardNewTask />
+          {
+            props.tasks.map((value) => <CardTask task={value} key={value.id} />)
+          }
         </Grid>
       </Grid>
     </Container>
   );
 };
 
-export default PageHome;
+
+interface PropsFromState {
+  tasks: TaskState[];
+}
+const mapStateToProps = ({ tasks }: AppState): PropsFromState => ({ tasks: tasks })
+const mapDispatchToProps = {
+  fetchTaskUpdate: fetchTaskUpdate
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(PageHome);
 // export useStyles;

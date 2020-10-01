@@ -95,29 +95,43 @@ export function recv(msgRaw: string, id: number = -1): boolean {
 
 /// Подписаться на получение единождого ответа
 export function waitMsg(msgBegin: string, callback: (msg: SocketWrapperResponse) => any): void {
-  let _ar = _listOfResponses.get(msgBegin);
+  const _ar = _listOfResponses.get(msgBegin);
   if (_ar) {
-    _ar.push(callback);
+    const _callback = (msg: SocketWrapperResponse) => {
+      callback(msg);
+      const index = _ar.indexOf(_callback);
+      if (index > -1) {
+        _ar.splice(index, 1);
+      }
+    }
+    _ar.push(_callback);
   } else {
     _listOfResponses.set(msgBegin, [callback]);
   }
 }
 
 /// Подписаться на получение всех ответов
-export function waitMsgAll(msgBegin: string, callback: (msg: SocketWrapperResponse) => any): void {
-  let _ar = _listOfRespSubers.get(msgBegin);
+export function waitMsgAll(msgBegin: string, callback: (msg: SocketWrapperResponse) => any): () => void {
+  const _ar = _listOfRespSubers.get(msgBegin);
   if (_ar) {
     _ar.push(callback);
   } else {
     _listOfRespSubers.set(msgBegin, [callback]);
   }
+  return () => {
+    const _ar = _listOfRespSubers.get(msgBegin);
+    const index = _ar.indexOf(callback);
+    if (index > -1) {
+      _ar.splice(index, 1);
+    }
+  };
 }
 
 /// Отправить запрос и получить на него ответ
 export function requestOnce(msg: string, callback: (msg: string) => any): void {
   _requestID += 1;
-  let id = _requestID;
-  let _ar = _listOfRequest.get(id);
+  const id = _requestID;
+  const _ar = _listOfRequest.get(id);
   if (_ar) {
     _ar.push(callback);
   } else {
@@ -127,7 +141,7 @@ export function requestOnce(msg: string, callback: (msg: string) => any): void {
 }
 
 /// Отправить запрос на подписку к событиям
-export function requestSubscribe(msg: string, callback: (msg: string) => any): void {
+export function requestSubscribe(msg: string, callback: (msg: string) => any): () => void {
   _subscribersID += 1;
   let id = _subscribersID;
   let _ar = _listOfSubscribers.get(id);
@@ -137,6 +151,13 @@ export function requestSubscribe(msg: string, callback: (msg: string) => any): v
     _listOfSubscribers.set(id, [callback]);
   }
   send(id, msg);
+  return () => {
+    const _ar = _listOfSubscribers.get(id);
+    const index = _ar.indexOf(callback);
+    if (index > -1) {
+      _ar.splice(index, 1);
+    }
+  };
 }
 
 
@@ -205,10 +226,18 @@ export function dartConnect() {
     dartSocket.onclose = null;
     dartSocket.onerror = null;
     dartSocket.onmessage = null;
+    _requestID = 0;
+    _listOfRequest.clear();
+    _subscribersID = 0;
+    _listOfSubscribers.clear();
+    // _listOfResponses.clear();
+    // _listOfRespSubers.clear();
   }
   dartSocket = new WebSocket("ws://" + document.location.host + "/ws");
   dartSocket.onopen = handleSocketOnOpen;
   dartSocket.onclose = handleSocketOnClose;
   dartSocket.onerror = handleSocketOnError;
   dartSocket.onmessage = handleSocketOnMessage;
+
+
 }

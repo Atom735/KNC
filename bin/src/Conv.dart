@@ -53,7 +53,7 @@ class Conv extends ProcessManager {
   static Future<Conv> init() async {
     final dirTemp = Directory('temp').absolute;
     if (await dirTemp.exists()) {
-      await dirTemp.delete();
+      await dirTemp.delete(recursive: true);
     }
 
     return Conv._create(await dirTemp.create(), await _searchProgram_7Zip(),

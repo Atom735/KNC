@@ -1,5 +1,5 @@
 
-interface DartFuncs {
+interface Dart {
   dartJMsgUserSignin: (mail: string, pass: string) => string;
   dartJMsgUserLogout: () => string;
   dartJMsgUserRegistration: (mail: string, pass: string,
@@ -8,8 +8,11 @@ interface DartFuncs {
   dartJMsgZip: (dir: string, zip: string) => string;
   dartJMsgUnzip: (zip: string, dir: string) => string;
   dartJMsgNewTask: (settings: string) => string;
+
+  dartIdJMsgNewTask: () => string;
+  dartIdJMsgTaskUpdate: () => string;
 }
-export const funcs = (window as unknown as DartFuncs);
+export const funcs = (window as unknown as Dart);
 
 
 export interface JUser {
