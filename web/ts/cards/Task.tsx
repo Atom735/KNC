@@ -11,6 +11,7 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 
 import { NTaskState, TaskState } from "./../redux";
+import LinearProgress from "@material-ui/core/LinearProgress";
 
 interface CardTaskProps {
   task: TaskState;
@@ -30,9 +31,14 @@ const CardTask: React.FC<CardTaskProps> = (props) => {
               (task.state == NTaskState.searchFiles) ? "Поиск файлов: " + task.files :
                 (task.state == NTaskState.workFiles) ? "Обработка файлов: " + task.worked + "/" + task.files :
                   (task.state == NTaskState.generateTable) ? "Генерация отчётной таблицы" :
-                    "Неизвестное состояние"}
+                    (task.state == NTaskState.completed) ? "Конец задачи" :
+                      "Неизвестное состояние"}
           </Typography>
-
+          {!task.state ? <LinearProgress /> :
+            (task.state == NTaskState.searchFiles) ? <LinearProgress /> :
+              (task.state == NTaskState.workFiles) ? <LinearProgress variant="determinate" value={task.worked / task.files} /> :
+                (task.state == NTaskState.generateTable) ? <LinearProgress /> :
+                  null}
         </CardContent>
       </CardActionArea>
     </Card>
