@@ -72,7 +72,7 @@ class JMsgUserRegistration {
 /// состояния, также передаются идентификаторы, разделяемые символом
 /// `;` задач, которые уже имеются у клиента.
 ///
-/// Первое сообщение [JMsgAllTasks] отправляется клиенту с массивом
+/// Первое сообщение [JMsgTasksAll] отправляется клиенту с массивом
 /// идентификаторов задач разделённых символом `;`.
 ///
 /// Пустое сообщение посылается самой задаче, которая возвращает состояния
@@ -87,23 +87,23 @@ class JMsgGetTasks {
   @override
   String toString() => msgId;
 
-  static String jsFunc(String str) => JMsgGetTasks().toString();
+  static String jsFunc() => JMsgGetTasks().toString();
 }
 
-/// Сообщение [JMsgAllTasks] отправляется клиенту с массивом
+/// Сообщение [JMsgTasksAll] отправляется клиенту с массивом
 /// идентификаторов задач разделённых символом `;`.
 ///
 /// Так же означает начало передачи последующих данных о задачах в виде
 /// сообщений [JMsgTaskUpdate].
 ///
 /// Пустое сообщение передаётся клиенту как завершающее.
-class JMsgAllTasks {
+class JMsgTasksAll {
   static const msgId = 'JMsgAllTasks:';
   final List<String> ids;
 
-  factory JMsgAllTasks.fromString(final String str) =>
-      JMsgAllTasks(str.split(';'));
-  const JMsgAllTasks(this.ids);
+  factory JMsgTasksAll.fromString(final String str) =>
+      JMsgTasksAll(str.split(';'));
+  const JMsgTasksAll(this.ids);
 
   @override
   String toString() => msgId + ids.join(';');

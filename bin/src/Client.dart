@@ -212,16 +212,16 @@ class Client extends SocketWrapper {
     waitMsgAll(JMsgGetTasks.msgId).listen((msg) {
       final _tasks = getTasksControllers();
       if (_tasks.isEmpty) {
-        send(msg.i, JMsgAllTasks.msgId);
+        send(msg.i, JMsgTasksAll.msgId);
       } else {
         send(
             msg.i,
-            JMsgAllTasks(_tasks.map((e) => e.id).toList(growable: false))
+            JMsgTasksAll(_tasks.map((e) => e.id).toList(growable: false))
                 .toString());
         Future.wait(_tasks.map((e) => e
                 .requestOnce(JMsgGetTasks.msgId)
                 .then((_msg) => send(msg.i, JMsgTaskUpdate.msgId + _msg))))
-            .then((_) => send(msg.i, JMsgAllTasks.msgId));
+            .then((_) => send(msg.i, JMsgTasksAll.msgId));
       }
     });
   }

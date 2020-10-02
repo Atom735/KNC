@@ -8,9 +8,11 @@ interface Dart {
   dartJMsgZip: (dir: string, zip: string) => string;
   dartJMsgUnzip: (zip: string, dir: string) => string;
   dartJMsgNewTask: (settings: string) => string;
+  dartJMsgGetTasks: () => string;
 
-  dartIdJMsgNewTask: () => string;
+  dartIdJMsgTaskNew: () => string;
   dartIdJMsgTaskUpdate: () => string;
+  dartIdJMsgTasksAll: () => string;
 }
 export const funcs = (window as unknown as Dart);
 

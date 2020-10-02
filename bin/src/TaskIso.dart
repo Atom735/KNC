@@ -39,8 +39,6 @@ class TaskIso extends SocketWrapper {
   final files = <JOneFileData>[];
 
   /// Состояние задачи
-  ///
-  ///
   final JTaskState state;
 
   /// Полный абсолютный путь к папке задачи
@@ -497,7 +495,7 @@ class TaskIso extends SocketWrapper {
       '$runtimeType{${sets.id}}(${settings.name})[${settings.user}]';
   TaskIso._init(this.sets, this.pathAbsolute)
       : settings = sets.settings,
-        state = JTaskState({'id': sets.id},
+        state = JTaskState({'id': sets.id, 'settings': sets.settings},
             Duration(milliseconds: sets.settings.update_duration)),
         dirFiles =
             Directory(p.join(TaskController.dirTasks.path, sets.id, 'temp')),

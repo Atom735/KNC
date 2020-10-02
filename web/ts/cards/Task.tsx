@@ -16,6 +16,8 @@ interface CardTaskProps {
   task: TaskState;
 }
 const CardTask: React.FC<CardTaskProps> = (props) => {
+  const { task } = props;
+  const settings = props.task.settings;
   return (
     <Card>
       <CardActionArea component={RouterLink} to="/newtask">
@@ -28,11 +30,10 @@ const CardTask: React.FC<CardTaskProps> = (props) => {
         />
         <CardContent>
           <Typography gutterBottom variant="h5" component="h2">
-            Крутая ящерка
+            {settings ? settings.name : 'Загружаю данные'}
           </Typography>
           <Typography variant="body2" color="textSecondary" component="p">
-            Нажми на меня чтобы добавить новою задачу и дай мне немножка
-            поработать! (Или множка...)
+            Просто текст
           </Typography>
         </CardContent>
       </CardActionArea>
