@@ -34,8 +34,10 @@ class JTaskState {
 
   set onUpdate(void Function() /*?*/ func) {
     _onUpdate = func;
-    mapUpdates.addAll(map);
-    _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
+    if (func != null) {
+      mapUpdates.addAll(map);
+      _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
+    }
   }
 
   /// Состояние задачи
@@ -113,7 +115,9 @@ class JTaskState {
 
   JTaskState(this.map, this.duration, [void Function() /*?*/ funcOnUpdate]) {
     mapUpdates.addAll(map);
+    _updatesFuture = null;
     onUpdate = funcOnUpdate;
+
     // _updatesFuture ??= Future.delayed(duration, onUpdate).then(_onUpdateEnd);
   }
 
