@@ -103,20 +103,22 @@ class TaskController extends SocketWrapper {
     sendForAllClients(JMsgTaskNew(id).toString());
   }
 
+  /// Получить список веб клиентов имеющих доступ к задаче.
+  Iterable<Client> getTaskClients() => Client.list.where((e) =>
+
+      /// Клиенты запустившие задачу
+      (e.user?.mail ?? '@guest') == settings.user ||
+
+      /// Клиенты находящиеся в списке доступа
+      (settings.users?.contains(e.user?.mail ?? '@guest') ?? false) ||
+
+      /// Доступность неавторизированным пользователям
+      (settings.users?.contains('@guest') ?? true) ||
+
+      /// Доступность суперпользавателю
+      (e.user?.access?.contains('x') ?? false));
+
   /// Отправка сообщения всем пользователям, которым доступна задача
-  void sendForAllClients(final String msg) => Client.list
-      .where((e) =>
-
-          /// Клиенты запустившие задачу
-          (e.user?.mail ?? '@guest') == settings.user ||
-
-          /// Клиенты находящиеся в списке доступа
-          (settings.users?.contains(e.user?.mail ?? '@guest') ?? false) ||
-
-          /// Доступность неавторизированным пользователям
-          (settings.users?.contains('@guest') ?? true) ||
-
-          /// Доступность суперпользавателю
-          (e.user?.access?.contains('x') ?? false))
-      .forEach((e) => e.send(0, msg));
+  void sendForAllClients(final String msg) =>
+      getTaskClients().forEach((e) => e.send(0, msg));
 }

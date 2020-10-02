@@ -66,6 +66,49 @@ class JMsgUserRegistration {
   }
 }
 
+/// Запрос на получение данных задачи
+///
+/// Клиент отправляет запрос серверу для получения списка задач и их
+/// состояния, также передаются идентификаторы, разделяемые символом
+/// `;` задач, которые уже имеются у клиента.
+///
+/// Первое сообщение [JMsgAllTasks] отправляется клиенту с массивом
+/// идентификаторов задач разделённых символом `;`.
+///
+/// Пустое сообщение посылается самой задаче, которая возвращает состояния
+/// в виде сообщений [JMsgTaskUpdate].
+///
+/// Пустое сообщение передаётся клиенту как завершающее
+class JMsgGetTasks {
+  static const msgId = 'JMsgGetTasks:';
+
+  const JMsgGetTasks();
+
+  @override
+  String toString() => msgId;
+
+  static String jsFunc(String str) => JMsgGetTasks().toString();
+}
+
+/// Сообщение [JMsgAllTasks] отправляется клиенту с массивом
+/// идентификаторов задач разделённых символом `;`.
+///
+/// Так же означает начало передачи последующих данных о задачах в виде
+/// сообщений [JMsgTaskUpdate].
+///
+/// Пустое сообщение передаётся клиенту как завершающее.
+class JMsgAllTasks {
+  static const msgId = 'JMsgAllTasks:';
+  final List<String> ids;
+
+  factory JMsgAllTasks.fromString(final String str) =>
+      JMsgAllTasks(str.split(';'));
+  const JMsgAllTasks(this.ids);
+
+  @override
+  String toString() => msgId + ids.join(';');
+}
+
 /// Сообщение об обновлении состояния задачи.
 ///
 /// Приходит как уведомление от сервера клиенту. Передаются только

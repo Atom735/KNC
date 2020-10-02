@@ -521,6 +521,11 @@ class TaskIso extends SocketWrapper {
       }
       print('$this recieved unknown msg {$msg}');
     });
+
+    waitMsgAll(JMsgGetTasks.msgId).listen((msg) {
+      send(msg.i, jsonEncode(state));
+    });
+
 /*
     /// Отвечаем на все запросы на получение заметок файла, где аругментом
     /// указан путь к рабочей копии файла, кодируем их в [json]

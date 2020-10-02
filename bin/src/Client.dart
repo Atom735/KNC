@@ -207,5 +207,38 @@ class Client extends SocketWrapper {
       TaskSpawnSets.spawn(settings: JTaskSettings.fromJson(v))
           .then((_id) => send(msg.i, _id));
     });
+
+    /// Просьба обновить список задач
+    waitMsgAll(JMsgGetTasks.msgId).listen((msg) {
+      final _tasks = getTasksControllers();
+      if (_tasks.isEmpty) {
+        send(msg.i, JMsgAllTasks.msgId);
+      } else {
+        send(
+            msg.i,
+            JMsgAllTasks(_tasks.map((e) => e.id).toList(growable: false))
+                .toString());
+        Future.wait(_tasks.map((e) => e
+                .requestOnce(JMsgGetTasks.msgId)
+                .then((_msg) => send(msg.i, JMsgTaskUpdate.msgId + _msg))))
+            .then((_) => send(msg.i, JMsgAllTasks.msgId));
+      }
+    });
   }
+
+  /// Получить список задач доступных клиенту.
+  Iterable<TaskController> getTasksControllers() =>
+      TaskController.list.values.where((e) =>
+
+          /// Клиенты запустившие задачу
+          (user?.mail ?? '@guest') == e.settings.user ||
+
+          /// Клиенты находящиеся в списке доступа
+          (e.settings.users?.contains(user?.mail ?? '@guest') ?? false) ||
+
+          /// Доступность неавторизированным пользователям
+          (e.settings.users?.contains('@guest') ?? true) ||
+
+          /// Доступность суперпользавателю
+          (user?.access?.contains('x') ?? false));
 }
