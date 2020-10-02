@@ -75,7 +75,7 @@ class TaskController extends SocketWrapper {
       final _msg = JMsgDoc2X.fromString(msg.s);
       Conv()
           .doc2x(_msg.doc, _msg.docx)
-          .then((value) => send(msg.i, value.toString()));
+          .then((value) => send(msg.i, value.exitCode.toString()));
     });
 
     /// Просьба задачи на запаковку внутренностей папки $1 в zip архив $2
