@@ -218,7 +218,7 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
             <HomeIcon />
           </IconButton>
           <Typography variant="h6" className={classes.title}>
-            Пункт приёма стеклотары
+            {props.title}
           </Typography>
           {user ? (
             <>
@@ -272,9 +272,10 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
   );
 };
 interface PropsFromState {
-  user: JUser
+  user: JUser,
+  title: string,
 }
-const mapStateToProps = ({ user }: AppState): PropsFromState => ({ user: user })
+const mapStateToProps = ({ user, title }: AppState): PropsFromState => ({ user: user, title: title })
 const mapDispatchToProps = {
   fetchSignOut: fetchSignOut,
   fetchSignIn: fetchSignIn

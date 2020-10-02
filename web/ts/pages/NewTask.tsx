@@ -26,7 +26,7 @@ import Accordion from "@material-ui/core/Accordion";
 import AccordionSummary from "@material-ui/core/AccordionSummary";
 import AccordionDetails from "@material-ui/core/AccordionDetails";
 import { connect } from "react-redux";
-import { AppState } from "../redux";
+import { AppState, fetchSetTitle } from "../redux";
 import { funcs, JTaskSettings, JTaskSettings_defs, JUser } from "../dart/Lib";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import Switch from "@material-ui/core/Switch";
@@ -69,6 +69,7 @@ const NewTaskArchiveExt: React.FC<NewTaskSetsChldProps> = (props) => {
     sets: sets,
     setSets: setSets,
   } = props;
+
 
   const [indexesNew, setIndexesNew] = useState<number>(sets.settings["ar-e"].length + 1);
   const [indexes, setIndexes] = useState<number[]>(sets.settings["ar-e"].map((value, index) => index));
@@ -475,6 +476,11 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
     setSets({ ...sets, settings: { ...sets.settings, users: [...value] } });
   }
 
+
+  useEffect(() => {
+    props.fetchSetTitle('Настройки новой задачи');
+  }, []);
+
   return (
     <Container component="main" maxWidth="lg">
       <CssBaseline />
@@ -640,7 +646,7 @@ interface PropsFromState {
 }
 const mapStateToProps = ({ user }: AppState): PropsFromState => ({ user: user });
 const mapDispatchToProps = {
-  // fetchSignOut: fetchSignOut
+  fetchSetTitle: fetchSetTitle,
 }
-export default connect(mapStateToProps)(PageNewTask);
+export default connect(mapStateToProps, mapDispatchToProps)(PageNewTask);
 // export useStyles;

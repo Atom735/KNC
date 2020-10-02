@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from "react";
+import React, { FunctionComponent, useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import { RouterProps } from "react-router";
@@ -22,7 +22,7 @@ import useStyles from "./../styles";
 
 import { funcs, JUser } from "./../dart/Lib";
 import { requestOnce } from "./../dart/SocketWrapper";
-import { fetchSignIn } from "../redux";
+import { fetchSetTitle, fetchSignIn } from "../redux";
 import { connect } from "react-redux";
 import { useSnackbar } from "notistack";
 
@@ -69,6 +69,11 @@ const PageSignUp: React.FC<typeof mapDispatchToProps & RouterProps> = (props) =>
       }
     });
   };
+
+
+  useEffect(() => {
+    props.fetchSetTitle('Регистратура');
+  }, []);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -181,6 +186,7 @@ const PageSignUp: React.FC<typeof mapDispatchToProps & RouterProps> = (props) =>
 };
 
 const mapDispatchToProps = {
-  fetchSignIn: fetchSignIn
+  fetchSignIn: fetchSignIn,
+  fetchSetTitle: fetchSetTitle
 }
 export default connect(null, mapDispatchToProps)(PageSignUp);

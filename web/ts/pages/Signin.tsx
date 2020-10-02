@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { RouterProps } from "react-router";
 import { Link as RouterLink } from "react-router-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -21,7 +21,7 @@ import useStyles from "./../styles";
 
 import { funcs, JUser } from "./../dart/Lib";
 import { requestOnce } from "./../dart/SocketWrapper";
-import { fetchSignIn } from "../redux";
+import { fetchSetTitle, fetchSignIn } from "../redux";
 import { connect } from "react-redux";
 import { useSnackbar } from "notistack";
 
@@ -31,7 +31,7 @@ interface PageSignInProps {
   handleSignIn: (email: string, pass: string, remem: boolean, callback: () => any) => void;
 };
 
-const PageSignIn: React.FC<PageSignInProps> = (
+const PageSignIn: React.FC<PageSignInProps & typeof mapDispatchToProps> = (
   props
 ) => {
   const classes = useStyles();
@@ -51,6 +51,10 @@ const PageSignIn: React.FC<PageSignInProps> = (
     setRemem(event.target.checked);
   };
 
+
+  useEffect(() => {
+    props.fetchSetTitle('Входная дверь');
+  }, []);
 
   const [submit, setSubmit] = useState(false);
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -156,5 +160,7 @@ const PageSignIn: React.FC<PageSignInProps> = (
   );
 };
 
-export default PageSignIn;
-// export useStyles;
+const mapDispatchToProps = {
+  fetchSetTitle: fetchSetTitle,
+}
+export default connect(null, mapDispatchToProps)(PageSignIn);

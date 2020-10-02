@@ -9,6 +9,7 @@ export enum AppActionTypes {
     TASK_NEW = 'TASK_NEW',
     TASK_UPDATE = 'TASK_UPDATE',
     TASKS_ALL = 'TASKS_ALL',
+    SET_TITLE = 'SET_TITLE',
 }
 export enum NTaskState {
     initialization = 0,
@@ -34,6 +35,7 @@ export interface TaskState {
 export interface AppState {
     readonly user: JUser | null;
     readonly tasks: TaskState[];
+    readonly title: string;
 }
 
 
@@ -42,6 +44,7 @@ export interface AppState {
 const initialState: AppState = {
     user: null,
     tasks: [],
+    title: '',
 };
 
 const reducer: Reducer<AppState> = (state = initialState, action) => {
@@ -88,6 +91,12 @@ const reducer: Reducer<AppState> = (state = initialState, action) => {
                 ...state, tasks: _tasks
             }
         }
+        case AppActionTypes.SET_TITLE: {
+            console.log("new title: " + action.payload);
+            return {
+                ...state, title: action.payload
+            }
+        }
         default: {
             return state
         }
@@ -101,6 +110,7 @@ export const fetchSignOut = () => action(AppActionTypes.SIGN_OUT);
 export const fetchTaskNew = (id: string) => action(AppActionTypes.TASK_NEW, id);
 export const fetchTaskUpdate = (data: string) => action(AppActionTypes.TASK_UPDATE, data);
 export const fetchTasksAll = (data: string) => action(AppActionTypes.TASKS_ALL, data);
+export const fetchSetTitle = (data: string) => action(AppActionTypes.SET_TITLE, data);
 
 waitMsgAll(funcs.dartIdJMsgTaskNew(), (msg) => { store.dispatch(fetchTaskNew(msg.s)) });
 waitMsgAll(funcs.dartIdJMsgTaskUpdate(), (msg) => { store.dispatch(fetchTaskUpdate(msg.s)) });

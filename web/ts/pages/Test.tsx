@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from "react";
+import React, { FunctionComponent, useEffect, useState } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import { makeStyles } from "@material-ui/core/styles";
 
@@ -16,8 +16,17 @@ import Container from "@material-ui/core/Container";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 
 import useStyles from "./../styles";
+import { connect } from "react-redux";
+import { fetchSetTitle } from "../redux";
 
-const PageTest: FunctionComponent = () => {
+const PageTest: React.FC<typeof mapDispatchToProps> = (props) => {
+
+
+
+  useEffect(() => {
+    props.fetchSetTitle('Тестовая комната');
+  }, []);
+
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -25,4 +34,7 @@ const PageTest: FunctionComponent = () => {
   );
 };
 
-export default PageTest;
+const mapDispatchToProps = {
+  fetchSetTitle: fetchSetTitle
+}
+export default connect(null, mapDispatchToProps)(PageTest);

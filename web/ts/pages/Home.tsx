@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 
@@ -6,7 +6,7 @@ import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
 
 import CardNewTask from "./../cards/NewTask";
-import { AppState, fetchTaskUpdate, TaskState } from "../redux";
+import { AppState, fetchSetTitle, fetchTaskUpdate, TaskState } from "../redux";
 import { connect } from "react-redux";
 import CardTask from "../cards/Task";
 
@@ -20,6 +20,11 @@ const useStyles = makeStyles((theme) =>
 
 const PageHome: React.FC<PropsFromState & typeof mapDispatchToProps> = (props) => {
   const classes = useStyles();
+
+  useEffect(() => {
+    props.fetchSetTitle('Пункт приёма стеклотары');
+  }, []);
+
   return (
     <Container component="main">
       <CssBaseline />
@@ -45,7 +50,8 @@ interface PropsFromState {
 }
 const mapStateToProps = ({ tasks }: AppState): PropsFromState => ({ tasks: tasks })
 const mapDispatchToProps = {
-  fetchTaskUpdate: fetchTaskUpdate
+  fetchTaskUpdate: fetchTaskUpdate,
+  fetchSetTitle: fetchSetTitle,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(PageHome);
