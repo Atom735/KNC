@@ -12,12 +12,12 @@ export enum AppActionTypes {
 }
 export enum NTaskState {
     initialization = 0,
-    searchFiles,
-    workFiles,
-    generateTable,
-    waitForCorrectErrors,
-    reworkErrors,
-    completed,
+    searchFiles = 1,
+    workFiles = 2,
+    generateTable = 3,
+    waitForCorrectErrors = 4,
+    reworkErrors = 5,
+    completed = 6,
 }
 
 export interface TaskState {

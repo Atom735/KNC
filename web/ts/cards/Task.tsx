@@ -10,7 +10,7 @@ import CardMedia from "@material-ui/core/CardMedia";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 
-import { TaskState } from "./../redux";
+import { NTaskState, TaskState } from "./../redux";
 
 interface CardTaskProps {
   task: TaskState;
@@ -20,21 +20,19 @@ const CardTask: React.FC<CardTaskProps> = (props) => {
   const settings = props.task.settings;
   return (
     <Card>
-      <CardActionArea component={RouterLink} to="/newtask">
-        <CardMedia
-          component="img"
-          alt="Contemplative Reptile"
-          height="140"
-          image="https://material-ui.com/static/images/cards/contemplative-reptile.jpg"
-          title="Contemplative Reptile"
-        />
+      <CardActionArea component={RouterLink} to={"/task/" + task.id}>
         <CardContent>
           <Typography gutterBottom variant="h5" component="h2">
-            {settings ? settings.name : 'Загружаю данные'}
+            {!settings ? 'Загружаю данные задачи' : settings.name}
           </Typography>
           <Typography variant="body2" color="textSecondary" component="p">
-            Просто текст
+            {!task.state ? "Инициализация" :
+              (task.state == NTaskState.searchFiles) ? "Поиск файлов: " + task.files :
+                (task.state == NTaskState.workFiles) ? "Обработка файлов: " + task.worked + "/" + task.files :
+                  (task.state == NTaskState.generateTable) ? "Генерация отчётной таблицы" :
+                    "Неизвестное состояние"}
           </Typography>
+
         </CardContent>
       </CardActionArea>
     </Card>

@@ -169,10 +169,10 @@ class JOneFileData {
         encode = m[jsonKey_encode] as String /*?*/,
         curves = (m[jsonKey_curves] as List /*?*/)
             ?.map((e) => JOneFilesDataCurve.byJson(e))
-            .toList(growable: false),
+            ?.toList(growable: false),
         notes = (m[jsonKey_notes] as List /*?*/)
             ?.map((e) => JOneFileLineNote.byJson(e))
-            .toList(growable: false),
+            ?.toList(growable: false),
         notesError = m[jsonKey_notesError] as int /*?*/,
         notesWarnings = m[jsonKey_notesWarnings] as int /*?*/;
   Map<String, dynamic> toJson() => {

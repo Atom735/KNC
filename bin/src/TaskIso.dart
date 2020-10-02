@@ -346,7 +346,7 @@ class TaskIso extends SocketWrapper {
       }
       await tryFunc<File /*?*/ >(
           () => File(fileDataNew /*!*/ .path + '.json')
-              .writeAsString(jsonEncode(fileDataNew)), onError: (e) {
+              .writeAsString(jsonEncode(fileDataNew.toJson())), onError: (e) {
         errorsOut.writeln(DateTime.now().toIso8601String());
         errorsOut.writeln('!Save FileData');
         errorsOut.writeln(e);
@@ -509,6 +509,8 @@ class TaskIso extends SocketWrapper {
     state.onUpdate = () {
       send(0, JMsgTaskUpdate(state).toString());
     };
+
+    send(0, JMsgTaskUpdate.msgId + jsonEncode(state.map));
 
     /// Обрабатываем все сообщения через Wrapper
     receivePort.listen((final msg) {
