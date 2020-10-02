@@ -26,10 +26,12 @@ const PageHome: React.FC<PropsFromState & typeof mapDispatchToProps> = (props) =
       <Grid container spacing={3} className={classes.root}>
         <Grid item xs={12} sm={6} xl={4}>
           <CardNewTask />
-          {
-            props.tasks.map((value) => <CardTask task={value} key={value.id} />)
-          }
         </Grid>
+        {
+          props.tasks.map((value) => <Grid item xs={12} sm={6} xl={4} key={value.id}>
+            <CardTask task={value} />
+          </Grid>)
+        }
       </Grid>
     </Container>
   );

@@ -204,8 +204,12 @@ class Client extends SocketWrapper {
       } else if (!user.access.contains('x')) {
         v['user'] = user.mail;
       }
-      TaskSpawnSets.spawn(settings: JTaskSettings.fromJson(v))
-          .then((_id) => send(msg.i, _id));
+      TaskSpawnSets.spawn(settings: JTaskSettings.fromJson(v)).then((_id) {
+        send(msg.i, _id);
+        TaskController.list[_id]
+            .requestOnce(JMsgGetTasks.msgId)
+            .then((_msg) => send(msg.i, JMsgTaskUpdate.msgId + _msg));
+      });
     });
 
     /// Просьба обновить список задач

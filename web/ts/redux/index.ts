@@ -1,7 +1,7 @@
 import { createStore, Reducer } from "redux";
 import { funcs, JTaskSettings, JUser } from "../dart/Lib";
 import { action } from 'typesafe-actions'
-import { waitMsgAll } from "../dart/SocketWrapper";
+import { send, waitMsgAll } from "../dart/SocketWrapper";
 
 export enum AppActionTypes {
     SIGN_IN = 'SIGN_IN',
@@ -48,9 +48,17 @@ const reducer: Reducer<AppState> = (state = initialState, action) => {
     console.dir(state);
     switch (action.type) {
         case AppActionTypes.SIGN_IN: {
+            if (action.meta) {
+                window.localStorage.setItem("user", JSON.stringify(action.payload));
+            } else {
+                window.sessionStorage.setItem("user", JSON.stringify(action.payload));
+            }
+            send(0, funcs.dartJMsgGetTasks());
             return { ...state, user: action.payload }
         }
         case AppActionTypes.SIGN_OUT: {
+            window.localStorage.removeItem("user");
+            window.sessionStorage.removeItem("user");
             return { ...state, user: null }
         }
         case AppActionTypes.TASK_NEW: {
@@ -87,7 +95,7 @@ const reducer: Reducer<AppState> = (state = initialState, action) => {
 
 const store = createStore(reducer);
 
-export const fetchSignIn = (user: JUser) => action(AppActionTypes.SIGN_IN, user);
+export const fetchSignIn = (user: JUser, remem: boolean) => action(AppActionTypes.SIGN_IN, user, remem);
 export const fetchSignOut = () => action(AppActionTypes.SIGN_OUT);
 export const fetchTaskNew = (id: string) => action(AppActionTypes.TASK_NEW, id);
 export const fetchTaskUpdate = (data: string) => action(AppActionTypes.TASK_UPDATE, data);

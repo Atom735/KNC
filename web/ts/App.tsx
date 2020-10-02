@@ -32,9 +32,9 @@ import PageSignUp from "./pages/Signup";
 import PageTest from "./pages/Test";
 import PageNewTask from "./pages/NewTask";
 
-import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen, requestOnce } from "./dart/SocketWrapper";
+import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen, requestOnce, send } from "./dart/SocketWrapper";
 import { funcs, JUser } from "./dart/Lib";
-import { AppState, fetchSignOut } from "./redux";
+import { AppState, fetchSignIn, fetchSignOut } from "./redux";
 
 
 const useStylesScrollTop = makeStyles((theme) =>
@@ -112,6 +112,24 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
   const { enqueueSnackbar } = useSnackbar();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  const handleSignIn = (email: string, pass: string, remem: boolean, callback: () => any) => {
+    requestOnce(funcs.dartJMsgUserSignin(email, pass), (msg) => {
+      if (callback) {
+        callback();
+      }
+      if (msg) {
+        console.log("Успешный вход: " + msg);
+        const _user = JSON.parse(msg) as JUser;
+        console.dir(_user);
+        props.fetchSignIn(_user, remem);
+        enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
+        props.history.push('/');
+      } else {
+        enqueueSnackbar("Неверные логин и/или пароль", { variant: "error" });
+      }
+    });
+  };
+
   useEffect(() => {
     dartSetSocketOnOpen(() => {
       enqueueSnackbar("Соединение установлено", { variant: "info" });
@@ -124,6 +142,15 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
     dartSetSocketOnError(() => {
       enqueueSnackbar("Ошибка в соединении", { variant: "error" });
     });
+
+    const _userData = window.localStorage.getItem('user');
+    if (_userData) {
+      const _user = JSON.parse(_userData) as JUser;
+      handleSignIn(_user.mail, _user.pass, true, null);
+    } else {
+      send(0, funcs.dartJMsgGetTasks());
+    }
+
     return () => {
       dartSetSocketOnOpen(null);
       dartSetSocketOnClose(null);
@@ -159,6 +186,7 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
   const handleSettings = () => {
     handleUserMenuClose();
   };
+
 
 
 
@@ -220,7 +248,7 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
       </AppBar>
       <Toolbar id="back-to-top-anchor" />
       <RouteSwitch>
-        <Route path="/signin" component={PageSignIn} />
+        <Route path="/signin" component={() => <PageSignIn handleSignIn={handleSignIn} />} />
         <Route path="/signup" component={PageSignUp} />
         <Route path="/test" component={PageTest} />
         <Route path="/newtask" component={PageNewTask} />
@@ -238,7 +266,8 @@ interface PropsFromState {
 }
 const mapStateToProps = ({ user }: AppState): PropsFromState => ({ user: user })
 const mapDispatchToProps = {
-  fetchSignOut: fetchSignOut
+  fetchSignOut: fetchSignOut,
+  fetchSignIn: fetchSignIn
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);

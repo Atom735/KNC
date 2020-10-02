@@ -27,14 +27,16 @@ import { useSnackbar } from "notistack";
 
 
 
+interface PageSignInProps {
+  handleSignIn: (email: string, pass: string, remem: boolean, callback: () => any) => void;
+};
 
-
-const PageSignIn: React.FC<typeof mapDispatchToProps & RouterProps> = (
+const PageSignIn: React.FC<PageSignInProps> = (
   props
 ) => {
   const classes = useStyles();
 
-  const { enqueueSnackbar } = useSnackbar();
+  // const { enqueueSnackbar } = useSnackbar();
 
   const [email, setEmail] = useState("");
   const handleChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,19 +56,20 @@ const PageSignIn: React.FC<typeof mapDispatchToProps & RouterProps> = (
   const handleOnSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmit(true);
-    requestOnce(funcs.dartJMsgUserSignin(email, pass), (msg) => {
-      setSubmit(false);
-      if (msg) {
-        console.log("Успешный вход: " + msg);
-        const _user = JSON.parse(msg) as JUser;
-        console.dir(_user);
-        props.signin(_user);
-        enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
-        props.history.push('/');
-      } else {
-        enqueueSnackbar("Неверные логин и/или пароль", { variant: "error" });
-      }
-    });
+    props.handleSignIn(email, pass, remem, () => { setSubmit(false); });
+    // requestOnce(funcs.dartJMsgUserSignin(email, pass), (msg) => {
+    //   setSubmit(false);
+    //   if (msg) {
+    //     console.log("Успешный вход: " + msg);
+    //     const _user = JSON.parse(msg) as JUser;
+    //     console.dir(_user);
+    //     props.signin(_user);
+    //     enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
+    //     props.history.push('/');
+    //   } else {
+    //     enqueueSnackbar("Неверные логин и/или пароль", { variant: "error" });
+    //   }
+    // });
   };
 
   return (
@@ -153,8 +156,5 @@ const PageSignIn: React.FC<typeof mapDispatchToProps & RouterProps> = (
   );
 };
 
-const mapDispatchToProps = {
-  signin: fetchSignIn
-}
-export default connect(null, mapDispatchToProps)(PageSignIn);
+export default PageSignIn;
 // export useStyles;
