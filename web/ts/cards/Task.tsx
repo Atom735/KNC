@@ -36,7 +36,7 @@ const CardTask: React.FC<CardTaskProps> = (props) => {
           </Typography>
           {!task.state ? <LinearProgress /> :
             (task.state == NTaskState.searchFiles) ? <LinearProgress /> :
-              (task.state == NTaskState.workFiles) ? <LinearProgress variant="determinate" value={task.worked / task.files} /> :
+              (task.state == NTaskState.workFiles && task.worked) ? <LinearProgress variant="determinate" value={task.worked * 100 / task.files} /> :
                 (task.state == NTaskState.generateTable) ? <LinearProgress /> :
                   null}
         </CardContent>

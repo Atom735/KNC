@@ -105,9 +105,10 @@ class TaskIso extends SocketWrapper {
   Future<void> runWorkFiles() async {
     state.state = NTaskState.workFiles;
     final _l = files.length;
-    for (var i = 0; i < _l; i++) {
-      await handleFile(i);
-    }
+    await Future.wait(List.generate(_l, (i) => handleFile(i), growable: false));
+    // for (var i = 0; i < _l; i++) {
+    //   await handleFile(i);
+    // }
   }
 
   /// Генерация таблицы
