@@ -349,7 +349,7 @@ class TaskIso extends SocketWrapper {
       }
       await tryFunc<File /*?*/ >(
           () => File(fileDataNew /*!*/ .path + '.json')
-              .writeAsString(jsonEncode(fileDataNew.toJson())), onError: (e) {
+              .writeAsString(jsonEncode(fileDataNew)), onError: (e) {
         errorsOut.writeln(DateTime.now().toIso8601String());
         errorsOut.writeln('!Save FileData');
         errorsOut.writeln(e);
