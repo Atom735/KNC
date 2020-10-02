@@ -72,7 +72,7 @@ class TaskSpawnSets {
         TaskIso.entryPoint,
         TaskSpawnSets._(_id, App().receivePort.sendPort, settings,
             Conv().charMaps, _bExistsTask),
-        debugName: '{$_id}(${settings.name})[${settings.user}');
+        debugName: '{$_id}(${settings.name})[${settings.user}]');
 
     /// Ждём пока поток вернёт порт для связи
     final _sendPort = await _c.future;

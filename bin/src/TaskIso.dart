@@ -55,6 +55,9 @@ class TaskIso extends SocketWrapper {
 
   /// Точка входа изолята внутри класса
   Future<void> entryPointInClass() async {
+    if (sets.exists) {
+      return;
+    }
     try {
       await dirFiles.create();
       await runSearchFiles();
@@ -506,8 +509,11 @@ class TaskIso extends SocketWrapper {
         super((msg) => sets.sendPort.send([sets.id, msg])) {
     print('$this created');
     instance = this;
+    final fileState =
+        File(p.join(TaskController.dirTasks.path, sets.id, 'state.json'));
     state.onUpdate = () {
       send(0, JMsgTaskUpdate(state).toString());
+      fileState.writeAsStringSync(jsonEncode(state.map));
     };
 
     send(0, JMsgTaskUpdate.msgId + jsonEncode(state.map));

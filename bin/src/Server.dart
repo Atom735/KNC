@@ -21,9 +21,9 @@ class Server {
 
   /// Корневые каталоги, где будут искаться файлы в первую очередь
   final dirs = <Directory>[
-    Directory('build').absolute,
+    // Directory('build').absolute,
     Directory('web').absolute,
-    TaskController.dirTasks,
+    // TaskController.dirTasks,
   ];
 
   /// Маппинг ссылок на файлам
