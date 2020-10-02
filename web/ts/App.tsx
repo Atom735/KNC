@@ -123,7 +123,9 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
         console.dir(_user);
         props.fetchSignIn(_user, remem);
         enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
-        props.history.push('/');
+        if (callback) {
+          props.history.push('/');
+        }
       } else {
         enqueueSnackbar("Неверные логин и/или пароль", { variant: "error" });
       }

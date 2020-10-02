@@ -421,7 +421,8 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
   const [sets, setSets] = useState<TaskSets>({
     public: user == null, settings: {
       ...JTaskSettings_defs,
-      user: user != null ? user.mail : "Гость"
+      user: user != null ? user.mail : "Гость",
+      users: user == null ? JTaskSettings_defs.users : [user.mail]
     }
   });
 
@@ -444,7 +445,8 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
 
 
   const handleSwitchPublic = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSets({ ...sets, [event.target.name]: event.target.checked });
+    setSets({ ...sets, [event.target.name]: event.target.checked, settings: { ...sets.settings, users: event.target.checked ? JTaskSettings_defs.users : [user.mail] } });
+
   };
 
   const handleChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -468,6 +470,9 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
   }
   const handleChangeFileExt = (value: string[]) => {
     setSets({ ...sets, settings: { ...sets.settings, "f-e": [...value] } });
+  }
+  const handleChangeUsers = (value: string[]) => {
+    setSets({ ...sets, settings: { ...sets.settings, users: [...value] } });
   }
 
   return (
@@ -608,12 +613,15 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
             <Accordion disabled={user == null}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} >
                 <Typography variant="h5">Настройки доступа</Typography>
-
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={2}>
-                  <Grid item>
-                  </Grid>
+                  <ArrayOfTextFields setValue={handleChangeUsers} default={JTaskSettings_defs.users} itemProps={{ xs: 12 }}
+                    textFieldProps={{ fullWidth: true, label: "Почта пользователя" }}>
+                    Указывает почту пользователей, которым будет доступна задача.<br />
+                      Сейчас введено:
+                      {sets.settings.users.map((value, index) => <span key={index}><br />[{index}] {value}</span>)}
+                  </ArrayOfTextFields>
                 </Grid>
               </AccordionDetails>
             </Accordion>
