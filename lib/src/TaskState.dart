@@ -24,12 +24,18 @@ class JTaskState {
   Duration duration;
 
   /// Функция обновления данных
-  void Function() /*?*/ onUpdate;
+  void Function() /*?*/ _onUpdate;
 
   void _onUpdateEnd(void _) {
     mapUpdates.clear();
     mapUpdates['id'] = map['id'];
     _updatesFuture = null;
+  }
+
+  set onUpdate(void Function() /*?*/ func) {
+    _onUpdate = func;
+    mapUpdates.addAll(map);
+    _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
   }
 
   /// Состояние задачи
@@ -42,7 +48,7 @@ class JTaskState {
     }
     map[jsonKey_state] = i.index;
     mapUpdates[jsonKey_state] = i.index;
-    _updatesFuture ??= Future.delayed(duration, onUpdate).then(_onUpdateEnd);
+    _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
   }
 
   /// Количество обработанных файлов с ошибками
@@ -54,7 +60,7 @@ class JTaskState {
     }
     map[jsonKey_errors] = i;
     mapUpdates[jsonKey_errors] = i;
-    _updatesFuture ??= Future.delayed(duration, onUpdate).then(_onUpdateEnd);
+    _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
   }
 
   /// Количество найденных файлов для обработки
@@ -66,7 +72,7 @@ class JTaskState {
     }
     map[jsonKey_files] = i;
     mapUpdates[jsonKey_files] = i;
-    _updatesFuture ??= Future.delayed(duration, onUpdate).then(_onUpdateEnd);
+    _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
   }
 
   /// Количество обработанных файлов с предупреждениями и/или ошибками
@@ -78,7 +84,7 @@ class JTaskState {
     }
     map[jsonKey_warnings] = i;
     mapUpdates[jsonKey_warnings] = i;
-    _updatesFuture ??= Future.delayed(duration, onUpdate).then(_onUpdateEnd);
+    _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
   }
 
   /// Количество обработанных файлов
@@ -90,7 +96,7 @@ class JTaskState {
     }
     map[jsonKey_worked] = i;
     mapUpdates[jsonKey_worked] = i;
-    _updatesFuture ??= Future.delayed(duration, onUpdate).then(_onUpdateEnd);
+    _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
   }
 
   /// Ссылка на отчётную таблицу
@@ -102,12 +108,13 @@ class JTaskState {
     }
     map[jsonKey_raport] = i;
     mapUpdates[jsonKey_raport] = i;
-    _updatesFuture ??= Future.delayed(duration, onUpdate).then(_onUpdateEnd);
+    _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
   }
 
-  JTaskState(this.map, this.duration, [this.onUpdate]) {
+  JTaskState(this.map, this.duration, [void Function() /*?*/ funcOnUpdate]) {
     mapUpdates.addAll(map);
-    _updatesFuture ??= Future.delayed(duration, onUpdate).then(_onUpdateEnd);
+    onUpdate = funcOnUpdate;
+    // _updatesFuture ??= Future.delayed(duration, onUpdate).then(_onUpdateEnd);
   }
 
   factory JTaskState.fromJson(Map<String, dynamic> m) =>

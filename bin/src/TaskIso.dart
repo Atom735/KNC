@@ -511,6 +511,7 @@ class TaskIso extends SocketWrapper {
     instance = this;
     final fileState =
         File(p.join(TaskController.dirTasks.path, sets.id, 'state.json'));
+
     state.onUpdate = () {
       send(0, JMsgTaskUpdate(state).toString());
       fileState.writeAsStringSync(jsonEncode(state.map));
