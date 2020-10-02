@@ -101,6 +101,10 @@ const useStylesApp = makeStyles((theme) =>
     },
     title: {
       flexGrow: 1
+    },
+    error: {
+      color: theme.palette.error.contrastText,
+      backgroundColor: theme.palette.error.main
     }
   })
 );
@@ -111,6 +115,7 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
   const classes = useStylesApp();
   const { enqueueSnackbar } = useSnackbar();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [connected, setConnected] = useState(false);
 
   const handleSignIn = (email: string, pass: string, remem: boolean, callback: () => any) => {
     requestOnce(funcs.dartJMsgUserSignin(email, pass), (msg) => {
@@ -135,10 +140,12 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
   useEffect(() => {
     dartSetSocketOnOpen(() => {
       enqueueSnackbar("Соединение установлено", { variant: "info" });
+      setConnected(true);
     });
 
     dartSetSocketOnClose((reason) => {
       enqueueSnackbar("Соединение было закрыто: " + reason, { variant: "warning" });
+      setConnected(false);
     });
 
     dartSetSocketOnError(() => {
@@ -192,12 +199,13 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
 
 
 
+
   const { user } = props;
 
 
   return (
     <>
-      <AppBar>
+      <AppBar className={connected ? null : classes.error}>
         <Toolbar>
           <IconButton
             edge="start"
