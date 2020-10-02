@@ -61,7 +61,7 @@ const PageSignUp: React.FC<typeof mapDispatchToProps & RouterProps> = (props) =>
         console.log("Успешная регистрация: " + msg);
         const _user = JSON.parse(msg) as JUser;
         console.dir(_user);
-        props.signin(_user);
+        props.fetchSignIn(_user, false);
         enqueueSnackbar("Вы вошли как: " + _user.first_name, { variant: "info" });
         props.history.push('/');
       } else {
@@ -181,6 +181,6 @@ const PageSignUp: React.FC<typeof mapDispatchToProps & RouterProps> = (props) =>
 };
 
 const mapDispatchToProps = {
-  signin: fetchSignIn
+  fetchSignIn: fetchSignIn
 }
 export default connect(null, mapDispatchToProps)(PageSignUp);

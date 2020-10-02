@@ -59,7 +59,8 @@ const reducer: Reducer<AppState> = (state = initialState, action) => {
         case AppActionTypes.SIGN_OUT: {
             window.localStorage.removeItem("user");
             window.sessionStorage.removeItem("user");
-            return { ...state, user: null }
+            send(0, funcs.dartJMsgGetTasks());
+            return { ...state, user: null, tasks: [] }
         }
         case AppActionTypes.TASK_NEW: {
             return {
