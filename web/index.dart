@@ -21,6 +21,8 @@ external set _jsJMsgUnzip(Function f);
 external set _jsJMsgNewTask(Function f);
 @JS('dartJMsgGetTasks')
 external set _jsJMsgGetTasks(Function f);
+@JS('dartJMsgTaskKill')
+external set _jsJMsgTaskKill(Function f);
 
 @JS('dartIdJMsgTaskNew')
 external set _jsIdJMsgTaskNew(Function f);
@@ -28,6 +30,8 @@ external set _jsIdJMsgTaskNew(Function f);
 external set _jsIdJMsgTaskUpdate(Function f);
 @JS('dartIdJMsgTasksAll')
 external set _jsIdJMsgTasksAll(Function f);
+@JS('dartIdJMsgTaskKill')
+external set _jsIdJMsgTaskKill(Function f);
 
 void main() {
   _jsJMsgUserSignin = allowInterop(JMsgUserSignin.jsFunc);
@@ -38,7 +42,9 @@ void main() {
   _jsJMsgUnzip = allowInterop(JMsgUnzip.jsFunc);
   _jsJMsgNewTask = allowInterop(JMsgNewTask.jsFunc);
   _jsJMsgGetTasks = allowInterop(JMsgGetTasks.jsFunc);
+  _jsJMsgTaskKill = allowInterop(JMsgTaskKill.jsFunc);
   _jsIdJMsgTaskNew = allowInterop(() => JMsgTaskNew.msgId);
   _jsIdJMsgTaskUpdate = allowInterop(() => JMsgTaskUpdate.msgId);
   _jsIdJMsgTasksAll = allowInterop(() => JMsgTasksAll.msgId);
+  _jsIdJMsgTaskKill = allowInterop(() => JMsgTaskKill.msgId);
 }

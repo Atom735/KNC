@@ -611,6 +611,13 @@ class TaskIso extends SocketWrapper {
       send(msg.i, jsonEncode(state));
     });
 
+    /// Просьба удалить задачу
+    waitMsgAll(JMsgTaskKill.msgId).listen((msg) {
+      final _msg = JMsgTaskKill.fromString(msg.s);
+      receivePort.close();
+      send(msg.i, _msg.toString());
+    });
+
 /*
     /// Отвечаем на все запросы на получение заметок файла, где аругментом
     /// указан путь к рабочей копии файла, кодируем их в [json]

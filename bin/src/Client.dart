@@ -224,6 +224,23 @@ class Client extends SocketWrapper {
             .then((_) => send(msg.i, JMsgTasksAll.msgId));
       }
     });
+
+    /// Просьба удалить задачу
+    waitMsgAll(JMsgTaskKill.msgId).listen((msg) {
+      final _msg = JMsgTaskKill.fromString(msg.s);
+      final _id = _msg.id;
+      final _tasks = getTasksControllers();
+      if (_tasks.isEmpty) {
+        send(msg.i, '!!TASK NOT FOUND OR ACCESS DENIED');
+      } else {
+        final _a = _tasks.firstWhere((e) => e.id == _id, orElse: () => null);
+        if (_a == null) {
+          send(msg.i, '!!TASK NOT FOUND OR ACCESS DENIED');
+        } else {
+          _a.requestOnce(_msg.toString()).then((_m) => send(msg.i, _m));
+        }
+      }
+    });
   }
 
   /// Получить список задач доступных клиенту.

@@ -21,38 +21,51 @@ import AssignmentIcon from '@material-ui/icons/Assignment';
 import useStyles from "./../styles";
 
 import { funcs, JUser } from "./../dart/Lib";
-import { requestOnce, waitMsgAll } from "./../dart/SocketWrapper";
+import { requestOnce, send, waitMsgAll } from "./../dart/SocketWrapper";
 import { AppState, fetchSetTitle, fetchSignIn, TaskState } from "../redux";
 import { connect } from "react-redux";
 import { useSnackbar } from "notistack";
 import { rTaskStateLinearProgress, rTaskStateString } from "../cards/Task";
 import { useStylesApp } from "../App";
+import Tooltip from "@material-ui/core/Tooltip";
 
 
 
 interface PageTaskProps {
 };
 
-const PageTask: React.FC<PageTaskProps & typeof mapDispatchToProps & RouteProps & PropsFromState> = (
+const PageTask: React.FC<PageTaskProps & typeof mapDispatchToProps & RouterProps & PropsFromState> = (
   props
 ) => {
   const classes = useStyles();
+  const { enqueueSnackbar } = useSnackbar();
 
-  const classError = useStylesApp().error;
+  // const classError = useStylesApp().error;
 
-  const _path = props.location.pathname.substring('/task/'.length);
+  const _taskId = props.history.location.pathname.split('/')[2];
 
-  const [task, setTask] = useState(props.tasks.find((value) => value.id == _path));
+  const [task, setTask] = useState(props.tasks.find((value) => value.id == _taskId));
 
   useEffect(() => {
     props.fetchSetTitle('Задача: ' + task?.id);
   }, [task]);
 
   useEffect(() => {
-    setTask(props.tasks.find((value) => value.id == _path));
+    setTask(props.tasks.find((value) => value.id == _taskId));
   }, [props.tasks]);
 
 
+  const handleTaskDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+    requestOnce(funcs.dartJMsgTaskKill(_taskId), (msg) => {
+      console.warn(msg);
+      const _msgId = funcs.dartIdJMsgTaskKill();
+      if (msg.length <= _msgId.length || msg.substring(_msgId.length) != _taskId) {
+        enqueueSnackbar("Невозможно удалить задачу", { variant: "error" });
+      } else {
+        props.history.push('/');
+      }
+    });
+  };
 
   return (
     <Container component="main" maxWidth="lg">
@@ -117,7 +130,37 @@ const PageTask: React.FC<PageTaskProps & typeof mapDispatchToProps & RouteProps 
         Управление задачей
       </Typography>
 
-      <Button variant="outlined">Удалить</Button>
+      <Grid
+        container
+        direction="row"
+        spacing={1}
+      >
+        <Grid item >
+          <Tooltip title="Открывает страницу изменения параметров задачи, после чего необходимо будет принудительно повторить поиск, либо обработку, либо же генерацию таблицы">
+            <Button variant="outlined">Изменить параметры</Button>
+          </Tooltip>
+        </Grid>
+        <Grid item >
+          <Tooltip title="Запускает процесс поиска файлов, а также их обработку и генерацию отчёта">
+            <Button variant="outlined">Поиск файлов</Button>
+          </Tooltip>
+        </Grid>
+        <Grid item >
+          <Tooltip title="Запускает повторную обработку всех найденных файлов, после чего будет повторно сгененрирован отчёт">
+            <Button variant="outlined">Обработать файлы</Button>
+          </Tooltip>
+        </Grid>
+        <Grid item >
+          <Tooltip title="Запускает повторную генерацию отчётной таблицы">
+            <Button variant="outlined">Сгенерировать отчёт</Button>
+          </Tooltip>
+        </Grid>
+        <Grid item xs={12}>
+          <Tooltip title="Удаляет задачу и все её данные">
+            <Button variant="outlined" onClick={handleTaskDelete}>Удалить</Button>
+          </Tooltip>
+        </Grid>
+      </Grid>
 
 
 

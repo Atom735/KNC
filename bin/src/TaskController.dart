@@ -111,6 +111,17 @@ class TaskController extends SocketWrapper {
       }
     });
 
+    /// Сообщение об удалении задачи
+    waitMsgAll(JMsgTaskKill.msgId).listen((msg) {
+      final _msg = JMsgTaskKill.fromString(msg.s);
+      sendForAllClients(_msg.toString());
+      final _task = list[_msg.id];
+      _task.isolate.kill(priority: Isolate.immediate);
+      tryFunc(() => _task.dir.delete(recursive: true),
+          tryesMax: 600, tryesDuration: 100);
+      list.remove(_msg.id);
+    });
+
     // уведомить клиентов о старте новой задачи
     sendForAllClients(JMsgTaskNew(id).toString());
   }

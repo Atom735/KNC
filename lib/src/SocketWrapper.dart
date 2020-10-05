@@ -60,6 +60,9 @@ class SocketWrapper {
           /// Если сообщение не обработанно, то значит это не ответ на запрос
           /// а уведомитенльное, или сообщение команды...
           return recv(msg, id);
+        } else {
+          recv(msg, id);
+          return true;
         }
       } else {
         throw Exception('Сообщение без идентификатора:\n$msgRaw');

@@ -90,6 +90,26 @@ class JMsgGetTasks {
   static String jsFunc() => JMsgGetTasks().toString();
 }
 
+/// Сообщение [JMsgTaskKill] отправляется клиентом серверу с
+/// идентификатором задачи которую необходимо уничтожить.
+///
+/// Возврщается идентификатор убитой задачи.
+///
+/// Также это сообщение может придти просто так от сервера, как уведомление
+/// что задача удалена и к ней больше нет доступа.
+class JMsgTaskKill {
+  static const msgId = 'JMsgTaskKill:';
+  final String id;
+
+  factory JMsgTaskKill.fromString(final String str) => JMsgTaskKill(str);
+  const JMsgTaskKill(this.id);
+
+  @override
+  String toString() => msgId + id;
+
+  static String jsFunc(String id) => JMsgTaskKill(id).toString();
+}
+
 /// Сообщение [JMsgTasksAll] отправляется клиенту с массивом
 /// идентификаторов задач разделённых символом `;`.
 ///

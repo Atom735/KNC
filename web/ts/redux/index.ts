@@ -8,6 +8,7 @@ export enum AppActionTypes {
     SIGN_OUT = 'SIGN_OUT',
     TASK_NEW = 'TASK_NEW',
     TASK_UPDATE = 'TASK_UPDATE',
+    TASK_KILL = 'TASK_KILL',
     TASKS_ALL = 'TASKS_ALL',
     SET_TITLE = 'SET_TITLE',
 }
@@ -75,10 +76,15 @@ const reducer: Reducer<AppState> = (state = initialState, action) => {
         }
         case AppActionTypes.TASK_UPDATE: {
             const _data = JSON.parse(action.payload) as TaskState;
-            const _id = state.tasks.findIndex((value) => value.id == _data.id);
+            const _id = state.tasks.findIndex(value => value.id == _data.id);
             return {
                 ...state, tasks: state.tasks.map((value, index) => _id != index ? value :
                     { ...value, ..._data })
+            }
+        }
+        case AppActionTypes.TASK_KILL: {
+            return {
+                ...state, tasks: state.tasks.filter(value => value.id != action.payload)
             }
         }
         case AppActionTypes.TASKS_ALL: {
@@ -109,11 +115,13 @@ export const fetchSignIn = (user: JUser, remem: boolean) => action(AppActionType
 export const fetchSignOut = () => action(AppActionTypes.SIGN_OUT);
 export const fetchTaskNew = (id: string) => action(AppActionTypes.TASK_NEW, id);
 export const fetchTaskUpdate = (data: string) => action(AppActionTypes.TASK_UPDATE, data);
+export const fetchTaskKill = (data: string) => action(AppActionTypes.TASK_KILL, data);
 export const fetchTasksAll = (data: string) => action(AppActionTypes.TASKS_ALL, data);
 export const fetchSetTitle = (data: string) => action(AppActionTypes.SET_TITLE, data);
 
 waitMsgAll(funcs.dartIdJMsgTaskNew(), (msg) => { store.dispatch(fetchTaskNew(msg.s)) });
 waitMsgAll(funcs.dartIdJMsgTaskUpdate(), (msg) => { store.dispatch(fetchTaskUpdate(msg.s)) });
 waitMsgAll(funcs.dartIdJMsgTasksAll(), (msg) => { store.dispatch(fetchTasksAll(msg.s)) });
+waitMsgAll(funcs.dartIdJMsgTaskKill(), (msg) => { store.dispatch(fetchTaskKill(msg.s)) });
 
 export default store;
