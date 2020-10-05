@@ -24,7 +24,7 @@ export enum NTaskState {
 export interface TaskState {
     readonly id: string;
     readonly state?: NTaskState;
-    readonly erros?: number;
+    readonly errors?: number;
     readonly files?: number;
     readonly warnings?: number;
     readonly worked?: number;

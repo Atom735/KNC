@@ -178,7 +178,7 @@ class JOneFileData {
   Map<String, dynamic> toJson() => {
         jsonKey_path: path,
         jsonKey_origin: origin,
-        jsonKey_type: type.toString(),
+        jsonKey_type: type.index,
         jsonKey_size: size,
         jsonKey_encode: encode,
         jsonKey_curves: curves,

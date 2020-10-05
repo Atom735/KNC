@@ -13,6 +13,23 @@ import Typography from "@material-ui/core/Typography";
 import { NTaskState, TaskState } from "./../redux";
 import LinearProgress from "@material-ui/core/LinearProgress";
 
+export function rTaskStateString(task: TaskState) {
+  return !task ? "NULL" : !task.state ? "Инициализация" :
+    (task.state == NTaskState.searchFiles) ? "Поиск файлов: " + task.files :
+      (task.state == NTaskState.workFiles) ? "Обработка файлов: " + task.worked + "/" + task.files :
+        (task.state == NTaskState.generateTable) ? "Генерация отчётной таблицы" :
+          (task.state == NTaskState.completed) ? "Конец задачи" :
+            "Неизвестное состояние";
+}
+
+export function rTaskStateLinearProgress(task: TaskState) {
+  return !task ? null : !task.state ? <LinearProgress /> :
+    (task.state == NTaskState.searchFiles) ? <LinearProgress /> :
+      (task.state == NTaskState.workFiles && task.worked) ? <LinearProgress variant="determinate" value={task.worked * 100 / task.files} /> :
+        (task.state == NTaskState.generateTable) ? <LinearProgress /> :
+          null;
+}
+
 interface CardTaskProps {
   task: TaskState;
 }
@@ -27,19 +44,10 @@ const CardTask: React.FC<CardTaskProps> = (props) => {
             {!settings ? 'Загружаю данные задачи' : settings.name}
           </Typography>
           <Typography variant="body2" color="textSecondary" component="p">
-            {!task.state ? "Инициализация" :
-              (task.state == NTaskState.searchFiles) ? "Поиск файлов: " + task.files :
-                (task.state == NTaskState.workFiles) ? "Обработка файлов: " + task.worked + "/" + task.files :
-                  (task.state == NTaskState.generateTable) ? "Генерация отчётной таблицы" :
-                    (task.state == NTaskState.completed) ? "Конец задачи" :
-                      "Неизвестное состояние"}
+            {rTaskStateString(task)}
 
           </Typography>
-          {!task.state ? <LinearProgress /> :
-            (task.state == NTaskState.searchFiles) ? <LinearProgress /> :
-              (task.state == NTaskState.workFiles && task.worked) ? <LinearProgress variant="determinate" value={task.worked * 100 / task.files} /> :
-                (task.state == NTaskState.generateTable) ? <LinearProgress /> :
-                  null}
+          {rTaskStateLinearProgress(task)}
 
         </CardContent>
       </CardActionArea>

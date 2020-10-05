@@ -31,6 +31,7 @@ import PageSignIn from "./pages/Signin";
 import PageSignUp from "./pages/Signup";
 import PageTest from "./pages/Test";
 import PageNewTask from "./pages/NewTask";
+import PageTask from "./pages/Task";
 
 import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen, requestOnce, send } from "./dart/SocketWrapper";
 import { funcs, JUser } from "./dart/Lib";
@@ -91,7 +92,7 @@ function Copyright() {
   );
 }
 
-const useStylesApp = makeStyles((theme) =>
+export const useStylesApp = makeStyles((theme) =>
   createStyles({
     root: {
       flexGrow: 1
@@ -262,6 +263,7 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
         <Route path="/signup" component={PageSignUp} />
         <Route path="/test" component={PageTest} />
         <Route path="/newtask" component={PageNewTask} />
+        <Route path="/task" component={PageTask} />
         <Route path="/" component={PageHome} />
       </RouteSwitch>
       <Box mt={8}>
