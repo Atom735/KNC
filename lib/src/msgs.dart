@@ -139,6 +139,20 @@ class JMsgTaskNew {
   String toString() => msgId + id;
 }
 
+/// Сообщение от задачи о состоянии отчёта.
+///
+/// Отправляется задачей серверу, в [path] передаётся относительный путь к
+/// файлу таблице.
+class JMsgTaskRaport {
+  static const msgId = 'JMsgTaskRaport:';
+  final String path;
+
+  factory JMsgTaskRaport.fromString(final String str) => JMsgTaskRaport(str);
+  const JMsgTaskRaport([this.path = '']);
+  @override
+  String toString() => msgId + path;
+}
+
 /// Запрос на преобразование старого `*.doc` файла по пути [doc] в современный
 /// `*.docx` файл по пути [docx].
 ///

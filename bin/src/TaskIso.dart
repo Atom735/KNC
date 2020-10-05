@@ -251,6 +251,7 @@ class TaskIso extends SocketWrapper {
 
     final xlsPath = xlsDataOut.path + '.xlsx';
     await zip(xlsDataOut.path, xlsPath);
+    send(0, JMsgTaskRaport(p.relative(xlsPath, from: pathAbsolute)).toString());
     state.raport = true;
   }
 

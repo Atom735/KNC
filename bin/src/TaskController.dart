@@ -99,6 +99,18 @@ class TaskController extends SocketWrapper {
     waitMsgAll(JMsgTaskUpdate.msgId)
         .listen((msg) => sendForAllClients(JMsgTaskUpdate.msgId + msg.s));
 
+    /// Сообщение об изменении отчёта
+    waitMsgAll(JMsgTaskRaport.msgId).listen((msg) {
+      final _msg = JMsgTaskRaport.fromString(msg.s);
+      final _url = '/' + (p.url.join('raports', id));
+      if (_msg.path.isNotEmpty) {
+        final _filePath = p.join(TaskController.dirTasks.path, id, _msg.path);
+        Server().addFileMap(_url, File(_filePath));
+      } else {
+        Server().addFileMap(_url, null);
+      }
+    });
+
     // уведомить клиентов о старте новой задачи
     sendForAllClients(JMsgTaskNew(id).toString());
   }

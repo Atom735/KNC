@@ -33,14 +33,19 @@ const CardTask: React.FC<CardTaskProps> = (props) => {
                   (task.state == NTaskState.generateTable) ? "Генерация отчётной таблицы" :
                     (task.state == NTaskState.completed) ? "Конец задачи" :
                       "Неизвестное состояние"}
+
           </Typography>
           {!task.state ? <LinearProgress /> :
             (task.state == NTaskState.searchFiles) ? <LinearProgress /> :
               (task.state == NTaskState.workFiles && task.worked) ? <LinearProgress variant="determinate" value={task.worked * 100 / task.files} /> :
                 (task.state == NTaskState.generateTable) ? <LinearProgress /> :
                   null}
+
         </CardContent>
       </CardActionArea>
+      {   task.raport ? <CardActions>
+        <Button href={"/raports/" + task.id} color="primary">Отчёт</Button>
+      </CardActions> : null}
     </Card>
   );
 };

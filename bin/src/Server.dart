@@ -40,6 +40,20 @@ class Server {
   /// Контрольная сумма закешированных файлов
   final fileMapCrc = <File, String>{};
 
+  /// Добавляет файл по указанному [url], если файл пуст, то он удаляется
+  /// из карты путей
+  void addFileMap(String url, File /*?*/ file) {
+    if (fileMapCache[url] != null) {
+      fileMapCache.remove(url);
+      fileMapCrc.remove(url);
+    }
+    if (file != null) {
+      fileMap[url] = file;
+    } else {
+      fileMap.remove(url);
+    }
+  }
+
   void serveFile(
     HttpRequest request,
     HttpResponse response,
