@@ -40,6 +40,10 @@ class JTaskState {
     }
   }
 
+  void update() {
+    _updatesFuture ??= Future.delayed(duration, _onUpdate).then(_onUpdateEnd);
+  }
+
   /// Состояние задачи
   NTaskState get state =>
       NTaskState.values[(map[jsonKey_state] as int /*?*/) ?? 0];

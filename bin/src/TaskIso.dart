@@ -55,10 +55,46 @@ class TaskIso extends SocketWrapper {
 
   /// Точка входа изолята внутри класса
   Future<void> entryPointInClass() async {
-    if (sets.exists) {
-      return;
-    }
     try {
+      if (sets.exists) {
+        final _fileState = File(p.join(pathAbsolute, 'state.json'));
+        if (await _fileState.exists()) {
+          final _k = await _fileState.readAsString();
+          if (_k.isEmpty) {
+            return;
+          }
+          final _v = jsonDecode(_k);
+          state.map.addAll(_v);
+          state.mapUpdates.addAll(_v);
+          state.update();
+
+          switch (state.state) {
+            case NTaskState.searchFiles:
+              await runSearchFiles();
+              await runWorkFiles();
+              await runGenerateTable();
+              break;
+            case NTaskState.workFiles:
+              await loadSearchFiles();
+              await runWorkFiles();
+              await runGenerateTable();
+              break;
+            case NTaskState.generateTable:
+              await loadSearchFiles(true);
+              await runGenerateTable();
+              break;
+            case NTaskState.completed:
+              await loadSearchFiles(true);
+              break;
+            default:
+              await dirFiles.create();
+              await runSearchFiles();
+              await runWorkFiles();
+              await runGenerateTable();
+          }
+        }
+        return;
+      }
       await dirFiles.create();
       await runSearchFiles();
       await runWorkFiles();
@@ -97,8 +133,48 @@ class TaskIso extends SocketWrapper {
             '${e.type.toString().substring(e.type.runtimeType.toString().length)}\n'
             '${e.origin}\n'
             '${p.relative(e.path, from: pathAbsolute)}\n'
-            '${e.size}')
-        .join('\n'));
+            '${e.size}\n')
+        .join());
+  }
+
+  /// Процедура поиска файлов
+  Future<void> loadSearchFiles([bool withWorked = false]) async {
+    files.clear();
+    final _v = (await File(p.join(pathAbsolute, 'files.txt')).readAsString())
+        .split('\n');
+    final _vLenght = _v.length ~/ 4;
+    for (var i = 0; i < _vLenght; i++) {
+      files.add(JOneFileData(p.join(pathAbsolute, _v[i * 4 + 2]), _v[i * 4 + 1],
+          NOneFileDataType.unknown, int.parse(_v[i * 4 + 3])));
+    }
+    if (withWorked) {
+      final _fs = <Future>[];
+      for (var i = 0; i < _vLenght; i++) {
+        final _i = i;
+        final _file = File(files[_i].path + '.json');
+        _fs.add(_file.exists().then((b) {
+          if (b) {
+            return _file.readAsString().then((fdata) {
+              state.worked = state.worked + 1;
+              final fileDataNew = JOneFileData.byJson(jsonDecode(fdata));
+              if (fileDataNew /*!*/ .notes != null) {
+                if ((fileDataNew.notesError ?? 0) > 0) {
+                  state.errors = state.errors + 1;
+                }
+                if ((fileDataNew.notesWarnings ?? 0) > 0) {
+                  state.warnings = state.warnings + 1;
+                }
+              }
+              files[_i] = fileDataNew;
+            });
+          } else {
+            state.worked = state.worked + 1;
+            return null;
+          }
+        }));
+      }
+      await Future.wait(_fs);
+    }
   }
 
   /// Процедура обработки файлов
