@@ -60,7 +60,7 @@ const PageTask: React.FC<PageTaskProps & typeof mapDispatchToProps & RouterProps
       console.warn(msg);
       const _msgId = funcs.dartIdJMsgTaskKill();
       if (msg.length <= _msgId.length || msg.substring(_msgId.length) != _taskId) {
-        enqueueSnackbar("Невозможно удалить задачу", { variant: "error" });
+        enqueueSnackbar("Невозможно удалить задачу: " + msg.substring(_msgId.length), { variant: "error" });
       } else {
         props.history.push('/');
       }

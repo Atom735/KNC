@@ -52,7 +52,7 @@ const initialState: AppState = {
 };
 
 const reducer: Reducer<AppState> = (state = initialState, action) => {
-    console.dir(state);
+    // console.dir(state);
     switch (action.type) {
         case AppActionTypes.SIGN_IN: {
             if (action.meta) {

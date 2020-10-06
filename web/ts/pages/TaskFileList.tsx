@@ -54,14 +54,23 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
   }, [task]);
 
   useEffect(() => {
-    requestOnce(funcs.dartJMsgGetTaskFileList(task ? task.id : ""), msg => {
-      fetchTaskUpdateFileList(msg, task?.id);
-    });
+    if (task) {
+      requestOnce(funcs.dartJMsgGetTaskFileList(task ? task.id : ""), msg => {
+        console.dir(JSON.parse(msg));
+        if (msg.startsWith('!!')) {
+          enqueueSnackbar("Невозможно получить список файлов: " + msg, { variant: "error" });
+        } else {
+          fetchTaskUpdateFileList(msg, task?.id);
+        }
+      });
+    }
   }, [task?.files, task?.worked, task?.warnings, task?.errors]);
 
   useEffect(() => {
     setTask(props.tasks.find((value) => value.id == _taskId));
   }, [props.tasks]);
+
+
 
   return (
     <Container component="main">

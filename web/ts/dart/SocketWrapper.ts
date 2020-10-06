@@ -211,8 +211,8 @@ const handleSocketOnError = () => {
   }
 };
 const handleSocketOnMessage = (event: MessageEvent) => {
-  console.log("Сообщения от сокета: " + event.data);
-  console.dir(event.data);
+  // console.log("Сообщения от сокета: " + event.data);
+  // console.dir(event.data);
   recv(event.data as string);
   if (dartSocketOnMessage) {
     dartSocketOnMessage(event.data);
