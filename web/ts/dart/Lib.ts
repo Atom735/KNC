@@ -9,6 +9,7 @@ interface Dart {
   dartJMsgUnzip: (zip: string, dir: string) => string;
   dartJMsgNewTask: (settings: string) => string;
   dartJMsgGetTasks: () => string;
+  dartJMsgGetTaskFileList: (id: string) => string;
   dartJMsgTaskKill: (id: string) => string;
 
   dartIdJMsgTaskNew: () => string;

@@ -175,14 +175,16 @@ class JOneFileData {
             ?.toList(growable: false),
         notesError = m[jsonKey_notesError] as int /*?*/,
         notesWarnings = m[jsonKey_notesWarnings] as int /*?*/;
-  Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson(
+          {bool withoutCurves = false, bool withoutNotes = false}) =>
+      {
         jsonKey_path: path,
         jsonKey_origin: origin,
         jsonKey_type: type.index,
         jsonKey_size: size,
         jsonKey_encode: encode,
-        jsonKey_curves: curves,
-        jsonKey_notes: notes,
+        jsonKey_curves: withoutCurves ? null : curves,
+        jsonKey_notes: withoutNotes ? null : notes,
         jsonKey_notesError: notesError,
         jsonKey_notesWarnings: notesWarnings,
       };

@@ -21,6 +21,8 @@ external set _jsJMsgUnzip(Function f);
 external set _jsJMsgNewTask(Function f);
 @JS('dartJMsgGetTasks')
 external set _jsJMsgGetTasks(Function f);
+@JS('dartJMsgGetTaskFileList')
+external set _jsJMsgGetTaskFileList(Function f);
 @JS('dartJMsgTaskKill')
 external set _jsJMsgTaskKill(Function f);
 
@@ -42,6 +44,7 @@ void main() {
   _jsJMsgUnzip = allowInterop(JMsgUnzip.jsFunc);
   _jsJMsgNewTask = allowInterop(JMsgNewTask.jsFunc);
   _jsJMsgGetTasks = allowInterop(JMsgGetTasks.jsFunc);
+  _jsJMsgGetTaskFileList = allowInterop(JMsgGetTaskFileList.jsFunc);
   _jsJMsgTaskKill = allowInterop(JMsgTaskKill.jsFunc);
   _jsIdJMsgTaskNew = allowInterop(() => JMsgTaskNew.msgId);
   _jsIdJMsgTaskUpdate = allowInterop(() => JMsgTaskUpdate.msgId);

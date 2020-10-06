@@ -79,62 +79,70 @@ const PageTask: React.FC<PageTaskProps & typeof mapDispatchToProps & RouterProps
           {task?.settings?.name}
         </Typography>
       </div>
-      <Typography variant="h5">
-        Основные данные задачи
-      </Typography>
-
-      <Typography>
-        <b>Состояние: </b>
-        {rTaskStateString(task)}
-      </Typography>
-      {rTaskStateLinearProgress(task)}
-
-      <Typography>
-        <b>Запущена пользователем: </b>
-        {task?.settings?.user}
-      </Typography>
-
-      {task?.settings?.users && <Typography>
-        <b>Доступна пользователям: </b>
-        {task?.settings?.users.join(', ')}
-      </Typography>}
-
-      {task?.files && <Typography>
-        <b>Количество файлов: </b>
-        {task?.files}
-      </Typography>}
-
-      {task?.worked && <Typography>
-        <b>Количество обработанных файлов: </b>
-        {task?.worked}
-      </Typography>}
-
-
-
-      {task?.errors && <Typography>
-        <b>Количество файлов с ошибками: </b>
-        {task?.errors}
-      </Typography>}
-
-      {task?.warnings && <Typography>
-        <b>Количество файлов с предупрежениями: </b>
-        {task?.warnings}
-      </Typography>}
-
-
-      {task?.raport &&
-        <Button variant="contained" href={"/raports/" + task?.id} color="primary">Файл отчёта</Button>}
-
-
-      <Typography variant="h5">
-        Управление задачей
-      </Typography>
 
       <Grid
         container
         direction="row"
         spacing={1}
       >
+        <Grid item xs={12}>
+          <Typography variant="h5">
+            Основные данные задачи
+      </Typography></Grid>
+        <Grid item xs={12}>
+          <Typography>
+            <b>Состояние: </b>
+            {rTaskStateString(task)}
+          </Typography>
+        </Grid>
+        <Grid item xs={12}>{rTaskStateLinearProgress(task)}</Grid>
+
+        <Grid item xs={12}><Typography>
+          <b>Запущена пользователем: </b>
+          {task?.settings?.user}
+        </Typography></Grid>
+
+        {task?.settings?.users && <Grid item xs={12}><Typography>
+          <b>Доступна пользователям: </b>
+          {task?.settings?.users.join(', ')}
+        </Typography></Grid>}
+
+        {task?.files && <Grid item xs={12}><Typography>
+          <b>Количество файлов: </b>
+          {task?.files}
+        </Typography></Grid>}
+
+        {task?.worked && <Grid item xs={12}><Typography>
+          <b>Количество обработанных файлов: </b>
+          {task?.worked}
+        </Typography></Grid>}
+
+
+
+        {task?.errors && <Grid item xs={12}><Typography>
+          <b>Количество файлов с ошибками: </b>
+          {task?.errors}
+        </Typography></Grid>}
+
+        {task?.warnings && <Grid item xs={12}><Typography>
+          <b>Количество файлов с предупрежениями: </b>
+          {task?.warnings}
+        </Typography></Grid>}
+
+
+        {task?.raport &&
+          <Grid item><Button variant="contained" href={"/raports/" + task?.id + '.xlsx'} color="primary">
+            Файл отчёта
+            </Button></Grid>}
+        <Grid item><Button variant="contained" href={"/task/" + task?.id + '/filelist'}>
+          Список файлов
+            </Button></Grid>
+
+
+        <Grid item xs={12}><Typography variant="h5">
+          Управление задачей
+      </Typography></Grid>
+
         <Grid item >
           <Tooltip title="Открывает страницу изменения параметров задачи, после чего необходимо будет принудительно повторить поиск, либо обработку, либо же генерацию таблицы">
             <Button variant="outlined">Изменить параметры</Button>

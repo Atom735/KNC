@@ -2,12 +2,14 @@ import { createStore, Reducer } from "redux";
 import { funcs, JTaskSettings, JUser } from "../dart/Lib";
 import { action } from 'typesafe-actions'
 import { send, waitMsgAll } from "../dart/SocketWrapper";
+import { JOneFileData } from "../dart/OneFileData";
 
 export enum AppActionTypes {
     SIGN_IN = 'SIGN_IN',
     SIGN_OUT = 'SIGN_OUT',
     TASK_NEW = 'TASK_NEW',
     TASK_UPDATE = 'TASK_UPDATE',
+    TASK_UPDATE_FILELIST = 'TASK_UPDATE_FILELIST',
     TASK_KILL = 'TASK_KILL',
     TASKS_ALL = 'TASKS_ALL',
     SET_TITLE = 'SET_TITLE',
@@ -31,6 +33,7 @@ export interface TaskState {
     readonly worked?: number;
     readonly raport?: boolean;
     readonly settings?: JTaskSettings;
+    readonly filelist?: Array<JOneFileData>;
 }
 
 export interface AppState {
@@ -82,6 +85,14 @@ const reducer: Reducer<AppState> = (state = initialState, action) => {
                     { ...value, ..._data })
             }
         }
+        case AppActionTypes.TASK_UPDATE_FILELIST: {
+            const _data = JSON.parse(action.payload) as Array<JOneFileData>;
+            const _id = state.tasks.findIndex(value => value.id == action.meta);
+            return {
+                ...state, tasks: state.tasks.map((value, index) => _id != index ? value :
+                    { ...value, filelist: _data })
+            }
+        }
         case AppActionTypes.TASK_KILL: {
             return {
                 ...state, tasks: state.tasks.filter(value => value.id != action.payload)
@@ -118,6 +129,7 @@ export const fetchTaskUpdate = (data: string) => action(AppActionTypes.TASK_UPDA
 export const fetchTaskKill = (data: string) => action(AppActionTypes.TASK_KILL, data);
 export const fetchTasksAll = (data: string) => action(AppActionTypes.TASKS_ALL, data);
 export const fetchSetTitle = (data: string) => action(AppActionTypes.SET_TITLE, data);
+export const fetchTaskUpdateFileList = (data: string, id: string) => action(AppActionTypes.TASK_UPDATE_FILELIST, data, id);
 
 waitMsgAll(funcs.dartIdJMsgTaskNew(), (msg) => { store.dispatch(fetchTaskNew(msg.s)) });
 waitMsgAll(funcs.dartIdJMsgTaskUpdate(), (msg) => { store.dispatch(fetchTaskUpdate(msg.s)) });

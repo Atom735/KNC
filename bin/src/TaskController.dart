@@ -102,7 +102,7 @@ class TaskController extends SocketWrapper {
     /// Сообщение об изменении отчёта
     waitMsgAll(JMsgTaskRaport.msgId).listen((msg) {
       final _msg = JMsgTaskRaport.fromString(msg.s);
-      final _url = '/' + (p.url.join('raports', id));
+      final _url = '/' + (p.url.join('raports', id)) + '.xlsx';
       if (_msg.path.isNotEmpty) {
         final _filePath = p.join(TaskController.dirTasks.path, id, _msg.path);
         Server().addFileMap(_url, File(_filePath));

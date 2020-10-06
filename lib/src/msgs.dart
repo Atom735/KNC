@@ -66,6 +66,26 @@ class JMsgUserRegistration {
   }
 }
 
+/// Запрос на получение списка файлов
+///
+/// Клиент отправляет запрос серверу для получения списка файлов и их
+/// кратких данных. Передаётся идентификатор необходимой задачи.
+///
+/// В ответ сервер отправляет данные задачи [JOneFileData] в виде `JSON` строки.
+class JMsgGetTaskFileList {
+  static const msgId = 'JMsgGetTaskFileList:';
+  final String id;
+
+  factory JMsgGetTaskFileList.fromString(final String str) =>
+      JMsgGetTaskFileList(str);
+  const JMsgGetTaskFileList(this.id);
+
+  @override
+  String toString() => msgId + id;
+
+  static String jsFunc(String id) => JMsgGetTaskFileList(id).toString();
+}
+
 /// Запрос на получение данных задачи
 ///
 /// Клиент отправляет запрос серверу для получения списка задач и их

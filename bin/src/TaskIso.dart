@@ -99,7 +99,6 @@ class TaskIso extends SocketWrapper {
       await runSearchFiles();
       await runWorkFiles();
       await runGenerateTable();
-      state.state = NTaskState.completed;
     } catch (e, s) {
       if (errorsOut != null) {
         errorsOut.writeln(DateTime.now().toIso8601String());
@@ -329,6 +328,7 @@ class TaskIso extends SocketWrapper {
     await zip(xlsDataOut.path, xlsPath);
     send(0, JMsgTaskRaport(p.relative(xlsPath, from: pathAbsolute)).toString());
     state.raport = true;
+    state.state = NTaskState.completed;
   }
 
   /// Обработка файлов во время поиска всех файлов
@@ -616,6 +616,15 @@ class TaskIso extends SocketWrapper {
       final _msg = JMsgTaskKill.fromString(msg.s);
       receivePort.close();
       send(msg.i, _msg.toString());
+    });
+
+    /// Запрос на получение списка файлов
+    waitMsgAll(JMsgGetTaskFileList.msgId).listen((msg) {
+      send(
+          msg.i,
+          jsonEncode(files
+              .map((e) => e.toJson(withoutCurves: true, withoutNotes: true))
+              .toList(growable: false)));
     });
 
 /*
