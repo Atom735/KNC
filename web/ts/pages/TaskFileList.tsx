@@ -32,7 +32,7 @@ import clsx from 'clsx';
 import { createStyles, makeStyles, Theme, withStyles, WithStyles } from '@material-ui/core/styles';
 import TableCell from '@material-ui/core/TableCell';
 import Paper from '@material-ui/core/Paper';
-import { AutoSizer, Column, ColumnProps, Index, SortDirection, SortDirectionType, Table, TableCellRenderer, TableHeaderProps, WindowScroller } from 'react-virtualized';
+import { AutoSizer, Column, ColumnProps, defaultTableRowRenderer, Index, SortDirection, SortDirectionType, Table, TableCellRenderer, TableHeaderProps, WindowScroller } from 'react-virtualized';
 import { JOneFileData, NOneFileDataType } from "../dart/OneFileData";
 import TableSortLabel from "@material-ui/core/TableSortLabel";
 import { Compare } from "@material-ui/icons";
@@ -159,7 +159,6 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
         if (msg.startsWith('!!')) {
           enqueueSnackbar("Невозможно получить список файлов: " + msg, { variant: "error" });
         } else {
-
           fetchTaskUpdateFileList(msg, task?.id);
           const list = JSON.parse(msg) as Array<JOneFileData>;
           const _path = list[0].path;
@@ -220,7 +219,6 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
   );
 
 
-
   return (
     <Container component="main" maxWidth={false}>
       <CssBaseline />
@@ -245,6 +243,15 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                     rowCount={files ? files.length : 0}
                     rowGetter={(row) => files[row.index]}
                     rowClassName={getRowClassName}
+                    rowRenderer={(propsRow) => {
+                      const rowData = propsRow.rowData as JOneFileData;
+                      return (
+                        <RouterLink key={propsRow.key} to={"/task/" + task?.id + "/file/" + rowData.path}>
+                          {defaultTableRowRenderer(propsRow)}
+                        </RouterLink>);
+                    }}
+
+
                     gridStyle={{ paddingTop: headerHeight } as React.CSSProperties}
 
                     className={classesTable.table}
