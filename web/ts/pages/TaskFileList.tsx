@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { RouterProps } from "react-router";
 import { Link as RouterLink, RouteProps } from "react-router-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -32,9 +32,10 @@ import clsx from 'clsx';
 import { createStyles, makeStyles, Theme, withStyles, WithStyles } from '@material-ui/core/styles';
 import TableCell from '@material-ui/core/TableCell';
 import Paper from '@material-ui/core/Paper';
-import { AutoSizer, Column, ColumnProps, Index, Table, TableCellRenderer, TableHeaderProps, WindowScroller } from 'react-virtualized';
+import { AutoSizer, Column, ColumnProps, Index, SortDirection, SortDirectionType, Table, TableCellRenderer, TableHeaderProps, WindowScroller } from 'react-virtualized';
 import { JOneFileData, NOneFileDataType } from "../dart/OneFileData";
 import TableSortLabel from "@material-ui/core/TableSortLabel";
+import { Compare } from "@material-ui/icons";
 
 
 const styles = makeStyles((theme: Theme) =>
@@ -94,6 +95,10 @@ interface ColumnData extends ColumnProps {
 
 interface PageTaskFileListProps {
 };
+
+function strcmp(a: any, b: any) {
+  return (a < b ? -1 : (a > b ? 1 : 0));
+}
 
 const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToProps & RouterProps & PropsFromState> = (
   props
@@ -180,6 +185,39 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
   const headerHeight = 48;
   const rowHeight = 48;
 
+  const [sorting, setSorting] = useState<{
+    sortBy?: keyof JOneFileData,
+    sortDirection?: SortDirectionType,
+  }>({});
+
+  const _sort = (info: {
+    sortBy: keyof JOneFileData;
+    sortDirection: SortDirectionType;
+  }) => {
+    const { sortBy, sortDirection } = info;
+    const { sortBy: prevSortBy, sortDirection: prevSortDirection } = sorting;
+    setSorting({ sortBy: sortBy, sortDirection: sortDirection });
+    if (sortDirection === SortDirection.DESC) {
+      setFiles(files.sort((a, b) => strcmp(b[sortBy], a[sortBy])));
+    } else {
+      setFiles(files.sort((a, b) => strcmp(a[sortBy], b[sortBy])));
+    }
+  }
+
+  useEffect(
+    () => {
+      if (sorting.sortBy) {
+        if (sorting.sortDirection === SortDirection.DESC) {
+          setFiles(files.sort((a, b) => strcmp(b[sorting.sortBy], a[sorting.sortBy])));
+        } else {
+          setFiles(files.sort((a, b) => strcmp(a[sorting.sortBy], b[sorting.sortBy])));
+        }
+      }
+    }, [files]
+  );
+
+
+
   return (
     <Container component="main" maxWidth={false}>
       <CssBaseline />
@@ -195,6 +233,8 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                     height={height}
                     width={width}
 
+                    _dep={files}
+
 
                     headerHeight={headerHeight}
 
@@ -209,6 +249,10 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                     onScroll={onChildScroll}
                     scrollTop={scrollTop}
                     overscanRowCount={16}
+
+                    sort={_sort}
+                    sortBy={sorting.sortBy}
+                    sortDirection={sorting.sortDirection}
                   >
                     {columns.map((columnData) => {
                       const { dataKey, ...other } = columnData;
@@ -221,6 +265,7 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                           headerRenderer={(propsHeader) => {
                             const columnData = propsHeader.columnData as ColumnData;
                             const { columnType } = columnData;
+                            const { sortBy, sortDirection } = sorting;
                             return (
                               <TableCell
                                 component="div"
@@ -234,19 +279,20 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                                   columnType == ColumnType.number || columnType == ColumnType.fileType ?
                                     'right' : 'left'}
                               >
-                                {/* <TableSortLabel
-                                  active={orderBy === columns[columnIndex].dataKey}
-                                  direction={orderBy === columns[columnIndex].dataKey && order ? order : 'asc'}
-                                  onClick={createSortHandler(columns[columnIndex].dataKey)}
+                                { <TableSortLabel
+                                  active={sorting.sortBy === columnData.dataKey}
+                                  direction={sortBy === columnData.dataKey && sortDirection ?
+                                    (sortDirection == SortDirection.ASC ? 'asc' : 'desc') : 'asc'}
+                                // onClick={createSortHandler(columnData.dataKey)}
                                 >
-                                  {label}
-                                  {orderBy === columns[columnIndex].dataKey ? (
-                                    <span className={classes.visuallyHidden}>
-                                      {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                                  {propsHeader.label}
+                                  {sortBy === columnData.dataKey ? (
+                                    <span className={classesTable.visuallyHidden}>
+                                      {sortDirection == SortDirection.DESC ?
+                                        'sorted descending' : 'sorted ascending'}
                                     </span>
                                   ) : null}
-                                </TableSortLabel> */
-                                  propsHeader.label
+                                </TableSortLabel>
                                 }
                               </TableCell>);
                           }}
