@@ -33,7 +33,7 @@ import { createStyles, Theme, withStyles, WithStyles } from '@material-ui/core/s
 import TableCell from '@material-ui/core/TableCell';
 import Paper from '@material-ui/core/Paper';
 import { AutoSizer, Column, Table, TableCellRenderer, TableHeaderProps } from 'react-virtualized';
-import { JOneFileData } from "../dart/OneFileData";
+import { JOneFileData, NOneFileDataType } from "../dart/OneFileData";
 
 
 declare module '@material-ui/core/styles/withStyles' {
@@ -81,6 +81,7 @@ interface ColumnData {
   dataKey: string;
   label: string;
   numeric?: boolean;
+  typeOfFile?: boolean;
   width: number;
 }
 
@@ -123,7 +124,7 @@ class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> 
         style={{ height: rowHeight }}
         align={(columnIndex != null && columns[columnIndex].numeric) || false ? 'right' : 'left'}
       >
-        {cellData}
+        {(columnIndex != null && columns[columnIndex].typeOfFile) || false ? NOneFileDataType[cellData] : cellData}
       </TableCell>
     );
   };
@@ -217,12 +218,16 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
   useEffect(() => {
     if (task) {
       requestOnce(funcs.dartJMsgGetTaskFileList(task ? task.id : ""), msg => {
-        console.dir(JSON.parse(msg));
+        // console.dir(JSON.parse(msg));
         if (msg.startsWith('!!')) {
           enqueueSnackbar("Невозможно получить список файлов: " + msg, { variant: "error" });
         } else {
+
           fetchTaskUpdateFileList(msg, task?.id);
-          setFiles(JSON.parse(msg));
+          const list = JSON.parse(msg) as Array<JOneFileData>;
+          const _path = list[0].path;
+          const _i = _path.indexOf('temp') + 5;
+          setFiles(list.map<JOneFileData>((value) => { return { ...value, path: value.path.substring(_i) } }));
         }
       });
     }
@@ -233,16 +238,26 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
   }, [props.tasks]);
 
   useEffect(() => {
-    // setFiles(task?.filelist);
+    setFiles(task?.filelist);
   }, [task]);
 
+  const [height, setHeight] = useState(window.innerHeight - 100);
 
+  useEffect(() => {
+    const listner = () => {
+      setHeight(window.innerHeight - 100);
+    }
+    window.addEventListener("resize", listner);
+    return () => {
+      window.removeEventListener("resize", listner);
+    };
+  }, []);
 
   return (
     <Container component="main">
       <CssBaseline />
       {!files ? null :
-        < Paper style={{ height: '100%', width: '100%' }}>
+        <Paper style={{ height: height, width: '100%' }}>
           <VirtualizedTable
             rowCount={files.length}
             rowGetter={({ index }) => files[index]}
@@ -261,6 +276,7 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                 width: 120,
                 label: 'Тип',
                 dataKey: 'type',
+                typeOfFile: true,
               },
               {
                 width: 120,

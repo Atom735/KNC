@@ -27,30 +27,34 @@ class Server {
   ];
 
   /// Маппинг ссылок на файлам
-  final fileMap = <String, File>{'/': File('web/index.html').absolute};
+  final fileMap = <String, File>{
+    '/': File(p.join('web', 'index.html')).absolute
+  };
 
   /// `RegExp` Маппинг ссылок на файлам
   final reMap = <RegExp, File>{
-    RegExp(r'^/.*', caseSensitive: false): File('web/index.html').absolute
+    RegExp(r'^/.*', caseSensitive: false):
+        File(p.join('web', 'index.html')).absolute
   };
 
   /// Закешированные файлы
-  final fileMapCache = <File, List<int>>{};
+  final fileMapCache = <String, List<int>>{};
 
   /// Контрольная сумма закешированных файлов
-  final fileMapCrc = <File, String>{};
+  final fileMapCrc = <String, String>{};
 
   /// Добавляет файл по указанному [url], если файл пуст, то он удаляется
   /// из карты путей
   void addFileMap(String url, File /*?*/ file) {
-    if (fileMapCache[url] != null) {
-      fileMapCache.remove(url);
-      fileMapCrc.remove(url);
+    final _key = url.toLowerCase();
+    if (fileMapCache[_key] != null) {
+      fileMapCache.remove(_key);
+      fileMapCrc.remove(_key);
     }
     if (file != null) {
-      fileMap[url] = file;
+      fileMap[_key] = file;
     } else {
-      fileMap.remove(url);
+      fileMap.remove(_key);
     }
   }
 
@@ -60,9 +64,10 @@ class Server {
     File file,
     /*SECURE*[bool bSecure = false]*/
   ) {
-    if (fileMapCrc[file] != null &&
+    final _key = file.absolute.path.toLowerCase();
+    if (fileMapCrc[_key] != null &&
         request.headers.value(HttpHeaders.ifNoneMatchHeader) != null &&
-        fileMapCrc[file] ==
+        fileMapCrc[_key] ==
             (request.headers
                     .value(HttpHeaders.ifNoneMatchHeader)
                     ?.toLowerCase() ??
@@ -81,16 +86,16 @@ class Server {
                 'http (${request.hashCode}): ${request.uri.path} closed ($iReq) not modified');
           });
         });
-    } else if (fileMapCache[file] != null) {
-      final mime = mimeResolver.lookup(file.path) as String /*?*/;
+    } else if (fileMapCache[_key] != null) {
+      final mime = mimeResolver.lookup(_key) /*as String?*/;
 
       /// Файл закеширован
       response
         ..statusCode = HttpStatus.ok
         ..headers.contentType =
             mime != null ? ContentType.parse(mime /*!*/) : ContentType.binary
-        ..headers.add(HttpHeaders.etagHeader, fileMapCrc[file] /*!*/)
-        ..add(fileMapCache[file] /*!*/)
+        ..headers.add(HttpHeaders.etagHeader, fileMapCrc[_key] /*!*/)
+        ..add(fileMapCache[_key] /*!*/)
         ..flush().then((_) {
           response.close().then((_) {
             /*SECURE*if (bSecure) {*/
@@ -99,16 +104,16 @@ class Server {
               iReqSecure -= 1;
             }*/
             print(
-                'http (${request.hashCode}): ${request.uri.path} closed ($iReq) from cache #${fileMapCrc[file] /*!*/}');
+                'http (${request.hashCode}): ${request.uri.path} closed ($iReq) from cache #${fileMapCrc[_key] /*!*/}');
           });
         });
     } else if (file.existsSync()) {
       /// Файл существует
       file.readAsBytes().then((bytes) {
-        fileMapCache[file] = bytes;
-        fileMapCrc[file] =
+        fileMapCache[_key] = bytes;
+        fileMapCrc[_key] =
             Crc64().convert(bytes).toRadixString(36).toLowerCase();
-        print('$file cached #${fileMapCrc[file] /*!*/}');
+        print('$_key cached #${fileMapCrc[_key] /*!*/}');
         serveFile(request, response, file);
       });
     } else {
@@ -171,11 +176,11 @@ class Server {
 
       /// Следим за изменением файлов в папках
       dir.watch(recursive: true).listen((event) {
-        final file = File(event.path).absolute;
-        if (fileMapCache[file] != null) {
-          fileMapCache.remove(file);
-          fileMapCrc.remove(file);
-          print('$file cached removed');
+        final _key = File(event.path).absolute.path.toLowerCase();
+        if (fileMapCache[_key] != null) {
+          fileMapCache.remove(_key);
+          fileMapCrc.remove(_key);
+          print('$_key cached removed');
         }
       });
     }
@@ -200,7 +205,7 @@ class Server {
 
     /// если есть необходимый файл в папках
     for (final dir in dirs) {
-      final f = File(dir.path + request.uri.path);
+      final f = File(p.normalize(dir.absolute.path + request.uri.path));
       if (f.existsSync()) {
         serveFile(request, response, f);
         return;
