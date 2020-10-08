@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
-aimport { createStyles, makeStyles, Theme, withStyles, WithStyles } from "@material-ui/core/styles";
+import { createStyles, makeStyles, Theme, withStyles, WithStyles } from "@material-ui/core/styles";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
@@ -23,166 +23,9 @@ import TableCell from "@material-ui/core/TableCell";
 import clsx from "clsx";
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
+import VirtualizedTableFactory, { Order } from "../component/Table";
 
 
-const styles = (theme: Theme) =>
-  createStyles({
-    flexContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      boxSizing: 'border-box',
-    },
-    table: {
-      // temporary right-to-left patch, waiting for
-      // https://github.com/bvaughn/react-virtualized/issues/454
-      '& .ReactVirtualized__Table__headerRow': {
-        flip: false,
-        paddingRight: theme.direction === 'rtl' ? '0 !important' : undefined,
-      },
-    },
-    tableRow: {
-      cursor: 'pointer',
-    },
-    tableRowHover: {
-      '&:hover': {
-        backgroundColor: theme.palette.grey[200],
-      },
-    },
-    tableCell: {
-      flex: 1,
-    },
-    noClick: {
-      cursor: 'initial',
-    },
-  });
-
-
-interface ColumnData {
-  dataKey: string;
-  label: string;
-  numeric?: boolean;
-  width: number;
-}
-
-interface Row {
-  index: number;
-}
-
-interface MuiVirtualizedTableProps<T> extends WithStyles<typeof styles> {
-  columns: ColumnData[];
-  headerHeight?: number;
-  onRowClick?: () => void;
-  rowCount: number;
-  rowGetter: (row: Row) => T;
-  rowHeight?: number;
-}
-
-class MuiVirtualizedTable<T> extends React.PureComponent<MuiVirtualizedTableProps<T>> {
-  static defaultProps = {
-    headerHeight: 48,
-    rowHeight: 48,
-  };
-
-
-  getRowClassName = ({ index }: Row) => {
-    const { classes, onRowClick } = this.props;
-
-    return clsx(classes.tableRow, classes.flexContainer, {
-      [classes.tableRowHover]: index !== -1 && onRowClick != null,
-    });
-  };
-
-  cellRenderer: TableCellRenderer = ({ cellData, columnIndex }) => {
-    const { columns, classes, rowHeight, onRowClick } = this.props;
-    return (
-      <TableCell
-        component="div"
-        className={clsx(classes.tableCell, classes.flexContainer, {
-          [classes.noClick]: onRowClick == null,
-        })}
-        variant="body"
-        style={{ height: rowHeight }}
-        align={(columnIndex != null && columns[columnIndex].numeric) || false ? 'right' : 'left'}
-      >
-        {cellData}
-      </TableCell>
-    );
-  };
-
-  headerRenderer = ({ label, columnIndex }: TableHeaderProps & { columnIndex: number }) => {
-    const { headerHeight, columns, classes } = this.props;
-
-    return (
-      <TableCell
-        component="div"
-        className={clsx(classes.tableCell, classes.flexContainer, classes.noClick)}
-        variant="head"
-        style={{ height: headerHeight }}
-        align={columns[columnIndex].numeric || false ? 'right' : 'left'}
-      >
-        <span>{label}</span>
-      </TableCell>
-    );
-  };
-
-  render() {
-    const { classes, columns, rowHeight, headerHeight, ...tableProps } = this.props;
-    return (
-      <WindowScroller
-        scrollElement={window}>
-        {({ height, isScrolling, registerChild, onChildScroll, scrollTop }) => (
-          <div style={{ flex: "1 1 auto" }}>
-            <AutoSizer disableHeight>
-              {({ width }) => (
-                <div ref={registerChild}>
-                  <Table
-                    autoHeight
-                    height={height}
-                    width={width}
-                    rowHeight={rowHeight!}
-                    gridStyle={{
-                      direction: 'inherit',
-                    }}
-                    headerHeight={headerHeight!}
-                    className={classes.table}
-                    {...tableProps}
-                    rowClassName={this.getRowClassName}
-                    isScrolling={isScrolling}
-                    onScroll={onChildScroll}
-                    scrollTop={scrollTop}
-                    overscanRowCount={2}
-                  >
-                    {columns.map(({ dataKey, ...other }, index) => {
-                      return (
-                        <Column
-                          key={dataKey}
-                          headerRenderer={(headerProps) =>
-                            this.headerRenderer({
-                              ...headerProps,
-                              columnIndex: index,
-                            })
-                          }
-                          className={classes.flexContainer}
-                          cellRenderer={this.cellRenderer}
-                          dataKey={dataKey}
-                          {...other}
-                        />
-                      );
-                    })}
-                  </Table>
-                </div>
-              )}
-            </AutoSizer>
-          </div>
-        )}
-      </WindowScroller>
-    );
-  }
-}
-
-function VirtualizedTableFactory() {
-  return withStyles(styles)(MuiVirtualizedTable);
-}
 
 
 const VirtualizedTable = VirtualizedTableFactory();
@@ -227,7 +70,45 @@ for (let i = 0; i < 20000; i += 1) {
 
 const PageTest: React.FC<typeof mapDispatchToProps> = (props) => {
 
+  const [order, setOrder] = React.useState<Order>('asc');
+  const [orderBy, setOrderBy] = React.useState<keyof Data>('calories');
+  const [selected, setSelected] = React.useState<number[]>([]);
 
+  const handleRequestSort = (event: React.MouseEvent<unknown>, property: keyof Data) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const newSelecteds = rows.map((n) => n.id);
+      setSelected(newSelecteds);
+      return;
+    }
+    setSelected([]);
+  };
+
+  const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
+    const selectedIndex = selected.indexOf(id);
+    let newSelected: number[] = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selected, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selected.slice(1));
+    } else if (selectedIndex === selected.length - 1) {
+      newSelected = newSelected.concat(selected.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1),
+      );
+    }
+
+    setSelected(newSelected);
+  };
+  const isSelected = (id: number) => selected.indexOf(id) !== -1;
 
   useEffect(() => {
     props.fetchSetTitle('Тестовая комната');
@@ -237,6 +118,11 @@ const PageTest: React.FC<typeof mapDispatchToProps> = (props) => {
     <Container component="main">
       <CssBaseline />
       <VirtualizedTable
+        numSelected={selected.length}
+        order={order}
+        orderBy={orderBy}
+        onSelectAllClick={handleSelectAllClick}
+        onRequestSort={handleRequestSort}
         rowCount={rows.length}
         rowGetter={({ index }) => rows[index]}
         columns={[

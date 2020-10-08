@@ -29,24 +29,15 @@ import { rTaskStateLinearProgress, rTaskStateString } from "../cards/Task";
 import { useStylesApp } from "../App";
 import Tooltip from "@material-ui/core/Tooltip";
 import clsx from 'clsx';
-import { createStyles, Theme, withStyles, WithStyles } from '@material-ui/core/styles';
+import { createStyles, makeStyles, Theme, withStyles, WithStyles } from '@material-ui/core/styles';
 import TableCell from '@material-ui/core/TableCell';
 import Paper from '@material-ui/core/Paper';
-import { AutoSizer, Column, Table, TableCellRenderer, TableHeaderProps } from 'react-virtualized';
+import { AutoSizer, Column, ColumnProps, Index, Table, TableCellRenderer, TableHeaderProps, WindowScroller } from 'react-virtualized';
 import { JOneFileData, NOneFileDataType } from "../dart/OneFileData";
+import TableSortLabel from "@material-ui/core/TableSortLabel";
 
 
-declare module '@material-ui/core/styles/withStyles' {
-  // Augment the BaseCSSProperties so that we can control jss-rtl
-  interface BaseCSSProperties {
-    /*
-     * Used to control if the rule-set should be affected by rtl transformation
-     */
-    flip?: boolean;
-  }
-}
-
-const styles = (theme: Theme) =>
+const styles = makeStyles((theme: Theme) =>
   createStyles({
     flexContainer: {
       display: 'flex',
@@ -75,120 +66,31 @@ const styles = (theme: Theme) =>
     noClick: {
       cursor: 'initial',
     },
-  });
+    visuallyHidden: {
+      border: 0,
+      clip: 'rect(0 0 0 0)',
+      height: 1,
+      margin: -1,
+      overflow: 'hidden',
+      padding: 0,
+      position: 'absolute',
+      top: 20,
+      width: 1,
+    },
+  }));
 
-interface ColumnData {
-  dataKey: string;
+enum ColumnType {
+  text = 0,
+  number,
+  fileType,
+}
+
+interface ColumnData extends ColumnProps {
+  dataKey: keyof JOneFileData;
   label: string;
-  numeric?: boolean;
-  typeOfFile?: boolean;
   width: number;
+  columnType?: ColumnType;
 }
-
-interface Row {
-  index: number;
-}
-
-interface MuiVirtualizedTableProps extends WithStyles<typeof styles> {
-  columns: ColumnData[];
-  headerHeight?: number;
-  onRowClick?: () => void;
-  rowCount: number;
-  rowGetter: (row: Row) => JOneFileData;
-  rowHeight?: number;
-}
-
-class MuiVirtualizedTable extends React.PureComponent<MuiVirtualizedTableProps> {
-  static defaultProps = {
-    headerHeight: 48,
-    rowHeight: 48,
-  };
-
-  getRowClassName = ({ index }: Row) => {
-    const { classes, onRowClick } = this.props;
-
-    return clsx(classes.tableRow, classes.flexContainer, {
-      [classes.tableRowHover]: index !== -1 && onRowClick != null,
-    });
-  };
-
-  cellRenderer: TableCellRenderer = ({ cellData, columnIndex }) => {
-    const { columns, classes, rowHeight, onRowClick } = this.props;
-    return (
-      <TableCell
-        component="div"
-        className={clsx(classes.tableCell, classes.flexContainer, {
-          [classes.noClick]: onRowClick == null,
-        })}
-        variant="body"
-        style={{ height: rowHeight }}
-        align={(columnIndex != null && columns[columnIndex].numeric) || false ? 'right' : 'left'}
-      >
-        {(columnIndex != null && columns[columnIndex].typeOfFile) || false ? NOneFileDataType[cellData] : cellData}
-      </TableCell>
-    );
-  };
-
-  headerRenderer = ({ label, columnIndex }: TableHeaderProps & { columnIndex: number }) => {
-    const { headerHeight, columns, classes } = this.props;
-
-    return (
-      <TableCell
-        component="div"
-        className={clsx(classes.tableCell, classes.flexContainer, classes.noClick)}
-        variant="head"
-        style={{ height: headerHeight }}
-        align={columns[columnIndex].numeric || false ? 'right' : 'left'}
-      >
-        <span>{label}</span>
-      </TableCell>
-    );
-  };
-
-  render() {
-    const { classes, columns, rowHeight, headerHeight, ...tableProps } = this.props;
-    return (
-      <AutoSizer>
-        {({ height, width }) => (
-          <Table
-            height={height}
-            width={width}
-            rowHeight={rowHeight!}
-            gridStyle={{
-              direction: 'inherit',
-            }}
-            headerHeight={headerHeight!}
-            className={classes.table}
-            {...tableProps}
-            rowClassName={this.getRowClassName}
-          >
-            {columns.map(({ dataKey, ...other }, index) => {
-              return (
-                <Column
-                  key={dataKey}
-                  headerRenderer={(headerProps) =>
-                    this.headerRenderer({
-                      ...headerProps,
-                      columnIndex: index,
-                    })
-                  }
-                  className={classes.flexContainer}
-                  cellRenderer={this.cellRenderer}
-                  dataKey={dataKey}
-                  {...other}
-                />
-              );
-            })}
-          </Table>
-        )}
-      </AutoSizer>
-    );
-  }
-}
-
-const VirtualizedTable = withStyles(styles)(MuiVirtualizedTable);
-
-
 
 interface PageTaskFileListProps {
 };
@@ -197,6 +99,7 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
   props
 ) => {
   const classes = useStyles();
+  const classesTable = styles();
   const { enqueueSnackbar } = useSnackbar();
 
   // const classError = useStylesApp().error;
@@ -208,7 +111,33 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
 
   const [task, setTask] = useState(props.tasks.find((value) => value.id == _taskId));
 
-  const [files, setFiles] = useState(task?.filelist);
+  const [files, setFiles] = useState<JOneFileData[]>(task?.filelist);
+
+
+  const [columns, setColumns] = useState<ColumnData[]>([{
+    dataKey: 'path',
+    label: 'Копия',
+    width: 120,
+    flexShrink: 0,
+  }, {
+    dataKey: 'origin',
+    label: 'Оригинал',
+    width: 200,
+    flexShrink: 0,
+    flexGrow: 1,
+  }, {
+    dataKey: 'type',
+    label: 'Тип',
+    width: 80,
+    flexShrink: 0,
+    columnType: ColumnType.fileType,
+  }, {
+    dataKey: 'size',
+    label: 'Размер',
+    width: 100,
+    flexShrink: 0,
+    columnType: ColumnType.number,
+  }]);
 
 
   useEffect(() => {
@@ -241,72 +170,114 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
     setFiles(task?.filelist);
   }, [task]);
 
-  const [height, setHeight] = useState(window.innerHeight - 100);
 
-  useEffect(() => {
-    const listner = () => {
-      setHeight(window.innerHeight - 100);
-    }
-    window.addEventListener("resize", listner);
-    return () => {
-      window.removeEventListener("resize", listner);
-    };
-  }, []);
+  const getRowClassName = ({ index }: Index) => {
+    return clsx(classesTable.tableRow, classesTable.flexContainer, {
+      [classesTable.tableRowHover]: index !== -1,
+    });
+  };
+
+  const headerHeight = 48;
+  const rowHeight = 48;
 
   return (
-    <Container component="main">
+    <Container component="main" maxWidth={false}>
       <CssBaseline />
-      {!files ? null :
-        <Paper style={{ height: height, width: '100%' }}>
-          <VirtualizedTable
-            rowCount={files.length}
-            rowGetter={({ index }) => files[index]}
-            columns={[
-              {
-                width: 200,
-                label: 'Оригинал',
-                dataKey: 'origin',
-              },
-              {
-                width: 120,
-                label: 'Копия',
-                dataKey: 'path',
-              },
-              {
-                width: 120,
-                label: 'Тип',
-                dataKey: 'type',
-                typeOfFile: true,
-              },
-              {
-                width: 120,
-                label: 'Размер',
-                dataKey: 'size',
-                numeric: true,
-              },
-              {
-                width: 120,
-                label: 'Кодировка',
-                dataKey: 'encode',
-                numeric: true,
-              },
-              {
-                width: 120,
-                label: 'Предупреждений',
-                dataKey: 'n-warn',
-                numeric: true,
-              },
-              {
-                width: 120,
-                label: 'Ошибок',
-                dataKey: 'n-errors',
-                numeric: true,
-              },
-            ]}
-          />
+      <WindowScroller
+        scrollElement={window}>
+        {({ height, isScrolling, registerChild, onChildScroll, scrollTop }) => (
+          <div style={{ flex: "1 1 auto" }}>
+            <AutoSizer disableHeight>
+              {({ width }) => (
+                <div ref={registerChild}>
+                  <Table
+                    autoHeight
+                    height={height}
+                    width={width}
 
-        </Paper>
-      }
+
+                    headerHeight={headerHeight}
+
+                    rowHeight={rowHeight}
+                    rowCount={files ? files.length : 0}
+                    rowGetter={(row) => files[row.index]}
+                    rowClassName={getRowClassName}
+
+                    className={classesTable.table}
+
+                    isScrolling={isScrolling}
+                    onScroll={onChildScroll}
+                    scrollTop={scrollTop}
+                    overscanRowCount={16}
+                  >
+                    {columns.map((columnData) => {
+                      const { dataKey, ...other } = columnData;
+                      return (
+                        <Column
+                          key={dataKey}
+                          dataKey={dataKey}
+                          columnData={columnData}
+                          {...other}
+                          headerRenderer={(propsHeader) => {
+                            const columnData = propsHeader.columnData as ColumnData;
+                            const { columnType } = columnData;
+                            return (
+                              <TableCell
+                                component="div"
+                                className={
+                                  clsx(classesTable.tableCell,
+                                    classesTable.flexContainer,
+                                    classesTable.noClick)}
+                                variant="head"
+                                style={{ height: headerHeight }}
+                                align={
+                                  columnType == ColumnType.number || columnType == ColumnType.fileType ?
+                                    'right' : 'left'}
+                              >
+                                {/* <TableSortLabel
+                                  active={orderBy === columns[columnIndex].dataKey}
+                                  direction={orderBy === columns[columnIndex].dataKey && order ? order : 'asc'}
+                                  onClick={createSortHandler(columns[columnIndex].dataKey)}
+                                >
+                                  {label}
+                                  {orderBy === columns[columnIndex].dataKey ? (
+                                    <span className={classes.visuallyHidden}>
+                                      {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                                    </span>
+                                  ) : null}
+                                </TableSortLabel> */
+                                  propsHeader.label
+                                }
+                              </TableCell>);
+                          }}
+                          cellRenderer={({ columnIndex, cellData, ...propsCell }) => {
+                            return (
+                              <TableCell
+                                component="div"
+                                className={clsx(classesTable.tableCell, classesTable.flexContainer)}
+                                variant="body"
+                                style={{ height: rowHeight }}
+                                align={(columnIndex != null &&
+                                  (columns[columnIndex].columnType == ColumnType.number) ||
+                                  (columns[columnIndex].columnType == ColumnType.fileType)) ?
+                                  'right' : 'left'}
+                              >
+                                {columns[columnIndex].columnType == ColumnType.fileType ?
+                                  NOneFileDataType[cellData] :
+                                  cellData}
+                              </TableCell>
+                            );
+                          }}
+                        />
+                      );
+                    })}
+                  </Table>
+                </div>
+              )}
+            </AutoSizer>
+          </div>
+        )}
+      </WindowScroller>
     </Container >
   );
 };
