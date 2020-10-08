@@ -51,6 +51,9 @@ const styles = makeStyles((theme: Theme) =>
       '& .ReactVirtualized__Table__headerRow': {
         flip: false,
         paddingRight: theme.direction === 'rtl' ? '0 !important' : undefined,
+        position: "fixed",
+        backgroundColor: theme.palette.background.default,
+        zIndex: 1,
       },
     },
     tableRow: {
@@ -242,6 +245,7 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                     rowCount={files ? files.length : 0}
                     rowGetter={(row) => files[row.index]}
                     rowClassName={getRowClassName}
+                    gridStyle={{ paddingTop: headerHeight } as React.CSSProperties}
 
                     className={classesTable.table}
 
