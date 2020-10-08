@@ -71,7 +71,8 @@ class JMsgUserRegistration {
 /// Клиент отправляет запрос серверу для получения списка файлов и их
 /// кратких данных. Передаётся идентификатор необходимой задачи.
 ///
-/// В ответ сервер отправляет данные задачи [JOneFileData] в виде `JSON` строки.
+/// В ответ сервер отправляет данные задачи [JOneFileData] в виде `JSON` строки
+/// без кривых и и заметок.
 class JMsgGetTaskFileList {
   static const msgId = 'JMsgGetTaskFileList:';
   final String id;

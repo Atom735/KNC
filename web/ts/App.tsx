@@ -33,6 +33,7 @@ import PageTest from "./pages/Test";
 import PageNewTask from "./pages/NewTask";
 import PageTask from "./pages/Task";
 import PageTaskFileList from "./pages/TaskFileList";
+import PageFileViewer from "./pages/FileViewer";
 
 import { dartSetSocketOnClose, dartSetSocketOnError, dartSetSocketOnOpen, requestOnce, send } from "./dart/SocketWrapper";
 import { funcs, JUser } from "./dart/Lib";
@@ -264,6 +265,7 @@ const App: React.FC<RouterProps & PropsFromState & typeof mapDispatchToProps> = 
         <Route path="/signup" component={PageSignUp} />
         <Route path="/test" component={PageTest} />
         <Route path="/newtask" component={PageNewTask} />
+        <Route path="/task/*/file/*" component={PageFileViewer} />
         <Route path="/task/*/filelist" component={PageTaskFileList} />
         <Route path="/task" component={PageTask} />
         <Route path="/" component={PageHome} />
