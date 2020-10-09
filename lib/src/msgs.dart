@@ -87,6 +87,31 @@ class JMsgGetTaskFileList {
   static String jsFunc(String id) => JMsgGetTaskFileList(id).toString();
 }
 
+/// Запрос на получение данных кривых и заметок файла...
+///
+/// Клиент отправляет запрос серверу для получения полных данных о файле.
+/// Передаётся идентификатор задачи и имя файла внутри задачи.
+///
+/// В ответ сервер отправляет полные данные файла [JOneFileData] в виде `JSON`
+/// строки.
+class JMsgGetTaskFileNotesAndCurves {
+  static const msgId = 'JMsgGetTaskFileNotesAndCurves:';
+  final String id;
+  final String path;
+
+  factory JMsgGetTaskFileNotesAndCurves.fromString(final String str) {
+    final s = str.split(msgRecordSeparator);
+    return JMsgGetTaskFileNotesAndCurves(s[0], s[1]);
+  }
+  const JMsgGetTaskFileNotesAndCurves(this.id, this.path);
+
+  @override
+  String toString() => '$msgId$id$msgRecordSeparator$path';
+
+  static String jsFunc(String mail, String pass) =>
+      JMsgGetTaskFileNotesAndCurves(mail, pass).toString();
+}
+
 /// Запрос на получение данных задачи
 ///
 /// Клиент отправляет запрос серверу для получения списка задач и их

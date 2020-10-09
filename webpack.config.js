@@ -4,9 +4,9 @@
 const path = require('path');
 
 module.exports = {
-    alias: {
-        'react-virtualized/List': 'react-virtualized/dist/es/List',
-    },
+    // alias: {
+    //     'react-virtualized/List': 'react-virtualized/dist/es/List',
+    // },
     entry: './web/ts/index.tsx',
     devtool: 'inline-source-map',
     module: {

@@ -10,6 +10,7 @@ export enum AppActionTypes {
     TASK_NEW = 'TASK_NEW',
     TASK_UPDATE = 'TASK_UPDATE',
     TASK_UPDATE_FILELIST = 'TASK_UPDATE_FILELIST',
+    TASK_UPDATE_FILE = 'TASK_UPDATE_FILE',
     TASK_KILL = 'TASK_KILL',
     TASKS_ALL = 'TASKS_ALL',
     SET_TITLE = 'SET_TITLE',
@@ -88,9 +89,35 @@ const reducer: Reducer<AppState> = (state = initialState, action) => {
         case AppActionTypes.TASK_UPDATE_FILELIST: {
             const _data = JSON.parse(action.payload) as Array<JOneFileData>;
             const _id = state.tasks.findIndex(value => value.id == action.meta);
+            const _dataPrev = state.tasks[_id]?.filelist;
             return {
                 ...state, tasks: state.tasks.map((value, index) => _id != index ? value :
-                    { ...value, filelist: _data })
+                    {
+                        ...value, filelist: _data.map((value, index) => {
+                            return (_dataPrev?.length > index) ?
+                                {
+                                    ..._dataPrev[index], ...value,
+                                    notes: value.notes ? value.notes : _dataPrev[index].notes,
+                                    curves: value.curves ? value.curves : _dataPrev[index].curves,
+                                }
+                                : value;
+                        })
+                    })
+
+            }
+        }
+        case AppActionTypes.TASK_UPDATE_FILE: {
+            const _data = JSON.parse(action.payload) as JOneFileData;
+            const _id = state.tasks.findIndex(value => value.id == action.meta[0]);
+            const _path = action.meta[1] as string;
+            const _dataPrevIndex = state.tasks[_id]?.filelist?.findIndex((e) => e.path.endsWith(_path));
+            return {
+                ...state, tasks: state.tasks.map((value, index) => _id != index ? value :
+                    {
+                        ...value, filelist: value?.filelist?.map((value, index) => index != _dataPrevIndex ? value :
+                            _data)
+                    })
+
             }
         }
         case AppActionTypes.TASK_KILL: {
@@ -130,6 +157,8 @@ export const fetchTaskKill = (data: string) => action(AppActionTypes.TASK_KILL, 
 export const fetchTasksAll = (data: string) => action(AppActionTypes.TASKS_ALL, data);
 export const fetchSetTitle = (data: string) => action(AppActionTypes.SET_TITLE, data);
 export const fetchTaskUpdateFileList = (data: string, id: string) => action(AppActionTypes.TASK_UPDATE_FILELIST, data, id);
+export const fetchTaskUpdateFile = (data: string, id: string, path: string) => action(AppActionTypes.TASK_UPDATE_FILE, data, [id, path]);
+
 
 waitMsgAll(funcs.dartIdJMsgTaskNew(), (msg) => { store.dispatch(fetchTaskNew(msg.s)) });
 waitMsgAll(funcs.dartIdJMsgTaskUpdate(), (msg) => { store.dispatch(fetchTaskUpdate(msg.s)) });

@@ -627,6 +627,23 @@ class TaskIso extends SocketWrapper {
               .toList(growable: false)));
     });
 
+    /// Запрос на получение полных данных о файле
+    waitMsgAll(JMsgGetTaskFileNotesAndCurves.msgId).listen((msg) {
+      final _msg = JMsgGetTaskFileNotesAndCurves.fromString(msg.s);
+      final _path = _msg.path;
+      if (files.isEmpty) {
+        send(msg.i, '!!FILE NOT FOUND');
+      } else {
+        final _a =
+            files.firstWhere((e) => e.path.endsWith(_path), orElse: () => null);
+        if (_a == null) {
+          send(msg.i, '!!FILE NOT FOUND');
+        } else {
+          send(msg.i, jsonEncode(_a.toJson()));
+        }
+      }
+    });
+
 /*
     /// Отвечаем на все запросы на получение заметок файла, где аругментом
     /// указан путь к рабочей копии файла, кодируем их в [json]

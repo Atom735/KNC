@@ -10,6 +10,7 @@ interface Dart {
   dartJMsgNewTask: (settings: string) => string;
   dartJMsgGetTasks: () => string;
   dartJMsgGetTaskFileList: (id: string) => string;
+  dartJMsgGetTaskFileNotesAndCurves: (id: string, path: string) => string;
   dartJMsgTaskKill: (id: string) => string;
 
   dartIdJMsgTaskNew: () => string;

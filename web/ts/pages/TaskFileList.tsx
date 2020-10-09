@@ -19,10 +19,11 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import AssignmentIcon from '@material-ui/icons/Assignment';
 
 import useStyles from "./../styles";
+import { useTheme } from '@material-ui/core/styles';
 
 import { funcs, JUser } from "./../dart/Lib";
 import { requestOnce, send, waitMsgAll } from "./../dart/SocketWrapper";
-import { AppState, fetchSetTitle, fetchSignIn, fetchTaskUpdateFileList, TaskState } from "../redux";
+import { AppState, fetchSetTitle, fetchSignIn, fetchTaskUpdateFile, fetchTaskUpdateFileList, TaskState } from "../redux";
 import { connect } from "react-redux";
 import { useSnackbar } from "notistack";
 import { rTaskStateLinearProgress, rTaskStateString } from "../cards/Task";
@@ -36,7 +37,9 @@ import { AutoSizer, Column, ColumnProps, defaultTableRowRenderer, Index, SortDir
 import { JOneFileData, NOneFileDataType } from "../dart/OneFileData";
 import TableSortLabel from "@material-ui/core/TableSortLabel";
 import { Compare } from "@material-ui/icons";
+import IconButton from "@material-ui/core/IconButton";
 
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 
 const styles = makeStyles((theme: Theme) =>
   createStyles({
@@ -87,6 +90,7 @@ enum ColumnType {
   text = 0,
   number,
   fileType,
+  btns,
 }
 
 interface ColumnData extends ColumnProps {
@@ -145,6 +149,12 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
     width: 100,
     flexShrink: 0,
     columnType: ColumnType.number,
+  }, {
+    dataKey: 'path',
+    label: '',
+    width: 100,
+    flexShrink: 0,
+    columnType: ColumnType.btns,
   }]);
 
 
@@ -206,6 +216,7 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
     }
   }
 
+
   useEffect(
     () => {
       if (sorting.sortBy) {
@@ -218,6 +229,25 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
     }, [files]
   );
 
+  const theme = useTheme();
+
+
+  const onHover = (path: string) => {
+    const _file = files?.find(e => e.path == path);
+    if (_file?.type != NOneFileDataType.unknown && !(_file?.notes)) {
+      requestOnce(funcs.dartJMsgGetTaskFileNotesAndCurves(task ? task.id : "", path), msg => {
+        // console.dir(JSON.parse(msg));
+        if (msg.startsWith('!!')) {
+          enqueueSnackbar("Невозможно получить данные файла " + path + ": " + msg, { variant: "error" });
+        } else {
+          fetchTaskUpdateFile(msg, task?.id, path);
+          const data = JSON.parse(msg) as JOneFileData;
+          const _updatedData = { ...data, path: path } as JOneFileData;
+          setFiles(files.map<JOneFileData>((value) => value.path.endsWith(path) ? _updatedData : value));
+        }
+      });
+    }
+  }
 
   return (
     <Container component="main" maxWidth={false}>
@@ -234,22 +264,21 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                     height={height}
                     width={width}
 
-                    _dep={files}
-
-
                     headerHeight={headerHeight}
 
                     rowHeight={rowHeight}
                     rowCount={files ? files.length : 0}
                     rowGetter={(row) => files[row.index]}
                     rowClassName={getRowClassName}
-                    rowRenderer={(propsRow) => {
-                      const rowData = propsRow.rowData as JOneFileData;
-                      return (
-                        <RouterLink key={propsRow.key} to={"/task/" + task?.id + "/file/" + rowData.path}>
-                          {defaultTableRowRenderer(propsRow)}
-                        </RouterLink>);
-                    }}
+                    // rowRenderer={(propsRow) => {
+                    //   const rowData = propsRow.rowData as JOneFileData;
+                    //   // console.dir(propsRow);
+                    //   // return (
+                    //   //   <RouterLink className={propsRow.className} key={propsRow.key} to={"/task/" + task?.id + "/file/" + rowData.path}>
+                    //   //     {defaultTableRowRenderer(propsRow)}
+                    //   //   </RouterLink>);
+                    //   // return defaultTableRowRenderer(propsRow);
+                    // }}
 
 
                     gridStyle={{ paddingTop: headerHeight } as React.CSSProperties}
@@ -308,6 +337,7 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                               </TableCell>);
                           }}
                           cellRenderer={({ columnIndex, cellData, ...propsCell }) => {
+                            const rowData = propsCell.rowData as JOneFileData;
                             return (
                               <TableCell
                                 component="div"
@@ -316,12 +346,40 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                                 style={{ height: rowHeight }}
                                 align={(columnIndex != null &&
                                   (columns[columnIndex].columnType == ColumnType.number) ||
-                                  (columns[columnIndex].columnType == ColumnType.fileType)) ?
+                                  (columns[columnIndex].columnType == ColumnType.fileType) ||
+                                  (columns[columnIndex].columnType == ColumnType.btns)) ?
                                   'right' : 'left'}
                               >
                                 {columns[columnIndex].columnType == ColumnType.fileType ?
                                   NOneFileDataType[cellData] :
-                                  cellData}
+                                  columns[columnIndex].columnType == ColumnType.btns ? (
+
+                                    <Tooltip onOpen={() => onHover(rowData.path)} arrow title=
+                                      {(rowData.curves && rowData.notes) ?
+                                        (<>
+                                          Данные файла {rowData.path}<br /><br />
+                                          Обнаруженные кривые:
+                                          {rowData.curves.map((e, i) => <div key={i}>{e.well} <b>{e.name}</b> {e.strt}:{e.stop}({e.step})</div>)}
+                                          Заметки:
+                                          {rowData.notes.map((e, i) => <div key={i}><b>{e.line}:{e.column}: </b>{e.text}({e.data})</div>)}
+                                        </>) :
+                                        (rowData.type != NOneFileDataType.unknown) ?
+                                          (<CircularProgress color="secondary" />) :
+                                          ("Файл неизвестного типа")
+                                      }>
+                                      <IconButton component={RouterLink} to={"/task/" + task?.id + "/file/" + cellData}
+                                        style={{
+                                          color:
+                                            rowData["n-errors"] ? theme.palette.error.main :
+                                              rowData["n-warn"] ? theme.palette.warning.main :
+                                                theme.palette.info.main
+                                        }} >
+                                        <HelpOutlineIcon />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )
+                                    :
+                                    cellData}
                               </TableCell>
                             );
                           }}
@@ -333,8 +391,9 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
               )}
             </AutoSizer>
           </div>
-        )}
-      </WindowScroller>
+        )
+        }
+      </WindowScroller >
     </Container >
   );
 };
@@ -346,5 +405,6 @@ const mapStateToProps = ({ tasks }: AppState): PropsFromState => ({ tasks: tasks
 const mapDispatchToProps = {
   fetchSetTitle: fetchSetTitle,
   fetchTaskUpdateFileList: fetchTaskUpdateFileList,
+  fetchTaskUpdateFile: fetchTaskUpdateFile,
 }
 export default connect(mapStateToProps, mapDispatchToProps)(PageTaskFileList);
