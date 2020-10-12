@@ -132,10 +132,10 @@ const PageTask: React.FC<PageTaskProps & typeof mapDispatchToProps & RouterProps
 
         {task?.raport &&
           <>
-            <Grid item><Button variant="contained" href={"/raports/" + task.id + '.xlsx'} color="primary">
+            <Grid item><Button variant="contained" href={"/raports/" + task.id + '.xlsx'} color="primary" download>
               Файл отчёта
             </Button></Grid>
-            <Grid item><Button variant="contained" href={"/lases/" + task.id + '.zip'} color="primary">
+            <Grid item><Button variant="contained" href={"/lases/" + task.id + '.zip'} color="primary" download>
               Архив LAS файлов
             </Button></Grid></>}
         <Grid item><Button variant="contained" component={RouterLink} to={"/task/" + task?.id + '/filelist'}>
