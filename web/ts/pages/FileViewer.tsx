@@ -22,7 +22,7 @@ import useStyles from "./../styles";
 
 import { funcs, JUser } from "./../dart/Lib";
 import { requestOnce, send, waitMsgAll } from "./../dart/SocketWrapper";
-import { AppState, fetchSetTitle, fetchSignIn, fetchTaskUpdateFileList, TaskState } from "../redux";
+import { AppState, fetchSetTitle, fetchSignIn, fetchTaskUpdateFile, fetchTaskUpdateFileList, TaskState } from "../redux";
 import { connect } from "react-redux";
 import { useSnackbar } from "notistack";
 import { rTaskStateLinearProgress, rTaskStateString } from "../cards/Task";
@@ -71,6 +71,17 @@ const PageFileViewer: React.FC<PageFileViewerProps & typeof mapDispatchToProps &
     setFile(files?.find((value) => value.path == _fileName));
     console.log('[files] ' + _fileName);
     console.dir(files);
+    // requestOnce(funcs.dartJMsgGetTaskFileNotesAndCurves(_taskId, _fileName), msg => {
+    //   // console.dir(JSON.parse(msg));
+    //   if (msg.startsWith('!!')) {
+    //     enqueueSnackbar("Невозможно получить данные файла " + _fileName + ": " + msg, { variant: "error" });
+    //   } else {
+    //     fetchTaskUpdateFile(msg, _taskId, _fileName);
+    //     const data = JSON.parse(msg) as JOneFileData;
+    //     const _updatedData = { ...data, path: _fileName } as JOneFileData;
+    //     setFiles(files.map<JOneFileData>((value) => value.path.endsWith(_fileName) ? _updatedData : value));
+    //   }
+    // });
   }, [files]);
 
 
@@ -106,6 +117,7 @@ interface PropsFromState {
 const mapStateToProps = ({ tasks }: AppState): PropsFromState => ({ tasks: tasks })
 const mapDispatchToProps = {
   fetchSetTitle: fetchSetTitle,
+  fetchTaskUpdateFile: fetchTaskUpdateFile,
   fetchTaskUpdateFileList: fetchTaskUpdateFileList,
 }
 export default connect(mapStateToProps, mapDispatchToProps)(PageFileViewer);

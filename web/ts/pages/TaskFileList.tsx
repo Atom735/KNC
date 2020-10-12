@@ -361,7 +361,14 @@ const PageTaskFileList: React.FC<PageTaskFileListProps & typeof mapDispatchToPro
                                           Обнаруженные кривые:
                                           {rowData.curves.map((e, i) => <div key={i}>{e.well} <b>{e.name}</b> {e.strt}:{e.stop}({e.step})</div>)}
                                           Заметки:
-                                          {rowData.notes.map((e, i) => <div key={i}><b>{e.line}:{e.column}: </b>{e.text}({e.data})</div>)}
+                                          {rowData.notes.filter((value) => value.text != '!Pignore' && value.text != '!Psection').map((e, i) => <div key={i}><b>{e.line}:{e.column}: </b>
+                                            {e.text.startsWith('!P') ?
+                                              e.text.substring(2).split('\u001E').map((value, index) => index == 0 ? <b key={index}>{value}</b> : '| ' + value)
+                                              : e.text.startsWith('!W') ?
+                                                <b style={{ color: theme.palette.warning.main }}>{e.text.substring(2)}</b>
+                                                : e.text.startsWith('!E') ?
+                                                  <b style={{ color: theme.palette.error.main }}>{e.text.substring(2)}</b>
+                                                  : e.text + '(' + e.data + ')'}</div>)}
                                         </>) :
                                         (rowData.type != NOneFileDataType.unknown) ?
                                           (<CircularProgress color="secondary" />) :

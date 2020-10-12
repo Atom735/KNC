@@ -492,16 +492,6 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
           Добавление задачи
         </Typography>
         <form className={classesPage.form} noValidate onSubmit={handleOnSubmit}>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            className={classesPage.submit}
-            disabled={submit}
-          >
-            Добавить задачу
-          </Button>
           <div>
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} >
@@ -632,6 +622,16 @@ const PageNewTask: React.FC<RouterProps & PropsFromState & typeof mapDispatchToP
               </AccordionDetails>
             </Accordion>
           </div>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
+            className={classesPage.submit}
+            disabled={submit}
+          >
+            Добавить задачу
+          </Button>
         </form>
       </div>
       <Backdrop className={classesPage.backdrop} open={submit}>

@@ -85,6 +85,7 @@ class TaskIso extends SocketWrapper {
               break;
             case NTaskState.completed:
               await loadSearchFiles(true);
+              await runGenerateTable();
               break;
             default:
               await dirFiles.create();
@@ -118,8 +119,8 @@ class TaskIso extends SocketWrapper {
     settings.path.forEach((element) {
       if (element.isNotEmpty) {
         print('$this scan $element');
-        fs.add(FileSystemEntity.type(element).then((value) =>
-            value == FileSystemEntityType.file
+        fs.add(FileSystemEntity.type(element)
+            .then((value) => value == FileSystemEntityType.file
                 ? func(File(element), element)
                 : value == FileSystemEntityType.directory
                     ? func(Directory(element), element)
