@@ -53,6 +53,7 @@ const CardTask: React.FC<CardTaskProps> = (props) => {
       </CardActionArea>
       {   task.raport ? <CardActions>
         <Button href={"/raports/" + task.id + '.xlsx'} color="primary">Отчёт</Button>
+        <Button href={"/lases/" + task.id + '.zip'} color="primary">LAS файлы</Button>
       </CardActions> : null}
     </Card>
   );

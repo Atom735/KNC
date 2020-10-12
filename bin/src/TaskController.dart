@@ -103,11 +103,16 @@ class TaskController extends SocketWrapper {
     waitMsgAll(JMsgTaskRaport.msgId).listen((msg) {
       final _msg = JMsgTaskRaport.fromString(msg.s);
       final _url = '/' + (p.url.join('raports', id)) + '.xlsx';
+      final _urlLas = '/' + (p.url.join('lases', id)) + '.zip';
       if (_msg.path.isNotEmpty) {
         final _filePath = p.join(TaskController.dirTasks.path, id, _msg.path);
+        final _filePathLas =
+            p.join(TaskController.dirTasks.path, id, 'lases.zip');
         Server().addFileMap(_url, File(_filePath));
+        Server().addFileMap(_urlLas, File(_filePathLas));
       } else {
         Server().addFileMap(_url, null);
+        Server().addFileMap(_urlLas, null);
       }
     });
 

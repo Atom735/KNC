@@ -72,28 +72,24 @@ class TaskIso extends SocketWrapper {
             case NTaskState.searchFiles:
               await runSearchFiles();
               await runWorkFiles();
-              await runGenerateTable();
               break;
             case NTaskState.workFiles:
               await loadSearchFiles();
               await runWorkFiles();
-              await runGenerateTable();
               break;
             case NTaskState.generateTable:
               await loadSearchFiles(true);
-              await runGenerateTable();
               break;
             case NTaskState.completed:
               await loadSearchFiles(true);
-              await runGenerateTable();
               break;
             default:
               await dirFiles.create();
               await runSearchFiles();
               await runWorkFiles();
-              await runGenerateTable();
           }
         }
+        await runGenerateTable();
         return;
       }
       await dirFiles.create();
@@ -327,6 +323,40 @@ class TaskIso extends SocketWrapper {
 
     final xlsPath = xlsDataOut.path + '.xlsx';
     await zip(xlsDataOut.path, xlsPath);
+
+    final _lFiles = files.length;
+
+    /// Создание архива las файлов
+    final lasArchPath = p.join(pathAbsolute, 'lases');
+    final lasDir = Directory(lasArchPath);
+    if (await lasDir.exists()) {
+      await lasDir.delete(recursive: true);
+    }
+    await lasDir.create();
+    final lasCopysFuture = <Future>[];
+    final lasCopysNames = <String>[];
+    for (var i = 0; i < _lFiles; i++) {
+      final oneFile = files[i];
+      if (oneFile.type == NOneFileDataType.las) {
+        final file = File(oneFile.path);
+        var newName = p.join(lasArchPath, p.basename(oneFile.origin));
+        if (lasCopysNames.contains(newName)) {
+          var j = 0;
+          final baseName = p.basenameWithoutExtension(oneFile.origin);
+          final ext = p.extension(oneFile.origin);
+          do {
+            newName = p.join(lasArchPath, '${baseName}_$j$ext');
+            j++;
+          } while (lasCopysNames.contains(newName));
+        }
+        lasCopysNames.add(newName);
+        lasCopysFuture.add(file.copy(newName));
+      }
+    }
+
+    await Future.wait(lasCopysFuture);
+    await zip(lasArchPath, lasArchPath + '.zip');
+
     send(0, JMsgTaskRaport(p.relative(xlsPath, from: pathAbsolute)).toString());
     state.raport = true;
     state.state = NTaskState.completed;
