@@ -137,6 +137,9 @@ const PageTask: React.FC<PageTaskProps & typeof mapDispatchToProps & RouterProps
             </Button></Grid>
             <Grid item><Button variant="contained" href={"/lases/" + task.id + '.zip'} color="primary" download>
               Архив LAS файлов
+            </Button></Grid>
+            <Grid item><Button variant="contained" href={"/inks/" + task.id + '.zip'} color="primary" download>
+              Архив файлов инклинометрии
             </Button></Grid></>}
         <Grid item><Button variant="contained" component={RouterLink} to={"/task/" + task?.id + '/filelist'}>
           Список файлов

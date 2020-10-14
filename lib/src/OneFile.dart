@@ -6,7 +6,13 @@ class JOneFilesDataCurve {
   final String well;
   static const jsonKey_well = r'well';
 
-  /// Наименоваине кривой (.ink - для инклинометрии)
+  /// Наименоваине кривой
+  ///
+  /// (.ink - для инклинометрии)
+  /// - `.ink.data` - Угол склонения, Альтитуда
+  /// - `.ink.depth` - Глубина
+  /// - `.ink.angle` - Угол
+  /// - `.ink.azimuth` - Азимут
   final String name;
   static const jsonKey_name = r'name';
 

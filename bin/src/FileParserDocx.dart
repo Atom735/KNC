@@ -265,6 +265,9 @@ Future<JOneFileData /*?*/ > parserFileDocx(
     final tbl2_Azimuth = <num>[];
 
     bool parseTbl2Paragraph() {
+      if (xmlParagraph.isEmpty) {
+        return false;
+      }
       if (tbl2RowCount == 1) {
         if (tbl2Head.length < tbl2CellCount) {
           tbl2Head.length = tbl2CellCount;

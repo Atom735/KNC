@@ -358,6 +358,53 @@ class TaskIso extends SocketWrapper {
     await Future.wait(lasCopysFuture);
     await zip(lasArchPath, lasArchPath + '.zip');
 
+    /// Создание архива ink файлов
+    final inkArchPath = p.join(pathAbsolute, 'inks');
+    final inkDir = Directory(inkArchPath);
+    if (await inkDir.exists()) {
+      await inkDir.delete(recursive: true);
+    }
+    await inkDir.create();
+    final inkCopysFuture = <Future>[];
+    final inkCopysNames = <String>[];
+    for (var i = 0; i < _lFiles; i++) {
+      final oneFile = files[i];
+      if (oneFile.type == NOneFileDataType.ink_docx) {
+        var newName = p.join(inkArchPath, oneFile.curves.first.well + '.txt');
+        if (inkCopysNames.contains(newName)) {
+          var j = 0;
+          final baseName = oneFile.curves.first.well;
+          final ext = '.txt';
+          do {
+            newName = p.join(inkArchPath, '${baseName}_$j$ext');
+            j++;
+          } while (inkCopysNames.contains(newName));
+        }
+        inkCopysNames.add(newName);
+        final file = File(newName);
+        final angle = oneFile.curves.first.data[0];
+        final alt = oneFile.curves.first.data[1];
+        final str = StringBuffer(oneFile.curves.first.well + '\r\n');
+        final _dep = oneFile.curves[1].data;
+        final _ang = oneFile.curves[2].data;
+        final _azi = oneFile.curves[3].data;
+        final _l = _dep.length;
+        for (var i = 0; i < _l; i++) {
+          str.write(_dep[i].toString() +
+              '\t' +
+              _ang[i].toString() +
+              '\t' +
+              (_azi[i] + angle).toString() +
+              '\r\n');
+        }
+
+        inkCopysFuture.add(file.writeAsString(str.toString()));
+      }
+    }
+
+    await Future.wait(inkCopysFuture);
+    await zip(inkArchPath, inkArchPath + '.zip');
+
     send(0, JMsgTaskRaport(p.relative(xlsPath, from: pathAbsolute)).toString());
     state.raport = true;
     state.state = NTaskState.completed;
