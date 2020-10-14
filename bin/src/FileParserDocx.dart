@@ -432,9 +432,9 @@ Future<JOneFileData /*?*/ > parserFileDocx(
         oWell, '.ink.azimuth', strt, stop, step, dataAzimuth));
     final _l = tbl2_Depth.length;
     for (var i = 0; i < _l; i++) {
-      dataDepth[i] = tbl2_Depth[i];
-      dataAngle[i] = tbl2_Angle[i];
-      dataAzimuth[i] = tbl2_Azimuth[i];
+      dataDepth.add(tbl2_Depth[i]);
+      dataAngle.add(tbl2_Angle[i]);
+      dataAzimuth.add(tbl2_Azimuth[i]);
     }
 
     return JOneFileData(fileData.path, fileData.origin,

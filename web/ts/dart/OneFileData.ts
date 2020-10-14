@@ -1,4 +1,5 @@
-export enum NOneFileDataType { unknown, las }
+export enum NOneFileDataType { unknown, las, docx, ink_docx }
+
 
 /// Значения иследований
 export interface JOneFilesDataCurve {
