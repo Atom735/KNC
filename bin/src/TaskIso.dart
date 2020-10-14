@@ -10,6 +10,7 @@ import 'FIleParserLas.dart';
 import 'TaskController.dart';
 import 'TaskSpawnSets.dart';
 import 'misc.dart';
+import 'FileParserDocx.dart';
 
 class TaskIso extends SocketWrapper {
   /// Порт для получение сообщений этим изолятом
@@ -420,8 +421,36 @@ class TaskIso extends SocketWrapper {
         if (arch.exitCode == 0) {
           final _dir = Directory(arch.pathOut /*!*/);
           await copyDirectoryRecursive(_dir, Directory(_dirName));
-          // TODO: обработать docx файл
+
           await _dir.delete(recursive: true);
+
+          // Пытаемся обработать к DOCX файл
+          if ((fileDataNew = await parserFileDocx(
+                  this,
+                  fileData,
+                  await File(p.join(_dirName, 'word', 'document.xml'))
+                      .readAsString())) !=
+              null) {
+            if (fileDataNew /*!*/ .notes != null) {
+              if ((fileDataNew.notesError ?? 0) > 0) {
+                state.errors = state.errors + 1;
+              }
+              if ((fileDataNew.notesWarnings ?? 0) > 0) {
+                state.warnings = state.warnings + 1;
+              }
+            }
+            await tryFunc<File /*?*/ >(
+                () => File(fileDataNew /*!*/ .path + '.json')
+                    .writeAsString(jsonEncode(fileDataNew)), onError: (e) {
+              errorsOut.writeln(DateTime.now().toIso8601String());
+              errorsOut.writeln('!Save FileData');
+              errorsOut.writeln(e);
+              return null;
+            });
+            files[_i] = fileDataNew;
+            state.worked = state.worked + 1;
+            return;
+          }
         } else {
           errorsOut.writeln(DateTime.now().toIso8601String());
           errorsOut.writeln('!Archive unzip ${arch.pathIn} => ${arch.pathOut}');

@@ -17,6 +17,9 @@ interface Dart {
   dartIdJMsgTaskUpdate: () => string;
   dartIdJMsgTasksAll: () => string;
   dartIdJMsgTaskKill: () => string;
+
+
+  dartJTaskSettingsDefs: () => string;
 }
 export const funcs = (window as unknown as Dart);
 
@@ -71,14 +74,16 @@ export interface JTaskSettings {
   'ud'?: number;
 }
 
-export const JTaskSettings_defs: JTaskSettings = {
-  user: "Гость",
-  users: ['@guest'],
-  name: '@unnamed',
-  path: ['D:\\Искринское м-е'],
-  'ar-e': ['.zip', '.rar'],
-  'f-e': ['.las', '.doc', '.docx', '.txt', '.dbf'],
-  'ar-s': 1024 * 1024 * 1024,
-  'ar-d': -1,
-  'ud': 333,
-}
+export const JTaskSettings_defs: JTaskSettings = JSON.parse(funcs.dartJTaskSettingsDefs());
+
+// {
+//   user: "Гость",
+//   users: ['@guest'],
+//   name: '@unnamed',
+//   path: ['D:\\Искринское м-е'],
+//   'ar-e': ['.zip', '.rar'],
+//   'f-e': ['.las', '.doc', '.docx', '.txt', '.dbf'],
+//   'ar-s': 1024 * 1024 * 1024,
+//   'ar-d': -1,
+//   'ud': 333,
+// }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Класс содержащий параметры и настройки поставленной задачи
 class JTaskSettings {
   /// Почта пользователя запустившего задачу.
@@ -18,7 +20,11 @@ class JTaskSettings {
   /// Список сканируемых путей
   final List<String> path;
   static const jsonKey_path = 'path';
-  static const def_path = [r'D:\Искринское м-е'];
+  // static const def_path = [r'D:\Искринское м-е'];
+  static const def_path = [
+    r'D:\Искринское м-е\2012г\2255\2255\2 ствол\2255 (2ствол) инклинометрия.doc',
+    r'D:\Искринское м-е\2012г\2255\2255\2 ствол\2255 (2ствол) инклинометрия 1060м.doc'
+  ];
 
   /// Расширения для архивных файлов
   final List<String> ext_ar;
@@ -59,7 +65,7 @@ class JTaskSettings {
   static const def_update_duration = 333;
 
   JTaskSettings(
-      {/*required*/ this.user,
+      {this.user = def_user,
       this.users = def_users,
       this.name = def_name,
       this.path = def_path,
@@ -104,4 +110,6 @@ class JTaskSettings {
         jsonKey_maxdepth_ar: maxdepth_ar,
         jsonKey_update_duration: update_duration,
       };
+
+  String js() => jsonEncode(toJson());
 }

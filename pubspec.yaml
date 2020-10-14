@@ -9,7 +9,7 @@ environment:
 dependencies:
   mime: ^0.9.7
   crclib: ^1.1.0
-  xml: ^4.2.0
+  xml: ^4.5.0
   path: ^1.7.0
   crypto: ^2.1.5
   mdc_web: ^0.4.1

@@ -1,4 +1,4 @@
-enum NOneFileDataType { unknown, las }
+enum NOneFileDataType { unknown, las, docx, ink_docx }
 
 /// Значения иследований
 class JOneFilesDataCurve {

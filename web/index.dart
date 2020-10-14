@@ -37,6 +37,9 @@ external set _jsIdJMsgTasksAll(Function f);
 @JS('dartIdJMsgTaskKill')
 external set _jsIdJMsgTaskKill(Function f);
 
+@JS('dartJTaskSettingsDefs')
+external set _jsJTaskSettingsDefs(Function f);
+
 void main() {
   _jsJMsgUserSignin = allowInterop(JMsgUserSignin.jsFunc);
   _jsJMsgUserLogout = allowInterop(JMsgUserLogout.jsFunc);
@@ -50,8 +53,11 @@ void main() {
   _jsJMsgGetTaskFileNotesAndCurves =
       allowInterop(JMsgGetTaskFileNotesAndCurves.jsFunc);
   _jsJMsgTaskKill = allowInterop(JMsgTaskKill.jsFunc);
+
   _jsIdJMsgTaskNew = allowInterop(() => JMsgTaskNew.msgId);
   _jsIdJMsgTaskUpdate = allowInterop(() => JMsgTaskUpdate.msgId);
   _jsIdJMsgTasksAll = allowInterop(() => JMsgTasksAll.msgId);
   _jsIdJMsgTaskKill = allowInterop(() => JMsgTaskKill.msgId);
+
+  _jsJTaskSettingsDefs = allowInterop(() => JTaskSettings().js());
 }
