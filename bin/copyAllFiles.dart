@@ -30,12 +30,9 @@ void copy(String pathIn, List<String> exts, Directory dirOut) async {
 void main(List<String> args) async {
   const pathIn = r'\\NAS\Public\common';
 
-  await copy(
-      pathIn, ['.txt'], Directory(p.join('.ignore', 'files', 'txt')).absolute);
-  await copy(
-      pathIn, ['.dbf'], Directory(p.join('.ignore', 'files', 'dbf')).absolute);
-  await copy(pathIn, ['.doc', '.docx'],
+  copy(pathIn, ['.txt'], Directory(p.join('.ignore', 'files', 'txt')).absolute);
+  copy(pathIn, ['.dbf'], Directory(p.join('.ignore', 'files', 'dbf')).absolute);
+  copy(pathIn, ['.doc', '.docx'],
       Directory(p.join('.ignore', 'files', 'doc')).absolute);
-  await copy(
-      pathIn, ['.las'], Directory(p.join('.ignore', 'files', 'las')).absolute);
+  copy(pathIn, ['.las'], Directory(p.join('.ignore', 'files', 'las')).absolute);
 }
