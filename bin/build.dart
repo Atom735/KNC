@@ -16,6 +16,18 @@ String dartType2TsType(String type) {
   return type.endsWith('/*?*/') ? '?: $type' : ': $type';
 }
 
+String dartTypeFromJson(String type) {
+  type = type
+      .trim()
+      .replaceAll('String', 'string')
+      .replaceAll('num', 'number')
+      .replaceAll('int', 'number')
+      .replaceAll('double', 'number')
+      .replaceAll('bool', 'boolean')
+      .replaceAll('List', 'Array');
+  return type.endsWith('/*?*/') ? '?: $type' : ': $type';
+}
+
 void main(List<String> args) {
   final dirLibTs =
       Directory(p.join(Directory.current.absolute.path, 'lib', 'ts'));
