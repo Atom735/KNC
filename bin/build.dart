@@ -12,6 +12,7 @@ String dartType2TsType(String type) {
       .replaceAll('int', 'number')
       .replaceAll('double', 'number')
       .replaceAll('bool', 'boolean')
+      .replaceAll('dynamic', 'any')
       .replaceAll('List', 'Array');
   return type.endsWith('/*?*/') ? '?: $type' : ': $type';
 }
