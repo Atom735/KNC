@@ -18,6 +18,9 @@ tasks
 web/ts/*.js
 *bundle.js
 
+*.g.ts
+*.g.dart
+
 
 # See https://www.dartlang.org/guides/libraries/private-files
 
