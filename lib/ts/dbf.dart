@@ -16,7 +16,7 @@ class DbfHead {
   /// - `139`	`0x8B`	`10001011`	[dBASE IV, dBASE 5]	Таблица с memo-полями .DBT формата dBASE IV
   /// - `140`	`0x8C`	`10001100`	[dBASE 7]	Таблица с memo-полями .DBT формата dBASE IV
   /// - `203`	`0xCB`	`11001011`	[dBASE IV, dBASE 5]	SQL-таблица dBASE IV с memo-полями .DBT
-  /// - `203`	`0xE5`	`11100101`	[SMT]	Таблица с memo-полями .SMT
+  /// - `229`	`0xE5`	`11100101`	[SMT]	Таблица с memo-полями .SMT
   /// - `235`	`0xEB`	`11101011`	[dBASE IV, dBASE 5]	Системная SQL-таблица dBASE IV с memo-полями .DBT
   /// - `245`	`0xF5`	`11110101`	[FoxPro]	Таблица с memo-полями .FPT
   /// - `251`	`0xFB`	`11111011`	[FoxBASE]	Таблица с memo-полями .???
