@@ -1,3 +1,20 @@
+/// Дополнительные параметры
+class OneFileLasDataSectionLine {
+  /// Мнемоника параметра
+  /// либо имя кривой
+  String mnem;
+
+  /// Единицы измерения
+  String units;
+
+  /// Занчение параметра
+  /// либо API кривой
+  String value;
+
+  /// Описание
+  String desc;
+}
+
 /// `~V` - contains version and wrap mode information
 /// - Этот раздел является обязательным и обычно появляется в самом начале
 /// файла.
@@ -25,7 +42,7 @@ class OneFileLasDataSectionV {
   bool wrap;
 
   /// Дополнительные линии
-  List<String> /*?*/ extLines;
+  List<OneFileLasDataSectionLine> /*?*/ extLines;
 }
 
 /// `~W` - contains well identification
@@ -97,22 +114,7 @@ class OneFileLasDataSectionW {
   String /*?*/ uniqueWellId;
 
   /// Дополнительные линии
-  List<String> /*?*/ extLines;
-}
-
-/// Дополнительные параметры
-class OneFileLasDataSectionLine {
-  /// Мнемоника параметра
-  String mnem;
-
-  /// Единицы измерения
-  String units;
-
-  /// Занчение
-  String value;
-
-  /// Описание
-  String desc;
+  List<OneFileLasDataSectionLine> /*?*/ extLines;
 }
 
 /// Данные LAS файла
