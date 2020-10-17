@@ -1,103 +1,142 @@
 /// Доп инфомация проведения инклинометрии
-class OneFileInkExtInfo {
+class OneFileInkDataDocExtInfo {
   /// Номер
   int n;
 
   /// Интервал начало
-  double strt;
+  double /*?*/ strt;
 
   /// Интервал конец
-  double stop;
+  double /*?*/ stop;
 
   /// Количетсво точек
-  int count;
+  int /*?*/ count;
 
   /// Дата иследования (День)
-  int dd;
+  int /*?*/ dd;
 
   /// Дата иследования (Месяц)
-  int mm;
+  int /*?*/ mm;
 
   /// Дата иследования (Год)
-  int yy;
+  int /*?*/ yy;
 
   /// Тип прибора
-  String devType;
+  String /*?*/ devType;
 
   /// Номер прибора
-  int devNum;
+  int /*?*/ devNum;
 
   /// Дата проверки
-  String devDate;
+  String /*?*/ devDate;
 
   /// Ствол
-  String shaft;
+  String /*?*/ shaft;
 
   /// ЛБТ
-  String sLBT;
+  String /*?*/ sLBT;
 
   /// ТБПВ
-  String sTBPV;
+  String /*?*/ sTBPV;
 
   /// УБТ
-  String sUBT;
+  String /*?*/ sUBT;
 
   /// Фамилия начальника партии
-  String supervisor;
+  String /*?*/ supervisor;
 
   /// Фамилия представителя заказчика
-  String client;
+  String /*?*/ client;
 }
 
-/// Данные инклинометрии
-class OneFileInkDataExt {
+/// Данные инклинометрии, одна строка
+class OneFileInkDataRow {
   /// Глубина (м)
   double depth;
 
   /// Угол (градусы)
   double angle;
 
+  /// Угол (градусы`минуты)
+  double angle1;
+
   /// Азимут (градусы)
   double azimuth;
+}
 
+/// Данные инклинометрии DBF файла на каждую скважину, одна строка
+class OneFileInkDataRowDbf extends OneFileInkDataRow {
+  /// Дополнительные поля данных скважины, названия берутся из [OneFileInkDataDbf]
+  List<String> /*?*/ extInfo;
+}
+
+/// Данные инклинометрии DOCX файла, одна строка
+class OneFileInkDataRowDoc extends OneFileInkDataRow {
   /// Звёздочка у значения Азимута
   bool azimuthStar;
 
   /// Удлинение (м)
-  double addLenght;
+  double /*?*/ addLenght;
 
   /// Абс. отметка (м)
-  double absPoint;
+  double /*?*/ absPoint;
 
   /// Вертикальная глубина (м)
-  double vertDepth;
+  double /*?*/ vertDepth;
 
   /// Смещение (м)
-  double offset;
+  double /*?*/ offset;
 
   /// Дир. угол смещения (градусы)
-  double offsetAngle;
+  double /*?*/ offsetAngle;
+
+  /// Дир. угол смещения (градусы`минуты)
+  double /*?*/ offsetAngle1;
 
   /// +север, -юг, (м)
-  double north;
+  double /*?*/ north;
 
   /// +восток, -запад, (м)
-  double west;
+  double /*?*/ west;
 
   /// Интенсивность (градусы/10м)
-  double intensity;
+  double /*?*/ intensity;
 }
 
-/// Данные инклинометрии DOCX файла
-class OneFileInk {
-  /// Фамилия утверждающего
-  String approver;
-
-  /// Заказчик
-  String client;
-
+/// Данные инклинометрии каждой скважины
+class OneFileIncData<T extends OneFileInkDataRow> {
   /// Номер скважины
   String well;
+
+  /// Интервал печати начало (м)
+  double strt;
+
+  /// Интервал печати конец (м)
+  double stop;
+
+  /// Данные инклинометрии
+  List<T> data;
+}
+
+/// Данные инклинометрии DBF файла на каждую скважину
+class OneFileInkDataDbfWell extends OneFileIncData<OneFileInkDataRowDbf> {}
+
+/// Данные инклинометрии DOCX файла
+class OneFileInkDataDoc extends OneFileIncData<OneFileInkDataRowDoc> {
+  /// Угол склонения (градусы)
+  double angle;
+
+  /// Альтитуда (м)
+  double altitude;
+
+  /// Доп инфомация
+  List<OneFileInkDataDocExtInfo> extInfo;
+
+  /// Фамилия утверждающего
+  String /*?*/ approver;
+
+  /// Заказчик
+  String /*?*/ client;
 
   /// Площадь
   String /*?*/ square;
@@ -111,26 +150,8 @@ class OneFileInk {
   /// Глубина башмака (м)
   double /*?*/ depth;
 
-  /// Угол склонения (градусы)
-  double angle;
-
-  /// Альтитуда (м)
-  double altitude;
-
   /// Забой (м)
   double /*?*/ zaboy;
-
-  /// Доп инфомация
-  List<OneFileInkExtInfo> extInfo;
-
-  /// Данные инклинометрии
-  List<OneFileInkDataExt> data;
-
-  /// Интервал печати начало (м)
-  double strt;
-
-  /// Интервал печати конец (м)
-  double stop;
 
   /// Глубина максимального зенитного угла (м)
   double /*?*/ maxZenithAngleDepth;
@@ -146,4 +167,13 @@ class OneFileInk {
 
   /// Кто обработал
   String /*?*/ processed;
+}
+
+/// Данные инклинометрии DBF файла
+class OneFileInkDataDbf {
+  /// Данные инклинометрии каждой скважины
+  List<OneFileInkDataDbfWell> wells;
+
+  /// Наименования дополнительных полей данных скважины
+  List<String> extInfo;
 }
