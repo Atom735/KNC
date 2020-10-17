@@ -4,15 +4,21 @@ import 'package:path/path.dart' as p;
 
 const dartSdk = r'D:\ARGilyazeev\dart-sdk\bin\';
 
-String dartType2TsType(String type) => type
-    .trim()
-    .replaceAll('String', 'string')
-    .replaceAll('num', 'number')
-    .replaceAll('int', 'number')
-    .replaceAll('double', 'number')
-    .replaceAll('bool', 'boolean')
-    .replaceAll('dynamic', 'any')
-    .replaceAll('List', 'Array');
+String dartType2TsType(String type) => type == 'String'
+    ? 'string'
+    : type == 'num'
+        ? 'number'
+        : type == 'int'
+            ? 'number'
+            : type == 'double'
+                ? 'number'
+                : type == 'bool'
+                    ? 'boolean'
+                    : type == 'dynamic'
+                        ? 'any'
+                        : type == 'List'
+                            ? 'Array'
+                            : type;
 
 List<String> getDocComments(String data) => data
     .trim()
@@ -69,31 +75,68 @@ class DartClassMember {
   /// Унаследован ли
   bool inherited;
 
-  static DartClassMember inherite(DartClassMember m) {
+  static DartClassMember inherite(DartClassMember m, DartClass from) {
     final o = DartClassMember();
     o.docComments = m.docComments;
-    o.type = m.type;
-    o.typeGenericsNames = m.typeGenericsNames;
+    // o.type = m.type;
+    // o.typeGenericsNames = m.typeGenericsNames;
     o.ident = m.ident;
     o.canBeNull = m.canBeNull;
     o.inherited = true;
+
+    final _super = from.superClass;
+
+    o.type = m.type;
+    if (_super.genericsNames != null && _super.genericsNames.contains(m.type)) {
+      final i0 = _super.genericsNames.indexOf(m.type);
+      if (from.superClassGenericsNames != null &&
+          from.superClassGenericsNames.length > i0) {
+        o.type = from.superClassGenericsNames[i0];
+      } else {
+        o.type = 'dynamic';
+      }
+    }
+
+    o.typeGenericsNames = m.typeGenericsNames;
+    if (m.typeGenericsNames != null && m.typeGenericsNames.isNotEmpty) {
+      o.typeGenericsNames = m.typeGenericsNames.map((e) {
+        if (_super.genericsNames != null && _super.genericsNames.contains(e)) {
+          final i0 = _super.genericsNames.indexOf(e);
+          if (from.superClassGenericsNames != null &&
+              from.superClassGenericsNames.length > i0) {
+            return from.superClassGenericsNames[i0];
+          }
+        }
+        return 'dynamic';
+      }).toList(growable: false);
+    }
     return o;
   }
 
   static DartClassMember getByRegExpMatch(final RegExpMatch match) {
     final o = DartClassMember();
     final _docComments = match.group(1);
-    final _type = match.group(2);
+    var _type = match.group(2);
     o.ident = match.group(3);
     if (_docComments != null && _docComments.trim().isNotEmpty) {
       o.docComments = getDocComments(_docComments);
     }
     if (_type.endsWith('/*?*/')) {
-      o.type = _type.substring(0, _type.length - 5).trim();
+      _type = _type.substring(0, _type.length - 5).trim();
       o.canBeNull = true;
     } else {
-      o.type = _type;
       o.canBeNull = false;
+    }
+    final i0 = _type.indexOf('<');
+    if (i0 != -1) {
+      o.typeGenericsNames = _type
+          .substring(i0 + 1, _type.lastIndexOf('>'))
+          .split(',')
+          .map((e) => e.trim())
+          .toList(growable: false);
+      o.type = _type.substring(0, i0).trim();
+    } else {
+      o.type = _type;
     }
     o.inherited = false;
     return o;
@@ -119,6 +162,11 @@ class DartClassMember {
         ident +
         (canBeNull ? '?: ' : ': ') +
         dartType2TsType(type) +
+        (typeGenericsNames != null && typeGenericsNames.isNotEmpty
+            ? '<' +
+                typeGenericsNames.map((e) => dartType2TsType(e)).join(', ') +
+                '>'
+            : '') +
         ';');
     return str.toString();
   }
@@ -131,6 +179,9 @@ class DartClassMember {
     }
     str.writeln(''.padLeft(tabs, '\t') +
         type +
+        (typeGenericsNames != null && typeGenericsNames.isNotEmpty
+            ? '<' + typeGenericsNames.join(', ') + '>'
+            : '') +
         (canBeNull ? ' /*?*/ ' : ' ') +
         ident +
         ';');
@@ -197,6 +248,9 @@ class DartClass {
   /// Члены класса
   List<DartClassMember> /*?*/ members;
 
+  /// Супер класс
+  DartClass /*?*/ superClass;
+
   static DartClass getByRegExpMatch(final RegExpMatch match,
       [final List<DartClass> ctx]) {
     final o = DartClass();
@@ -213,11 +267,11 @@ class DartClass {
       if (ctx != null &&
           ctx.isNotEmpty &&
           ctx.any((e) => e.ident == o.superClassName)) {
-        final _superMembers =
-            ctx.firstWhere((e) => e.ident == o.superClassName).members;
+        o.superClass = ctx.firstWhere((e) => e.ident == o.superClassName);
+        final _superMembers = o.superClass.members;
         if (_superMembers != null && _superMembers.isNotEmpty) {
           o.members =
-              _superMembers.map((e) => DartClassMember.inherite(e)).toList();
+              _superMembers.map((e) => DartClassMember.inherite(e, o)).toList();
         }
       }
     }
