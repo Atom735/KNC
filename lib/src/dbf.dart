@@ -8,24 +8,24 @@ extension IDbfHead on DbfHead {
       return null;
     }
     return DbfHead(
-        bytes.getUint8(0),
-        bytes.getUint8(1),
-        bytes.getUint8(2),
-        bytes.getUint8(3),
-        bytes.getUint32(4, Endian.little),
-        bytes.getUint16(8, Endian.little),
-        bytes.getUint16(10, Endian.little),
-        bytes.getUint16(12, Endian.little),
-        bytes.getUint8(14),
-        bytes.getUint8(15),
-        bytes.getUint32(16, Endian.little),
-        bytes.getUint32(20, Endian.little),
-        bytes.getUint32(24, Endian.little),
-        bytes.getUint8(28),
-        bytes.getUint8(29),
-        bytes.getUint16(30),
-        '',
-        0);
+        signature: bytes.getUint8(0),
+        lastUpdateYY: bytes.getUint8(1),
+        lastUpdateMM: bytes.getUint8(2),
+        lastUpdateDD: bytes.getUint8(3),
+        numberOfRecords: bytes.getUint32(4, Endian.little),
+        lengthOfHeader: bytes.getUint16(8, Endian.little),
+        lengthOfEachRecord: bytes.getUint16(10, Endian.little),
+        r12: bytes.getUint16(12, Endian.little),
+        incompleteTransac: bytes.getUint8(14),
+        ecryptionFlag: bytes.getUint8(15),
+        r16: bytes.getUint32(16, Endian.little),
+        r20: bytes.getUint32(20, Endian.little),
+        r24: bytes.getUint32(24, Endian.little),
+        mdxFlag: bytes.getUint8(28),
+        laguageDriverID: bytes.getUint8(29),
+        r30: bytes.getUint16(30),
+        laguageDriverName: '',
+        r64: 0);
   }
 
   String getDebugString() {
@@ -330,16 +330,16 @@ extension IDbfFieldStruct on DbfFieldStruct {
         String.fromCharCodes(bytes.buffer.asInt8List(bytes.offsetInBytes, ij));
     final _type = String.fromCharCode(bytes.getUint8(11));
     return DbfFieldStruct(
-        _name,
-        _type,
-        bytes.getUint32(12, Endian.little),
-        bytes.getUint8(16),
-        bytes.getUint8(17),
-        bytes.getUint8(18),
-        bytes.getUint32(19, Endian.little),
-        bytes.getUint8(23),
-        bytes.getUint32(24, Endian.little),
-        bytes.getUint32(28, Endian.little));
+        name: _name,
+        type: _type,
+        address: bytes.getUint32(12, Endian.little),
+        length: bytes.getUint8(16),
+        decimalCount: bytes.getUint8(17),
+        flags: bytes.getUint8(18),
+        autoincrementNextVal: bytes.getUint32(19, Endian.little),
+        autoincrementStepVal: bytes.getUint8(23),
+        r24: bytes.getUint32(24, Endian.little),
+        r28: bytes.getUint32(28, Endian.little));
   }
 
   String getDebugString() {
@@ -514,7 +514,7 @@ extension IDbfRecord on DbfRecord {
           .asUint8List(bytes.offsetInBytes + offset, fields[j].length));
       offset += fields[j].length;
     }
-    return DbfRecord(bytes.getUint8(0), _list);
+    return DbfRecord(headByte: bytes.getUint8(0), values: _list);
   }
 
   String getDebugString(final List<DbfFieldStruct> fields,
@@ -575,7 +575,7 @@ extension IOneFileDbf on OneFileDbf {
               bytes, offset, offset + _head.lengthOfEachRecord),
           _fields);
     });
-    return OneFileDbf(_head, _fields, _records);
+    return OneFileDbf(head: _head, fields: _fields, records: _records);
   }
 
   String getDebugString() {
