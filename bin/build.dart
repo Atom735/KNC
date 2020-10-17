@@ -25,7 +25,7 @@ List<String> getDocComments(String data) => data
 String wrtieDocCommentsTs(List<String> comments, [tabs = 0]) =>
     ''.padLeft(tabs, '\t') +
     '/**\r\n' +
-    comments.map((e) => ''.padLeft(tabs, '\t') + '///' + e).join('\r\n') +
+    comments.map((e) => ''.padLeft(tabs, '\t') + ' *' + e).join('\r\n') +
     '\r\n' +
     ''.padLeft(tabs, '\t') +
     ' */';
@@ -315,25 +315,62 @@ class DartClass {
 
   String getDartClassConstructorDefault([int tabs = 1]) {
     final str = StringBuffer();
-    str.writeln(''.padLeft(tabs, '\t') + ident + '([');
+    str.writeln(''.padLeft(tabs, '\t') + ident + '({');
     if (members != null && members.isNotEmpty) {
       for (var member in members) {
-        str.writeln(''.padLeft(tabs + 1, '\t') + 'this.${member.ident},');
+        if (member.inherited) {
+          str.writeln(''.padLeft(tabs + 1, '\t') +
+              '${member.type} ${member.canBeNull ? '/*?*/ ' : ''} ${member.ident},');
+        } else {
+          str.writeln(''.padLeft(tabs + 1, '\t') + 'this.${member.ident},');
+        }
       }
     }
-    str.writeln(''.padLeft(tabs, '\t') + ']);');
+    str.write(''.padLeft(tabs, '\t') + '})');
+    if (superClassName != null && superClassName.isNotEmpty) {
+      str.writeln(' : super(');
+      if (members != null && members.isNotEmpty) {
+        for (var member in members) {
+          if (member.inherited) {
+            str.writeln(''.padLeft(tabs + 4, '\t') +
+                '${member.ident} : ${member.ident},');
+          }
+        }
+      }
+      str.writeln(''.padLeft(tabs + 3, '\t') + ');');
+    } else {
+      str.writeln(';');
+    }
     return str.toString();
   }
 
-  String getDartClassConstructorMap([int tabs = 1]) {
+  String getDartClassConstructorArray([int tabs = 1]) {
     final str = StringBuffer();
-    str.writeln(''.padLeft(tabs, '\t') + ident + '.map({');
+    str.writeln(''.padLeft(tabs, '\t') + ident + '.a([');
     if (members != null && members.isNotEmpty) {
       for (var member in members) {
-        str.writeln(''.padLeft(tabs + 1, '\t') + 'this.${member.ident},');
+        if (member.inherited) {
+          str.writeln(''.padLeft(tabs + 1, '\t') +
+              '${member.type} ${member.canBeNull ? '/*?*/ ' : ''} ${member.ident},');
+        } else {
+          str.writeln(''.padLeft(tabs + 1, '\t') + 'this.${member.ident},');
+        }
       }
     }
-    str.writeln(''.padLeft(tabs, '\t') + '});');
+    str.write(''.padLeft(tabs, '\t') + '])');
+    if (superClassName != null && superClassName.isNotEmpty) {
+      str.writeln(' : super.a(');
+      if (members != null && members.isNotEmpty) {
+        for (var member in members) {
+          if (member.inherited) {
+            str.writeln(''.padLeft(tabs + 4, '\t') + '${member.ident},');
+          }
+        }
+      }
+      str.writeln(''.padLeft(tabs + 3, '\t') + ');');
+    } else {
+      str.writeln(';');
+    }
     return str.toString();
   }
 
@@ -341,16 +378,31 @@ class DartClass {
     final str = StringBuffer();
     str.writeln(
         ''.padLeft(tabs, '\t') + ident + '.byJson(Map<String,dynamic> $json)');
+    var bFirst = true;
     if (members != null && members.isNotEmpty) {
-      final _l = members.length;
-      str.write(''.padLeft(tabs + 2, '\t') +
-          ': ' +
-          members[0].getDartJsonGetter(json));
-      for (var i = 1; i < _l; i++) {
+      for (var member in members) {
+        if (!member.inherited) {
+          if (bFirst) {
+            str.write(''.padLeft(tabs + 2, '\t') +
+                ': ' +
+                member.getDartJsonGetter(json));
+            bFirst = false;
+          } else {
+            str.writeln(',');
+            str.write(''.padLeft(tabs + 2, '\t') +
+                '  ' +
+                member.getDartJsonGetter(json));
+          }
+        }
+      }
+    }
+    if (superClassName != null && superClassName.isNotEmpty) {
+      if (bFirst) {
+        str.write(''.padLeft(tabs + 2, '\t') + ': super.byJson($json)');
+        bFirst = false;
+      } else {
         str.writeln(',');
-        str.write(''.padLeft(tabs + 2, '\t') +
-            '  ' +
-            members[i].getDartJsonGetter(json));
+        str.write(''.padLeft(tabs + 2, '\t') + '  super.byJson($json)');
       }
     }
     str.writeln(';');
@@ -411,7 +463,7 @@ class DartClass {
       }
     }
     str.writeln(getDartClassConstructorDefault());
-    str.writeln(getDartClassConstructorMap());
+    str.writeln(getDartClassConstructorArray());
     str.writeln(getDartClassConstructorJson());
     str.writeln(getDartClassJsonGenerator());
     str.writeln('}');
