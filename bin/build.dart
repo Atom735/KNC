@@ -22,6 +22,17 @@ List<String> getDocComments(String data) => data
     .map((e) => e.substring(3))
     .toList(growable: false);
 
+String wrtieDocCommentsTs(List<String> comments, [tabs = 0]) =>
+    ''.padLeft(tabs, '\t') +
+    '/**\r\n' +
+    comments.map((e) => ''.padLeft(tabs, '\t') + '///' + e).join('\r\n') +
+    '\r\n' +
+    ''.padLeft(tabs, '\t') +
+    ' */';
+
+String wrtieDocCommentsDart(List<String> comments, [tabs = 0]) =>
+    comments.map((e) => ''.padLeft(tabs, '\t') + '///' + e).join('\r\n');
+
 // ignore: slash_for_doc_comments
 /**
 ```regexp
@@ -35,8 +46,8 @@ List<String> getDocComments(String data) => data
 */
 final reClassMember = RegExp(
     r'((?:^\s*\/\/\/.*\r?\n)*)\s*'
-    r'?(\w+(?:\s*\<\w+\>)?(?:\s*\/\*\?\*\/)?)'
-    r'?\s+(\w+);',
+    r'(\w+(?:\s*\<\w+\>)?(?:\s*\/\*\?\*\/)?)'
+    r'\s+(\w+);',
     multiLine: true);
 
 class DartClassMember {
@@ -76,7 +87,7 @@ class DartClassMember {
   /// Распарсить Dart class Body
   static List<DartClassMember> getByString(String data) {
     final o = <DartClassMember>[];
-    final matches = reClassHead.allMatches(data);
+    final matches = reClassMember.allMatches(data);
     for (var match in matches) {
       o.add(getByRegExpMatch(match));
     }
@@ -86,12 +97,8 @@ class DartClassMember {
   /// Получить строку как член TS интерфейса
   String getTsInterface([int tabs = 1]) {
     final str = StringBuffer();
-    if (docComments != null) {
-      str.writeln(''.padLeft(tabs, '\t') + '/**');
-      for (var comment in docComments) {
-        str.writeln(''.padLeft(tabs, '\t') + ' *' + comment);
-      }
-      str.writeln(''.padLeft(tabs, '\t') + ' */');
+    if (docComments != null && docComments.isNotEmpty) {
+      str.writeln(wrtieDocCommentsTs(docComments, tabs));
     }
     str.writeln(''.padLeft(tabs, '\t') +
         ident +
@@ -100,6 +107,28 @@ class DartClassMember {
         ';');
     return str.toString();
   }
+
+  /// Получить строку как член Dart класса
+  String getDartMember([int tabs = 1]) {
+    final str = StringBuffer();
+    if (docComments != null && docComments.isNotEmpty) {
+      str.writeln(wrtieDocCommentsDart(docComments, tabs));
+    }
+    str.writeln(''.padLeft(tabs, '\t') +
+        type +
+        (canBeNull ? ' /*?*/ ' : ' ') +
+        ident +
+        ';');
+    return str.toString();
+  }
+
+  /// Получить строку как установка значения Dart члена с помощью json данных
+  String getDartJsonGetter([String json = '_json']) =>
+      '$ident = $json[\'$ident\'] as $type' + (canBeNull ? ' /*?*/' : '');
+
+  /// Получить строку как установка значения json поля
+  String getDartJsonSetter([int tabs = 2]) =>
+      ''.padLeft(tabs, '\t') + '\'$ident\': $ident,';
 }
 
 // ignore: slash_for_doc_comments
@@ -184,8 +213,10 @@ class DartClass {
               .map((e) => e.trim())
               .toList(growable: false))
           .toList(growable: false);
-      o.genericsNames = _genParams.map((e) => e[0]);
-      o.genericsExtends = _genParams.map((e) => e.length > 1 ? e[1] : null);
+      o.genericsNames = _genParams.map((e) => e[0]).toList(growable: false);
+      o.genericsExtends = _genParams
+          .map((e) => e.length > 1 ? e[1] : null)
+          .toList(growable: false);
     }
 
     final _input = match.input;
@@ -210,12 +241,8 @@ class DartClass {
   /// Получить строку как TS интерфейс
   String getTsInterface([int tabs = 0]) {
     final str = StringBuffer();
-    if (docComments != null) {
-      str.writeln(''.padLeft(tabs, '\t') + '/**');
-      for (var comment in docComments) {
-        str.writeln(''.padLeft(tabs, '\t') + ' *' + comment);
-      }
-      str.writeln(''.padLeft(tabs, '\t') + ' */');
+    if (docComments != null && docComments.isNotEmpty) {
+      str.writeln(wrtieDocCommentsTs(docComments, tabs));
     }
     str.write(''.padLeft(tabs, '\t') + 'export interface $ident');
     if (genericsNames != null && genericsNames.isNotEmpty) {
@@ -253,6 +280,109 @@ class DartClass {
     str.writeln('}');
     return str.toString();
   }
+
+  String getDartClassConstructorDefault([int tabs = 1]) {
+    final str = StringBuffer();
+    str.writeln(''.padLeft(tabs, '\t') + ident + '([');
+    if (members != null && members.isNotEmpty) {
+      for (var member in members) {
+        str.writeln(''.padLeft(tabs + 1, '\t') + 'this.${member.ident},');
+      }
+    }
+    str.writeln(''.padLeft(tabs, '\t') + ']);');
+    return str.toString();
+  }
+
+  String getDartClassConstructorMap([int tabs = 1]) {
+    final str = StringBuffer();
+    str.writeln(''.padLeft(tabs, '\t') + ident + '.map({');
+    if (members != null && members.isNotEmpty) {
+      for (var member in members) {
+        str.writeln(''.padLeft(tabs + 1, '\t') + 'this.${member.ident},');
+      }
+    }
+    str.writeln(''.padLeft(tabs, '\t') + '});');
+    return str.toString();
+  }
+
+  String getDartClassConstructorJson([int tabs = 1, String json = '_json']) {
+    final str = StringBuffer();
+    str.writeln(
+        ''.padLeft(tabs, '\t') + ident + '.byJson(Map<String,dynamic> $json)');
+    if (members != null && members.isNotEmpty) {
+      final _l = members.length;
+      str.write(''.padLeft(tabs + 2, '\t') +
+          ': ' +
+          members[0].getDartJsonGetter(json));
+      for (var i = 1; i < _l; i++) {
+        str.writeln(',');
+        str.write(''.padLeft(tabs + 2, '\t') +
+            '  ' +
+            members[i].getDartJsonGetter(json));
+      }
+    }
+    str.writeln(';');
+    return str.toString();
+  }
+
+  String getDartClassJsonGenerator([int tabs = 1]) {
+    final str = StringBuffer();
+    str.writeln(''.padLeft(tabs, '\t') + 'Map<String, dynamic> toJson() => {');
+    if (members != null && members.isNotEmpty) {
+      final _l = members.length;
+      for (var i = 0; i < _l; i++) {
+        str.writeln(members[i].getDartJsonSetter());
+      }
+    }
+    str.writeln(''.padLeft(tabs + 2, '\t') + '};');
+    return str.toString();
+  }
+
+  String getDartClass([int tabs = 0]) {
+    final str = StringBuffer();
+    if (docComments != null && docComments.isNotEmpty) {
+      str.writeln(wrtieDocCommentsDart(docComments, tabs));
+    }
+    str.write(''.padLeft(tabs, '\t') + 'class $ident');
+    if (genericsNames != null && genericsNames.isNotEmpty) {
+      str.write('<' + genericsNames[0]);
+      if (genericsExtends[0] != null && genericsExtends[0].isNotEmpty) {
+        str.write(' extends ' + genericsExtends[0]);
+      }
+      final _l = genericsNames.length;
+      for (var i = 1; i < _l; i++) {
+        str.write(', ' + genericsNames[i]);
+        if (genericsExtends[i] != null && genericsExtends[i].isNotEmpty) {
+          str.write(' extends ' + genericsExtends[i]);
+        }
+      }
+      str.write('>');
+    }
+    if (superClassName != null && superClassName.isNotEmpty) {
+      str.write(' extends ' + superClassName);
+      if (superClassGenericsNames != null &&
+          superClassGenericsNames.isNotEmpty) {
+        str.write('<' + superClassGenericsNames[0]);
+        final _l = superClassGenericsNames.length;
+        for (var i = 1; i < _l; i++) {
+          str.write(', ' + superClassGenericsNames[i]);
+        }
+        str.write('>');
+      }
+    }
+    str.writeln(' {');
+    if (members != null && members.isNotEmpty) {
+      for (var member in members) {
+        str.writeln(member.getDartMember(tabs + 1));
+      }
+    }
+    str.writeln(getDartClassConstructorDefault());
+    str.writeln(getDartClassConstructorMap());
+    str.writeln(getDartClassConstructorJson());
+    str.writeln(getDartClassJsonGenerator());
+    str.writeln('}');
+    return str.toString();
+  }
 }
 
 /// Папка содержащие файлы которые неоходимо преобразовать
@@ -283,6 +413,7 @@ void main(List<String> args) {
       final strDart = StringBuffer();
       final strTs = StringBuffer();
       for (final _class in classes) {
+        strDart.writeln(_class.getDartClass());
         strTs.writeln(_class.getTsInterface());
       }
 
