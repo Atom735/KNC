@@ -526,8 +526,8 @@ class DartClass {
 }
 
 /// Папка содержащие файлы которые неоходимо преобразовать
-final dirLibTs =
-    Directory(p.join(Directory.current.absolute.path, 'lib', 'ts'));
+final dirLibT =
+    Directory(p.join(Directory.current.absolute.path, 'lib', 'src'));
 
 /// Папка куда будут помещены преобразованные в Dart файлы
 final dirLibSrc =
@@ -538,17 +538,17 @@ final dirWebTsDart =
     Directory(p.join(Directory.current.absolute.path, 'web', 'ts', 'dart'));
 
 void main(List<String> args) {
-  final files = dirLibTs.listSync();
+  final files = dirLibT.listSync();
   final _l = files.length;
 
   for (var i = 0; i < _l; i++) {
     final file = files[i];
-    if (file is File) {
+    if (file is File && p.extension(file.path, 2).toLowerCase() == '.t.dart') {
       final fileData = file.readAsStringSync();
-      final newDartFile = File(p.join(
-          dirLibSrc.path, p.basenameWithoutExtension(file.path) + '.g.dart'));
-      final newTsFile = File(p.join(
-          dirWebTsDart.path, p.basenameWithoutExtension(file.path) + '.g.ts'));
+      final fileName =
+          p.basenameWithoutExtension(p.basenameWithoutExtension(file.path));
+      final newDartFile = File(p.join(dirLibSrc.path, fileName + '.g.dart'));
+      final newTsFile = File(p.join(dirWebTsDart.path, fileName + '.g.ts'));
       final classes = DartClass.getByString(fileData);
       final strDart = StringBuffer();
       final strTs = StringBuffer();
