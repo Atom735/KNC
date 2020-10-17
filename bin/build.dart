@@ -469,7 +469,7 @@ class DartClass {
     if (members != null && members.isNotEmpty) {
       final _l = members.length;
       for (var i = 0; i < _l; i++) {
-        str.writeln(members[i].getDartJsonSetter());
+        str.writeln(members[i].getDartJsonSetter(tabs + 3));
       }
     }
     str.writeln(''.padLeft(tabs + 2, '\t') + '};');
