@@ -529,7 +529,6 @@ extension IDbfRecord on DbfRecord {
                 .name
                 .padRight(max(fields[i].name.length, fields[i].length)));
       }
-      str.writeln();
     } else {
       str.write(String.fromCharCode(headByte));
       for (var i = 0; i < _filedsLength; i++) {
@@ -538,7 +537,6 @@ extension IDbfRecord on DbfRecord {
                 .toString()
                 .padRight(max(fields[i].name.length, fields[i].length)));
       }
-      str.writeln();
     }
 
     return str.toString();
