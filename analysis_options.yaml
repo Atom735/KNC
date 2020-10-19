@@ -17,3 +17,4 @@ analyzer:
     - public/**
     - src/**
     - build/**
+    - lib/**.t.dart
