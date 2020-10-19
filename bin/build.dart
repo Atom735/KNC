@@ -43,6 +43,125 @@ String wrtieDocCommentsDart(List<String> comments, [tabs = 0]) =>
 /**
 ```regexp
 ((?:^\s*\/\/\/.*\r?\n)*)\s*
+?enum\s+(\w+)
+?\s*\{
+```
+- 1 - doc comment
+- 2 - enum ident
+*/
+final reEnumHead = RegExp(
+    r'((?:^\s*\/\/\/.*\r?\n)*)\s*'
+    r'enum\s+(\w+)'
+    r'\s*\{',
+    multiLine: true);
+
+// ignore: slash_for_doc_comments
+/**
+```regexp
+((?:^\s*\/\/\/.*\r?\n)*)\s*
+?(\w+)
+```
+- 1 - doc comment
+- 2 - member ident
+*/
+final reEnumMember = RegExp(
+    r'((?:^\s*\/\/\/.*\r?\n)*)\s*'
+    r'(\w+)(?:\s*,)?',
+    multiLine: true);
+
+class DartEnum {
+  /// Комментарии Enum
+  List<String> /*?*/ docComments;
+
+  /// Наименование Enum
+  String ident;
+
+  /// Комментарии Enum
+  List<List<String> /*?*/ > namesDocComments;
+
+  /// Список нименований
+  List<String> names;
+
+  static DartEnum getByRegExpMatch(final RegExpMatch match) {
+    final o = DartEnum();
+    final _docComments = match.group(1);
+    o.ident = match.group(2);
+    if (_docComments != null && _docComments.trim().isNotEmpty) {
+      o.docComments = getDocComments(_docComments);
+    }
+    final _input = match.input;
+    final _body =
+        _input.substring(match.end, _input.indexOf('}', match.end)).trim();
+
+    o.names = [];
+    o.namesDocComments = [];
+    if (_body.isNotEmpty) {
+      final matches = reEnumMember.allMatches(_body);
+      for (var match in matches) {
+        final _docComments = match.group(1);
+        o.names.add(match.group(2));
+        if (_docComments != null && _docComments.trim().isNotEmpty) {
+          o.namesDocComments.add(getDocComments(_docComments));
+        } else {
+          o.namesDocComments.add(null);
+        }
+      }
+    }
+    return o;
+  }
+
+  /// Распарсить Dart файл
+  static List<DartEnum> getByString(String data) {
+    final o = <DartEnum>[];
+    final matches = reEnumHead.allMatches(data);
+    for (var match in matches) {
+      o.add(getByRegExpMatch(match));
+    }
+    return o;
+  }
+
+  /// Получить строку как TS интерфейс
+  String getTsInterface([int tabs = 0]) {
+    final str = StringBuffer();
+    if (docComments != null && docComments.isNotEmpty) {
+      str.writeln(wrtieDocCommentsTs(docComments, tabs));
+    }
+    str.writeln(''.padLeft(tabs, '\t') + 'export enum $ident {');
+    final _l = names.length;
+    for (var i = 0; i < _l; i++) {
+      final _docComments = namesDocComments[i];
+      if (_docComments != null && _docComments.isNotEmpty) {
+        str.writeln(wrtieDocCommentsTs(_docComments, tabs + 1));
+      }
+      str.writeln(''.padLeft(tabs + 1, '\t') + names[i] + ',');
+    }
+    str.writeln(''.padLeft(tabs, '\t') + '}');
+    return str.toString();
+  }
+
+  String getDartEnum([int tabs = 0]) {
+    final str = StringBuffer();
+    if (docComments != null && docComments.isNotEmpty) {
+      str.writeln(wrtieDocCommentsDart(docComments, tabs));
+    }
+    str.writeln(''.padLeft(tabs, '\t') + 'enum $ident {');
+    final _l = names.length;
+    for (var i = 0; i < _l; i++) {
+      final _docComments = namesDocComments[i];
+      if (_docComments != null && _docComments.isNotEmpty) {
+        str.writeln(wrtieDocCommentsDart(_docComments, tabs + 1));
+      }
+      str.writeln(''.padLeft(tabs + 1, '\t') + names[i] + ',');
+    }
+    str.writeln(''.padLeft(tabs, '\t') + '}');
+    return str.toString();
+  }
+}
+
+// ignore: slash_for_doc_comments
+/**
+```regexp
+((?:^\s*\/\/\/.*\r?\n)*)\s*
 ?(\w+(?:\s*\<\w+\>)?(?:\s*\/\*\?\*\/)?)
 ?\s+(\w+);
 ```
@@ -550,8 +669,13 @@ void main(List<String> args) {
       final newDartFile = File(p.join(dirLibSrc.path, fileName + '.g.dart'));
       final newTsFile = File(p.join(dirWebTsDart.path, fileName + '.g.ts'));
       final classes = DartClass.getByString(fileData);
+      final enums = DartEnum.getByString(fileData);
       final strDart = StringBuffer();
       final strTs = StringBuffer();
+      for (final _enum in enums) {
+        strDart.writeln(_enum.getDartEnum());
+        strTs.writeln(_enum.getTsInterface());
+      }
       for (final _class in classes) {
         strDart.writeln(_class.getDartClass());
         strTs.writeln(_class.getTsInterface());
