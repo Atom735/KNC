@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'ink.dart';
 
@@ -37,20 +38,13 @@ final reInkTxtExtDev =
 // ignore: slash_for_doc_comments
 /**
 ```regexp
-^\s*утверждаю\s+
-?(?:[\s\S]*?([\w :]+)[\s\S]*?
-?(?:_+)([\w \.\s]+?$))?
+^\s*Утверждаю\s+([А-Яа-яA-Za-z].+)$\s+_*(.+)
 ```
 - 1 - Звание
 - 2 - ФИО
 */
-final reInkTxtApprover = RegExp(
-    r'^\s*Утверждаю\s+'
-    r'(?:[\s\S]*?([\w :]+)[\s\S]*?'
-    r'(?:_+)([\w \.\s]+?$))?',
-    multiLine: true,
-    unicode: true,
-    caseSensitive: false);
+final reInkTxtApprover = RegExp(r'^\s*Утверждаю\s+([А-Яа-яA-Za-z].+)$\s+_*(.+)',
+    multiLine: true, unicode: true, caseSensitive: false);
 
 final reInkTxtTitle = RegExp(r'^\s*Замер\s+кривизны\s*$',
     multiLine: true, unicode: true, caseSensitive: false);
@@ -140,7 +134,8 @@ final reInkTxtProcessed = RegExp(r'^\s*Обработал\s*:?\s*(.+)$',
 /// - 1 - разделительная строка таблицы
 /// - 2 - Заголовок таблицы
 /// - 3 - содержание таблицы
-final reInkTxtTable = RegExp(r'^(-+)(.+?)\1(.+?)\1');
+final reInkTxtTable =
+    RegExp(r'^(-+\r?\n)(.+?)\1(.+?)\1', dotAll: true, multiLine: true);
 
 extension IOneFileInkDataTxt on OneFileInkDataDoc {
   static OneFileInkDataDoc /*?*/ createByString(final String data) {
@@ -161,7 +156,7 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
     String /*?*/ _client;
     final _matchClient = reInkTxtClient.firstMatch(data);
     if (_matchClient != null) {
-      _client = _matchApprover.group(1).trim();
+      _client = _matchClient.group(1).trim();
     }
 
     String /*?*/ _well;
@@ -286,9 +281,9 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
       final _tbl1_head_lines =
           LineSplitter.split(_tbl1_head).toList(growable: false);
       final _lTbl1_headColumns = _tbl1_head_lines.last.split('|').length;
-      final _tbl1_headColumns_t = List<int>.filled(_lTbl1_headColumns, -1);
+      final _tbl1_headColumns_t = List<int>.filled(_lTbl1_headColumns - 1, -1);
       final _tbl1_headColumns = List<String>.filled(_lTbl1_headColumns, '');
-      for (var i = 0; i < _lTbl1_headColumns; i++) {
+      for (var i = 0; i < _lTbl1_headColumns - 1; i++) {
         _tbl1_headColumns_t[i] = _tbl1_head_lines.last
             .indexOf('|', i == 0 ? 0 : _tbl1_headColumns_t[i - 1] + 1);
       }
@@ -316,13 +311,15 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
         final _cols = List<String>.filled(_lTbl1_headColumns - 1, '');
 
         for (var i = 0; i < _lTbl1_headColumns - 1; i++) {
-          _cols[i] += _tbl1_body_lines[j * 2 + 0].substring(
-                  i == 0 ? 0 : _tbl1_headColumns_t[i - 1] + 1,
-                  _tbl1_headColumns_t[i] + 1) +
+          final _l1 = _tbl1_body_lines[j * 2 + 0];
+          final _l2 = _tbl1_body_lines[j * 2 + 1];
+          final _len1 = _l1.length;
+          final _len2 = _l2.length;
+          final _i1 = i == 0 ? 0 : _tbl1_headColumns_t[i - 1] + 1;
+          final _i2 = _tbl1_headColumns_t[i] + 1;
+          _cols[i] += (_i1 < _len1 ? _l1.substring(_i1, min(_i2, _len1)) : '') +
               ' ' +
-              _tbl1_body_lines[j * 2 + 1].substring(
-                  i == 0 ? 0 : _tbl1_headColumns_t[i - 1] + 1,
-                  _tbl1_headColumns_t[i] + 1);
+              (_i1 < _len2 ? _l2.substring(_i1, min(_i2, _len2)) : '');
         }
         final _n = int.tryParse(_cols[0]);
 
@@ -640,8 +637,8 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
             offsetAngle: _offsetAngleM
                 ? convertAngleMinuts2Gradus(_offsetAngle)
                 : _offsetAngle,
-            north: _north,
-            west: _west,
+            north: _north_i != -1 && _northM ? -_north : _north,
+            west: _west_i != -1 && _westM ? -_west : _west,
             intensity: _intensityM
                 ? convertAngleMinuts2Gradus(_intensity)
                 : _intensity,
@@ -661,8 +658,8 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
       angle: _angleM ? convertAngleMinuts2Gradus(_angle) : _angle,
       altitude: _altitude,
       zaboy: _zaboy,
-      strt: _printStrt ?? _data.isNotEmpty ? _data.first.depth : 0.0,
-      stop: _printStop ?? _data.isNotEmpty ? _data.last.depth : 0.0,
+      strt: _printStrt ?? (_data.isNotEmpty ? _data.first.depth : 0.0),
+      stop: _printStop ?? (_data.isNotEmpty ? _data.last.depth : 0.0),
       maxZenithAngleDepth: _maxZenithAngleDepth,
       maxZenithAngle: _maxZenithAngleM
           ? convertAngleMinuts2Gradus(_maxZenithAngle)
@@ -672,8 +669,145 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
           ? convertAngleMinuts2Gradus(_maxIntensity)
           : _maxIntensity,
       processed: _processed,
-      extInfo: _extInfo.isNotEmpty ? _extInfo : null,
+      extInfo: _extInfo,
       data: _data,
     );
+  }
+
+  String getDebugString() {
+    final str = StringBuffer();
+    str.writeln('Данные ИНКЛИНОМЕТРИИ разобранные из текстовой строки');
+    str.writeln('Номер скважины:'.padRight(48) + (well?.toString() ?? 'null'));
+    str.writeln('Угол склонения:'.padRight(48) + (angle?.toString() ?? 'null'));
+    str.writeln('Альтитуда:'.padRight(48) + (altitude?.toString() ?? 'null'));
+    str.writeln(''.padRight(48, '-'));
+    str.writeln(
+        'Интервал печати начало:'.padRight(48) + (strt?.toString() ?? 'null'));
+    str.writeln(
+        'Интервал печати конец:'.padRight(48) + (stop?.toString() ?? 'null'));
+    str.writeln('Утвержедно:'.padRight(48) + (approver?.toString() ?? 'null'));
+    str.writeln('Заказчик:'.padRight(48) + (client?.toString() ?? 'null'));
+    str.writeln('Площадь:'.padRight(48) + (square?.toString() ?? 'null'));
+    str.writeln('Куст:'.padRight(48) + (cluster?.toString() ?? 'null'));
+    str.writeln(
+        'Диаметр скважины:'.padRight(48) + (diametr?.toString() ?? 'null'));
+    str.writeln(
+        'Глубина башмака:'.padRight(48) + (depth?.toString() ?? 'null'));
+    str.writeln('Забой:'.padRight(48) + (zaboy?.toString() ?? 'null'));
+    str.writeln('Глубина максимального зенитного угла:'.padRight(48) +
+        (maxZenithAngleDepth?.toString() ?? 'null'));
+    str.writeln('Максимальный зенитный угол:'.padRight(48) +
+        (maxZenithAngle?.toString() ?? 'null'));
+    str.writeln('Глубина максимальной интенисивности кривизны:'.padRight(48) +
+        (maxIntensityDepth?.toString() ?? 'null'));
+    str.writeln('Максимальная интенсивность кривизны:'.padRight(48) +
+        (maxIntensity?.toString() ?? 'null'));
+    str.writeln(
+        'Кто обработал:'.padRight(48) + (processed?.toString() ?? 'null'));
+
+    str.writeln(''.padRight(48, '-'));
+    str.writeln('ДОПОЛНИТЕЛЬНЫЕ ДАННЫЕ:'.padRight(48) +
+        (extInfo?.length.toString() ?? 'null'));
+    if (extInfo != null && extInfo.isNotEmpty) {
+      str.writeln('N'.padLeft(4) +
+          '|' +
+          'Интервал, кол. точек и дата исследования'.padLeft(42) +
+          '|' +
+          'Тип и номер прибора, дата поверки'.padLeft(42) +
+          '|' +
+          'Ствол'.padRight(16) +
+          '|' +
+          'ЛБТ'.padLeft(16) +
+          '|' +
+          'ТБПВ'.padLeft(16) +
+          '|' +
+          'УБТ'.padLeft(16) +
+          '|' +
+          'Фамилия нач. партии'.padRight(32) +
+          '|' +
+          'Фамилия представителя заказчика');
+      for (var ext in extInfo) {
+        str.writeln((ext.n?.toString() ?? 'null').padLeft(4) +
+            '|' +
+            ('[${ext.strt?.toString() ?? 'null'}] -'
+                    '[${ext.stop?.toString() ?? 'null'}] '
+                    '(${ext.count?.toString() ?? 'null'}) '
+                    '${ext.dd?.toString() ?? 'null'}.'
+                    '${ext.mm?.toString() ?? 'null'}.'
+                    '${ext.yy?.toString() ?? 'null'}')
+                .padLeft(42) +
+            '|' +
+            ('[${ext.devType?.toString() ?? 'null'}] '
+                    'N [${ext.devNum?.toString() ?? 'null'}] '
+                    '(${ext.devDate?.toString() ?? 'null'})')
+                .padLeft(42) +
+            '|' +
+            '${ext.shaft?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${ext.sLBT?.toString() ?? 'null'}'.padLeft(16) +
+            '|' +
+            '${ext.sTBPV?.toString() ?? 'null'}'.padLeft(16) +
+            '|' +
+            '${ext.sUBT?.toString() ?? 'null'}'.padLeft(16) +
+            '|' +
+            '${ext.supervisor?.toString() ?? 'null'}'.padRight(32) +
+            '|' +
+            '${ext.client?.toString() ?? 'null'}');
+      }
+    }
+
+    str.writeln(''.padRight(48, '-'));
+    str.writeln('ДАННЫЕ ИНКЛИНОМЕТРИИ:'.padRight(48) +
+        (data?.length.toString() ?? 'null'));
+
+    if (data != null && data.isNotEmpty) {
+      str.writeln('Глубина'.padRight(16) +
+          '|' +
+          'Угол'.padRight(16) +
+          '|' +
+          'Азимут'.padRight(16) +
+          '|' +
+          'Удлинение'.padRight(16) +
+          '|' +
+          'Абс. отметка'.padRight(16) +
+          '|' +
+          'Верт. глубина'.padRight(16) +
+          '|' +
+          'Смещение'.padRight(16) +
+          '|' +
+          'Дир. угл смещ.'.padRight(16) +
+          '|' +
+          '+север, -юг'.padRight(16) +
+          '|' +
+          '+восток, -запад'.padRight(16) +
+          '|' +
+          'Интенсивность'.padRight(16));
+      for (var d in data) {
+        str.writeln('${d.depth?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${d.angle?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${d.azimuthStar == true ? '*' : d.azimuthStar == false ? ' ' : '?'}' +
+            '${d.azimuth?.toString() ?? 'null'}'.padRight(15) +
+            '|' +
+            '${d.addLenght?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${d.absPoint?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${d.vertDepth?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${d.offset?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${d.offsetAngle?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${d.north?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${d.west?.toString() ?? 'null'}'.padRight(16) +
+            '|' +
+            '${d.intensity?.toString() ?? 'null'}'.padRight(16));
+      }
+    }
+
+    return str.toString();
   }
 }
