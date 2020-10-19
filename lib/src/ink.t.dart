@@ -104,7 +104,7 @@ class OneFileInkDataRowDoc extends OneFileInkDataRow {
 }
 
 /// Данные инклинометрии каждой скважины
-class OneFileIncData<T extends OneFileInkDataRow> {
+class OneFileInkData<T extends OneFileInkDataRow> {
   /// Номер скважины
   String well;
 
@@ -119,10 +119,10 @@ class OneFileIncData<T extends OneFileInkDataRow> {
 }
 
 /// Данные инклинометрии DBF файла на каждую скважину
-class OneFileInkDataDbfWell extends OneFileIncData<OneFileInkDataRowDbf> {}
+class OneFileInkDataDbfWell extends OneFileInkData<OneFileInkDataRowDbf> {}
 
 /// Данные инклинометрии DOCX файла
-class OneFileInkDataDoc extends OneFileIncData<OneFileInkDataRowDoc> {
+class OneFileInkDataDoc extends OneFileInkData<OneFileInkDataRowDoc> {
   /// Угол склонения (градусы)
   double angle;
 
