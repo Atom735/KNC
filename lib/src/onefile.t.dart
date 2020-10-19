@@ -1,16 +1,57 @@
+import 'package:knc/src/ink.g.dart';
+
 /// Тип файла [OneFile]
 enum NOneFileDataType {
+  /// Неизсветсный тип данных,
+  /// [datas] отсутсвует
   unknown,
+
+  /// Текстовый файл,
+  /// [datas] отсутсвует
   txt,
+
+  /// `DOC` файл,
+  /// [datas] отсутсвует
   doc,
+
+  /// `DOCX` файл,
+  /// [datas] отсутсвует
+  docx,
+
+  /// `DBF` файл,
+  /// [datas] указывать на [OneFileDbf]
   dbf,
+
+  /// Бинарный файл,
+  /// [datas] отсутсвует
   bin,
-  zip,
+
+  /// `LAS` файл версии `1.2`,
+  /// [datas] указывает на [OneFileLasData]
   las_1,
+
+  /// `LAS` файл версии `2.0`,
+  /// [datas] указывает на [OneFileLasData]
   las_2,
+
+  /// `LAS` файл версии `3.0`,
+  /// [datas] указывает на [OneFileLasData]
   las_3,
+
+  /// `DBF` файл содержащий инклинометрию,
+  /// [datas] указывать на [OneFileInkDataDbf]
   ink_dbf,
+
+  /// `DOC` файл содержащий инклинометрию,
+  /// [datas] указывать на [OneFileInkDataDoc]
   ink_doc,
+
+  /// `DOCX` файл содержащий инклинометрию,
+  /// [datas] указывать на [OneFileInkDataDoc]
+  ink_docx,
+
+  /// Текстовый файл содержащий инклинометрию,
+  /// [datas] указывать на [OneFileInkDataDoc]
   ink_txt,
 }
 
