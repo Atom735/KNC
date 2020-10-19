@@ -10,15 +10,16 @@ void main(List<String> args) {
     if (e is File) {
       final ext = p.extension(e.path).toLowerCase();
       if (ext == '.dbf') {
-        final str = StringBuffer();
         final dbf = IOneFileDbf.createByByteData(
             e.readAsBytesSync().buffer.asByteData());
         if (dbf != null) {
+          final str = StringBuffer();
           str.writeCharCode(unicodeBomCharacterRune);
           str.write(dbf.getDebugString());
           File(e.path + '.txt').writeAsStringSync(str.toString());
           final ink = IOneFileInkDataDbf.createByDbf(dbf);
           if (ink != null) {
+            final str = StringBuffer();
             str.writeCharCode(unicodeBomCharacterRune);
             str.write(ink.getDebugString());
             File(e.path + '.ink.txt').writeAsStringSync(str.toString());

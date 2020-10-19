@@ -120,6 +120,7 @@ extension IOneFileInkDataDbf on OneFileInkDataDbf {
             str.write('|' + _extD.toString().padRight(16));
           }
         }
+        str.writeln();
       }
     }
 

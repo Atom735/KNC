@@ -10,10 +10,10 @@ void main(List<String> args) {
       final ext = p.extension(e.path).toLowerCase();
       if (ext == '.dbf') {
         final path = e.path + '.txt';
-        final str = StringBuffer();
         final dbf = IOneFileDbf.createByByteData(
             e.readAsBytesSync().buffer.asByteData());
         if (dbf != null) {
+          final str = StringBuffer();
           str.writeCharCode(unicodeBomCharacterRune);
           str.write(dbf.getDebugString());
           File(path).writeAsStringSync(str.toString());
