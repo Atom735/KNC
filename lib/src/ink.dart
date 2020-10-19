@@ -6,3 +6,10 @@ extension IOneFileInkDataDocDebug on OneFileInkDataDoc {
     return str.toString();
   }
 }
+
+extension IOneFileInkDataDbfDebug on OneFileInkDataDbf {
+  String getDebugString() {
+    final str = StringBuffer();
+    return str.toString();
+  }
+}

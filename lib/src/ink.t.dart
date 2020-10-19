@@ -55,10 +55,10 @@ class OneFileInkDataRow {
   double depth;
 
   /// Угол (градусы)
-  double angle;
+  double /*?*/ angle;
 
   /// Угол (градусы`минуты)
-  double angle1;
+  double /*?*/ angle1;
 
   /// Азимут (градусы)
   double azimuth;
