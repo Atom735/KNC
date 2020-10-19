@@ -4,7 +4,19 @@ import 'ink.dart';
 
 import 'ink.g.dart';
 
-final reDigit = RegExp(r'[\+-]?\d+(?:\.\d+)?');
+final _reDigit = RegExp(r'[\+-]?\d+(?:\.\d+)?');
+
+final reInkTxtDataDepth = RegExp(r'^Гл', caseSensitive: false);
+final reInkTxtDataAngle = RegExp(r'^Уг', caseSensitive: false);
+final reInkTxtDataAzimuth = RegExp(r'^Аз', caseSensitive: false);
+final reInkTxtDataAddLenght = RegExp(r'^Уд', caseSensitive: false);
+final reInkTxtDataAbsPoint = RegExp(r'^Аб', caseSensitive: false);
+final reInkTxtDataVertDepth = RegExp(r'^Ве', caseSensitive: false);
+final reInkTxtDataOffset = RegExp(r'^См', caseSensitive: false);
+final reInkTxtDataOffsetAngle = RegExp(r'уго?л\s+см', caseSensitive: false);
+final reInkTxtDataNorth = RegExp(r'[+-]?[сю]', caseSensitive: false);
+final reInkTxtDataWest = RegExp(r'[+-]?[вз]', caseSensitive: false);
+final reInkTxtDataIntensity = RegExp(r'^Ин', caseSensitive: false);
 
 /// - 1 - Интервал начало
 /// - 2 - Интервал конец
@@ -167,13 +179,13 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
     final _matchDiametr = reInkTxtDiametr.firstMatch(data);
     if (_matchWell != null) {
       final _diametr_s = _matchDiametr.group(1).trim();
-      final _diametr_d = reDigit.firstMatch(_diametr_s);
+      final _diametr_d = _reDigit.firstMatch(_diametr_s);
       if (_diametr_d != null) {
         _diametr = double.tryParse(_diametr_d.group(0));
       }
       final _depth_s = _matchDiametr.group(2)?.trim();
       if (_depth_s != null) {
-        final _depth_d = reDigit.firstMatch(_depth_s);
+        final _depth_d = _reDigit.firstMatch(_depth_s);
         if (_depth_d != null) {
           _depth = double.tryParse(_depth_d.group(0));
         }
@@ -187,21 +199,21 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
     final _matchAngle = reInkTxtAngle.firstMatch(data);
     if (_matchWell != null) {
       final _angle_s = _matchAngle.group(1).trim();
-      final _angle_d = reDigit.firstMatch(_angle_s);
+      final _angle_d = _reDigit.firstMatch(_angle_s);
       _angleM = _angle_s.toLowerCase().contains('м');
       if (_angle_d != null) {
         _angle = double.tryParse(_angle_d.group(0));
       }
       final _altitude_s = _matchAngle.group(2)?.trim();
       if (_altitude_s != null) {
-        final _altitude_d = reDigit.firstMatch(_altitude_s);
+        final _altitude_d = _reDigit.firstMatch(_altitude_s);
         if (_altitude_d != null) {
           _altitude = double.tryParse(_altitude_d.group(0));
         }
       }
       final _zaboy_s = _matchAngle.group(3)?.trim();
       if (_zaboy_s != null) {
-        final _zaboy_d = reDigit.firstMatch(_zaboy_s);
+        final _zaboy_d = _reDigit.firstMatch(_zaboy_s);
         if (_zaboy_d != null) {
           _zaboy = double.tryParse(_zaboy_d.group(0));
         }
@@ -213,9 +225,9 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
     final _matchPrint = reInkTxtPrint.firstMatch(data);
     if (_matchPrint != null) {
       final _print = _matchPrint.group(1).trim();
-      final _printStrt_d = reDigit.firstMatch(_print);
+      final _printStrt_d = _reDigit.firstMatch(_print);
       if (_printStrt_d != null) {
-        final _printStop_d = reDigit.matchAsPrefix(_print, _printStrt_d.end);
+        final _printStop_d = _reDigit.matchAsPrefix(_print, _printStrt_d.end);
         if (_printStop_d != null) {
           _printStop = double.tryParse(_printStop_d.group(0));
         }
@@ -229,12 +241,13 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
     final _matchMaxZenith = reInkTxtMaxZenith.firstMatch(data);
     if (_matchMaxZenith != null) {
       final _maxZenithAngleDepth_s = _matchMaxZenith.group(1).trim();
-      final _maxZenithAngleDepth_d = reDigit.firstMatch(_maxZenithAngleDepth_s);
+      final _maxZenithAngleDepth_d =
+          _reDigit.firstMatch(_maxZenithAngleDepth_s);
       if (_maxZenithAngleDepth_d != null) {
         _maxZenithAngleDepth = double.tryParse(_maxZenithAngleDepth_d.group(0));
       }
       final _maxZenithAngle_s = _matchMaxZenith.group(2).trim();
-      final _maxZenithAngle_d = reDigit.firstMatch(_maxZenithAngle_s);
+      final _maxZenithAngle_d = _reDigit.firstMatch(_maxZenithAngle_s);
       _maxZenithAngleM = _maxZenithAngle_s.toLowerCase().contains('м');
       if (_maxZenithAngle_d != null) {
         _maxZenithAngle = double.tryParse(_maxZenithAngle_d.group(0));
@@ -247,12 +260,12 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
     final _matchMaxIntensity = reInkTxtMaxIntensity.firstMatch(data);
     if (_matchMaxIntensity != null) {
       final _maxIntensityDepth_s = _matchMaxIntensity.group(1).trim();
-      final _maxIntensityDepth_d = reDigit.firstMatch(_maxIntensityDepth_s);
+      final _maxIntensityDepth_d = _reDigit.firstMatch(_maxIntensityDepth_s);
       if (_maxIntensityDepth_d != null) {
         _maxIntensityDepth = double.tryParse(_maxIntensityDepth_d.group(0));
       }
       final _maxIntensity_s = _matchMaxIntensity.group(2).trim();
-      final _maxIntensity_d = reDigit.firstMatch(_maxIntensity_s);
+      final _maxIntensity_d = _reDigit.firstMatch(_maxIntensity_s);
       _maxIntensityM = _maxIntensity_s.toLowerCase().contains('м');
       if (_maxIntensity_d != null) {
         _maxIntensity = double.tryParse(_maxIntensity_d.group(0));
@@ -369,7 +382,272 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
         ));
       }
       final _matchTbl2 = reInkTxtTable.matchAsPrefix(data, _matchTbl1.end);
-      if (_matchTbl2 != null) {}
+      if (_matchTbl2 != null) {
+        final _tbl2_head = _matchTbl1.group(2);
+        final _tbl2_head_lines =
+            LineSplitter.split(_tbl2_head).toList(growable: false);
+        final _lTbl2_headColumns = _tbl2_head_lines.first.split('|').length;
+        final _tbl2_headColumns_t = List<int>.filled(_lTbl2_headColumns, -1);
+        final _tbl2_headColumns = List<String>.filled(_lTbl2_headColumns, '');
+        for (var i = 0; i < _lTbl2_headColumns; i++) {
+          _tbl2_headColumns_t[i] = _tbl2_head_lines.last
+              .indexOf('|', i == 0 ? 0 : _tbl2_headColumns_t[i - 1] + 1);
+        }
+        for (var _line in _tbl2_head_lines) {
+          final _cols = _line.split('|');
+          for (var i = 0; i < _lTbl2_headColumns; i++) {
+            _tbl2_headColumns[i] += ' ' + _cols[i].trim();
+          }
+        }
+        var _depth_i = -1;
+        var _angle_i = -1;
+        bool /*?*/ _angleM;
+        var _azimuth_i = -1;
+        bool /*?*/ _azimuthM;
+        var _addLenght_i = -1;
+        var _absPoint_i = -1;
+        var _vertDepth_i = -1;
+        var _offset_i = -1;
+        var _offsetAngle_i = -1;
+        bool /*?*/ _offsetAngleM;
+        var _north_i = -1;
+        bool _northM;
+        var _west_i = -1;
+        bool _westM;
+        var _intensity_i = -1;
+        bool /*?*/ _intensityM;
+
+        for (var i = 0; i < _lTbl2_headColumns; i++) {
+          final _input = _tbl2_headColumns[i] = _tbl2_headColumns[i].trim();
+          if (reInkTxtDataDepth.hasMatch(_input)) {
+            _depth_i = i;
+          } else if (reInkTxtDataAngle.hasMatch(_input)) {
+            _angle_i = i;
+            if (_input.toLowerCase().contains('м')) {
+              _angleM = true;
+            }
+          } else if (reInkTxtDataAzimuth.hasMatch(_input)) {
+            _azimuth_i = i;
+            if (_input.toLowerCase().contains('м')) {
+              _azimuthM = true;
+            }
+          } else if (reInkTxtDataAddLenght.hasMatch(_input)) {
+            _addLenght_i = i;
+          } else if (reInkTxtDataAbsPoint.hasMatch(_input)) {
+            _absPoint_i = i;
+          } else if (reInkTxtDataVertDepth.hasMatch(_input)) {
+            _vertDepth_i = i;
+          } else if (reInkTxtDataOffset.hasMatch(_input)) {
+            _offset_i = i;
+          } else if (reInkTxtDataOffsetAngle.hasMatch(_input)) {
+            _offsetAngle_i = i;
+            if (_input.toLowerCase().contains('\'м')) {
+              _offsetAngleM = true;
+            }
+          } else if (reInkTxtDataNorth.hasMatch(_input)) {
+            _north_i = i;
+            final _match = reInkTxtDataNorth.firstMatch(_input);
+            final _match1 = _match.group(0).toLowerCase();
+            if (_match1 == '+с' || _match1 == '-ю') {
+              _northM = false;
+            } else {
+              final _match2 = reInkTxtDataNorth
+                  .matchAsPrefix(_input, _match.end)
+                  .group(0)
+                  .toLowerCase();
+              if (_match2 != null && (_match1 == '-с' || _match1 == '+ю')) {
+                _northM = true;
+              } else {
+                _northM = false;
+              }
+            }
+          } else if (reInkTxtDataWest.hasMatch(_input)) {
+            _west_i = i;
+            final _match = reInkTxtDataWest.firstMatch(_input);
+            final _match1 = _match.group(0).toLowerCase();
+            if (_match1 == '+в' || _match1 == '-з') {
+              _westM = false;
+            } else {
+              final _match2 = reInkTxtDataWest
+                  .matchAsPrefix(_input, _match.end)
+                  .group(0)
+                  .toLowerCase();
+              if (_match2 != null && (_match1 == '-в' || _match1 == '+з')) {
+                _westM = true;
+              } else {
+                _westM = false;
+              }
+            }
+          } else if (reInkTxtDataIntensity.hasMatch(_input)) {
+            _intensity_i = i;
+            if (_input.toLowerCase().contains('\'м')) {
+              _intensityM = true;
+            }
+          }
+        }
+
+        final _tbl2_body = _matchTbl2.group(3);
+        final _tbl2_body_lines =
+            LineSplitter.split(_tbl2_body).toList(growable: false);
+        final _lLine = _tbl2_body_lines.length;
+        final _spaces = <int>[];
+        final _spacesCol = <int>[];
+        for (var i = 0; i < _lLine; i++) {
+          final _line = _tbl2_body_lines[i].codeUnits;
+          final _l = _line.length;
+          while (_spaces.length < _l) {
+            _spaces.add(i);
+          }
+          for (var j = 0; j < _l; j++) {
+            if (_line[j] == 0x20) {
+              _spaces[j]++;
+            }
+          }
+        }
+        final _l = _spaces.length;
+
+        for (var i = 0; i < _l; i++) {
+          if (_spacesCol.isEmpty) {
+            _spacesCol.add(i);
+          } else if (_spacesCol.last == i - 1 &&
+              _spaces[_spacesCol.last] >= _spaces[i]) {
+            _spacesCol.last = i;
+          } else {
+            _spacesCol.add(i);
+          }
+        }
+        var k = _tbl2_body_lines[0].length;
+        for (var _line in _tbl2_body_lines) {
+          final _match = _reDigit.firstMatch(_line)?.end ?? k;
+          if (_match < k) {
+            k = _match;
+          }
+        }
+        if (_spacesCol.first < k) {
+          _spacesCol.removeAt(0);
+        }
+        final _l_spacesCol = _spacesCol.length;
+        final _grid = <List<String>>[];
+        for (var _line in _tbl2_body_lines) {
+          final _cols = List<String>.filled(_l_spacesCol, '');
+          _cols[0] = _line.substring(0, _spacesCol.first).trim();
+          for (var i = 1; i < _l_spacesCol; i++) {
+            _cols[i] = _line.substring(_spacesCol[i - 1], _spacesCol[i]).trim();
+          }
+          _cols[_l_spacesCol] = _line.substring(_spacesCol.last).trim();
+          _grid.add(_cols);
+        }
+        final _l_grid = _grid.length;
+        if (_angle_i != -1 && _angleM == null) {
+          _angleM = true;
+          for (var i = 0; i < _l_grid; i++) {
+            if (!maybeAngleInMinuts(
+                double.tryParse(_grid[i][_angle_i]) ?? 0.0)) {
+              _angleM = false;
+            }
+          }
+        }
+        if (_azimuth_i != -1 && _azimuthM == null) {
+          _azimuthM = true;
+          for (var i = 0; i < _l_grid; i++) {
+            if (!maybeAngleInMinuts(double.tryParse(
+                    _grid[i][_azimuth_i].startsWith('*')
+                        ? _grid[i][_azimuth_i].substring(1)
+                        : [i][_azimuth_i]) ??
+                0.0)) {
+              _azimuthM = false;
+            }
+          }
+        }
+        if (_offsetAngle_i != -1 && _offsetAngleM == null) {
+          _offsetAngleM = true;
+          for (var i = 0; i < _l_grid; i++) {
+            if (!maybeAngleInMinuts(
+                double.tryParse(_grid[i][_offsetAngle_i]) ?? 0.0)) {
+              _offsetAngleM = false;
+            }
+          }
+        }
+        if (_intensity_i != -1 && _intensityM == null) {
+          _intensityM = true;
+          for (var i = 0; i < _l_grid; i++) {
+            if (!maybeAngleInMinuts(
+                double.tryParse(_grid[i][_intensity_i]) ?? 0.0)) {
+              _intensityM = false;
+            }
+          }
+        }
+        for (var i = 0; i < _l_grid; i++) {
+          final _row = _grid[i];
+          double /*?*/ _depth;
+          if (_depth_i != -1) {
+            _depth = double.tryParse(_row[_depth_i]);
+          }
+          double /*?*/ _angle;
+          if (_angle_i != -1) {
+            _angle = double.tryParse(_row[_angle_i]);
+          }
+          double /*?*/ _azimuth;
+          var _azimuthStar = false;
+          if (_azimuth_i != -1) {
+            _azimuthStar = _row[_azimuth_i].startsWith('*');
+            _azimuth = double.tryParse(_azimuthStar
+                ? _row[_azimuth_i].substring(1)
+                : _row[_azimuth_i]);
+          }
+          double /*?*/ _addLenght;
+          if (_addLenght_i != -1) {
+            _addLenght = double.tryParse(_row[_addLenght_i]);
+          }
+          double /*?*/ _absPoint;
+          if (_absPoint_i != -1) {
+            _absPoint = double.tryParse(_row[_absPoint_i]);
+          }
+          double /*?*/ _vertDepth;
+          if (_vertDepth_i != -1) {
+            _vertDepth = double.tryParse(_row[_vertDepth_i]);
+          }
+          double /*?*/ _offset;
+          if (_offset_i != -1) {
+            _offset = double.tryParse(_row[_offset_i]);
+          }
+          double /*?*/ _offsetAngle;
+          if (_offsetAngle_i != -1) {
+            _offsetAngle = double.tryParse(_row[_offsetAngle_i]);
+          }
+          double /*?*/ _north;
+          if (_north_i != -1) {
+            _north = double.tryParse(_row[_north_i]);
+          }
+          double /*?*/ _west;
+          if (_west_i != -1) {
+            _west = double.tryParse(_row[_west_i]);
+          }
+          double /*?*/ _intensity;
+          if (_intensity_i != -1) {
+            _intensity = double.tryParse(_row[_intensity_i]);
+          }
+
+          _data.add(OneFileInkDataRowDoc(
+            depth: _depth,
+            angle: _angleM ? convertAngleMinuts2Gradus(_angle) : _angle,
+            azimuth: _azimuthM ? convertAngleMinuts2Gradus(_azimuth) : _azimuth,
+            azimuthStar: _azimuthStar,
+            addLenght: _addLenght,
+            absPoint: _absPoint,
+            vertDepth: _vertDepth,
+            offset: _offset,
+            offsetAngle: _offsetAngleM
+                ? convertAngleMinuts2Gradus(_offsetAngle)
+                : _offsetAngle,
+            north: _north,
+            west: _west,
+            intensity: _intensityM
+                ? convertAngleMinuts2Gradus(_intensity)
+                : _intensity,
+          ));
+        }
+      }
     }
 
     return OneFileInkDataDoc(

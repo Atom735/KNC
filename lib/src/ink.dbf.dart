@@ -1,4 +1,5 @@
 import 'dbf.g.dart';
+import 'ink.dart';
 import 'ink.g.dart';
 
 extension IOneFileInkDataDbf on OneFileInkDataDbf {
@@ -50,10 +51,10 @@ extension IOneFileInkDataDbf on OneFileInkDataDbf {
           }
           final _parsedRow = OneFileInkDataRowDbf(
               depth: double.tryParse(_row.values[_iGLUB]),
-              angle1:
-                  _iUGOL != -1 ? double.tryParse(_row.values[_iUGOL]) : null,
-              angle:
-                  _iUGOL1 != -1 ? double.tryParse(_row.values[_iUGOL1]) : null,
+              angle: _iUGOL1 != -1
+                  ? double.tryParse(_row.values[_iUGOL1])
+                  : convertAngleMinuts2Gradus(
+                      double.tryParse(_row.values[_iUGOL])),
               azimuth: double.tryParse(_row.values[_iAZIMUT]),
               extInfo: _extInfo);
           if (_iWell == -1) {
@@ -131,7 +132,6 @@ extension IOneFileInkDataDbf on OneFileInkDataDbf {
         str.write(well.well.padRight(16));
         str.write('|' + row.depth.toStringAsFixed(6).padLeft(16));
         str.write('|' + row.angle.toStringAsFixed(2).padLeft(16));
-        str.write('|' + row.angle1.toStringAsFixed(2).padLeft(16));
         str.write('|' + row.azimuth.toStringAsFixed(6).padLeft(16));
         for (var i = 0; i < _lExt; i++) {
           final _ext = extInfo[i];

@@ -20,3 +20,6 @@ double convertAngleMinuts2Gradus(final double val) {
   var v = (val % 1.0);
   return val + (v * 10.0 / 6.0) - v;
 }
+
+/// проверяет может ли число быть в минутах
+bool maybeAngleInMinuts(final double val) => (val % 1.0) < 0.60;

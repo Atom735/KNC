@@ -55,10 +55,7 @@ class OneFileInkDataRow {
   double depth;
 
   /// Угол (градусы)
-  double /*?*/ angle;
-
-  /// Угол (градусы`минуты)
-  double /*?*/ angle1;
+  double angle;
 
   /// Азимут (градусы)
   double azimuth;
@@ -89,9 +86,6 @@ class OneFileInkDataRowDoc extends OneFileInkDataRow {
 
   /// Дир. угол смещения (градусы)
   double /*?*/ offsetAngle;
-
-  /// Дир. угол смещения (градусы`минуты)
-  double /*?*/ offsetAngle1;
 
   /// +север, -юг, (м)
   double /*?*/ north;
