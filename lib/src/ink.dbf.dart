@@ -74,6 +74,28 @@ extension IOneFileInkDataDbf on OneFileInkDataDbf {
         well.stop = well.data.last.depth;
       }
       return OneFileInkDataDbf(wells: wells, extInfo: extInfo);
+    } else if (_iNSKV != -1 ||
+        _iGLUB != -1 ||
+        _iUGOL != -1 ||
+        _iUGOL1 != -1 ||
+        _iAZIMUT != -1) {
+      final str = <String>[];
+      if (_iNSKV != -1) {
+        str.add('NSKV');
+      }
+      if (_iGLUB != -1) {
+        str.add('GLUB');
+      }
+      if (_iUGOL != -1) {
+        str.add('UGOL');
+      }
+      if (_iUGOL1 != -1) {
+        str.add('UGOL1');
+      }
+      if (_iAZIMUT != -1) {
+        str.add('AZIMUT');
+      }
+      throw Exception('Были обнаруженны следующие поля: ${str.join(', ')}');
     } else {
       return null;
     }
