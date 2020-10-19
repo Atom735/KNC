@@ -15,7 +15,8 @@ final reInkTxtDataAbsPoint = RegExp(r'^Аб', caseSensitive: false);
 final reInkTxtDataVertDepth = RegExp(r'^Ве', caseSensitive: false);
 final reInkTxtDataOffset = RegExp(r'^См', caseSensitive: false);
 final reInkTxtDataOffsetAngle = RegExp(r'уго?л\s+см', caseSensitive: false);
-final reInkTxtDataNorth = RegExp(r'[+-]?[сю]', caseSensitive: false);
+final reInkTxtDataNorth =
+    RegExp(r'[+-]?(?<![а-яА-Я])[сю]', caseSensitive: false);
 final reInkTxtDataWest = RegExp(r'[+-]?[вз]', caseSensitive: false);
 final reInkTxtDataIntensity = RegExp(r'^Ин', caseSensitive: false);
 
@@ -222,7 +223,8 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
       final _print = _matchPrint.group(1).trim();
       final _printStrt_d = _reDigit.firstMatch(_print);
       if (_printStrt_d != null) {
-        final _printStop_d = _reDigit.matchAsPrefix(_print, _printStrt_d.end);
+        final _printStop_d =
+            _reDigit.firstMatch(_print.substring(_printStrt_d.end));
         if (_printStop_d != null) {
           _printStop = double.tryParse(_printStop_d.group(0));
         }
@@ -378,9 +380,10 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
           client: _client,
         ));
       }
-      final _matchTbl2 = reInkTxtTable.matchAsPrefix(data, _matchTbl1.end);
+      final _matchTbl2 =
+          reInkTxtTable.firstMatch(data.substring(_matchTbl1.end));
       if (_matchTbl2 != null) {
-        final _tbl2_head = _matchTbl1.group(2);
+        final _tbl2_head = _matchTbl2.group(2);
         final _tbl2_head_lines =
             LineSplitter.split(_tbl2_head).toList(growable: false);
         final _lTbl2_headColumns = _tbl2_head_lines.first.split('|').length;
@@ -449,9 +452,9 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
               _northM = false;
             } else {
               final _match2 = reInkTxtDataNorth
-                  .matchAsPrefix(_input, _match.end)
+                  .firstMatch(_input.substring(_match.end))
                   .group(0)
-                  .toLowerCase();
+                  ?.toLowerCase();
               if (_match2 != null && (_match1 == '-с' || _match1 == '+ю')) {
                 _northM = true;
               } else {
@@ -466,7 +469,7 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
               _westM = false;
             } else {
               final _match2 = reInkTxtDataWest
-                  .matchAsPrefix(_input, _match.end)
+                  .firstMatch(_input.substring(_match.end))
                   .group(0)
                   .toLowerCase();
               if (_match2 != null && (_match1 == '-в' || _match1 == '+з')) {

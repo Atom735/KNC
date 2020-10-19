@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:knc/src/dbf.dart';
 import 'package:knc/src/ink.txt.dart';
 import 'package:path/path.dart' as p;
 
@@ -18,6 +17,7 @@ void main(List<String> args) async {
         if (ink != null) {
           final str = StringBuffer();
           str.writeCharCode(unicodeBomCharacterRune);
+          str.writeln(e.path);
           str.write(ink.getDebugString());
           File(e.path + '._.txt').writeAsStringSync(str.toString());
         }
