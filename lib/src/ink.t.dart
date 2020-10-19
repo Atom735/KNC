@@ -156,7 +156,7 @@ class OneFileInkDataDoc extends OneFileInkData<OneFileInkDataRowDoc> {
   /// Глубина максимального зенитного угла (м)
   double /*?*/ maxZenithAngleDepth;
 
-  /// Максимальный зенитный угл (градусы)
+  /// Максимальный зенитный угол (градусы)
   double /*?*/ maxZenithAngle;
 
   /// Глубина максимальной интенисивности кривизны (м)

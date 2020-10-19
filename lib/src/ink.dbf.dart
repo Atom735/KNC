@@ -95,7 +95,7 @@ extension IOneFileInkDataDbf on OneFileInkDataDbf {
       if (_iAZIMUT != -1) {
         str.add('AZIMUT');
       }
-      throw Exception('Были обнаруженны следующие поля: ${str.join(', ')}');
+      throw Exception('!W:Были обнаруженны следующие поля: ${str.join(', ')}');
     } else {
       return null;
     }
