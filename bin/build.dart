@@ -381,6 +381,14 @@ class DartClass {
     if (_docComments != null && _docComments.trim().isNotEmpty) {
       o.docComments = getDocComments(_docComments);
     }
+    if (_superClassGenericsNames != null &&
+        _superClassGenericsNames.trim().isNotEmpty) {
+      o.superClassGenericsNames = _superClassGenericsNames
+          .trim()
+          .split(',')
+          .map((e) => e.trim())
+          .toList(growable: false);
+    }
     if (_superClassName != null && _superClassName.trim().isNotEmpty) {
       o.superClassName = _superClassName.trim();
       if (ctx != null &&
@@ -393,14 +401,6 @@ class DartClass {
               _superMembers.map((e) => DartClassMember.inherite(e, o)).toList();
         }
       }
-    }
-    if (_superClassGenericsNames != null &&
-        _superClassGenericsNames.trim().isNotEmpty) {
-      o.superClassGenericsNames = _superClassGenericsNames
-          .trim()
-          .split(',')
-          .map((e) => e.trim())
-          .toList(growable: false);
     }
     if (_genericParams != null && _genericParams.trim().isNotEmpty) {
       final _genParams = _genericParams
@@ -492,8 +492,21 @@ class DartClass {
     if (members != null && members.isNotEmpty) {
       for (var member in members) {
         if (member.inherited) {
-          str.writeln(''.padLeft(tabs + 1, '\t') +
-              '${member.type} ${member.canBeNull ? '/*?*/ ' : ''} ${member.ident},');
+          str.write(''.padLeft(tabs + 1, '\t') + '${member.type}');
+          if (member.typeGenericsNames != null &&
+              member.typeGenericsNames.isNotEmpty) {
+            str.write('<');
+            var _first = true;
+            for (var gen in member.typeGenericsNames) {
+              if (!_first) {
+                str.write(', ');
+              }
+              str.write('$gen');
+              _first = false;
+            }
+            str.write('>');
+          }
+          str.writeln(' ${member.canBeNull ? '/*?*/ ' : ''} ${member.ident},');
         } else {
           str.writeln(''.padLeft(tabs + 1, '\t') + 'this.${member.ident},');
         }
@@ -523,8 +536,21 @@ class DartClass {
     if (members != null && members.isNotEmpty) {
       for (var member in members) {
         if (member.inherited) {
-          str.writeln(''.padLeft(tabs + 1, '\t') +
-              '${member.type} ${member.canBeNull ? '/*?*/ ' : ''} ${member.ident},');
+          str.write(''.padLeft(tabs + 1, '\t') + '${member.type}');
+          if (member.typeGenericsNames != null &&
+              member.typeGenericsNames.isNotEmpty) {
+            str.write('<');
+            var _first = true;
+            for (var gen in member.typeGenericsNames) {
+              if (!_first) {
+                str.write(', ');
+              }
+              str.write('$gen');
+              _first = false;
+            }
+            str.write('>');
+          }
+          str.writeln(' ${member.canBeNull ? '/*?*/ ' : ''} ${member.ident},');
         } else {
           str.writeln(''.padLeft(tabs + 1, '\t') + 'this.${member.ident},');
         }
