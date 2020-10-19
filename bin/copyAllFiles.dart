@@ -8,8 +8,11 @@ void copy(String pathIn, List<String> exts, Directory dirOut) async {
   }
   dirOut.createSync(recursive: true);
   final out = File(p.join(dirOut.path, '__out.txt'))
-      .openWrite(mode: FileMode.writeOnly, encoding: utf8);
+      .openWrite(mode: FileMode.writeOnly);
   out.writeCharCode(unicodeBomCharacterRune);
+  final outErr = File(p.join(dirOut.path, '__outErr.txt'))
+      .openWrite(mode: FileMode.writeOnly);
+  outErr.writeCharCode(unicodeBomCharacterRune);
   await Directory(pathIn).list(recursive: true).listen((entity) {
     if (entity is File) {
       final ext = p.extension(entity.path).toLowerCase();
@@ -18,13 +21,19 @@ void copy(String pathIn, List<String> exts, Directory dirOut) async {
         out.writeln(path);
         final dir = Directory(p.dirname(path));
         dir.createSync(recursive: true);
-        entity.copy(path);
+        try {
+          entity.copySync(path);
+        } catch (e, st) {
+          outErr.writeln(e);
+          outErr.writeln(st);
+          outErr.writeln();
+        }
       }
     }
   }).asFuture();
 
-  await out.flush();
   await out.close();
+  await outErr.close();
 }
 
 void main(List<String> args) async {
