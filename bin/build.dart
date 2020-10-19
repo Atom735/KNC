@@ -656,6 +656,31 @@ final dirLibSrc =
 final dirWebTsDart =
     Directory(p.join(Directory.current.absolute.path, 'web', 'ts', 'dart'));
 
+void parseFile(final File file) {
+  final fileData = file.readAsStringSync();
+  final fileName =
+      p.basenameWithoutExtension(p.basenameWithoutExtension(file.path));
+  final newDartFile = File(p.join(dirLibSrc.path, fileName + '.g.dart'));
+  final newTsFile = File(p.join(dirWebTsDart.path, fileName + '.g.ts'));
+  final classes = DartClass.getByString(fileData);
+  final enums = DartEnum.getByString(fileData);
+  final strDart = StringBuffer();
+  final strTs = StringBuffer();
+  for (final _enum in enums) {
+    strDart.writeln(_enum.getDartEnum());
+    strTs.writeln(_enum.getTsInterface());
+  }
+  for (final _class in classes) {
+    strDart.writeln(_class.getDartClass());
+    strTs.writeln(_class.getTsInterface());
+  }
+
+  newDartFile.writeAsStringSync(strDart.toString());
+  newTsFile.writeAsStringSync(strTs.toString());
+  print(
+      '[${DateTime.now()}] regenerated ${p.relative(file.path, from: dirLibT.path)}');
+}
+
 void main(List<String> args) {
   final files = dirLibT.listSync();
   final _l = files.length;
@@ -663,26 +688,14 @@ void main(List<String> args) {
   for (var i = 0; i < _l; i++) {
     final file = files[i];
     if (file is File && p.extension(file.path, 2).toLowerCase() == '.t.dart') {
-      final fileData = file.readAsStringSync();
-      final fileName =
-          p.basenameWithoutExtension(p.basenameWithoutExtension(file.path));
-      final newDartFile = File(p.join(dirLibSrc.path, fileName + '.g.dart'));
-      final newTsFile = File(p.join(dirWebTsDart.path, fileName + '.g.ts'));
-      final classes = DartClass.getByString(fileData);
-      final enums = DartEnum.getByString(fileData);
-      final strDart = StringBuffer();
-      final strTs = StringBuffer();
-      for (final _enum in enums) {
-        strDart.writeln(_enum.getDartEnum());
-        strTs.writeln(_enum.getTsInterface());
-      }
-      for (final _class in classes) {
-        strDart.writeln(_class.getDartClass());
-        strTs.writeln(_class.getTsInterface());
-      }
-
-      newDartFile.writeAsStringSync(strDart.toString());
-      newTsFile.writeAsStringSync(strTs.toString());
+      parseFile(file);
     }
   }
+
+  dirLibT.watch().listen((event) {
+    final _path = event.path;
+    if (p.extension(_path, 2).toLowerCase() == '.t.dart') {
+      parseFile(File(_path));
+    }
+  });
 }
