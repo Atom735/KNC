@@ -130,6 +130,9 @@ class OfficeWordBreak extends IOfficeWordElement {
   /// Restart Location For Text Wrapping Break
   NOfficeWord_ST_BrClear clear;
 
+  @override
+  String toString() => '\n';
+
   OfficeWordBreak();
   OfficeWordBreak.fromXmlEvent(XmlStartElementEvent _event) {
     final attributes = _event.attributes;
@@ -173,6 +176,9 @@ class OfficeWordText extends IOfficeWordElement {
           'preserve';
     }
   }
+
+  @override
+  String toString() => txt;
 
   @override
   bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
@@ -241,6 +247,15 @@ class OfficeWordTextRun extends IOfficeWordElement {
   int /*?*/ rsidR;
 
   List<IOfficeWordElement> elements = [];
+
+  @override
+  String toString() {
+    final str = StringBuffer();
+    for (var element in elements) {
+      str.write(element.toString());
+    }
+    return str.toString();
+  }
 
   OfficeWordTextRun();
   OfficeWordTextRun.fromXmlEvent(XmlStartElementEvent _event) {
@@ -342,6 +357,15 @@ class OfficeWordParagraph extends IOfficeWordElement {
   OfficeWordParagraphProperties /*?*/ pPr;
 
   List<IOfficeWordElement> elements = [];
+
+  @override
+  String toString() {
+    final str = StringBuffer();
+    for (var element in elements) {
+      str.write(element.toString());
+    }
+    return str.toString();
+  }
 
   OfficeWordParagraph();
   OfficeWordParagraph.fromXmlEvent(XmlStartElementEvent _event) {
@@ -486,6 +510,16 @@ class OfficeWordTable extends IOfficeWordElement {
 /// `w:sectPr` [0..1]    Document Final Section Properties
 class OfficeWordBody extends IOfficeWordElement {
   List<IOfficeWordElement> elements;
+
+  @override
+  String toString() {
+    final str = StringBuffer();
+    for (var element in elements) {
+      str.writeln(element.toString());
+    }
+    return str.toString();
+  }
+
   @override
   bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
     if (_event is XmlStartElementEvent) {
@@ -517,6 +551,9 @@ class OfficeWordBody extends IOfficeWordElement {
 /// - `w:body` [0..1]    Document Body
 class OfficeWordDocument extends IOfficeWordElement {
   OfficeWordBody body;
+
+  @override
+  String toString() => body?.toString() ?? 'null';
 
   @override
   bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
