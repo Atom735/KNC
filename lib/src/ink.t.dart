@@ -55,10 +55,10 @@ class OneFileInkDataRow {
   double depth;
 
   /// Угол (градусы)
-  double angle;
+  double /*?*/ angle;
 
   /// Азимут (градусы)
-  double azimuth;
+  double /*?*/ azimuth;
 }
 
 /// Данные инклинометрии DBF файла на каждую скважину, одна строка
