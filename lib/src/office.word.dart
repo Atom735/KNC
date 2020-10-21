@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:xml/xml_events.dart';
 
 /// XmlCDATAEvent
@@ -405,6 +408,240 @@ class OfficeWordParagraph extends IOfficeWordElement {
 }
 
 /// Sequence [1..1]
+/// - from type `w:CT_TblPrBase`
+/// - - `w:tblStyle` [0..1]    Referenced Table Style
+/// - - `w:tblpPr` [0..1]    Floating Table Positioning
+/// - - `w:tblOverlap` [0..1]    Floating Table Allows Other Tables to Overlap
+/// - - `w:bidiVisual` [0..1]    Visually Right to Left Table
+/// - - `w:tblStyleRowBandSize` [0..1]    Number of Rows in Row Band
+/// - - `w:tblStyleColBandSize` [0..1]    Number of Columns in Column Band
+/// - - `w:tblW` [0..1]    Preferred Table Width
+/// - - `w:jc` [0..1]    Table Alignment
+/// - - `w:tblCellSpacing` [0..1]    Table Cell Spacing Default
+/// - - `w:tblInd` [0..1]    Table Indent from Leading Margin
+/// - - `w:tblBorders` [0..1]    Table Borders
+/// - - `w:shd` [0..1]    Table Shading
+/// - - `w:tblLayout` [0..1]    Table Layout
+/// - - `w:tblCellMar` [0..1]    Table Cell Margin Defaults
+/// - - `w:tblLook` [0..1]    Table Style Conditional Formatting Settings
+/// - `w:tblPrChange` [0..1]    Revision Information for Table Properties
+class OfficeWordTableProperties extends IOfficeWordElement {
+  @override
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
+    if (_event is XmlStartElementEvent) {
+    } else if (_event is XmlEndElementEvent) {
+      if (_event.name == 'w:tblPr') {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/// Sequence [1..1]
+/// - from type `w:CT_TblGridBase`
+/// - - `w:gridCol` [0..*]    Grid Column Definition
+/// - - `w:tblGridChange` [0..1]    Revision Information for Table Grid Column Definitions
+class OfficeWordTableGrid extends IOfficeWordElement {
+  @override
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
+    if (_event is XmlStartElementEvent) {
+    } else if (_event is XmlEndElementEvent) {
+      if (_event.name == 'w:tblGrid') {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/// Sequence [1..1]
+/// - `w:tcPr` [0..1]    Table Cell Properties
+/// - from group `w:EG_BlockLevelElts`
+/// - - Choice [1..*]
+/// - - - from group `w:EG_BlockLevelChunkElts`
+/// - - - - Choice [0..*]
+/// - - - - from group `w:EG_ContentBlockContent`
+/// - - - - - `w:customXml`    Block-Level Custom XML Element
+/// - - - - - `w:sdt`    Block-Level Structured Document Tag
+/// - - - - - `w:p` [0..*]    Paragraph
+/// - - - - - `w:tbl` [0..*]    Table
+/// - - - - - - from group `w:EG_RunLevelElts`
+/// - - - - - - `w:proofErr` [0..1]    Proofing Error Anchor
+/// - - - - - - `w:permStart` [0..1]    Range Permission Start
+/// - - - - - - `w:permEnd` [0..1]    Range Permission End
+/// - - - - - - from group `w:EG_RangeMarkupElements`
+/// - - - - - - - `w:bookmarkStart`    Bookmark Start
+/// - - - - - - - `w:bookmarkEnd`    Bookmark End
+/// - - - - - - - `w:moveFromRangeStart`    Move Source Location Container - Start
+/// - - - - - - - `w:moveFromRangeEnd`    Move Source Location Container - End
+/// - - - - - - - `w:moveToRangeStart`    Move Destination Location Container - Start
+/// - - - - - - - `w:moveToRangeEnd`    Move Destination Location Container - End
+/// - - - - - - - `w:commentRangeStart`    Comment Anchor Range Start
+/// - - - - - - - `w:commentRangeEnd`    Comment Anchor Range End
+/// - - - - - - - `w:customXmlInsRangeStart`    Custom XML Markup Insertion Start
+/// - - - - - - - `w:customXmlInsRangeEnd`    Custom XML Markup Insertion End
+/// - - - - - - - `w:customXmlDelRangeStart`    Custom XML Markup Deletion Start
+/// - - - - - - - `w:customXmlDelRangeEnd`    Custom XML Markup Deletion End
+/// - - - - - - - `w:customXmlMoveFromRangeStart`    Custom XML Markup Move Source Start
+/// - - - - - - - `w:customXmlMoveFromRangeEnd`    Custom XML Markup Move Source End
+/// - - - - - - - `w:customXmlMoveToRangeStart`    Custom XML Markup Move Destination Location Start
+/// - - - - - - - `w:customXmlMoveToRangeEnd`    Custom XML Markup Move Destination Location End
+/// - - - - - - `w:ins` [0..1]    Inserted Run Content
+/// - - - - - - `w:del` [0..1]    Deleted Run Content
+/// - - - - - - `w:moveFrom`    Move Source Run Content
+/// - - - - - - `w:moveTo`    Move Destination Run Content
+/// - - - - - - from group `w:EG_MathContent`
+/// - - - - - - - `m:oMathPara`    Math Paragraph
+/// - - - - - - - `m:oMath`
+/// - - `w:altChunk` [0..*]    Anchor for Imported External Content
+class OfficeWordTableCell extends IOfficeWordElement {
+  List<IOfficeWordElement> elements = [];
+
+  @override
+  String toString() {
+    final str = StringBuffer();
+    for (var element in elements) {
+      str.writeln(element.toString());
+    }
+    return str.toString();
+  }
+
+  /// Получиает текст клетки списком из линий
+  List<String> getLinesList() =>
+      LineSplitter.split(toString()).toList(growable: false);
+
+  @override
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
+    if (_event is XmlStartElementEvent) {
+      if (_event.name == 'w:p') {
+        elements.add(OfficeWordParagraph.fromXmlEvent(_event));
+        if (!_event.isSelfClosing) {
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(elements.last));
+        }
+        return false;
+      } else if (_event.name == 'w:tbl') {
+        elements.add(OfficeWordTable());
+        if (!_event.isSelfClosing) {
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(elements.last));
+        }
+        return false;
+      }
+    } else if (_event is XmlEndElementEvent) {
+      if (_event.name == 'w:tc') {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/// Sequence [1..1]
+/// - `w:tblPrEx` [0..1]    Table-Level Property Exceptions
+/// - `w:trPr` [0..1]    Table Row Properties
+/// - - from group w:EG_ContentCellContent
+/// - - - Choice [0..*]
+/// - - - `w:tc` [0..*]    Table Cell
+/// - - - `w:customXml`    Cell-Level Custom XML Element
+/// - - - `w:sdt`    Cell-Level Structured Document Tag
+/// - - - from group `w:EG_RunLevelElts`
+/// - - - - `w:proofErr` [0..1]    Proofing Error Anchor
+/// - - - - `w:permStart` [0..1]    Range Permission Start
+/// - - - - `w:permEnd` [0..1]    Range Permission End
+/// - - - - from group w:EG_RangeMarkupElements
+/// - - - - - `w:bookmarkStart`    Bookmark Start
+/// - - - - - `w:bookmarkEnd`    Bookmark End
+/// - - - - - `w:moveFromRangeStart`    Move Source Location Container - Start
+/// - - - - - `w:moveFromRangeEnd`    Move Source Location Container - End
+/// - - - - - `w:moveToRangeStart`    Move Destination Location Container - Start
+/// - - - - - `w:moveToRangeEnd`    Move Destination Location Container - End
+/// - - - - - `w:commentRangeStart`    Comment Anchor Range Start
+/// - - - - - `w:commentRangeEnd`    Comment Anchor Range End
+/// - - - - - `w:customXmlInsRangeStart`    Custom XML Markup Insertion Start
+/// - - - - - `w:customXmlInsRangeEnd`    Custom XML Markup Insertion End
+/// - - - - - `w:customXmlDelRangeStart`    Custom XML Markup Deletion Start
+/// - - - - - `w:customXmlDelRangeEnd`    Custom XML Markup Deletion End
+/// - - - - - `w:customXmlMoveFromRangeStart`    Custom XML Markup Move Source Start
+/// - - - - - `w:customXmlMoveFromRangeEnd`    Custom XML Markup Move Source End
+/// - - - - - `w:customXmlMoveToRangeStart`    Custom XML Markup Move Destination Location Start
+/// - - - - - `w:customXmlMoveToRangeEnd`    Custom XML Markup Move Destination Location End
+/// - - - - `w:ins` [0..1]    Inserted Run Content
+/// - - - - `w:del` [0..1]    Deleted Run Content
+/// - - - - `w:moveFrom`    Move Source Run Content
+/// - - - - `w:moveTo`    Move Destination Run Content
+/// - - - - from group w:EG_MathContent
+/// - - - - - `m:oMathPara`    Math Paragraph
+/// - - - - - `m:oMath`
+/// === Attributes ===
+/// - `w:rsidRPr`	[0..1]	`w:ST_LongHexNumber`	Revision Identifier for Table Row Glyph Formatting
+/// - `w:rsidR`	[0..1]	`w:ST_LongHexNumber`	Revision Identifier for Table Row
+/// - `w:rsidDel`	[0..1]	`w:ST_LongHexNumber`	Revision Identifier for Table Row Deletion
+/// - `w:rsidTr`	[0..1]	`w:ST_LongHexNumber`	Revision Identifier for Table Row Properties
+class OfficeWordTableRow extends IOfficeWordElement {
+  /// Revision Identifier for Table Row Glyph Formatting
+  int /*?*/ rsidRPr;
+
+  /// Revision Identifier for Table Row
+  int /*?*/ rsidR;
+
+  /// Revision Identifier for Table Row Deletion
+  int /*?*/ rsidDel;
+
+  /// Revision Identifier for Table Row Properties
+  int /*?*/ rsidTr;
+
+  List<IOfficeWordElement> elements = [];
+
+  @override
+  String toString() {
+    final str = StringBuffer();
+    for (var element in elements) {
+      str.write(element.toString());
+    }
+    return str.toString();
+  }
+
+  /// Получиает текст строки списком из клеток, который состоит из линий строк
+  List<List<String>> getColsLinesList() {
+    final o = <List<String>>[];
+    for (var element in elements) {
+      if (element is OfficeWordTableCell) {
+        o.add(element.getLinesList());
+      }
+    }
+    return o;
+  }
+
+  OfficeWordTableRow();
+  OfficeWordTableRow.fromXmlEvent(XmlStartElementEvent _event) {
+    final attributes = _event.attributes;
+    if (attributes != null && attributes.isNotEmpty) {
+      rsidRPr = _getXmlAttributeHex('w:rsidRPr', attributes);
+      rsidR = _getXmlAttributeHex('w:rsidR', attributes);
+      rsidDel = _getXmlAttributeHex('w:rsidDel', attributes);
+      rsidTr = _getXmlAttributeHex('w:rsidTr', attributes);
+    }
+  }
+  @override
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
+    if (_event is XmlStartElementEvent) {
+      if (_event.name == 'w:tc') {
+        elements.add(OfficeWordTableCell());
+        if (!_event.isSelfClosing) {
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(elements.last));
+        }
+        return false;
+      }
+    } else if (_event is XmlEndElementEvent) {
+      if (_event.name == 'w:tr') {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/// Sequence [1..1]
 /// - from group `w:EG_RangeMarkupElements`
 /// - - Choice [0..*]
 /// - - - `w:bookmarkStart`    Bookmark Start
@@ -456,12 +693,95 @@ class OfficeWordParagraph extends IOfficeWordElement {
 /// - - - `w:moveFrom`    Move Source Run Content
 /// - - - `w:moveTo`    Move Destination Run Content
 /// - - - from group `w:EG_MathContent`
-/// - - - `m:`oMathPara    Math Paragraph
-/// - - - `m:`oMath
+/// - - - `m:oMathPara`    Math Paragraph
+/// - - - `m:oMath`
 class OfficeWordTable extends IOfficeWordElement {
+  /// Table Properties
+  OfficeWordTableProperties tblPr;
+
+  /// Table Grid
+  OfficeWordTableGrid tblGrid;
+
+  List<IOfficeWordElement> elements = [];
+
+  @override
+  String toString() {
+    final tbl = <List<List<String>>>[];
+    var _lColumns = 0;
+    for (var element in elements) {
+      if (element is OfficeWordTableRow) {
+        final _s = element.getColsLinesList();
+        if (_s.length > _lColumns) {
+          _lColumns = _s.length;
+        }
+        tbl.add(_s);
+      }
+    }
+    final _lRow = tbl.length;
+    final _colsWidth = List.filled(_lColumns, 0);
+    final _rowsHeight = List.filled(_lRow, 0);
+    for (var iRow = 0; iRow < _lRow; iRow++) {
+      final _row = tbl[iRow];
+      final _lCol = min(_lColumns, _row.length);
+      for (var iCol = 0; iCol < _lCol; iCol++) {
+        final _col = _row[iCol];
+        final _lLine = _col.length;
+        _rowsHeight[iRow] = max(_rowsHeight[iRow], _lLine);
+        for (var iLine = 0; iLine < _lLine; iLine++) {
+          _colsWidth[iCol] = max(_colsWidth[iCol], _col[iLine].length);
+        }
+      }
+    }
+    final _fullWidth = _colsWidth.fold(1, (_prev, e) => _prev + e);
+    final str = StringBuffer();
+    var _beginRow = true;
+    for (var iRow = 0; iRow < _lRow; iRow++) {
+      final _row = tbl[iRow];
+      final _lCol = min(_lColumns, _row.length);
+      if (_beginRow) {
+        str.writeln(''.padRight(_fullWidth, '-'));
+        _beginRow = false;
+      }
+      for (var iLine = 0; iLine < _rowsHeight[iRow]; iLine++) {
+        for (var iCol = 0; iCol < _lCol; iCol++) {
+          str.write('|');
+          final _col = _row[iCol];
+          final _lLine = _col.length;
+          if (iLine >= _lLine) {
+            str.write(''.padRight(_colsWidth[iCol]));
+          } else {
+            str.write(_col[iLine].padRight(_colsWidth[iCol]));
+          }
+        }
+        str.writeln('|');
+      }
+      str.writeln(''.padRight(_fullWidth, '-'));
+    }
+    return str.toString();
+  }
+
   @override
   bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlStartElementEvent) {
+      if (_event.name == 'w:tblPr') {
+        tblPr = OfficeWordTableProperties();
+        if (!_event.isSelfClosing) {
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(tblPr));
+        }
+        return false;
+      } else if (_event.name == 'w:tblGrid') {
+        tblGrid = OfficeWordTableGrid();
+        if (!_event.isSelfClosing) {
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(tblGrid));
+        }
+        return false;
+      } else if (_event.name == 'w:tr') {
+        elements.add(OfficeWordTableRow());
+        if (!_event.isSelfClosing) {
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(elements.last));
+        }
+        return false;
+      }
     } else if (_event is XmlEndElementEvent) {
       if (_event.name == 'w:tbl') {
         return true;
