@@ -64,12 +64,26 @@ class Conv extends ProcessManager {
   /// будет записана в переменную [this.codePage]
   ConvDecodeData decode(final List<int> bytes, [final String /*?*/ _codePage]) {
     if (_codePage == null) {
+      if (bytes.length >= 3 &&
+          bytes[0] == 0xEF &&
+          bytes[1] == 0xBB &&
+          bytes[2] == 0xBF) {
+        return ConvDecodeData(utf8.decode(bytes), 'UTF-8 (BOM)');
+      }
       // Подбираем кодировку
       final codePageRaiting = getMappingRaitings(bytes);
       final codePage = convGetMappingMax(codePageRaiting);
+      if (codePageRaiting[codePage] <= 0) {
+        return ConvDecodeData(
+            utf8.decode(bytes, allowMalformed: true), 'UTF-8', codePageRaiting);
+      }
       return ConvDecodeData(convDecode(bytes, charMaps[codePage] /*!*/),
           codePage, codePageRaiting);
     } else {
+      if (_codePage.startsWith('UTF-8')) {
+        return ConvDecodeData(
+            utf8.decode(bytes, allowMalformed: true), 'UTF-8');
+      }
       return ConvDecodeData(
           convDecode(bytes, charMaps[_codePage] /*!*/), _codePage);
     }

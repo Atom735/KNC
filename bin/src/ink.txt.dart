@@ -5,9 +5,7 @@ import 'package:path/path.dart' as p;
 
 import 'Conv.dart';
 
-void main(List<String> args) async {
-  await Conv.init();
-  final dir = Directory(p.join('.ignore', 'files', 'txt')).absolute;
+void _mainStepTxt(Directory dir) {
   dir.listSync(recursive: true).forEach((e) {
     if (e is File) {
       final ext = p.extension(e.path).toLowerCase();
@@ -24,4 +22,13 @@ void main(List<String> args) async {
       }
     }
   });
+}
+
+void main(List<String> args) async {
+  await Conv.init();
+  // _mainStepTxt(Directory(p.join('.ignore', 'files', 'txt')).absolute);
+  final dir = Directory(
+      '\\\\?\\' + Directory(p.join('.ignore', 'files', 'doc')).absolute.path);
+  _mainStepTxt(Directory(
+      r'\\?\D:\ARGilyazeev\github\KNC\.ignore\files\doc\Abilov\ЗАП_ЩЕРБЕНЬСКОЕ\Первичная_информация\Западно-Щербеньское м-е, ГИС\'));
 }

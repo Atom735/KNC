@@ -17,7 +17,8 @@ final reInkTxtDataOffset = RegExp(r'^См', caseSensitive: false);
 final reInkTxtDataOffsetAngle = RegExp(r'уго?л\s+см', caseSensitive: false);
 final reInkTxtDataNorth =
     RegExp(r'[+-]?(?<![а-яА-Я])[сю]', caseSensitive: false);
-final reInkTxtDataWest = RegExp(r'[+-]?[вз]', caseSensitive: false);
+final reInkTxtDataWest =
+    RegExp(r'[+-]?(?<![а-яА-Я])[вз]', caseSensitive: false);
 final reInkTxtDataIntensity = RegExp(r'^Ин', caseSensitive: false);
 
 /// - 1 - Интервал начало
@@ -135,12 +136,15 @@ final reInkTxtProcessed = RegExp(r'^\s*Обработал\s*:?\s*(.+)$',
 /// - 1 - разделительная строка таблицы
 /// - 2 - Заголовок таблицы
 /// - 3 - содержание таблицы
-final reInkTxtTable =
-    RegExp(r'^(-+\r?\n)(.+?)\1(.+?)\1', dotAll: true, multiLine: true);
+/// - 4? - содержание таблицы, тогда - 3 тоже заголовк для сгенерированного doc файла
+final reInkTxtTable = RegExp(
+    r'^(-+)\r?\n(.+?)^\1\r?\n(.+?)^\1$(?:\r?\n(.+?)^\1$)?',
+    dotAll: true,
+    multiLine: true);
 
 extension IOneFileInkDataTxt on OneFileInkDataDoc {
   static OneFileInkDataDoc /*?*/ createByString(final String data) {
-    if (!(reInkTxtTitle.hasMatch(data.substring(min(data.length, 4096))))) {
+    if (!(reInkTxtTitle.hasMatch(data.substring(0, min(data.length, 4096))))) {
       /// Отсутсвует заголовк `Замер кривизны`
       return null;
     }
@@ -298,24 +302,41 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
     final /*?*/ _data = <OneFileInkDataRowDoc>[];
     final _matchTbl1 = reInkTxtTable.firstMatch(data);
     if (_matchTbl1 != null) {
-      final _tbl1_head = _matchTbl1.group(2);
+      final _fromDocx = _matchTbl1.group(4) != null;
+
+      /// Текст заголовка первой таблицы
+      final _tbl1_head =
+          _matchTbl1.group(2) + (_fromDocx ? _matchTbl1.group(3) : '');
+
+      /// Нарезанные линии заголовка
       final _tbl1_head_lines =
           LineSplitter.split(_tbl1_head).toList(growable: false);
-      final _lTbl1_headColumns = _tbl1_head_lines.last.split('|').length;
+
+      /// Количество заголовков
+      final _lTbl1_headColumns =
+          _tbl1_head_lines.last.split('|').length - (_fromDocx ? 2 : 0);
+
+      /// Местонахождение разделителей колонок
       final _tbl1_headColumns_t = List<int>.filled(_lTbl1_headColumns - 1, -1);
+
+      /// Значение заголовков
       final _tbl1_headColumns = List<String>.filled(_lTbl1_headColumns, '');
+
+      /// Подсчёт разделителей заголовка
       for (var i = 0; i < _lTbl1_headColumns - 1; i++) {
-        _tbl1_headColumns_t[i] = _tbl1_head_lines.last
-            .indexOf('|', i == 0 ? 0 : _tbl1_headColumns_t[i - 1] + 1);
+        _tbl1_headColumns_t[i] = _tbl1_head_lines.last.indexOf(
+            '|', i == 0 ? (_fromDocx ? 1 : 0) : _tbl1_headColumns_t[i - 1] + 1);
       }
+
+      /// Заполение заголовков
       for (var _line in _tbl1_head_lines) {
-        final _cols = _line.split('|');
+        final _cols = _line.split('|')..removeWhere((e) => e.isEmpty);
         if (_cols.length == _lTbl1_headColumns) {
           for (var i = 0; i < _lTbl1_headColumns; i++) {
             _tbl1_headColumns[i] += ' ' + _cols[i].trim();
           }
         } else {
-          for (var i = 0; i < _cols.length - 2; i++) {
+          for (var i = 0; i < min(3, _cols.length); i++) {
             _tbl1_headColumns[i] += ' ' + _cols[i].trim();
           }
           _tbl1_headColumns.last += _cols.last;
@@ -324,24 +345,35 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
       for (var i = 0; i < _lTbl1_headColumns; i++) {
         _tbl1_headColumns[i] = _tbl1_headColumns[i].trim();
       }
-      final _tbl1_body = _matchTbl1.group(3);
+      final _tbl1_body = _matchTbl1.group(_fromDocx ? 4 : 3);
       final _tbl1_body_lines =
           LineSplitter.split(_tbl1_body).toList(growable: false);
       final _lTbl1_body_lines = _tbl1_body_lines.length ~/ 2;
       for (var j = 0; j < _lTbl1_body_lines; j++) {
         final _cols = List<String>.filled(_lTbl1_headColumns - 1, '');
 
-        for (var i = 0; i < _lTbl1_headColumns - 1; i++) {
-          final _l1 = _tbl1_body_lines[j * 2 + 0];
-          final _l2 = _tbl1_body_lines[j * 2 + 1];
-          final _len1 = _l1.length;
-          final _len2 = _l2.length;
-          final _i1 = i == 0 ? 0 : _tbl1_headColumns_t[i - 1] + 1;
-          final _i2 = _tbl1_headColumns_t[i] + 1;
-          _cols[i] += (_i1 < _len1 ? _l1.substring(_i1, min(_i2, _len1)) : '') +
-              ' ' +
-              (_i1 < _len2 ? _l2.substring(_i1, min(_i2, _len2)) : '');
+        final _l1 = _tbl1_body_lines[j * 2 + 0];
+        final _l2 = _tbl1_body_lines[j * 2 + 1];
+        final _len1 = _l1.length;
+        final _len2 = _l2.length;
+        if (_fromDocx) {
+          for (var i = 0; i < _lTbl1_headColumns - 1; i++) {
+            final _i1 = i == 0 ? 1 : _tbl1_headColumns_t[i - 1] + 1;
+            final _i2 = _tbl1_headColumns_t[i];
+            _cols[i] +=
+                (_l1.substring(_i1, _i2)) + ' ' + (_l2.substring(_i1, _i2));
+          }
+        } else {
+          for (var i = 0; i < _lTbl1_headColumns - 1; i++) {
+            final _i1 = i == 0 ? 0 : _tbl1_headColumns_t[i - 1] + 1;
+            final _i2 = _tbl1_headColumns_t[i] + 1;
+            _cols[i] +=
+                (_i1 < _len1 ? _l1.substring(_i1, min(_i2, _len1)) : '') +
+                    ' ' +
+                    (_i1 < _len2 ? _l2.substring(_i1, min(_i2, _len2)) : '');
+          }
         }
+
         final _n = int.tryParse(_cols[0]);
 
         double /*?*/ _strt;
@@ -375,10 +407,14 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
         final _sTBPV = _cols[5].trim();
         final _sUBT = _cols[6].trim();
 
-        final _supervisor =
-            _tbl1_body_lines[j * 2 + 0].substring(_tbl1_headColumns_t.last);
-        final _client =
-            _tbl1_body_lines[j * 2 + 1].substring(_tbl1_headColumns_t.last);
+        final _supervisor = (_fromDocx
+                ? _l1.substring(_tbl1_headColumns_t.last, _len1 - 1)
+                : _l1.substring(min(_tbl1_headColumns_t.last, _len1)))
+            .trim();
+        final _client = (_fromDocx
+                ? _l2.substring(_tbl1_headColumns_t.last, _len2 - 1)
+                : _l2.substring(min(_tbl1_headColumns_t.last, _len2)))
+            .trim();
 
         _extInfo.add(OneFileInkDataDocExtInfo(
           n: _n,
@@ -523,45 +559,53 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
         /// Количетво линий второй строки второй таблицы
         final _lLine = _tbl2_body_lines.length;
 
-        /// Количество пробелов на каждой позиции
-        final _spaces = <int>[];
-
         /// Предполагаемые позиции разделителей столбцов
         final _spacesCol = <int>[];
 
         /// Подсчёт пробелов в каждом столбце
-        for (var i = 0; i < _lLine; i++) {
-          final _line = _tbl2_body_lines[i].codeUnits;
-          final _l = _line.length;
-          while (_spaces.length < _l) {
-            _spaces.add(i);
+        if (_fromDocx) {
+          var _i = _tbl2_body_lines.first.indexOf('|');
+          while (_i != -1) {
+            _spacesCol.add(_i);
+            _i = _tbl2_body_lines.first.indexOf('|', _i + 1);
           }
-          for (var j = 0; j < _l; j++) {
-            if (_line[j] == 0x20) {
-              _spaces[j]++;
+        } else {
+          /// Количество пробелов на каждой позиции
+          final _spaces = <int>[];
+
+          var k = _tbl2_body_lines.first.length;
+          for (var i = 0; i < _lLine; i++) {
+            final _line = _tbl2_body_lines[i].codeUnits;
+            final _l = _line.length;
+            while (_spaces.length < _l) {
+              _spaces.add(i);
+            }
+            for (var j = 0; j < _l; j++) {
+              if (_line[j] == 0x20) {
+                _spaces[j]++;
+              }
             }
           }
-        }
-        final _l = _spaces.length;
+          final _l = _spaces.length;
 
-        /// Подбор длины первого столбца
-        var k = _tbl2_body_lines[0].length;
-        for (var _line in _tbl2_body_lines) {
-          final _match = _reDigit.firstMatch(_line)?.end ?? k;
-          if (_match < k) {
-            k = _match;
+          /// Подбор длины первого столбца
+          for (var _line in _tbl2_body_lines) {
+            final _match = _reDigit.firstMatch(_line)?.end ?? k;
+            if (_match < k) {
+              k = _match;
+            }
           }
-        }
 
-        /// Нарезание на возможные разделители
-        var _k = _spaces.first;
-        for (var i = 1; i < _l; i++) {
-          final _kT = _spaces[i];
-          if (_kT <= _k) {
-            _k = _kT;
-          } else {
-            _k = _kT;
-            _spacesCol.add(i);
+          /// Нарезание на возможные разделители
+          var _k = _spaces.first;
+          for (var i = 1; i < _l; i++) {
+            final _kT = _spaces[i];
+            if (_kT <= _k) {
+              _k = _kT;
+            } else {
+              _k = _kT;
+              _spacesCol.add(i);
+            }
           }
         }
 
@@ -573,12 +617,16 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
           _cols[0] = _line.substring(0, min(_lLine, _spacesCol.first)).trim();
           for (var i = 1; i < _l_spacesCol; i++) {
             _cols[i] = _line
-                .substring(
-                    min(_lLine, _spacesCol[i - 1]), min(_lLine, _spacesCol[i]))
+                .substring(min(_lLine, _spacesCol[i - 1] + (_fromDocx ? 1 : 0)),
+                    min(_lLine, _spacesCol[i]))
                 .trim();
           }
-          _cols.last = _line.substring(min(_lLine, _spacesCol.last)).trim();
-          _grid.add(_cols);
+          _cols.last = _line
+              .substring(min(_lLine, _spacesCol.last + (_fromDocx ? 1 : 0)))
+              .trim();
+          if (_cols.any((e) => e.isNotEmpty)) {
+            _grid.add(_cols);
+          }
         }
         final _l_grid = _grid.length;
 
