@@ -732,7 +732,7 @@ class OfficeWordTable extends IOfficeWordElement {
         }
       }
     }
-    final _fullWidth = _colsWidth.fold(1, (_prev, e) => _prev + e);
+    final _fullWidth = _colsWidth.fold(1, (_prev, e) => _prev + e + 1);
     final str = StringBuffer();
     var _beginRow = true;
     for (var iRow = 0; iRow < _lRow; iRow++) {
