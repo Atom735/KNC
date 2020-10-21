@@ -8,11 +8,13 @@ import 'package:xml/xml_events.dart';
 /// XmlProcessingEvent
 /// XmlStartElementEvent
 /// XmlTextEvent
-typedef RXmlEventFunc = bool Function(
-    XmlEvent, List<bool Function(XmlEvent, List)>);
+typedef RXmlEventFunc = bool Function(XmlEvent, List);
 
 abstract class IOfficeWordElement {
-  bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack);
+  static bool Function(XmlEvent _event, List _stack) rXmlEventParserGetFunc(
+          IOfficeWordElement caller) =>
+      caller.rXmlEventParser;
+  bool rXmlEventParser(XmlEvent _event, List _stack);
 }
 
 /// Break Types
@@ -107,7 +109,7 @@ NOfficeWord_ST_BrClear _getXmlAttributeEnum_ST_BrClear(
 /// - `w:pPrChange` [0..1]    Revision Information for Paragraph Properties
 class OfficeWordParagraphProperties extends IOfficeWordElement {
   @override
-  bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlStartElementEvent) {
     } else if (_event is XmlEndElementEvent) {
       if (_event.name == 'w:pPr') {
@@ -143,7 +145,7 @@ class OfficeWordBreak extends IOfficeWordElement {
   }
 
   @override
-  bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlEndElementEvent) {
       if (_event.name == 'w:br') {
         return true;
@@ -181,7 +183,7 @@ class OfficeWordText extends IOfficeWordElement {
   String toString() => txt;
 
   @override
-  bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlTextEvent) {
       txt =
           space ? '$txt${_event.text}' : '${txt.trim()} ${_event.text.trim()}';
@@ -268,17 +270,17 @@ class OfficeWordTextRun extends IOfficeWordElement {
   }
 
   @override
-  bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlStartElementEvent) {
       if (_event.name == 'w:br') {
         elements.add(OfficeWordBreak.fromXmlEvent(_event));
         if (!_event.isSelfClosing) {
-          _stack.add(elements.last.rXmlEventParser);
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(elements.last));
         }
       } else if (_event.name == 'w:t') {
         elements.add(OfficeWordText.fromXmlEvent(_event));
         if (!_event.isSelfClosing) {
-          _stack.add(elements.last.rXmlEventParser);
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(elements.last));
         }
       }
     } else if (_event is XmlEndElementEvent) {
@@ -380,17 +382,17 @@ class OfficeWordParagraph extends IOfficeWordElement {
   }
 
   @override
-  bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlStartElementEvent) {
       if (_event.name == 'w:pPr') {
         pPr = OfficeWordParagraphProperties();
         if (!_event.isSelfClosing) {
-          _stack.add(pPr.rXmlEventParser);
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(pPr));
         }
       } else if (_event.name == 'w:r') {
         elements.add(OfficeWordTextRun.fromXmlEvent(_event));
         if (!_event.isSelfClosing) {
-          _stack.add(elements.last.rXmlEventParser);
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(elements.last));
         }
       }
     } else if (_event is XmlEndElementEvent) {
@@ -458,7 +460,7 @@ class OfficeWordParagraph extends IOfficeWordElement {
 /// - - - `m:`oMath
 class OfficeWordTable extends IOfficeWordElement {
   @override
-  bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlStartElementEvent) {
     } else if (_event is XmlEndElementEvent) {
       if (_event.name == 'w:tbl') {
@@ -509,7 +511,7 @@ class OfficeWordTable extends IOfficeWordElement {
 /// - `w:altChunk` [0..*]    Anchor for Imported External Content
 /// `w:sectPr` [0..1]    Document Final Section Properties
 class OfficeWordBody extends IOfficeWordElement {
-  List<IOfficeWordElement> elements;
+  List<IOfficeWordElement> elements = [];
 
   @override
   String toString() {
@@ -521,18 +523,18 @@ class OfficeWordBody extends IOfficeWordElement {
   }
 
   @override
-  bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlStartElementEvent) {
       if (_event.name == 'w:p') {
         elements.add(OfficeWordParagraph.fromXmlEvent(_event));
         if (!_event.isSelfClosing) {
-          _stack.add(elements.last.rXmlEventParser);
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(elements.last));
         }
         return false;
       } else if (_event.name == 'w:tbl') {
         elements.add(OfficeWordTable());
         if (!_event.isSelfClosing) {
-          _stack.add(elements.last.rXmlEventParser);
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(elements.last));
         }
         return false;
       }
@@ -556,14 +558,14 @@ class OfficeWordDocument extends IOfficeWordElement {
   String toString() => body?.toString() ?? 'null';
 
   @override
-  bool rXmlEventParser(XmlEvent _event, List<RXmlEventFunc> _stack) {
+  bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlStartElementEvent) {
       if (_event.isSelfClosing) {
         return false;
       }
       if (_event.name == 'w:body') {
         body = OfficeWordBody();
-        _stack.add(body.rXmlEventParser);
+        _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(body));
         return false;
       }
     } else if (_event is XmlEndElementEvent) {
@@ -580,14 +582,14 @@ class OfficeWordDocument extends IOfficeWordElement {
 
     final _stack = <RXmlEventFunc>[];
 
-    bool _rInRoot(final XmlEvent _event, final List<RXmlEventFunc> _stack) {
+    bool _rInRoot(final XmlEvent _event, final List _stack) {
       if (_event is XmlStartElementEvent) {
         if (_event.isSelfClosing) {
           return false;
         }
         if (_event.name == 'w:document') {
           o = OfficeWordDocument();
-          _stack.add(o.rXmlEventParser);
+          _stack.add(IOfficeWordElement.rXmlEventParserGetFunc(o));
           return false;
         }
       }

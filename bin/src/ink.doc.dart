@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:knc/src/ink.txt.dart';
+import 'package:knc/src/office.word.dart';
 import 'package:path/path.dart' as p;
 
 import 'Conv.dart';
@@ -33,7 +34,24 @@ Future _mainStepUnZipDocx(Directory dir) {
 
 void main(List<String> args) async {
   await Conv.init();
-  final dir = Directory(p.join('.ignore', 'files', 'doc')).absolute;
-  await _mainStepDoc2x(dir);
-  await _mainStepUnZipDocx(dir);
+  final dir = Directory(
+      '\\\\?\\' + Directory(p.join('.ignore', 'files', 'doc')).absolute.path);
+  // await _mainStepDoc2x(dir);
+  // await _mainStepUnZipDocx(dir);
+  dir.listSync(recursive: true).forEach((e) {
+    if (e is Directory) {
+      final ext = p.extension(e.path, 2).toLowerCase();
+      if (ext == '.docx.dir') {
+        final doc = OfficeWordDocument.createByXmlString(
+            File(p.join(e.path, 'word', 'document.xml')).readAsStringSync());
+        if (doc != null) {
+          final str = StringBuffer();
+          str.writeCharCode(unicodeBomCharacterRune);
+          str.writeln('РАЗОБРАННЫЙ WORD файл');
+          str.writeln(doc.toString());
+          File(e.path + '.txt').writeAsStringSync(str.toString());
+        }
+      }
+    }
+  });
 }
