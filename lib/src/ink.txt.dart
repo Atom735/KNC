@@ -140,7 +140,7 @@ final reInkTxtTable =
 
 extension IOneFileInkDataTxt on OneFileInkDataDoc {
   static OneFileInkDataDoc /*?*/ createByString(final String data) {
-    if (!reInkTxtTitle.hasMatch(data)) {
+    if (!(reInkTxtTitle.hasMatch(data.substring(min(data.length, 4096))))) {
       /// Отсутсвует заголовк `Замер кривизны`
       return null;
     }
