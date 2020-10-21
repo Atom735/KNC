@@ -188,8 +188,7 @@ class OfficeWordText extends IOfficeWordElement {
   @override
   bool rXmlEventParser(XmlEvent _event, List _stack) {
     if (_event is XmlTextEvent) {
-      txt =
-          space ? '$txt${_event.text}' : '${txt.trim()} ${_event.text.trim()}';
+      txt = space ? '$txt${_event.text}' : '${txt}${_event.text.trim()}';
     } else if (_event is XmlEndElementEvent) {
       if (_event.name == 'w:t') {
         return true;
