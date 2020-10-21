@@ -18,3 +18,4 @@ analyzer:
     - src/**
     - build/**
     - lib/**.t.dart
+    - .ignore/**
