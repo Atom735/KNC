@@ -23,18 +23,29 @@ class TxtPos {
   /// Номер стобца
   int c = 0;
 
-  TxtPos(this.txt);
-
-  TxtPos.fromTxtPos(this.txt, final int p) {
-    skipSymbolsCount(p);
+  /// Создаёт указатель из контенера и перемещает его на [i] символов вперёд
+  TxtPos(this.txt, [final int i = 0]) {
+    skipSymbolsCount(i);
   }
 
+  /// Создаёт указатель
+  TxtPos.a(this.txt, [this.s = 0, this.l = 0, this.c = 0]);
+
+  /// Создаёт копию указателя из другого указателя
   TxtPos.copy(final TxtPos _) {
+    copyFrom(_);
+  }
+
+  /// Копирует данные из другого указателя в этот
+  void copyFrom(final TxtPos _) {
     txt = _.txt;
     s = _.s;
     l = _.l;
     c = _.c;
   }
+
+  /// Возвращает расстояние между двумя указателями
+  TxtPos distance(final TxtPos _) => TxtPos.a(txt, _.s - s, _.l - l, _.c - c);
 
   String /*?*/ get prev => s >= 1 ? txt.data[s - 1] : null;
   String /*?*/ get next => s < dataLength - 1 ? txt.data[s + 1] : null;
@@ -45,6 +56,9 @@ class TxtPos {
 
   /// Переход к следующему символу
   String /*?*/ nextSymbol() {
+    if (symbol == null) {
+      return null;
+    }
     s++;
     c++;
     final _s = symbol;
@@ -108,6 +122,17 @@ class TxtPos {
       _s = nextSymbol();
     }
   }
+
+  /// Переход к следующей линии, возвращает первый символ линии
+  String /*?*/ skipToNextLine() {
+    skipToEndOfLine();
+    var _s = nextSymbol();
+    // Если перевод строки как в Windows, то пропускаем второй символ
+    if (_s == '\n' && prev == '\r') {
+      return nextSymbol();
+    }
+    return _s;
+  }
 }
 
 /// Тип заметки [TxtNote]
@@ -123,6 +148,9 @@ enum NTxtNoteType {
 
   /// Ошибка
   error,
+
+  /// Фатальная ошибка
+  fatal,
 }
 
 /// Заметка к тексту
@@ -149,4 +177,7 @@ class TxtNote {
 
   /// Создать заметку об ошибки
   TxtNote.error(this.p, this.s, [this.l = 0]) : t = NTxtNoteType.error.index;
+
+  /// Создать заметку о фатальной ошибки
+  TxtNote.fatal(this.p, this.s, [this.l = 0]) : t = NTxtNoteType.fatal.index;
 }
