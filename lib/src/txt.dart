@@ -44,6 +44,9 @@ class TxtPos {
     c = _.c;
   }
 
+  @override
+  String toString() => '[${l + 1}, ${c + 1}]';
+
   /// Возвращает расстояние между двумя указателями
   TxtPos distance(final TxtPos _) => TxtPos.a(txt, _.s - s, _.l - l, _.c - c);
 
@@ -53,6 +56,9 @@ class TxtPos {
   String /*?*/ symbolAt(final int i) =>
       s + i < dataLength && s + i >= 0 ? txt.data[s + i] : null;
   int get dataLength => txt.length;
+
+  /// Возвращает подстроку длины [_len]
+  String substring(final int _len) => txt.data.substring(s, s + _len);
 
   /// Переход к следующему символу
   String /*?*/ nextSymbol() {
@@ -95,8 +101,8 @@ class TxtPos {
     return _s;
   }
 
-  /// Пропуск всех символов не содержащихся в [_a], возвращает первый символ не из
-  /// [_a]
+  /// Пропуск всех символов не содержащихся в [_a], возвращает первый
+  /// встретившийся символ из [_a]
   String /*?*/ skipSymbolsOutString(final String _a) {
     var _s = symbol;
     while (_s != null && !_a.contains(_s)) {
@@ -110,6 +116,15 @@ class TxtPos {
     var _s = symbol;
     while (
         _s != null && (_s == ' ' || _s == '\t' || _s == '\n' || _s == '\r')) {
+      _s = nextSymbol();
+    }
+    return _s;
+  }
+
+  /// Пропуск пробелов, возвращает первый непробельный символ
+  String /*?*/ skipWhiteSpacesOrToEndOfLine() {
+    var _s = symbol;
+    while (_s != null && (_s == ' ' || _s == '\t')) {
       _s = nextSymbol();
     }
     return _s;
