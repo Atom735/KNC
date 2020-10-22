@@ -161,8 +161,6 @@ class OneFileLasDataSectionW {
 }
 
 /// Данные LAS файла
-///
-///
 class OneFileLasData {
   /// `~V` - contains version and wrap mode information
   /// - Этот раздел является обязательным и обычно появляется в самом начале
@@ -175,7 +173,7 @@ class OneFileLasData {
   /// - Этот раздел является обязательным.
   /// - Он идентифицирует скважину, его местоположение и указывает начальную и
   /// конечную глубину файла.
-  OneFileLasDataSectionV w;
+  OneFileLasDataSectionW w;
 
   /// `~C` - contains curve information
   /// - `~Curve Information Section`
@@ -206,7 +204,7 @@ class OneFileLasData {
   /// `~O` - contains other information such as comments
   /// `~Other Information Section`
   /// - Этот раздел не является обязательным. Его предполагаемое использование - как раздел примечаний или комментариев.
-  String /*?*/ o;
+  List<String> /*?*/ o;
 
   /// `~A` - contains ASCII log data
   /// - Раздел данных всегда будет последним разделом в файле.
@@ -232,3 +230,5 @@ class OneFileLasData {
   /// ограничена.
   List<double> a;
 }
+
+class OneFileLasDataFile extends OneFileLasData {}
