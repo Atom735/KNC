@@ -230,5 +230,3 @@ class OneFileLasData {
   /// ограничена.
   List<double> a;
 }
-
-class OneFileLasDataFile extends OneFileLasData {}
