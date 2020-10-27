@@ -247,3 +247,29 @@ class TxtNote {
     return str.toString();
   }
 }
+
+double getMiddleArithmetic(final List<double> _list) {
+  var _o = 0.0;
+  final _l = _list.length;
+  for (var i = 0; i < _l; i++) {
+    _o += (_list[i] - _o) / (i + 1).toDouble();
+  }
+  return _o;
+}
+
+double getStepOfList(final List<double> _list, [final double _q = 0.00000001]) {
+  final _subList = _list.sublist(1);
+  final _l = _subList.length;
+  for (var i = 0; i < _l; i++) {
+    _subList[i] -= _list[i];
+  }
+  final _m = -getMiddleArithmetic(_subList);
+  final _q2 = -_q;
+  for (var i = 0; i < _l; i++) {
+    final _f = _subList[i] + _m;
+    if (_f >= _q || _f <= _q2) {
+      return 0.0;
+    }
+  }
+  return -_m;
+}

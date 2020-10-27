@@ -116,7 +116,7 @@ class LasParserLine extends TxtPos {
     final _firstNonSpace = TxtPos.copy(_begin)..skipWhiteSpacesOrToEndOfLine();
     final _firstSymbol = _firstNonSpace.symbol;
 
-    if (_firstSymbol == '#' && _ctx.section != 'O') {
+    if (_firstSymbol == '#') {
       if (_ctx.section == 'A') {
         _ctx.notes.add(TxtNote.error(
             _begin, 'Внутри ASCII секции запрещены комментарии', _len));
@@ -319,7 +319,7 @@ class LasParserLineParsed extends LasParserLine {
             .trim();
         return LasParserLineParsed.a(_, _mnem, '', _data, '');
       }
-      final _units = _pDot.substring(_pDot.distance(_pUnitsEnd).s);
+      final _units = _pUnits.substring(_pUnits.distance(_pUnitsEnd).s);
       return _dd(_pUnitsEnd, _units);
     }
   }
@@ -683,7 +683,7 @@ class LasParserLine_W_ extends LasParserLineParsed {
   static LasParserLine parse(
       LasParserLineParsed _, final LasParserContext _ctx) {
     if (_ is LasParserLineParsed && _.type == NLasParserLineType.raw_w.index) {
-      final val = _ctx.sV.version == 1 ? _.desc : _.data;
+      final val = _ctx.version?.value == 1 ? _.desc : _.data;
       switch (_.mnem.toUpperCase()) {
         case 'COMP':
           if (_.mnem != _.mnem.toUpperCase()) {
@@ -956,13 +956,7 @@ class LasParserContext {
       final _strt = curves.first.values.first;
       final _stop = curves.first.values.last;
       final _ld = curves.first.values.length;
-      var _step = curves.first.values[1] - _strt;
-      for (var i = 1; i < _ld; i++) {
-        if (_step != curves.first.values[i] - curves.first.values[i - 1]) {
-          _step = 0.0;
-          break;
-        }
-      }
+      var _step = getStepOfList(curves.first.values);
       for (var j = 0; j < _llc; j++) {
         curves[j].strt = _strt;
         curves[j].stop = _stop;
@@ -986,23 +980,16 @@ class LasParserContext {
         if (_indexStrt != -1) {
           curves[j].strt = curves[0].values[_indexStrt];
           curves[j].stop = curves[0].values[_indexStop];
-          curves[j].step = 0.0;
-          final _d = curves[0].values.sublist(_indexStrt, _indexStop + 1);
-          final _ll = _d.length;
-          if (_ll > 1) {
-            curves[j].step = _d[1] - _d[0];
-            for (var i = 1; i < _ll; i++) {
-              if (curves[j].step != _d[i] - _d[i - 1]) {
-                curves[j].step = 0.0;
-                break;
-              }
-            }
-          }
+
           final _c = curves[j].values.sublist(_indexStrt, _indexStop + 1);
           curves[j].values.clear();
           curves[j].values.addAll(_c);
           curves[j].indexStrt = _indexStrt;
           curves[j].indexStop = _indexStop;
+          if (_step == 0.0) {
+            curves[j].step = getStepOfList(
+                curves.first.values.sublist(_indexStrt, _indexStop + 1));
+          }
         } else {
           curves[j].strt = 0.0;
           curves[j].stop = 0.0;
