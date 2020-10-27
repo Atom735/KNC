@@ -852,84 +852,88 @@ class LasParserContext {
   LasParserContext._(final TxtCntainer _tc)
       : textContainer = _tc,
         thisPoint = TxtPos(_tc) {
-    while (thisPoint.symbol != null) {
-      if (next != null) {
-        break;
-      }
-      final _begin = TxtPos.copy(thisPoint);
-      thisPoint.skipToEndOfLine();
-      lines.add(LasParserLine(_begin, _begin.distance(thisPoint).s, this));
-      thisPoint.skipToNextLine();
-    }
-    final __l = lines.length;
-    for (var i = 0; i < __l; i++) {
-      final _line = lines[i];
-      if (_line is LasParserLineParsed) {
-        if (_line.type == NLasParserLineType.raw_v.index) {
-          lines[i] = LasParserLine_V_VERS.parse(_line, this);
-          lines[i] = LasParserLine_V_WRAP.parse(_line, this);
-        } else if (_line.type == NLasParserLineType.raw_w.index) {
-          lines[i] = LasParserLine_W_STRT.parse(_line, this);
-          lines[i] = LasParserLine_W_STOP.parse(_line, this);
-          lines[i] = LasParserLine_W_STEP.parse(_line, this);
-          lines[i] = LasParserLine_W_NULL.parse(_line, this);
-          lines[i] = LasParserLine_W_.parse(_line, this);
-        } else if (_line.type == NLasParserLineType.raw_c.index) {
-          lines[i] = LasParserLine_C_.parse(_line, this);
-        }
-      } else if (_line.type == NLasParserLineType.raw_a.index) {
-        ascii.add(_line);
-      }
-    }
-    bool _wrap;
-    _wrap = wrap?.value;
-
-    if (_wrap == false) {
-      final _l = ascii.length;
-      final _ll = curves.length;
-      for (var i = 0; i < _l; i++) {
-        final _line = ascii[i];
-        final _str = _line.string.split(' ')..removeWhere((e) => e.isEmpty);
-        if (_str.length == curves.length) {
-          final _parsed =
-              _str.map((e) => double.tryParse(e)).toList(growable: false);
-          if (_parsed.contains(null)) {
-            notes.add(
-                TxtNote.error(_line, 'Неудалось разобрать число', _line.len));
-          }
-          for (var j = 0; j < _ll; j++) {
-            curves[j].values.add(_parsed[j] ?? undef?.value);
-          }
-        } else {
-          notes.add(TxtNote.fatal(
-              _line,
-              'Количество значений не совпадает с количеством кривых',
-              _line.len));
-        }
-      }
-      final _strt = curves.first.values.first;
-      final _stop = curves.first.values.last;
-      final _ld = curves.first.values.length;
-      var _step = curves.first.values[1] - _strt;
-      for (var i = 1; i < _ld; i++) {
-        if (_step != curves.first.values[i] - curves.first.values[i - 1]) {
-          _step = 0.0;
+    try {
+      while (thisPoint.symbol != null) {
+        if (next != null) {
           break;
         }
+        final _begin = TxtPos.copy(thisPoint);
+        thisPoint.skipToEndOfLine();
+        lines.add(LasParserLine(_begin, _begin.distance(thisPoint).s, this));
+        thisPoint.skipToNextLine();
       }
-      for (var j = 0; j < _ll; j++) {
-        curves[j].strt = _strt;
-        curves[j].stop = _stop;
-        curves[j].step = _step;
+      final __l = lines.length;
+      for (var i = 0; i < __l; i++) {
+        final _line = lines[i];
+        if (_line is LasParserLineParsed) {
+          if (_line.type == NLasParserLineType.raw_v.index) {
+            lines[i] = LasParserLine_V_VERS.parse(_line, this);
+            lines[i] = LasParserLine_V_WRAP.parse(_line, this);
+          } else if (_line.type == NLasParserLineType.raw_w.index) {
+            lines[i] = LasParserLine_W_STRT.parse(_line, this);
+            lines[i] = LasParserLine_W_STOP.parse(_line, this);
+            lines[i] = LasParserLine_W_STEP.parse(_line, this);
+            lines[i] = LasParserLine_W_NULL.parse(_line, this);
+            lines[i] = LasParserLine_W_.parse(_line, this);
+          } else if (_line.type == NLasParserLineType.raw_c.index) {
+            lines[i] = LasParserLine_C_.parse(_line, this);
+          }
+        } else if (_line.type == NLasParserLineType.raw_a.index) {
+          ascii.add(_line);
+        }
       }
+      bool _wrap;
+      _wrap = wrap?.value;
+
+      if (_wrap == false) {
+        final _l = ascii.length;
+        final _ll = curves.length;
+        for (var i = 0; i < _l; i++) {
+          final _line = ascii[i];
+          final _str = _line.string.split(' ')..removeWhere((e) => e.isEmpty);
+          if (_str.length == curves.length) {
+            final _parsed =
+                _str.map((e) => double.tryParse(e)).toList(growable: false);
+            if (_parsed.contains(null)) {
+              notes.add(
+                  TxtNote.error(_line, 'Неудалось разобрать число', _line.len));
+            }
+            for (var j = 0; j < _ll; j++) {
+              curves[j].values.add(_parsed[j] ?? undef?.value);
+            }
+          } else {
+            notes.add(TxtNote.fatal(
+                _line,
+                'Количество значений не совпадает с количеством кривых',
+                _line.len));
+          }
+        }
+        final _strt = curves.first.values.first;
+        final _stop = curves.first.values.last;
+        final _ld = curves.first.values.length;
+        var _step = curves.first.values[1] - _strt;
+        for (var i = 1; i < _ld; i++) {
+          if (_step != curves.first.values[i] - curves.first.values[i - 1]) {
+            _step = 0.0;
+            break;
+          }
+        }
+        for (var j = 0; j < _ll; j++) {
+          curves[j].strt = _strt;
+          curves[j].stop = _stop;
+          curves[j].step = _step;
+        }
+      }
+      ofd = OneFileLasData(
+          v: sV,
+          a: sA,
+          w: sW,
+          c: sC,
+          p: sP.isNotEmpty ? sP : null,
+          o: sO.isNotEmpty ? sO : null);
+    } catch (e, bt) {
+      notes.add(TxtNote.exception(thisPoint, '$e\n$bt'));
     }
-    ofd = OneFileLasData(
-        v: sV,
-        a: sA,
-        w: sW,
-        c: sC,
-        p: sP.isNotEmpty ? sP : null,
-        o: sO.isNotEmpty ? sO : null);
   }
 }
 
@@ -937,12 +941,12 @@ extension IOneFileLasData on LasParserContext {
   static LasParserContext /*?*/ createByString(final String data) =>
       LasParserContext(data);
 
-  String getDebugString() {
+  String get getDebugString {
     final str = StringBuffer();
     str.writeln('РАЗОБРАННЫЙ LAS ФАЙЛ');
     str.writeln('Заметки:');
     for (var note in notes) {
-      str.writeln(note.getDebugString());
+      str.writeln(note.debugString);
     }
     str.writeln('VERS:'.padRight(24) + (version?.value?.toString() ?? 'null'));
     str.writeln('WRAP:'.padRight(24) + (wrap?.value?.toString() ?? 'null'));
@@ -958,7 +962,7 @@ extension IOneFileLasData on LasParserContext {
 
     if (next != null) {
       str.writeln('ВНИМАНИЕ! ВЛОЖЕННЫЙ LAS ФАЙЛ:');
-      str.writeln(next.getDebugString());
+      str.writeln(next.getDebugString);
     }
 
     str.writeln();

@@ -15,7 +15,7 @@ void _mainStepLas(List<String> list) {
         final str = StringBuffer();
         str.writeCharCode(unicodeBomCharacterRune);
         str.writeln(e);
-        str.write(las.getDebugString());
+        str.write(las.getDebugString);
         File(e + '.txt').writeAsStringSync(str.toString());
       }
     }

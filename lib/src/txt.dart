@@ -184,6 +184,9 @@ enum NTxtNoteType {
 
   /// Фатальная ошибка
   fatal,
+
+  /// Выбрашенное исключение
+  exception,
 }
 
 /// Заметка к тексту
@@ -214,7 +217,11 @@ class TxtNote {
   /// Создать заметку о фатальной ошибки
   TxtNote.fatal(this.p, this.s, [this.l = 0]) : t = NTxtNoteType.fatal.index;
 
-  String getDebugString() {
+  /// Создать заметку о фатальной ошибки
+  TxtNote.exception(this.p, this.s, [this.l = 0])
+      : t = NTxtNoteType.exception.index;
+
+  String get debugString {
     final str = StringBuffer();
     switch (NTxtNoteType.values[t]) {
       case NTxtNoteType.info:
@@ -228,6 +235,9 @@ class TxtNote {
         break;
       case NTxtNoteType.fatal:
         str.write('FATAL'.padRight(8));
+        break;
+      case NTxtNoteType.exception:
+        str.write('EXCEPTION'.padRight(8));
         break;
       default:
         str.write('UNKNOWN'.padRight(8));
