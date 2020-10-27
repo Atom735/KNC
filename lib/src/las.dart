@@ -128,8 +128,14 @@ class LasParserLine extends TxtPos {
       return LasParserLine.a(_begin, _len, NLasParserLineType.comment.index);
     } else if (_firstSymbol == '~') {
       if (_ctx.section == 'A') {
-        _ctx.notes.add(TxtNote.error(
+        _ctx.notes.add(TxtNote.fatal(
             _begin, 'Внутри ASCII секции запрещены новые секции', _len));
+        if (_firstNonSpace.next != 'A') {
+          _ctx.notes.add(TxtNote.info(
+              _begin, 'Начинаем разбирать как следующий файл', _len));
+          _ctx.next =
+              LasParserContext(_ctx.textContainer.data.substring(_begin.s));
+        }
       }
       if (_begin.distance(_firstNonSpace).s != 0) {
         _ctx.notes.add(TxtNote.warn(_firstNonSpace,
@@ -172,7 +178,24 @@ class LasParserLine extends TxtPos {
       }
       return o;
     } else if (_ctx.section == 'A') {
-      return LasParserLine.a(_begin, _len, NLasParserLineType.raw_a.index);
+      final o = LasParserLine.a(_begin, _len, NLasParserLineType.raw_a.index);
+      final _str = o.string;
+      if (_str.codeUnits.any((e) => e >= 128)) {
+        _ctx.notes.add(TxtNote.fatal(_begin, 'Кракозябра в строке', _len));
+        final _end = _str.indexOf(
+            String.fromCharCode(_str.codeUnits.firstWhere((e) => e >= 128)));
+
+        final _data = _ctx.textContainer.data.substring(_begin.s + _end);
+        final _beginData = _data.indexOf('~V');
+        if (_beginData != -1) {
+          _ctx.notes.add(TxtNote.info(
+              _begin, 'Начинаем разбирать как следующий файл', _len));
+          _ctx.next = LasParserContext(_data.substring(_beginData));
+        }
+
+        return LasParserLine.a(_begin, _end, NLasParserLineType.raw_a.index);
+      }
+      return o;
     } else if (_ctx.section == 'V') {
       return LasParserLineParsed.parse(
           LasParserLine.a(_begin, _len, NLasParserLineType.raw_v.index), _ctx);
@@ -769,6 +792,9 @@ class LasParserLine_C_ extends LasParserLineParsed {
 
 /// Контекст парсера LAS файлов
 class LasParserContext {
+  /// Следующий контекст парсера, если найден сдвоенный файл
+  LasParserContext /*?*/ next;
+
   /// Контейнер с разбираемым текстом
   final TxtCntainer textContainer;
 
@@ -827,29 +853,32 @@ class LasParserContext {
       : textContainer = _tc,
         thisPoint = TxtPos(_tc) {
     while (thisPoint.symbol != null) {
+      if (next != null) {
+        break;
+      }
       final _begin = TxtPos.copy(thisPoint);
       thisPoint.skipToEndOfLine();
       lines.add(LasParserLine(_begin, _begin.distance(thisPoint).s, this));
       thisPoint.skipToNextLine();
     }
-    final _l = lines.length;
-    for (var i = 0; i < _l; i++) {
+    final __l = lines.length;
+    for (var i = 0; i < __l; i++) {
       final _line = lines[i];
       if (_line is LasParserLineParsed) {
         if (_line.type == NLasParserLineType.raw_v.index) {
-          lines[i] = LasParserLine_V_VERS.parse(lines[i], this);
-          lines[i] = LasParserLine_V_WRAP.parse(lines[i], this);
+          lines[i] = LasParserLine_V_VERS.parse(_line, this);
+          lines[i] = LasParserLine_V_WRAP.parse(_line, this);
         } else if (_line.type == NLasParserLineType.raw_w.index) {
-          lines[i] = LasParserLine_W_STRT.parse(lines[i], this);
-          lines[i] = LasParserLine_W_STOP.parse(lines[i], this);
-          lines[i] = LasParserLine_W_STEP.parse(lines[i], this);
-          lines[i] = LasParserLine_W_NULL.parse(lines[i], this);
-          lines[i] = LasParserLine_W_.parse(lines[i], this);
+          lines[i] = LasParserLine_W_STRT.parse(_line, this);
+          lines[i] = LasParserLine_W_STOP.parse(_line, this);
+          lines[i] = LasParserLine_W_STEP.parse(_line, this);
+          lines[i] = LasParserLine_W_NULL.parse(_line, this);
+          lines[i] = LasParserLine_W_.parse(_line, this);
         } else if (_line.type == NLasParserLineType.raw_c.index) {
-          lines[i] = LasParserLine_C_.parse(lines[i], this);
-        } else if (_line.type == NLasParserLineType.raw_a.index) {
-          ascii.add(_line);
+          lines[i] = LasParserLine_C_.parse(_line, this);
         }
+      } else if (_line.type == NLasParserLineType.raw_a.index) {
+        ascii.add(_line);
       }
     }
     bool _wrap;
@@ -866,11 +895,10 @@ class LasParserContext {
               _str.map((e) => double.tryParse(e)).toList(growable: false);
           if (_parsed.contains(null)) {
             notes.add(
-                TxtNote.fatal(_line, 'Неудалось разобрать число', _line.len));
-          } else {
-            for (var j = 0; j < _ll; j++) {
-              curves[j].values.add(_parsed[j]);
-            }
+                TxtNote.error(_line, 'Неудалось разобрать число', _line.len));
+          }
+          for (var j = 0; j < _ll; j++) {
+            curves[j].values.add(_parsed[j] ?? undef?.value);
           }
         } else {
           notes.add(TxtNote.fatal(
@@ -926,6 +954,11 @@ extension IOneFileLasData on LasParserContext {
     str.writeln('Кривые:');
     for (var c in curves) {
       str.writeln(c);
+    }
+
+    if (next != null) {
+      str.writeln('ВНИМАНИЕ! ВЛОЖЕННЫЙ LAS ФАЙЛ:');
+      str.writeln(next.getDebugString());
     }
 
     str.writeln();
