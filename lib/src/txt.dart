@@ -50,17 +50,34 @@ class TxtPos {
   /// Возвращает расстояние между двумя указателями
   TxtPos distance(final TxtPos _) => TxtPos.a(txt, _.s - s, _.l - l, _.c - c);
 
+  /// Предудыщий символ
+  ///
+  /// Возвращает `null` если невозможно получить символ
   String /*?*/ get prev => s >= 1 ? txt.data[s - 1] : null;
+
+  /// Следующий символ
+  ///
+  /// Возвращает `null` если невозможно получить символ
   String /*?*/ get next => s < dataLength - 1 ? txt.data[s + 1] : null;
+
+  /// Настоящий символ, куда указывает указатель
+  ///
+  /// Возвращает `null` если невозможно получить символ
   String /*?*/ get symbol => s < dataLength ? txt.data[s] : null;
+
+  /// Получить символ который находится на отступе
+  ///
+  /// Возвращает `null` если невозможно получить символ
   String /*?*/ symbolAt(final int i) =>
       s + i < dataLength && s + i >= 0 ? txt.data[s + i] : null;
+
+  /// Количество символов в контейнере
   int get dataLength => txt.length;
 
   /// Возвращает подстроку длины [_len]
   String substring(final int _len) => txt.data.substring(s, s + _len);
 
-  /// Переход к следующему символу
+  /// Переход к следующему символу, возвращает этот следующий символ
   String /*?*/ nextSymbol() {
     if (symbol == null) {
       return null;
@@ -121,7 +138,8 @@ class TxtPos {
     return _s;
   }
 
-  /// Пропуск пробелов, возвращает первый непробельный символ
+  /// Пропуск пробелов до новой линии, возвращает первый непробельный символ,
+  /// либо символ новой строки
   String /*?*/ skipWhiteSpacesOrToEndOfLine() {
     var _s = symbol;
     while (_s != null && (_s == ' ' || _s == '\t')) {
@@ -195,4 +213,27 @@ class TxtNote {
 
   /// Создать заметку о фатальной ошибки
   TxtNote.fatal(this.p, this.s, [this.l = 0]) : t = NTxtNoteType.fatal.index;
+
+  String getDebugString() {
+    final str = StringBuffer();
+    switch (NTxtNoteType.values[t]) {
+      case NTxtNoteType.info:
+        str.write('INFO'.padRight(8));
+        break;
+      case NTxtNoteType.warn:
+        str.write('WARN'.padRight(8));
+        break;
+      case NTxtNoteType.error:
+        str.write('ERROR'.padRight(8));
+        break;
+      case NTxtNoteType.fatal:
+        str.write('FATAL'.padRight(8));
+        break;
+      default:
+        str.write('UNKNOWN'.padRight(8));
+    }
+    str.write('${p.l + 1}:${p.c + 1} ($l):'.padRight(16));
+    str.write(s);
+    return str.toString();
+  }
 }
