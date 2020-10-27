@@ -89,7 +89,7 @@ class TxtPos {
       return _s;
     } else if (_s == '\n' || _s == '\r') {
       l++;
-      c = 0;
+      c = -1;
       if (s >= 1 && _s == '\n' && prev == '\r') {
         // коррекция на Windows перевод строки
         l--;

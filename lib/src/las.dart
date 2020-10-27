@@ -259,16 +259,6 @@ class LasParserLineParsed extends LasParserLine {
     var _bUnits = true;
     if (_.type == NLasParserLineType.raw_v.index) {
       _bUnits = false;
-    } else if (_.type == NLasParserLineType.raw_w.index) {
-      _bUnits = false;
-      switch (_mnem) {
-        case 'STRT':
-        case 'STOP':
-        case 'STEP':
-          _bUnits = true;
-          break;
-        default:
-      }
     }
 
     LasParserLineParsed _dd(TxtPos _pUnitsEnd, [String /*?*/ _units]) {
@@ -286,6 +276,21 @@ class LasParserLineParsed extends LasParserLine {
           return LasParserLineParsed.a(_, _mnem, _units, _data, '');
         }
         return LasParserLineParsed.a(_, _mnem, '', '', '');
+      }
+      if (_ctx.version?.value == 2) {
+        var _pDDotNext = TxtPos.copy(_pDDot)
+          ..nextSymbol()
+          ..skipSymbolsOutString(':\r\n');
+        if (_pDDotNext.symbol == ':') {
+          _ctx.notes
+              .add(TxtNote.warn(_, 'В строке несколько двоеточий', _.len));
+        }
+        while (_pDDotNext.symbol == ':') {
+          _pDDot = _pDDotNext;
+          _pDDotNext = TxtPos.copy(_pDDot)
+            ..nextSymbol()
+            ..skipSymbolsOutString(':\r\n');
+        }
       }
       final _data = _pUnitsEnd.substring(_pUnitsEnd.distance(_pDDot).s).trim();
       final _pDesc = TxtPos.copy(_pDDot)..nextSymbol();
@@ -405,12 +410,22 @@ class LasParserLine_V_WRAP extends LasParserLineParsed {
       if (_.data[0] == 'Y' ||
           _.data[0] == 'y' ||
           _.data[0] == 'T' ||
-          _.data[0] == 't') {
+          _.data[0] == 't' ||
+          _.data[0] == '+') {
+        if (_.data != 'YES') {
+          _ctx.notes
+              .add(TxtNote.error(_, 'Не совсем корректное значение', _.len));
+        }
         val = true;
       } else if (_.data[0] == 'N' ||
           _.data[0] == 'n' ||
           _.data[0] == 'F' ||
-          _.data[0] == 'f') {
+          _.data[0] == 'f' ||
+          _.data[0] == '-') {
+        if (_.data != 'NO') {
+          _ctx.notes
+              .add(TxtNote.error(_, 'Не совсем корректное значение', _.len));
+        }
         val = false;
       }
       if (val == null) {
@@ -769,6 +784,8 @@ class LasParserLine_C_ extends LasParserLineParsed {
   double /*?*/ strt;
   double /*?*/ stop;
   double /*?*/ step;
+  int /*?*/ indexStrt;
+  int /*?*/ indexStop;
   final values = <double>[];
   LasParserLine_C_.a(final LasParserLineParsed _, [int type])
       : super.copy(_, type ?? NLasParserLineType.curve.index);
@@ -820,6 +837,8 @@ class LasParserContext {
   LasParserLine_W_STEP /*?*/ step;
   LasParserLine_W_NULL /*?*/ undef;
   LasParserLineParsed /*?*/ well;
+
+  bool exception = false;
 
   final curves = <LasParserLine_C_>[];
   final ascii = <LasParserLine>[];
@@ -885,9 +904,9 @@ class LasParserContext {
       bool _wrap;
       _wrap = wrap?.value;
 
+      final _l = ascii.length;
+      final _llc = curves.length;
       if (_wrap == false) {
-        final _l = ascii.length;
-        final _ll = curves.length;
         for (var i = 0; i < _l; i++) {
           final _line = ascii[i];
           final _str = _line.string.split(' ')..removeWhere((e) => e.isEmpty);
@@ -898,7 +917,7 @@ class LasParserContext {
               notes.add(
                   TxtNote.error(_line, 'Неудалось разобрать число', _line.len));
             }
-            for (var j = 0; j < _ll; j++) {
+            for (var j = 0; j < _llc; j++) {
               curves[j].values.add(_parsed[j] ?? undef?.value);
             }
           } else {
@@ -908,20 +927,96 @@ class LasParserContext {
                 _line.len));
           }
         }
-        final _strt = curves.first.values.first;
-        final _stop = curves.first.values.last;
-        final _ld = curves.first.values.length;
-        var _step = curves.first.values[1] - _strt;
-        for (var i = 1; i < _ld; i++) {
-          if (_step != curves.first.values[i] - curves.first.values[i - 1]) {
-            _step = 0.0;
-            break;
+      } else {
+        var iIndex = 0;
+        for (var i = 0; i < _l; i++) {
+          final _line = ascii[i];
+          final _str = _line.string.split(' ')..removeWhere((e) => e.isEmpty);
+          if (_str.length == curves.length) {
+            final _parsed =
+                _str.map((e) => double.tryParse(e)).toList(growable: false);
+            if (_parsed.contains(null)) {
+              notes.add(
+                  TxtNote.error(_line, 'Неудалось разобрать число', _line.len));
+            }
+            final _ll = _parsed.length;
+            if (iIndex + _ll >= _llc) {
+              notes.add(
+                  TxtNote.error(_line, 'Переизбыток чисел в блоке', _line.len));
+            } else {
+              for (var j = 0; j < _ll; j++) {
+                curves[j + iIndex].values.add(_parsed[j] ?? undef?.value);
+              }
+            }
+            iIndex += _ll;
+            if (iIndex >= _llc) {
+              iIndex = 0;
+            }
+          } else {
+            notes.add(TxtNote.fatal(
+                _line,
+                'Количество значений не совпадает с количеством кривых',
+                _line.len));
           }
         }
-        for (var j = 0; j < _ll; j++) {
-          curves[j].strt = _strt;
-          curves[j].stop = _stop;
-          curves[j].step = _step;
+      }
+      final _strt = curves.first.values.first;
+      final _stop = curves.first.values.last;
+      final _ld = curves.first.values.length;
+      var _step = curves.first.values[1] - _strt;
+      for (var i = 1; i < _ld; i++) {
+        if (_step != curves.first.values[i] - curves.first.values[i - 1]) {
+          _step = 0.0;
+          break;
+        }
+      }
+      for (var j = 0; j < _llc; j++) {
+        curves[j].strt = _strt;
+        curves[j].stop = _stop;
+        curves[j].step = _step;
+        curves[j].indexStrt = 0;
+        curves[j].indexStop = _llc - 1;
+      }
+      for (var j = 1; j < _llc; j++) {
+        final _l = curves[j].values.length;
+        var _indexStrt = -1;
+        var _indexStop = 0;
+        for (var i = 0; i < _l; i++) {
+          final _val = curves[j].values[i];
+          if (_val != undef?.value) {
+            if (_indexStrt == -1) {
+              _indexStrt = i;
+            }
+            _indexStop = i;
+          }
+        }
+        if (_indexStrt != -1) {
+          curves[j].strt = curves[0].values[_indexStrt];
+          curves[j].stop = curves[0].values[_indexStop];
+          curves[j].step = 0.0;
+          final _d = curves[0].values.sublist(_indexStrt, _indexStop + 1);
+          final _ll = _d.length;
+          if (_ll > 1) {
+            curves[j].step = _d[1] - _d[0];
+            for (var i = 1; i < _ll; i++) {
+              if (curves[j].step != _d[i] - _d[i - 1]) {
+                curves[j].step = 0.0;
+                break;
+              }
+            }
+          }
+          final _c = curves[j].values.sublist(_indexStrt, _indexStop + 1);
+          curves[j].values.clear();
+          curves[j].values.addAll(_c);
+          curves[j].indexStrt = _indexStrt;
+          curves[j].indexStop = _indexStop;
+        } else {
+          curves[j].strt = 0.0;
+          curves[j].stop = 0.0;
+          curves[j].step = 0.0;
+          curves[j].indexStrt = 0;
+          curves[j].indexStop = 0;
+          curves[j].values.clear();
         }
       }
       ofd = OneFileLasData(
@@ -933,6 +1028,7 @@ class LasParserContext {
           o: sO.isNotEmpty ? sO : null);
     } catch (e, bt) {
       notes.add(TxtNote.exception(thisPoint, '$e\n$bt'));
+      exception = true;
     }
   }
 }
