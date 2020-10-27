@@ -45,7 +45,7 @@ class TxtPos {
   }
 
   @override
-  String toString() => '[${l + 1}, ${c + 1}]';
+  String toString() => '[${l + 1}:${c + 1}]';
 
   /// Возвращает расстояние между двумя указателями
   TxtPos distance(final TxtPos _) => TxtPos.a(txt, _.s - s, _.l - l, _.c - c);
