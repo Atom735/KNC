@@ -932,31 +932,24 @@ class LasParserContext {
         for (var i = 0; i < _l; i++) {
           final _line = ascii[i];
           final _str = _line.string.split(' ')..removeWhere((e) => e.isEmpty);
-          if (_str.length == curves.length) {
-            final _parsed =
-                _str.map((e) => double.tryParse(e)).toList(growable: false);
-            if (_parsed.contains(null)) {
-              notes.add(
-                  TxtNote.error(_line, 'Неудалось разобрать число', _line.len));
-            }
-            final _ll = _parsed.length;
-            if (iIndex + _ll >= _llc) {
-              notes.add(
-                  TxtNote.error(_line, 'Переизбыток чисел в блоке', _line.len));
-            } else {
-              for (var j = 0; j < _ll; j++) {
-                curves[j + iIndex].values.add(_parsed[j] ?? undef?.value);
-              }
-            }
-            iIndex += _ll;
-            if (iIndex >= _llc) {
-              iIndex = 0;
-            }
+          final _parsed =
+              _str.map((e) => double.tryParse(e)).toList(growable: false);
+          if (_parsed.contains(null)) {
+            notes.add(
+                TxtNote.error(_line, 'Неудалось разобрать число', _line.len));
+          }
+          final _ll = _parsed.length;
+          if (iIndex + _ll > _llc) {
+            notes.add(
+                TxtNote.error(_line, 'Переизбыток чисел в блоке', _line.len));
           } else {
-            notes.add(TxtNote.fatal(
-                _line,
-                'Количество значений не совпадает с количеством кривых',
-                _line.len));
+            for (var j = 0; j < _ll; j++) {
+              curves[j + iIndex].values.add(_parsed[j] ?? undef?.value);
+            }
+          }
+          iIndex += _ll;
+          if (iIndex >= _llc) {
+            iIndex = 0;
           }
         }
       }
