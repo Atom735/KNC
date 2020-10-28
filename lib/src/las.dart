@@ -115,7 +115,10 @@ class LasParserLine extends TxtPos {
   String get desc => '';
 
   String toStringNormal(
-      [int _mnemLen = 0, int _unitLen = 0, int _dataLen = 0]) {
+      [int _mnemLen = 0,
+      int _unitLen = 0,
+      int _dataLen = 0,
+      String _dot = '.']) {
     switch (NLasParserLineType.values[type]) {
       case NLasParserLineType.section_v:
         return '~VERSION INFORMATION SECTION';
@@ -216,6 +219,7 @@ class LasParserLine extends TxtPos {
       final _str = o.string;
       if (_str.codeUnits.any((e) => e >= 128)) {
         _ctx.notes.add(TxtNote.fatal(_begin, 'Кракозябра в строке', _len));
+        _ctx.fatal = true;
         final _end = _str.indexOf(
             String.fromCharCode(_str.codeUnits.firstWhere((e) => e >= 128)));
 
@@ -225,8 +229,6 @@ class LasParserLine extends TxtPos {
           _ctx.notes.add(TxtNote.info(
               _begin, 'Начинаем разбирать как следующий файл', _len));
           _ctx.next = LasParserContext(_data.substring(_beginData));
-        } else {
-          _ctx.fatal = true;
         }
         return LasParserLine.a(_begin, _end, NLasParserLineType.raw_a.index);
       }
@@ -262,12 +264,15 @@ class LasParserLineComment extends LasParserLine {
 
   @override
   String toStringNormal(
-      [int _mnemLen = 0, int _unitLen = 0, int _dataLen = 0]) {
+      [int _mnemLen = 0,
+      int _unitLen = 0,
+      int _dataLen = 0,
+      String _dot = '.']) {
     switch (NLasParserLineType.values[type]) {
       case NLasParserLineType.comment:
         return '#$value';
       default:
-        return super.toStringNormal(_mnemLen, _unitLen, _dataLen);
+        return super.toStringNormal(_mnemLen, _unitLen, _dataLen, _dot);
     }
   }
 }
@@ -289,8 +294,11 @@ class LasParserLineParsed extends LasParserLine {
 
   @override
   String toStringNormal(
-          [int _mnemLen = 0, int _unitLen = 0, int _dataLen = 0]) =>
-      '${mnem.padRight(_mnemLen)}.${unit.padRight(_unitLen)} ${data.padLeft(_dataLen)} : $desc';
+          [int _mnemLen = 0,
+          int _unitLen = 0,
+          int _dataLen = 0,
+          String _dot = '.']) =>
+      '${mnem.padRight(_mnemLen)}.${unit.padRight(_unitLen)} ${data.padLeft(_dataLen).replaceAll('.', _dot)} : $desc';
 
   LasParserLineParsed.a(final LasParserLine _, this.mnemOrig, this.unitOrig,
       this.dataOrig, this.descOrig,
@@ -1193,7 +1201,7 @@ extension IOneFileLasData on LasParserContext {
   static LasParserContext /*?*/ createByString(final String data) =>
       LasParserContext(data);
 
-  String normalizeLasFileData({String lineFeed = '\r\n'}) {
+  String normalizeLasFileData({String lineFeed = '\r\n', String dot = '.'}) {
     var _mnemLen = 0;
     var _unitsLen = 0;
     var _dataLen = 0;
@@ -1242,7 +1250,7 @@ extension IOneFileLasData on LasParserContext {
     final str = StringBuffer();
 
     for (var _line in _normalLines) {
-      str.write(_line.toStringNormal(_mnemLen, _unitsLen, _dataLen));
+      str.write(_line.toStringNormal(_mnemLen, _unitsLen, _dataLen, dot));
       str.write(lineFeed);
     }
 
@@ -1252,10 +1260,12 @@ extension IOneFileLasData on LasParserContext {
         if (c.indexStrt <= i && i <= c.indexStop) {
           str.write(c.values[i - c.indexStrt]
               .toStringAsFixed(c.doublePrecision)
-              .padLeft(c.doubleLenght + 1 + c.doublePrecision));
+              .padLeft(c.doubleLenght + 1 + c.doublePrecision)
+              .replaceAll('.', dot));
         } else {
           str.write((undef?.value?.toStringAsFixed(c.doublePrecision) ?? 'null')
-              .padLeft(c.doubleLenght + 1 + c.doublePrecision));
+              .padLeft(c.doubleLenght + 1 + c.doublePrecision)
+              .replaceAll('.', dot));
         }
       }
       str.write(lineFeed);
