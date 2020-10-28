@@ -819,6 +819,27 @@ extension IOneFileInkDataTxt on OneFileInkDataDoc {
     );
   }
 
+  String normalizeInkFileData({String lineFeed = '\r\n', String dot = '.'}) {
+    final str = StringBuffer();
+    str.write(well);
+    str.write(lineFeed);
+    for (var d in data) {
+      var _azimuth = (d?.azimuth ?? 0.0) + (angle ?? 0.0);
+      while (_azimuth >= 360.0) {
+        _azimuth -= 360.0;
+      }
+      while (_azimuth < 0.0) {
+        _azimuth += 360.0;
+      }
+      str.write(
+          '${d.depth?.toString() ?? '0.0'}\t${d.angle?.toString() ?? '0.0'}\t$_azimuth'
+              .replaceAll('.', dot));
+      str.write(lineFeed);
+    }
+
+    return str.toString();
+  }
+
   String getDebugString() {
     final str = StringBuffer();
     str.writeln('Данные ИНКЛИНОМЕТРИИ разобранные из текстовой строки');
