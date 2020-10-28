@@ -225,8 +225,9 @@ class LasParserLine extends TxtPos {
           _ctx.notes.add(TxtNote.info(
               _begin, 'Начинаем разбирать как следующий файл', _len));
           _ctx.next = LasParserContext(_data.substring(_beginData));
+        } else {
+          _ctx.fatal = true;
         }
-
         return LasParserLine.a(_begin, _end, NLasParserLineType.raw_a.index);
       }
       return o;
@@ -943,6 +944,8 @@ class LasParserContext {
   /// Следующий контекст парсера, если найден сдвоенный файл
   LasParserContext /*?*/ next;
 
+  bool fatal = false;
+
   /// Контейнер с разбираемым текстом
   final TxtCntainer textContainer;
 
@@ -1003,10 +1006,7 @@ class LasParserContext {
       : textContainer = _tc,
         thisPoint = TxtPos(_tc) {
     try {
-      while (thisPoint.symbol != null) {
-        if (next != null) {
-          break;
-        }
+      while (thisPoint.symbol != null && !fatal && next == null) {
         final _begin = TxtPos.copy(thisPoint);
         thisPoint.skipToEndOfLine();
         lines.add(LasParserLine(_begin, _begin.distance(thisPoint).s, this));
