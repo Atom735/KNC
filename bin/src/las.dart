@@ -17,6 +17,12 @@ void _mainStepLas(List<String> list) {
         str.writeln(e);
         str.write(las.getDebugString);
         File(e + '.txt').writeAsStringSync(str.toString());
+
+        final str2 = StringBuffer();
+        str2.writeCharCode(unicodeBomCharacterRune);
+        str2.writeln(e);
+        str2.write(las.normalizeLasFileData());
+        File(e + '.min.txt').writeAsStringSync(str2.toString());
       }
     }
   });

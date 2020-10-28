@@ -109,6 +109,11 @@ class LasParserLine extends TxtPos {
   String toString() =>
       '${super.toString()} ${nNLasParserLineType_string(type)}\n"$string"\n${toStringNormal()}';
 
+  String get mnem => '';
+  String get unit => '';
+  String get data => '';
+  String get desc => '';
+
   String toStringNormal(
       [int _mnemLen = 0, int _unitLen = 0, int _dataLen = 0]) {
     switch (NLasParserLineType.values[type]) {
@@ -130,6 +135,9 @@ class LasParserLine extends TxtPos {
   }
 
   LasParserLine.a(final TxtPos _, this.len, [this.type = 0]) : super.copy(_);
+  LasParserLine.z(this.type, TxtCntainer txt)
+      : len = 0,
+        super.a(txt);
 
   factory LasParserLine(
       final TxtPos _begin, final int _len, final LasParserContext _ctx) {
@@ -243,9 +251,13 @@ class LasParserLine extends TxtPos {
 }
 
 class LasParserLineComment extends LasParserLine {
+  String value;
+
   LasParserLineComment.a(final LasParserLine _, this.value)
       : super.a(_, _.len, NLasParserLineType.comment.index);
-  String value;
+
+  LasParserLineComment.z(this.value, TxtCntainer txt)
+      : super.z(NLasParserLineType.comment.index, txt);
 
   @override
   String toStringNormal(
@@ -265,9 +277,13 @@ class LasParserLineParsed extends LasParserLine {
   final String dataOrig;
   final String descOrig;
 
+  @override
   String get mnem => mnemOrig;
+  @override
   String get unit => unitOrig;
+  @override
   String get data => dataOrig;
+  @override
   String get desc => descOrig;
 
   @override
@@ -281,6 +297,15 @@ class LasParserLineParsed extends LasParserLine {
       : super.a(_, _.len, type ?? _.type);
   LasParserLineParsed.copy(final LasParserLineParsed _, final int type)
       : this.a(_, _.mnemOrig, _.unitOrig, _.dataOrig, _.descOrig, type);
+
+  LasParserLineParsed.z(
+    final int type,
+    TxtCntainer txt, {
+    this.mnemOrig = '',
+    this.unitOrig = '',
+    this.dataOrig = '',
+    this.descOrig = '',
+  }) : super.z(type, txt);
 
   static LasParserLine parse(LasParserLine _, final LasParserContext _ctx) {
     /// Доходим до начала мнемоники
@@ -383,6 +408,9 @@ class LasParserLine_V_VERS extends LasParserLineParsed {
   LasParserLine_V_VERS.a(final LasParserLineParsed _, this.value)
       : super.copy(_, NLasParserLineType.v_vers.index);
 
+  LasParserLine_V_VERS.z(this.value, final TxtCntainer txt)
+      : super.z(NLasParserLineType.v_vers.index, txt);
+
   @override
   String get mnem => 'VERS';
   @override
@@ -439,6 +467,9 @@ class LasParserLine_V_WRAP extends LasParserLineParsed {
   final bool /*?*/ value;
   LasParserLine_V_WRAP.a(final LasParserLineParsed _, this.value)
       : super.copy(_, NLasParserLineType.v_wrap.index);
+
+  LasParserLine_V_WRAP.z(this.value, final TxtCntainer txt)
+      : super.z(NLasParserLineType.v_wrap.index, txt);
 
   @override
   String get mnem => 'WRAP';
@@ -1005,6 +1036,21 @@ class LasParserContext {
 
       final _l = ascii.length;
       final _llc = curves.length;
+
+      {
+        final _str = undef?.value?.toString() ?? 'null';
+        final _strL = _str.length;
+        final _strD = _str.lastIndexOf('.');
+        for (var j = 0; j < _llc; j++) {
+          if (_strD != -1) {
+            curves[j].doubleLenght = _strD + 1;
+            curves[j].doublePrecision = _strL - _strD - 1;
+          } else {
+            curves[j].doubleLenght = _strL;
+          }
+        }
+      }
+
       if (_wrap == false) {
         for (var i = 0; i < _l; i++) {
           final _line = ascii[i];
@@ -1021,12 +1067,18 @@ class LasParserContext {
               curves[j].values.add(_val);
               final _str = _val.toString();
               final _strL = _str.length;
-              final _strD = _strL - _str.lastIndexOf('.') - 1;
-              if (_strL >= curves[j].doubleLenght) {
-                curves[j].doubleLenght = _strL;
-              }
-              if (_strD != _strL && _strD >= curves[j].doublePrecision) {
-                curves[j].doublePrecision = _strD;
+              final _strD = _str.lastIndexOf('.');
+              if (_strD != -1) {
+                if (_strD >= curves[j].doubleLenght) {
+                  curves[j].doubleLenght = _strD + 1;
+                }
+                if (_strL - _strD - 1 > curves[j].doublePrecision) {
+                  curves[j].doublePrecision = _strL - _strD - 1;
+                }
+              } else {
+                if (_strL > curves[j].doubleLenght) {
+                  curves[j].doubleLenght = _strL;
+                }
               }
             }
           } else {
@@ -1057,13 +1109,18 @@ class LasParserContext {
               curves[j + iIndex].values.add(_val);
               final _str = _val.toString();
               final _strL = _str.length;
-              final _strD = _strL - _str.lastIndexOf('.') - 1;
-              if (_strL >= curves[j + iIndex].doubleLenght) {
-                curves[j + iIndex].doubleLenght = _strL;
-              }
-              if (_strD != _strL &&
-                  _strD >= curves[j + iIndex].doublePrecision) {
-                curves[j + iIndex].doublePrecision = _strD;
+              final _strD = _str.lastIndexOf('.');
+              if (_strD != -1) {
+                if (_strD >= curves[j + iIndex].doubleLenght) {
+                  curves[j + iIndex].doubleLenght = _strD + 1;
+                }
+                if (_strL - _strD - 1 > curves[j + iIndex].doublePrecision) {
+                  curves[j + iIndex].doublePrecision = _strL - _strD - 1;
+                }
+              } else {
+                if (_strL > curves[j + iIndex].doubleLenght) {
+                  curves[j + iIndex].doubleLenght = _strL;
+                }
               }
             }
           }
@@ -1137,16 +1194,71 @@ extension IOneFileLasData on LasParserContext {
       LasParserContext(data);
 
   String normalizeLasFileData({String lineFeed = '\r\n'}) {
-    final str = StringBuffer();
-    final _l = lines.length;
     var _mnemLen = 0;
     var _unitsLen = 0;
     var _dataLen = 0;
-    for (var i = 0; i < _l; i++) {
-      final _line = lines[i];
-      switch (NLasParserLineType.values[_line.type]) {
-        default:
+    final _normalLines = <LasParserLine>[
+      LasParserLine.z(NLasParserLineType.section_v.index, textContainer),
+      LasParserLine_V_VERS.z(2, textContainer),
+      LasParserLine_V_WRAP.z(false, textContainer),
+      LasParserLine.z(NLasParserLineType.section_w.index, textContainer),
+    ];
+    if (strt != null) {
+      _normalLines.add(strt);
+    }
+    if (stop != null) {
+      _normalLines.add(stop);
+    }
+    if (step != null) {
+      _normalLines.add(step);
+    }
+    if (undef != null) {
+      _normalLines.add(undef);
+    }
+    if (well != null) {
+      _normalLines.add(well);
+    }
+    _normalLines.add(
+      LasParserLine.z(NLasParserLineType.section_c.index, textContainer),
+    );
+    _normalLines.addAll(curves);
+    _normalLines.add(
+        LasParserLine.z(NLasParserLineType.section_a.index, textContainer));
+    for (var _line in _normalLines) {
+      final _mnemL = _line.mnem.length;
+      if (_mnemL > _mnemLen) {
+        _mnemLen = _mnemL;
       }
+      final _unitsL = _line.unit.length;
+      if (_unitsL > _unitsLen) {
+        _unitsLen = _unitsL;
+      }
+      final _dataL = _line.data.length;
+      if (_dataL > _dataLen) {
+        _dataLen = _dataL;
+      }
+    }
+
+    final str = StringBuffer();
+
+    for (var _line in _normalLines) {
+      str.write(_line.toStringNormal(_mnemLen, _unitsLen, _dataLen));
+      str.write(lineFeed);
+    }
+
+    final _l = curves.first.values.length;
+    for (var i = 0; i < _l; i++) {
+      for (var c in curves) {
+        if (c.indexStrt <= i && i <= c.indexStop) {
+          str.write(c.values[i - c.indexStrt]
+              .toStringAsFixed(c.doublePrecision)
+              .padLeft(c.doubleLenght + 1 + c.doublePrecision));
+        } else {
+          str.write((undef?.value?.toStringAsFixed(c.doublePrecision) ?? 'null')
+              .padLeft(c.doubleLenght + 1 + c.doublePrecision));
+        }
+      }
+      str.write(lineFeed);
     }
     return str.toString();
   }
@@ -1186,10 +1298,10 @@ extension IOneFileLasData on LasParserContext {
         if (c.indexStrt <= i && i <= c.indexStop) {
           str.write(c.values[i - c.indexStrt]
               .toStringAsFixed(c.doublePrecision)
-              .padLeft(c.doubleLenght + 1));
+              .padLeft(c.doubleLenght + 1 + c.doublePrecision));
         } else {
           str.write((undef?.value?.toStringAsFixed(c.doublePrecision) ?? 'null')
-              .padLeft(c.doubleLenght + 1));
+              .padLeft(c.doubleLenght + 1 + c.doublePrecision));
         }
       }
       str.writeln();
