@@ -102,6 +102,34 @@ extension IOneFileInkDataDbf on OneFileInkDataDbf {
     }
   }
 
+  Map<String, String> normalizeInkFileData(
+      {String lineFeed = '\r\n', String dot = '.'}) {
+    final o = <String, String>{};
+    for (var well in wells) {
+      final str = StringBuffer();
+      str.write(well.well);
+      str.write(lineFeed);
+      for (var row in well.data) {
+        var _azimuth = (row?.azimuth ?? 0.0);
+        if (_azimuth < -900.0) {
+          _azimuth = 0.0;
+        }
+        while (_azimuth >= 360.0) {
+          _azimuth -= 360.0;
+        }
+        while (_azimuth < 0.0) {
+          _azimuth += 360.0;
+        }
+        str.write(
+            '${row.depth?.toString() ?? '0.0'}\t${row.angle?.toString() ?? '0.0'}\t$_azimuth'
+                .replaceAll('.', dot));
+        str.write(lineFeed);
+      }
+      o[well.well] = str.toString();
+    }
+    return o;
+  }
+
   String getDebugString() {
     final str = StringBuffer();
     str.writeln('Данные ИНКЛИНОМЕТРИИ выгруженные из Базы данных');
