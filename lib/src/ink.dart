@@ -26,3 +26,5 @@ double /*?*/ convertAngleMinuts2Gradus(final double /*?*/ val) {
 
 /// проверяет может ли число быть в минутах
 bool maybeAngleInMinuts(final double val) => (val % 1.0) < 0.60;
+
+class OneFileInkFin {}

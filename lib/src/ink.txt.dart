@@ -68,7 +68,7 @@ final reInkTxtClient = RegExp(r'^\s*Заказчик.?(.*)$',
 */
 final reInkTxtWell = RegExp(
     r'^Скважина(?:\s*N)?(.*?)'
-    r'(?:\s*Площадь(?:\s*:)?(.*?))?'
+    r'(?:\s*(?:Площадь|Мест-ие|Месторождение)(?:\s*:)?(.*?))?'
     r'(?:\s*Куст(?:\s*:)?(.*?))?$',
     multiLine: true,
     unicode: true,

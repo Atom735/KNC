@@ -107,7 +107,27 @@ class LasParserLine extends TxtPos {
 
   @override
   String toString() =>
-      '${super.toString()} ${nNLasParserLineType_string(type)}\n"$string"';
+      '${super.toString()} ${nNLasParserLineType_string(type)}\n"$string"\n${toStringNormal()}';
+
+  String toStringNormal(
+      [int _mnemLen = 0, int _unitLen = 0, int _dataLen = 0]) {
+    switch (NLasParserLineType.values[type]) {
+      case NLasParserLineType.section_v:
+        return '~VERSION INFORMATION SECTION';
+      case NLasParserLineType.section_w:
+        return '~WELL INFORMATION SECTION';
+      case NLasParserLineType.section_c:
+        return '~CURVE INFORMATION SECTION';
+      case NLasParserLineType.section_p:
+        return '~PARAMETER INFORMATION SECTION';
+      case NLasParserLineType.section_o:
+        return '~OTHER';
+      case NLasParserLineType.section_a:
+        return '~ASCII LOG DATA';
+      default:
+        return '';
+    }
+  }
 
   LasParserLine.a(final TxtPos _, this.len, [this.type = 0]) : super.copy(_);
 
@@ -116,7 +136,9 @@ class LasParserLine extends TxtPos {
     final _firstNonSpace = TxtPos.copy(_begin)..skipWhiteSpacesOrToEndOfLine();
     final _firstSymbol = _firstNonSpace.symbol;
 
-    if (_firstSymbol == '#') {
+    if (_firstSymbol == '\r' || _firstSymbol == '\n' || _firstSymbol == null) {
+      return LasParserLine.a(_begin, _len, NLasParserLineType.empty.index);
+    } else if (_firstSymbol == '#') {
       if (_ctx.section == 'A') {
         _ctx.notes.add(TxtNote.error(
             _begin, 'Внутри ASCII секции запрещены комментарии', _len));
@@ -125,7 +147,11 @@ class LasParserLine extends TxtPos {
         _ctx.notes.add(TxtNote.warn(_firstNonSpace,
             'Символ начала комментария находится не в самом начале строки', 1));
       }
-      return LasParserLine.a(_begin, _len, NLasParserLineType.comment.index);
+      return LasParserLineComment.a(
+          LasParserLine.a(_begin, _len, NLasParserLineType.comment.index),
+          _firstNonSpace
+              .substring(_len - _begin.distance(_firstNonSpace).s)
+              .substring(1));
     } else if (_firstSymbol == '~') {
       if (_ctx.section == 'A') {
         _ctx.notes.add(TxtNote.fatal(
@@ -210,31 +236,51 @@ class LasParserLine extends TxtPos {
           LasParserLine.a(_begin, _len, NLasParserLineType.raw_c.index), _ctx);
     } else if (_ctx.section == 'O') {
       return LasParserLine.a(_begin, _len, NLasParserLineType.other.index);
-    } else if (_firstSymbol == '\r' ||
-        _firstSymbol == '\n' ||
-        _firstSymbol == null) {
-      return LasParserLine.a(_begin, _len, NLasParserLineType.empty.index);
     } else {
       return LasParserLine.a(_begin, _len, NLasParserLineType.unknown.index);
     }
   }
 }
 
-class LasParserLineParsed extends LasParserLine {
-  final String mnem;
-  final String unit;
-  final String data;
-  final String desc;
+class LasParserLineComment extends LasParserLine {
+  LasParserLineComment.a(final LasParserLine _, this.value)
+      : super.a(_, _.len, NLasParserLineType.comment.index);
+  String value;
 
   @override
-  String toString() => '${super.toString()}\n$mnem.$unit $data:$desc';
+  String toStringNormal(
+      [int _mnemLen = 0, int _unitLen = 0, int _dataLen = 0]) {
+    switch (NLasParserLineType.values[type]) {
+      case NLasParserLineType.comment:
+        return '#$value';
+      default:
+        return super.toStringNormal(_mnemLen, _unitLen, _dataLen);
+    }
+  }
+}
 
-  LasParserLineParsed.a(
-      final LasParserLine _, this.mnem, this.unit, this.data, this.desc,
+class LasParserLineParsed extends LasParserLine {
+  final String mnemOrig;
+  final String unitOrig;
+  final String dataOrig;
+  final String descOrig;
+
+  String get mnem => mnemOrig;
+  String get unit => unitOrig;
+  String get data => dataOrig;
+  String get desc => descOrig;
+
+  @override
+  String toStringNormal(
+          [int _mnemLen = 0, int _unitLen = 0, int _dataLen = 0]) =>
+      '${mnem.padRight(_mnemLen)}.${unit.padRight(_unitLen)} ${data.padLeft(_dataLen)} : $desc';
+
+  LasParserLineParsed.a(final LasParserLine _, this.mnemOrig, this.unitOrig,
+      this.dataOrig, this.descOrig,
       [final int type])
       : super.a(_, _.len, type ?? _.type);
   LasParserLineParsed.copy(final LasParserLineParsed _, final int type)
-      : this.a(_, _.mnem, _.unit, _.data, _.desc, type);
+      : this.a(_, _.mnemOrig, _.unitOrig, _.dataOrig, _.descOrig, type);
 
   static LasParserLine parse(LasParserLine _, final LasParserContext _ctx) {
     /// Доходим до начала мнемоники
@@ -338,26 +384,32 @@ class LasParserLine_V_VERS extends LasParserLineParsed {
       : super.copy(_, NLasParserLineType.v_vers.index);
 
   @override
-  String toString() =>
-      '${super.toString()}\n' +
-      (value == 1
-          ? 'VERS. 1.2: CWLS LOG ASCII STANDARD - VERSION 1.2'
-          : (value == 2
-              ? 'VERS. 2.0: CWLS log ASCII Standard - VERSION 2.0'
-              : (value == 3 ? 'VERS. 3.0:' : 'VERS. UNKNOWN:ERROR')));
+  String get mnem => 'VERS';
+  @override
+  String get unit => '';
+  @override
+  String get data => (value == 1
+      ? '1.2'
+      : (value == 2 ? '2.0' : (value == 3 ? '3.0' : 'UNKNOWN')));
+  @override
+  String get desc => (value == 1
+      ? 'CWLS LOG ASCII STANDARD - VERSION 1.2'
+      : (value == 2
+          ? 'CWLS log ASCII Standard - VERSION 2.0'
+          : (value == 3 ? '' : 'ERROR')));
 
   static LasParserLine parse(LasParserLine _, final LasParserContext _ctx) {
     if (_ is LasParserLineParsed &&
         _.type == NLasParserLineType.raw_v.index &&
-        _.mnem.toUpperCase() == 'VERS' &&
-        _.data.isNotEmpty) {
-      if (_.mnem != 'VERS') {
+        _.mnemOrig.toUpperCase() == 'VERS' &&
+        _.dataOrig.isNotEmpty) {
+      if (_.mnemOrig != 'VERS') {
         _ctx.notes
             .add(TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
       }
       int /*?*/ val;
-      val = double.tryParse(_.data)?.toInt();
-      val ??= int.tryParse(_.data[0]);
+      val = double.tryParse(_.dataOrig)?.toInt();
+      val ??= int.tryParse(_.dataOrig[0]);
       if (val == null) {
         _ctx.notes
             .add(TxtNote.fatal(_, 'Невозможно разобрать значение', _.len));
@@ -389,40 +441,43 @@ class LasParserLine_V_WRAP extends LasParserLineParsed {
       : super.copy(_, NLasParserLineType.v_wrap.index);
 
   @override
-  String toString() =>
-      '${super.toString()}\n' +
-      (value == true
-          ? 'WRAP. YES: Multiple lines per depth step'
-          : (value == false
-              ? 'WRAP. NO:  One line per depth step'
-              : 'WRAP. UNKNOWN:ERROR'));
+  String get mnem => 'WRAP';
+  @override
+  String get unit => '';
+  @override
+  String get data =>
+      (value == true ? 'YES' : (value == false ? 'NO' : 'UNKNOWN'));
+  @override
+  String get desc => (value == true
+      ? 'Multiple lines per depth step'
+      : (value == false ? 'One line per depth step' : 'ERROR'));
 
   static LasParserLine parse(LasParserLine _, final LasParserContext _ctx) {
     if (_ is LasParserLineParsed &&
         _.type == NLasParserLineType.raw_v.index &&
-        _.mnem.toUpperCase() == 'WRAP' &&
-        _.data.isNotEmpty) {
-      if (_.mnem != 'WRAP') {
+        _.mnemOrig.toUpperCase() == 'WRAP' &&
+        _.dataOrig.isNotEmpty) {
+      if (_.mnemOrig != 'WRAP') {
         _ctx.notes
             .add(TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
       }
       bool /*?*/ val;
-      if (_.data[0] == 'Y' ||
-          _.data[0] == 'y' ||
-          _.data[0] == 'T' ||
-          _.data[0] == 't' ||
-          _.data[0] == '+') {
-        if (_.data != 'YES') {
+      if (_.dataOrig[0] == 'Y' ||
+          _.dataOrig[0] == 'y' ||
+          _.dataOrig[0] == 'T' ||
+          _.dataOrig[0] == 't' ||
+          _.dataOrig[0] == '+') {
+        if (_.dataOrig != 'YES') {
           _ctx.notes
               .add(TxtNote.error(_, 'Не совсем корректное значение', _.len));
         }
         val = true;
-      } else if (_.data[0] == 'N' ||
-          _.data[0] == 'n' ||
-          _.data[0] == 'F' ||
-          _.data[0] == 'f' ||
-          _.data[0] == '-') {
-        if (_.data != 'NO') {
+      } else if (_.dataOrig[0] == 'N' ||
+          _.dataOrig[0] == 'n' ||
+          _.dataOrig[0] == 'F' ||
+          _.dataOrig[0] == 'f' ||
+          _.dataOrig[0] == '-') {
+        if (_.dataOrig != 'NO') {
           _ctx.notes
               .add(TxtNote.error(_, 'Не совсем корректное значение', _.len));
         }
@@ -466,24 +521,24 @@ class LasParserLine_W_STRT extends LasParserLineParsed {
       : super.copy(_, NLasParserLineType.w_strt.index);
 
   @override
-  String toString() =>
-      '${super.toString()}\n' +
-      (value != null
-          ? 'STRT. ${value.toStringAsFixed(6)}: START DEPTH'
-          : 'STRT. UNKNOWN:ERROR');
+  String get mnem => 'STRT';
+  @override
+  String get data => (value != null ? '$value' : 'UNKNOWN');
+  @override
+  String get desc => (value != null ? 'START DEPTH' : 'ERROR');
 
   static LasParserLine parse(
       LasParserLineParsed _, final LasParserContext _ctx) {
     if (_ is LasParserLineParsed &&
         _.type == NLasParserLineType.raw_w.index &&
-        _.mnem.toUpperCase() == 'STRT' &&
-        _.data.isNotEmpty) {
-      if (_.mnem != 'STRT') {
+        _.mnemOrig.toUpperCase() == 'STRT' &&
+        _.dataOrig.isNotEmpty) {
+      if (_.mnemOrig != 'STRT') {
         _ctx.notes
             .add(TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
       }
 
-      final val = double.tryParse(_.data);
+      final val = double.tryParse(_.dataOrig);
       if (val == null) {
         _ctx.notes
             .add(TxtNote.fatal(_, 'Невозможно разобрать значение', _.len));
@@ -511,23 +566,23 @@ class LasParserLine_W_STOP extends LasParserLineParsed {
       : super.copy(_, NLasParserLineType.w_stop.index);
 
   @override
-  String toString() =>
-      '${super.toString()}\n' +
-      (value != null
-          ? 'STOP. ${value.toStringAsFixed(6)}: STOP DEPTH'
-          : 'STOP. UNKNOWN:ERROR');
+  String get mnem => 'STOP';
+  @override
+  String get data => (value != null ? '$value' : 'UNKNOWN');
+  @override
+  String get desc => (value != null ? 'STOP DEPTH' : 'ERROR');
 
   static LasParserLine parse(
       LasParserLineParsed _, final LasParserContext _ctx) {
     if (_ is LasParserLineParsed &&
         _.type == NLasParserLineType.raw_w.index &&
-        _.mnem.toUpperCase() == 'STOP' &&
-        _.data.isNotEmpty) {
-      if (_.mnem != 'STOP') {
+        _.mnemOrig.toUpperCase() == 'STOP' &&
+        _.dataOrig.isNotEmpty) {
+      if (_.mnemOrig != 'STOP') {
         _ctx.notes
             .add(TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
       }
-      final val = double.tryParse(_.data);
+      final val = double.tryParse(_.dataOrig);
       if (val == null) {
         _ctx.notes
             .add(TxtNote.fatal(_, 'Невозможно разобрать значение', _.len));
@@ -557,23 +612,23 @@ class LasParserLine_W_STEP extends LasParserLineParsed {
       : super.copy(_, NLasParserLineType.w_step.index);
 
   @override
-  String toString() =>
-      '${super.toString()}\n' +
-      (value != null
-          ? 'STEP. ${value.toStringAsFixed(6)}: STEP'
-          : 'STEP. UNKNOWN:ERROR');
+  String get mnem => 'STEP';
+  @override
+  String get data => (value != null ? '$value' : 'UNKNOWN');
+  @override
+  String get desc => (value != null ? 'STEP' : 'ERROR');
 
   static LasParserLine parse(
       LasParserLineParsed _, final LasParserContext _ctx) {
     if (_ is LasParserLineParsed &&
         _.type == NLasParserLineType.raw_w.index &&
-        _.mnem.toUpperCase() == 'STEP' &&
-        _.data.isNotEmpty) {
-      if (_.mnem != 'STEP') {
+        _.mnemOrig.toUpperCase() == 'STEP' &&
+        _.dataOrig.isNotEmpty) {
+      if (_.mnemOrig != 'STEP') {
         _ctx.notes
             .add(TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
       }
-      final val = double.tryParse(_.data);
+      final val = double.tryParse(_.dataOrig);
       if (val == null) {
         _ctx.notes
             .add(TxtNote.fatal(_, 'Невозможно разобрать значение', _.len));
@@ -595,23 +650,23 @@ class LasParserLine_W_NULL extends LasParserLineParsed {
       : super.copy(_, NLasParserLineType.w_null.index);
 
   @override
-  String toString() =>
-      '${super.toString()}\n' +
-      (value != null
-          ? 'NULL. ${value.toStringAsFixed(6)}: NULL VALUE'
-          : 'NULL. UNKNOWN:ERROR');
+  String get mnem => 'NULL';
+  @override
+  String get data => (value != null ? '$value' : 'UNKNOWN');
+  @override
+  String get desc => (value != null ? 'NULL VALUE' : 'ERROR');
 
   static LasParserLine parse(
       LasParserLineParsed _, final LasParserContext _ctx) {
     if (_ is LasParserLineParsed &&
         _.type == NLasParserLineType.raw_w.index &&
-        _.mnem.toUpperCase() == 'NULL' &&
-        _.data.isNotEmpty) {
-      if (_.mnem != 'NULL') {
+        _.mnemOrig.toUpperCase() == 'NULL' &&
+        _.dataOrig.isNotEmpty) {
+      if (_.mnemOrig != 'NULL') {
         _ctx.notes
             .add(TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
       }
-      final val = double.tryParse(_.data);
+      final val = double.tryParse(_.dataOrig);
       if (val == null) {
         _ctx.notes
             .add(TxtNote.fatal(_, 'Невозможно разобрать значение', _.len));
@@ -628,72 +683,111 @@ class LasParserLine_W_ extends LasParserLineParsed {
       : super.copy(_, type ?? NLasParserLineType.w_ext.index);
 
   @override
-  String toString() {
+  String get mnem {
     switch (NLasParserLineType.values[type]) {
       case NLasParserLineType.w_comp:
-        return '${super.toString()}\n' +
-            (value != null ? 'COMP. $value: COMPANY' : 'COMP. UNKNOWN:ERROR');
+        return 'COMP';
       case NLasParserLineType.w_well:
-        return '${super.toString()}\n' +
-            (value != null ? 'WELL. $value: WELL' : 'WELL. UNKNOWN:ERROR');
+        return 'WELL';
       case NLasParserLineType.w_fld:
-        return '${super.toString()}\n' +
-            (value != null ? 'FLD. $value: FIELD' : 'FLD. UNKNOWN:ERROR');
+        return 'FLD';
       case NLasParserLineType.w_loc:
-        return '${super.toString()}\n' +
-            (value != null ? 'LOC. $value: LOCATION' : 'LOC. UNKNOWN:ERROR');
+        return 'LOC';
       case NLasParserLineType.w_prov:
-        return '${super.toString()}\n' +
-            (value != null ? 'PROV. $value: PROVINCE' : 'PROV. UNKNOWN:ERROR');
+        return 'PROV';
       case NLasParserLineType.w_cnty:
-        return '${super.toString()}\n' +
-            (value != null ? 'CNTY. $value: COUNTY' : 'CNTY. UNKNOWN:ERROR');
+        return 'CNTY';
       case NLasParserLineType.w_stat:
-        return '${super.toString()}\n' +
-            (value != null ? 'STAT. $value: STATE' : 'STAT. UNKNOWN:ERROR');
+        return 'STAT';
       case NLasParserLineType.w_ctry:
-        return '${super.toString()}\n' +
-            (value != null ? 'CTRY. $value: COUNTRY' : 'CTRY. UNKNOWN:ERROR');
+        return 'CTRY';
       case NLasParserLineType.w_srvc:
-        return '${super.toString()}\n' +
-            (value != null
-                ? 'SRVC. $value: SERVICE COMPANY'
-                : 'SRVC. UNKNOWN:ERROR');
+        return 'SRVC';
       case NLasParserLineType.w_date:
-        return '${super.toString()}\n' +
-            (value != null ? 'DATE. $value: DATE' : 'DATE. UNKNOWN:ERROR');
+        return 'DATE';
       case NLasParserLineType.w_uwi:
-        return '${super.toString()}\n' +
-            (value != null
-                ? 'UWI. $value:  UNIQUE WELL ID'
-                : 'UWI. UNKNOWN:ERROR');
+        return 'UWI';
       case NLasParserLineType.w_api:
-        return '${super.toString()}\n' +
-            (value != null ? 'API. $value: API NUMBER' : 'API. UNKNOWN:ERROR');
+        return 'API';
       case NLasParserLineType.w_lic:
-        return '${super.toString()}\n' +
-            (value != null
-                ? 'LIC. $value: LICENCE NUMBER'
-                : 'LIC. UNKNOWN:ERROR');
+        return 'LIC';
       default:
-        return super.toString();
+        return super.mnem;
+    }
+  }
+
+  @override
+  String get unit => '';
+  @override
+  String get data {
+    switch (NLasParserLineType.values[type]) {
+      case NLasParserLineType.w_comp:
+      case NLasParserLineType.w_well:
+      case NLasParserLineType.w_fld:
+      case NLasParserLineType.w_loc:
+      case NLasParserLineType.w_prov:
+      case NLasParserLineType.w_cnty:
+      case NLasParserLineType.w_stat:
+      case NLasParserLineType.w_ctry:
+      case NLasParserLineType.w_srvc:
+      case NLasParserLineType.w_date:
+      case NLasParserLineType.w_uwi:
+      case NLasParserLineType.w_api:
+      case NLasParserLineType.w_lic:
+        return (value != null ? '$value' : 'UNKNOWN');
+      default:
+        return super.data;
+    }
+  }
+
+  @override
+  String get desc {
+    switch (NLasParserLineType.values[type]) {
+      case NLasParserLineType.w_comp:
+        return (value != null ? 'COMPANY' : 'ERROR');
+      case NLasParserLineType.w_well:
+        return (value != null ? 'WELL' : 'ERROR');
+      case NLasParserLineType.w_fld:
+        return (value != null ? 'FIELD' : 'ERROR');
+      case NLasParserLineType.w_loc:
+        return (value != null ? 'LOCATION' : 'ERROR');
+      case NLasParserLineType.w_prov:
+        return (value != null ? 'PROVINCE' : 'ERROR');
+      case NLasParserLineType.w_cnty:
+        return (value != null ? 'COUNTY' : 'ERROR');
+      case NLasParserLineType.w_stat:
+        return (value != null ? 'STATE' : 'ERROR');
+      case NLasParserLineType.w_ctry:
+        return (value != null ? 'COUNTRY' : 'ERROR');
+      case NLasParserLineType.w_srvc:
+        return (value != null ? 'SERVICE COMPANY' : 'ERROR');
+      case NLasParserLineType.w_date:
+        return (value != null ? 'DATE' : 'ERROR');
+      case NLasParserLineType.w_uwi:
+        return (value != null ? 'UNIQUE WELL ID' : 'ERROR');
+      case NLasParserLineType.w_api:
+        return (value != null ? 'API NUMBER' : 'ERROR');
+      case NLasParserLineType.w_lic:
+        return (value != null ? 'LICENCE NUMBER' : 'ERROR');
+      default:
+        return super.desc;
     }
   }
 
   static LasParserLine parse(
       LasParserLineParsed _, final LasParserContext _ctx) {
     if (_ is LasParserLineParsed && _.type == NLasParserLineType.raw_w.index) {
-      final val = _ctx.version?.value == 1 ? _.desc : _.data;
-      switch (_.mnem.toUpperCase()) {
+      final val = _ctx.version?.value == 1 ? _.descOrig : _.dataOrig;
+      switch (_.mnemOrig.toUpperCase()) {
         case 'COMP':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           _ctx.sW.company = val;
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_comp.index);
         case 'WELL':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
@@ -701,73 +795,73 @@ class LasParserLine_W_ extends LasParserLineParsed {
           return _ctx.well =
               LasParserLine_W_.a(_, val, NLasParserLineType.w_well.index);
         case 'FLD':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           _ctx.sW.field = val;
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_fld.index);
         case 'LOC':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           _ctx.sW.location = val;
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_loc.index);
         case 'PROV':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           _ctx.sW.province = val;
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_prov.index);
         case 'CNTY':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_cnty.index);
         case 'STAT':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_stat.index);
         case 'CTRY':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_ctry.index);
         case 'SRVC':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           _ctx.sW.serviceCompany = val;
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_srvc.index);
         case 'DATE':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           _ctx.sW.date = val;
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_date.index);
         case 'UWI':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           _ctx.sW.uniqueWellId = val;
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_uwi.index);
         case 'API':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
           return LasParserLine_W_.a(_, val, NLasParserLineType.w_api.index);
         case 'LIC':
-          if (_.mnem != _.mnem.toUpperCase()) {
+          if (_.mnemOrig != _.mnemOrig.toUpperCase()) {
             _ctx.notes.add(
                 TxtNote.error(_, 'Мнемоника не в верхнем регистре', _.len));
           }
@@ -786,15 +880,21 @@ class LasParserLine_C_ extends LasParserLineParsed {
   double /*?*/ step;
   int /*?*/ indexStrt;
   int /*?*/ indexStop;
+
+  /// Количество цифр после точки
+  int doublePrecision = 0;
+
+  /// Общее количество цифр
+  int doubleLenght = 0;
   final values = <double>[];
   LasParserLine_C_.a(final LasParserLineParsed _, [int type])
       : super.copy(_, type ?? NLasParserLineType.curve.index);
 
   @override
   String toString() => '${super.toString()}\n'
-      '\tSTRT = ${strt?.toStringAsFixed(6) ?? 'null'}\n'
-      '\tSTOP = ${stop?.toStringAsFixed(6) ?? 'null'}\n'
-      '\tSTEP = ${step?.toStringAsFixed(6) ?? 'null'}';
+      '\tSTRT = ${strt?.toString() ?? 'null'}\n'
+      '\tSTOP = ${stop?.toString() ?? 'null'}\n'
+      '\tSTEP = ${step?.toString() ?? 'null'}';
 
   static LasParserLine parse(
       LasParserLineParsed _, final LasParserContext _ctx) {
@@ -883,22 +983,21 @@ class LasParserContext {
       }
       final __l = lines.length;
       for (var i = 0; i < __l; i++) {
-        final _line = lines[i];
-        if (_line is LasParserLineParsed) {
-          if (_line.type == NLasParserLineType.raw_v.index) {
-            lines[i] = LasParserLine_V_VERS.parse(_line, this);
-            lines[i] = LasParserLine_V_WRAP.parse(_line, this);
-          } else if (_line.type == NLasParserLineType.raw_w.index) {
-            lines[i] = LasParserLine_W_STRT.parse(_line, this);
-            lines[i] = LasParserLine_W_STOP.parse(_line, this);
-            lines[i] = LasParserLine_W_STEP.parse(_line, this);
-            lines[i] = LasParserLine_W_NULL.parse(_line, this);
-            lines[i] = LasParserLine_W_.parse(_line, this);
-          } else if (_line.type == NLasParserLineType.raw_c.index) {
-            lines[i] = LasParserLine_C_.parse(_line, this);
+        if (lines[i] is LasParserLineParsed) {
+          if (lines[i].type == NLasParserLineType.raw_v.index) {
+            lines[i] = LasParserLine_V_VERS.parse(lines[i], this);
+            lines[i] = LasParserLine_V_WRAP.parse(lines[i], this);
+          } else if (lines[i].type == NLasParserLineType.raw_w.index) {
+            lines[i] = LasParserLine_W_STRT.parse(lines[i], this);
+            lines[i] = LasParserLine_W_STOP.parse(lines[i], this);
+            lines[i] = LasParserLine_W_STEP.parse(lines[i], this);
+            lines[i] = LasParserLine_W_NULL.parse(lines[i], this);
+            lines[i] = LasParserLine_W_.parse(lines[i], this);
+          } else if (lines[i].type == NLasParserLineType.raw_c.index) {
+            lines[i] = LasParserLine_C_.parse(lines[i], this);
           }
-        } else if (_line.type == NLasParserLineType.raw_a.index) {
-          ascii.add(_line);
+        } else if (lines[i].type == NLasParserLineType.raw_a.index) {
+          ascii.add(lines[i]);
         }
       }
       bool _wrap;
@@ -918,7 +1017,17 @@ class LasParserContext {
                   TxtNote.error(_line, 'Неудалось разобрать число', _line.len));
             }
             for (var j = 0; j < _llc; j++) {
-              curves[j].values.add(_parsed[j] ?? undef?.value);
+              final _val = _parsed[j] ?? undef?.value;
+              curves[j].values.add(_val);
+              final _str = _val.toString();
+              final _strL = _str.length;
+              final _strD = _strL - _str.lastIndexOf('.') - 1;
+              if (_strL >= curves[j].doubleLenght) {
+                curves[j].doubleLenght = _strL;
+              }
+              if (_strD != _strL && _strD >= curves[j].doublePrecision) {
+                curves[j].doublePrecision = _strD;
+              }
             }
           } else {
             notes.add(TxtNote.fatal(
@@ -944,7 +1053,18 @@ class LasParserContext {
                 TxtNote.error(_line, 'Переизбыток чисел в блоке', _line.len));
           } else {
             for (var j = 0; j < _ll; j++) {
-              curves[j + iIndex].values.add(_parsed[j] ?? undef?.value);
+              final _val = _parsed[j] ?? undef?.value;
+              curves[j + iIndex].values.add(_val);
+              final _str = _val.toString();
+              final _strL = _str.length;
+              final _strD = _strL - _str.lastIndexOf('.') - 1;
+              if (_strL >= curves[j + iIndex].doubleLenght) {
+                curves[j + iIndex].doubleLenght = _strL;
+              }
+              if (_strD != _strL &&
+                  _strD >= curves[j + iIndex].doublePrecision) {
+                curves[j + iIndex].doublePrecision = _strD;
+              }
             }
           }
           iIndex += _ll;
@@ -962,13 +1082,12 @@ class LasParserContext {
         curves[j].stop = _stop;
         curves[j].step = _step;
         curves[j].indexStrt = 0;
-        curves[j].indexStop = _llc - 1;
+        curves[j].indexStop = _ld - 1;
       }
       for (var j = 1; j < _llc; j++) {
-        final _l = curves[j].values.length;
         var _indexStrt = -1;
-        var _indexStop = 0;
-        for (var i = 0; i < _l; i++) {
+        var _indexStop = -1;
+        for (var i = 0; i < _ld; i++) {
           final _val = curves[j].values[i];
           if (_val != undef?.value) {
             if (_indexStrt == -1) {
@@ -994,8 +1113,8 @@ class LasParserContext {
           curves[j].strt = 0.0;
           curves[j].stop = 0.0;
           curves[j].step = 0.0;
-          curves[j].indexStrt = 0;
-          curves[j].indexStop = 0;
+          curves[j].indexStrt = -1;
+          curves[j].indexStop = -1;
           curves[j].values.clear();
         }
       }
@@ -1017,6 +1136,21 @@ extension IOneFileLasData on LasParserContext {
   static LasParserContext /*?*/ createByString(final String data) =>
       LasParserContext(data);
 
+  String normalizeLasFileData({String lineFeed = '\r\n'}) {
+    final str = StringBuffer();
+    final _l = lines.length;
+    var _mnemLen = 0;
+    var _unitsLen = 0;
+    var _dataLen = 0;
+    for (var i = 0; i < _l; i++) {
+      final _line = lines[i];
+      switch (NLasParserLineType.values[_line.type]) {
+        default:
+      }
+    }
+    return str.toString();
+  }
+
   String get getDebugString {
     final str = StringBuffer();
     str.writeln('РАЗОБРАННЫЙ LAS ФАЙЛ');
@@ -1026,7 +1160,7 @@ extension IOneFileLasData on LasParserContext {
     }
     str.writeln('VERS:'.padRight(24) + (version?.value?.toString() ?? 'null'));
     str.writeln('WRAP:'.padRight(24) + (wrap?.value?.toString() ?? 'null'));
-    str.writeln('WELL:'.padRight(24) + (well?.data?.toString() ?? 'null'));
+    str.writeln('WELL:'.padRight(24) + (well?.dataOrig?.toString() ?? 'null'));
     str.writeln('STRT:'.padRight(24) + (strt?.value?.toString() ?? 'null'));
     str.writeln('STOP:'.padRight(24) + (stop?.value?.toString() ?? 'null'));
     str.writeln('STEP:'.padRight(24) + (step?.value?.toString() ?? 'null'));
@@ -1045,6 +1179,20 @@ extension IOneFileLasData on LasParserContext {
     str.writeln('Разобранные строки:');
     for (var c in lines) {
       str.writeln(c);
+    }
+    final _l = curves.first.values.length;
+    for (var i = 0; i < _l; i++) {
+      for (var c in curves) {
+        if (c.indexStrt <= i && i <= c.indexStop) {
+          str.write(c.values[i - c.indexStrt]
+              .toStringAsFixed(c.doublePrecision)
+              .padLeft(c.doubleLenght + 1));
+        } else {
+          str.write((undef?.value?.toStringAsFixed(c.doublePrecision) ?? 'null')
+              .padLeft(c.doubleLenght + 1));
+        }
+      }
+      str.writeln();
     }
 
     return str.toString();
