@@ -62,3 +62,21 @@ Map<String, int> getEncodingsRaiting(List<int> data) {
     };
   }
 }
+
+String getEncodingNameMustRaited(Map<String, int> map) {
+  var _mV = 0;
+  var _mK = '';
+  map.forEach((key, value) {
+    if (value > _mV) {
+      _mV = value;
+      _mK = key;
+    }
+  });
+  return _mK;
+}
+
+String getEncodingName(List<int> data) =>
+    getEncodingNameMustRaited(getEncodingsRaiting(data));
+
+Encoding getEncodingCodec(List<int> data) =>
+    charMapsCodecs[getEncodingName(data)];
