@@ -4,6 +4,9 @@ import 'dart:isolate';
 import 'dart:convert';
 
 import 'package:knc/knc.dart';
+import 'package:knc/src/ink.txt.dart';
+import 'package:knc/src/las.dart';
+import 'package:knc/src/office.word.dart';
 import 'package:path/path.dart' as p;
 
 import 'FIleParserLas.dart';
@@ -38,6 +41,9 @@ class TaskIso extends SocketWrapper {
 
   /// Список всех найденных файлов
   final files = <JOneFileData>[];
+
+  /// Обработанные файлы
+  List parsedData;
 
   /// Состояние задачи
   final JTaskState state;
@@ -178,6 +184,7 @@ class TaskIso extends SocketWrapper {
   Future<void> runWorkFiles() async {
     state.state = NTaskState.workFiles;
     final _l = files.length;
+    parsedData = List(_l);
     await Future.wait(List.generate(_l, (i) => handleFile(i), growable: false));
     // for (var i = 0; i < _l; i++) {
     //   await handleFile(i);
@@ -471,6 +478,32 @@ class TaskIso extends SocketWrapper {
 
           await _dir.delete(recursive: true);
 
+          final doc = OfficeWordDocument.createByXmlString(
+              File(p.join(_dirName, 'word', 'document.xml'))
+                  .readAsStringSync());
+          if (doc != null) {
+            final str = StringBuffer();
+            str.writeCharCode(unicodeBomCharacterRune);
+            str.writeln('РАЗОБРАННЫЙ WORD ФАЙЛ');
+            str.writeln('ОРИГИНАЛ: ${fileData.origin}');
+            str.writeln(doc.toString());
+            final _str = str.toString();
+            File(_dirName + '.txt').writeAsStringSync(_str);
+            final ink = IOneFileInkDataTxt.createByString(_str);
+            if (ink != null) {
+              final str = StringBuffer();
+              str.writeCharCode(unicodeBomCharacterRune);
+              str.writeln('РАЗОБРАННЫЙ WORD ФАЙЛ');
+              str.writeln('ОРИГИНАЛ: ${fileData.origin}');
+              str.writeln('РАЗБИРАЕМАЯ КОПИЯ: ${_dirName + '.txt'}');
+              str.write(ink.getDebugString());
+              File(_dirName + '.ink.txt').writeAsStringSync(str.toString());
+              parsedData[_i] = ink;
+              state.worked = state.worked + 1;
+              return;
+            }
+          }
+
           // Пытаемся обработать к DOCX файл
           if ((fileDataNew = await parserFileDocx(
                   this,
@@ -520,6 +553,30 @@ class TaskIso extends SocketWrapper {
     final encode = convGetMappingMax(encodesRaiting);
     // Преобразуем байты из кодировки в символы
     final buffer = convDecode(data, sets.charMaps[encode] /*!*/);
+
+    final las = IOneFileLasData.createByString(buffer);
+    if (las != null) {
+      final str = StringBuffer();
+      str.writeCharCode(unicodeBomCharacterRune);
+
+      str.writeCharCode(unicodeBomCharacterRune);
+      str.writeln('РАЗОБРАННЫЙ LAS ФАЙЛ');
+      str.writeln('ОРИГИНАЛ: ${fileData.origin}');
+      str.writeln('РАЗБИРАЕМАЯ КОПИЯ: ${fileData.path}');
+      str.write(las.getDebugString);
+      File(fileData.path + '.txt').writeAsStringSync(str.toString());
+
+      final str2 = StringBuffer();
+      str2.writeCharCode(unicodeBomCharacterRune);
+      str2.writeln('# МИНИМИЗИРОВАННЫЙ РАЗОБРАННЫЙ LAS ФАЙЛ');
+      str2.writeln('# ОРИГИНАЛ: ${fileData.origin}');
+      str2.writeln('# РАЗОБРАННАЯ КОПИЯ: ${fileData.path + '.txt'}');
+      str2.write(las.normalizeLasFileData());
+      File(fileData.path + '.min.las').writeAsStringSync(str2.toString());
+      parsedData[_i] = las;
+      state.worked = state.worked + 1;
+      return;
+    }
 
     // Пытаемся обработать к LAS файл
     if ((fileDataNew = await parserFileLas(this, fileData, buffer, encode)) !=
