@@ -4,11 +4,6 @@ import 'package:knc/src/dbf.dart';
 import 'package:knc/src/ink.dbf.dart';
 import 'package:path/path.dart' as p;
 
-import 'dart:convert';
-import 'dart:io';
-import 'package:knc/src/las.dart';
-import 'package:path/path.dart' as p;
-
 import 'Conv.dart';
 
 void _mainStepInkDbf(List<String> list) {
