@@ -3,11 +3,22 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 class ConstUniSymbolMap {
+  /// ID символа по спецификации `Microsoft Code Pages`
   final int id;
+
+  /// Наименование кодировки как в платформе `.NET`
   final String nameDotNet;
+
+  /// Альтернативные названия
   final String addInfo;
+
+  /// Данные отображения символов в Юникод таблицу
   final List<int> data;
+
+  /// Юникод названия символов
   final List<String> symbolNames;
+
+  /// Отображение символов из юникода в байты
   final Map<int, int> map;
 
   const ConstUniSymbolMap(this.id, this.nameDotNet, this.addInfo, this.data,
