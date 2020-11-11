@@ -52,24 +52,24 @@ class TxtPos {
 
   /// Предудыщий символ
   ///
-  /// Возвращает `null` если невозможно получить символ
-  String /*?*/ get prev => s >= 1 ? txt.data[s - 1] : null;
+  /// Возвращает пустую строку если невозможно получить символ
+  String get prev => s >= 1 ? txt.data[s - 1] : '';
 
   /// Следующий символ
   ///
-  /// Возвращает `null` если невозможно получить символ
-  String /*?*/ get next => s < dataLength - 1 ? txt.data[s + 1] : null;
+  /// Возвращает пустую строку если невозможно получить символ
+  String get next => s < dataLength - 1 ? txt.data[s + 1] : '';
 
   /// Настоящий символ, куда указывает указатель
   ///
-  /// Возвращает `null` если невозможно получить символ
-  String /*?*/ get symbol => s < dataLength ? txt.data[s] : null;
+  /// Возвращает пустую строку если невозможно получить символ
+  String get symbol => s < dataLength ? txt.data[s] : '';
 
   /// Получить символ который находится на отступе
   ///
-  /// Возвращает `null` если невозможно получить символ
-  String /*?*/ symbolAt(final int i) =>
-      s + i < dataLength && s + i >= 0 ? txt.data[s + i] : null;
+  /// Возвращает пустую строку если невозможно получить символ
+  String symbolAt(final int i) =>
+      s + i < dataLength && s + i >= 0 ? txt.data[s + i] : '';
 
   /// Количество символов в контейнере
   int get dataLength => txt.length;
@@ -78,14 +78,14 @@ class TxtPos {
   String substring(final int _len) => txt.data.substring(s, s + _len);
 
   /// Переход к следующему символу, возвращает этот следующий символ
-  String /*?*/ nextSymbol() {
+  String nextSymbol() {
     if (symbol == null) {
       return null;
     }
     s++;
     c++;
     final _s = symbol;
-    if (_s == null) {
+    if (_s.isEmpty) {
       return _s;
     } else if (_s == '\n' || _s == '\r') {
       l++;
@@ -100,9 +100,9 @@ class TxtPos {
 
   /// Пропуск [_i] символов, возвращает символ находящийся на расстоянии [_i]
   /// символов от настоящего
-  String /*?*/ skipSymbolsCount(final int _i) {
+  String skipSymbolsCount(final int _i) {
     var _s = symbol;
-    for (var i = 0; i < _i && _s != null; ++i) {
+    for (var i = 0; i < _i && _s.isNotEmpty; ++i) {
       _s = nextSymbol();
     }
     return _s;
@@ -110,7 +110,7 @@ class TxtPos {
 
   /// Пропуск всех символов содержащихся в [_a], возвращает первый символ не из
   /// [_a]
-  String /*?*/ skipSymbolsInString(final String _a) {
+  String skipSymbolsInString(final String _a) {
     var _s = symbol;
     while (_a.contains(_s)) {
       _s = nextSymbol();
@@ -120,19 +120,19 @@ class TxtPos {
 
   /// Пропуск всех символов не содержащихся в [_a], возвращает первый
   /// встретившийся символ из [_a]
-  String /*?*/ skipSymbolsOutString(final String _a) {
+  String skipSymbolsOutString(final String _a) {
     var _s = symbol;
-    while (_s != null && !_a.contains(_s)) {
+    while (_s.isNotEmpty && !_a.contains(_s)) {
       _s = nextSymbol();
     }
     return _s;
   }
 
   /// Пропуск пробелов, возвращает первый непробельный символ
-  String /*?*/ skipWhiteSpaces() {
+  String skipWhiteSpaces() {
     var _s = symbol;
-    while (
-        _s != null && (_s == ' ' || _s == '\t' || _s == '\n' || _s == '\r')) {
+    while (_s.isNotEmpty &&
+        (_s == ' ' || _s == '\t' || _s == '\n' || _s == '\r')) {
       _s = nextSymbol();
     }
     return _s;
@@ -140,9 +140,9 @@ class TxtPos {
 
   /// Пропуск пробелов до новой линии, возвращает первый непробельный символ,
   /// либо символ новой строки
-  String /*?*/ skipWhiteSpacesOrToEndOfLine() {
+  String skipWhiteSpacesOrToEndOfLine() {
     var _s = symbol;
-    while (_s != null && (_s == ' ' || _s == '\t')) {
+    while (_s.isNotEmpty && (_s == ' ' || _s == '\t')) {
       _s = nextSymbol();
     }
     return _s;
@@ -151,13 +151,13 @@ class TxtPos {
   /// Переход к концу линии
   void skipToEndOfLine() {
     var _s = symbol;
-    while (_s != null && _s != '\n' && _s != '\r') {
+    while (_s.isNotEmpty && _s != '\n' && _s != '\r') {
       _s = nextSymbol();
     }
   }
 
   /// Переход к следующей линии, возвращает первый символ линии
-  String /*?*/ skipToNextLine() {
+  String skipToNextLine() {
     skipToEndOfLine();
     var _s = nextSymbol();
     // Если перевод строки как в Windows, то пропускаем второй символ
@@ -225,51 +225,25 @@ class TxtNote {
     final str = StringBuffer();
     switch (NTxtNoteType.values[t]) {
       case NTxtNoteType.info:
-        str.write('INFO'.padRight(8));
+        str.write('INFO'.padRight(10));
         break;
       case NTxtNoteType.warn:
-        str.write('WARN'.padRight(8));
+        str.write('WARN'.padRight(10));
         break;
       case NTxtNoteType.error:
-        str.write('ERROR'.padRight(8));
+        str.write('ERROR'.padRight(10));
         break;
       case NTxtNoteType.fatal:
-        str.write('FATAL'.padRight(8));
+        str.write('FATAL'.padRight(10));
         break;
       case NTxtNoteType.exception:
-        str.write('EXCEPTION'.padRight(8));
+        str.write('EXCEPTION'.padRight(10));
         break;
       default:
-        str.write('UNKNOWN'.padRight(8));
+        str.write('UNKNOWN'.padRight(10));
     }
-    str.write('${p.l + 1}:${p.c + 1} ($l):'.padRight(16));
+    str.write('$p ($l):'.padRight(16));
     str.write(s);
     return str.toString();
   }
-}
-
-double getMiddleArithmetic(final List<double> _list) {
-  var _o = 0.0;
-  final _l = _list.length;
-  for (var i = 0; i < _l; i++) {
-    _o += (_list[i] - _o) / (i + 1).toDouble();
-  }
-  return _o;
-}
-
-double getStepOfList(final List<double> _list, [final double _q = 0.00000001]) {
-  final _subList = _list.sublist(1);
-  final _l = _subList.length;
-  for (var i = 0; i < _l; i++) {
-    _subList[i] -= _list[i];
-  }
-  final _m = -getMiddleArithmetic(_subList);
-  final _q2 = -_q;
-  for (var i = 0; i < _l; i++) {
-    final _f = _subList[i] + _m;
-    if (_f >= _q || _f <= _q2) {
-      return 0.0;
-    }
-  }
-  return -_m;
 }
