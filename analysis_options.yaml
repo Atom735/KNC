@@ -11,11 +11,17 @@ include: package:pedantic/analysis_options.yaml
 
 analyzer:
   exclude:
+    - .ignore/**
     - .vscode/**
     - data/**
     - node_modules/**
     - public/**
-    - src/**
-    - build/**
-    - lib/**.t.dart
-    - .ignore/**
+    - tasks/**
+    - temp/**
+    - .ignore
+    - .vscode
+    - data
+    - node_modules
+    - public
+    - tasks
+    - temp
