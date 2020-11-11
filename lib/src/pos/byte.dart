@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:typed_data';
+
+import '../charmaps/index.dart';
 
 import 'abstract.dart';
 
@@ -147,4 +150,23 @@ class BytePos extends AbstractPos {
     }
     return _s;
   }
+
+  /// Получает символ конца строки
+  String getLineFeedSymbols() {
+    final _l = dataLength;
+    final p = Uint8List.sublistView(data);
+    for (var i = 1; i < _l; i++) {
+      if (p[i] == 0x0A) {
+        if (p[i - 1] == 0x0D) {
+          return '\r\n';
+        } else {
+          return '\n';
+        }
+      }
+    }
+    return '\n';
+  }
+
+  /// Получает кодировку текста
+  Encoding getEncoding() => getEncodingCodec(Uint8List.sublistView(data));
 }
