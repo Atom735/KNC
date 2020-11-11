@@ -1,15 +1,15 @@
-export 'charmaps/ruslang_freq_2letters.dart';
+export 'ruslang_freq_2letters.dart';
 
 import 'dart:convert';
 
-import 'charmaps/8859-5.dart';
-import 'charmaps/CP1251.dart';
-import 'charmaps/CP855.dart';
-import 'charmaps/CP866.dart';
-import 'charmaps/KOI8-R.dart';
-import 'charmaps/MacCyrillic.dart';
-import 'charmaps/class.dart';
-import 'charmaps/ruslang_freq_2letters.dart';
+import '8859-5.dart';
+import 'CP1251.dart';
+import 'CP855.dart';
+import 'CP866.dart';
+import 'KOI8-R.dart';
+import 'MacCyrillic.dart';
+import 'class.dart';
+import 'ruslang_freq_2letters.dart';
 
 /// `CP855` — кириллическая кодовая страница для MS-DOS и подобных ей операционных систем.
 const cp_855 = ByteSymbolCodec(cp855);
