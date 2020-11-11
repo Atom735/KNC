@@ -1,5 +1,3 @@
-import 'dart:math';
-
 /// https://www.clicketyclick.dk/databases/xbase/format/dbf.html
 /// http://www.dbase.com/Knowledgebase/INT/db7_file_fmt.htm
 /// https://www.dbf2002.com/dbf-file-format.html
@@ -217,10 +215,9 @@ class DbfField {
 
   /// `0-10` Имя поля.  If less than 10, it is padded with null characters (0x00)
   String get name => String.fromCharCodes(
-      byteData.buffer.asUint8List(0, 10).toList(growable: true)
+      Uint8List.sublistView(byteData, 0, 10).toList(growable: true)
         ..removeWhere((e) => e == 0x0));
-  set name(String i) => byteData.buffer
-      .asUint8List(0, 10)
+  set name(String i) => Uint8List.sublistView(byteData, 0, 10)
       .setAll(0, i.padRight(10, '\u0000').codeUnits.sublist(0, 10));
 
   /// `11` Тип поля
@@ -328,17 +325,16 @@ class DbfRecord {
     final _type = field.type;
     switch (_type) {
       case 'C':
-        return String.fromCharCodes(byteData.buffer.asUint8List(
-                byteData.offsetInBytes + field.address,
-                field.length + field.decimalCount << 8))
+        return String.fromCharCodes(Uint8List.sublistView(
+                byteData, field.address, field.address + field.length))
             .trim();
       case 'N':
-        return double.tryParse(String.fromCharCodes(byteData.buffer.asUint8List(
-                byteData.offsetInBytes + field.address, field.length))) ??
+        return double.tryParse(String.fromCharCodes(Uint8List.sublistView(
+                byteData, field.address, field.address + field.length))) ??
             double.nan;
       default:
-        return String.fromCharCodes(byteData.buffer.asUint8List(
-                byteData.offsetInBytes + field.address, field.length))
+        return String.fromCharCodes(Uint8List.sublistView(
+                byteData, field.address, field.address + field.length))
             .trim();
     }
   }

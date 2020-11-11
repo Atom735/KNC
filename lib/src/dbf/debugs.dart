@@ -88,7 +88,7 @@ extension DbfRecordExt on DbfRecord {
                 .padRight(max(fields[i].name.length, fields[i].length)));
       }
     } else {
-      str.write(String.fromCharCode(byteData.getUint8(0)));
+      str.write(deleted ? 'x' : ' ');
       for (var i = 0; i < _filedsLength; i++) {
         final _type = fields[i].type;
         switch (_type) {
@@ -96,7 +96,7 @@ extension DbfRecordExt on DbfRecord {
             str.write('|' +
                 (value(fields[i]) as double)
                     .toStringAsFixed(fields[i].decimalCount)
-                    .padRight(max(fields[i].name.length, fields[i].length)));
+                    .padLeft(max(fields[i].name.length, fields[i].length)));
             break;
           default:
             str.write('|' +
