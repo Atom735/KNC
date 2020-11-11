@@ -1,8 +1,10 @@
 import 'dart:async';
 
-import 'www.dart';
-
 const msgRecordSeparator = '\u001E';
+const msgStreamClose = '\u0018';
+
+const msgIdBegin = '\u0001';
+const msgIdEnd = '\u0002';
 
 class SocketWrapperResponse {
   final String s;
@@ -16,24 +18,15 @@ class SocketWrapperResponse {
 /// * [recv] - функция вызываемаемая при получении сообщения
 class SocketWrapper {
   final void Function(String msgRaw) sender;
-  final String streamCloseMsg;
-  final String msgIdBegin;
-  final String msgIdEnd;
   Future /*?*/ signal;
 
   int _requestID = 0;
   final _listOfRequest = <int, Completer<String>>{};
-  int _subscribersID = 0;
-  final _listOfSubscribers = <int, StreamController<String>>{};
 
   final _listOfResponses = <String, Completer<SocketWrapperResponse>>{};
   final _listOfRespSubers = <String, StreamController<SocketWrapperResponse>>{};
 
-  SocketWrapper(this.sender,
-      {this.streamCloseMsg = wwwStreamClose,
-      this.msgIdBegin = '\u0001',
-      this.msgIdEnd = '\u0002',
-      this.signal}) {
+  SocketWrapper(this.sender, {this.signal}) {
     signal?.then((_) => signal = null);
   }
 
@@ -50,12 +43,12 @@ class SocketWrapper {
     if (msgRaw.startsWith(msgIdBegin)) {
       final i0 = msgRaw.indexOf(msgIdEnd, msgIdBegin.length);
       if (i0 != -1) {
-        final id = int.parse(msgRaw.substring(msgIdBegin.length, i0));
+        final idStr = msgRaw.substring(msgIdBegin.length, i0);
+        final id = int.tryParse(idStr) ?? 0;
         final msg = msgRaw.substring(i0 + msgIdEnd.length);
         b |= _listOfRequest[id] != null;
         _listOfRequest[id]?.complete(msg);
-        b |= _listOfSubscribers[id] != null;
-        _listOfSubscribers[id]?.add(msg);
+
         if (!b) {
           /// Если сообщение не обработанно, то значит это не ответ на запрос
           /// а уведомитенльное, или сообщение команды...
@@ -86,42 +79,46 @@ class SocketWrapper {
   }
 
   /// Подписаться на получение единождого ответа
-  Future<SocketWrapperResponse> waitMsg(final String msgBegin) {
-    final c = Completer<SocketWrapperResponse>();
+  ///
+  /// Например ждём запрос `^{id}$LoginAPI:login:pass`
+  ///
+  /// В ответ отправим `^{id}${someText}`
+  ///
+  /// Ну или серию ответов.
+  Future<SocketWrapperResponse> waitMsg(final String msgBegin,
+      [final bool sync = false]) {
+    final c = sync
+        ? Completer<SocketWrapperResponse>.sync()
+        : Completer<SocketWrapperResponse>();
+
     _listOfResponses[msgBegin] = c;
     c.future.then((_) => _listOfResponses.remove(msgBegin));
     return c.future;
   }
 
   /// Подписаться на получение всех ответов
-  Stream<SocketWrapperResponse> waitMsgAll(final String msgBegin) {
+  ///
+  /// Тоже самое как [waitMsg], но ждём без остановки
+  Stream<SocketWrapperResponse> waitMsgAll(final String msgBegin,
+      [final bool sync = false]) {
     final c = StreamController<SocketWrapperResponse>(
-        onCancel: () => _listOfRespSubers.remove(msgBegin));
+        onCancel: () => _listOfRespSubers.remove(msgBegin), sync: sync);
     _listOfRespSubers[msgBegin] = c;
     return c.stream;
   }
 
-  /// Отправить запрос и получить на него ответ
-  Future<String> requestOnce(final String msg) {
+  /// Отправить запрос и получить на него единождый ответ
+  ///
+  /// Например отправляем запрос `^123$LoginAPI:login:pass`
+  ///
+  /// В ответ получим `^123${someText}`
+  Future<String> requestOnce(final String msg, [final bool sync = false]) {
     _requestID += 1;
     final id = _requestID;
-    final c = Completer<String>();
+    final c = sync ? Completer<String>.sync() : Completer<String>();
     _listOfRequest[id] = c;
     c.future.then((_) => _listOfRequest.remove(id));
     send(id, msg);
     return c.future;
-  }
-
-  /// Отправить запрос на подписку к событиям
-  Stream<String> requestSubscribe(final String msg) {
-    _subscribersID += 1;
-    final id = _subscribersID;
-    final c = StreamController<String>(onCancel: () {
-      _listOfSubscribers.remove(id);
-      send(id, streamCloseMsg);
-    });
-    _listOfSubscribers[id] = c;
-    send(id, msg);
-    return c.stream;
   }
 }
