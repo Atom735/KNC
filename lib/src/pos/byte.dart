@@ -5,11 +5,31 @@ import '../charmaps/index.dart';
 
 import 'abstract.dart';
 
+int byteAlphaToUpperCase(int i) => (i >= 0x61 && i <= 0x7A) ? i & 0x5f : i;
+Uint8List bytesTrimLeft(Uint8List i) {
+  final _l = i.length;
+  var i0 = 0;
+  while (i0 < _l && (i[i0] == 0x20 || i[i0] == 0x09)) {
+    i0++;
+  }
+  return Uint8List.sublistView(i, i0);
+}
+
+Uint8List bytesTrimRight(Uint8List i) {
+  var i0 = i.length - 1;
+  while (i0 >= 0 && (i[i0] == 0x20 || i[i0] == 0x09)) {
+    i0--;
+  }
+  return Uint8List.sublistView(i, 0, i0 + 1);
+}
+
+Uint8List bytesTrim(Uint8List i) => bytesTrimLeft(bytesTrimRight(i));
+
 /// Указатель позиции текста
 class BytePos extends AbstractPos {
   /// Контейнер текста
   @override
-  final ByteData data;
+  final Uint8List data;
 
   /// Создаёт указатель из контенера и перемещает его на [i] символов вперёд
   BytePos(this.data, [final int i = 0]) : super(data) {
@@ -27,26 +47,26 @@ class BytePos extends AbstractPos {
   ///
   /// Возвращает `-1` если невозможно получить символ
   @override
-  int get prev => s >= 1 ? data.getUint8(s) : -1;
+  int get prev => s >= 1 ? data[s] : -1;
 
   /// Следующий символ
   ///
   /// Возвращает `-1` если невозможно получить символ
   @override
-  int get next => s < dataLength - 1 ? data.getUint8(s + 1) : -1;
+  int get next => s < dataLength - 1 ? data[s + 1] : -1;
 
   /// Настоящий символ, куда указывает указатель
   ///
   /// Возвращает `-1` если невозможно получить символ
   @override
-  int get symbol => s < dataLength ? data.getUint8(s) : -1;
+  int get symbol => s < dataLength ? data[s] : -1;
 
   /// Получить символ который находится на отступе
   ///
   /// Возвращает пустую строку если невозможно получить символ
   @override
   int symbolAt(final int i) =>
-      s + i < dataLength && s + i >= 0 ? data.getUint8(s + i) : -1;
+      s + i < dataLength && s + i >= 0 ? data[s + i] : -1;
 
   /// Количество символов в контейнере
   @override
@@ -54,7 +74,8 @@ class BytePos extends AbstractPos {
 
   /// Возвращает подстроку длины [_len]
   @override
-  ByteData substring(final int _len) => ByteData.sublistView(data, s, s + _len);
+  Uint8List substring(final int _len) =>
+      Uint8List.sublistView(data, s, s + _len);
 
   /// Переход к следующему символу, возвращает этот следующий символ
   @override
@@ -152,9 +173,9 @@ class BytePos extends AbstractPos {
   }
 
   /// Получает символ конца строки
-  String getLineFeedSymbols() {
+  String getLineFeed() {
     final _l = dataLength;
-    final p = Uint8List.sublistView(data);
+    final p = data;
     for (var i = 1; i < _l; i++) {
       if (p[i] == 0x0A) {
         if (p[i - 1] == 0x0D) {
@@ -168,5 +189,5 @@ class BytePos extends AbstractPos {
   }
 
   /// Получает кодировку текста
-  Encoding getEncoding() => getEncodingCodec(Uint8List.sublistView(data));
+  Encoding getEncoding() => getEncodingCodec(data);
 }
