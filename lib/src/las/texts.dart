@@ -1,0 +1,8 @@
+const kLasSectionFullLineName = {
+  r'V': r'VERSION INFORMATION SECTION',
+  r'W': r'WELL INFORMATION SECTION',
+  r'C': r'CURVE INFORMATION SECTION',
+  r'P': r'PARAMETER INFORMATION SECTION',
+  r'O': r'OTHER',
+  r'A': r'ASCII LOG DATA',
+};
