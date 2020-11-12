@@ -68,20 +68,24 @@ Map<String, int> getEncodingsRaiting(List<int> data) {
     };
   }
   try {
-    utf8.decode(data, allowMalformed: false);
-  } catch (e) {
-    return Map.fromIterables(cp_all.map((e) => e.name),
-        cp_all.map((e) => getRusLangFreq2LettersRaiting(e.decode(data))));
-  } finally {
+    utf8.decode(data);
     return {
       utf8.name: 1000000,
     };
+  } catch (e) {
+    final p = Map.fromIterables(cp_all.map((e) => e.name),
+        cp_all.map((e) => getRusLangFreq2LettersRaiting(e.decode(data))));
+    p[cp_855.name] ??= p[cp_855.name] + 1000;
+    p[cp_20866.name] ??= p[cp_20866.name] + 1500;
+    p[cp_1251.name] ??= p[cp_1251.name] + 2000;
+    p[cp_866.name] ??= p[cp_866.name] + 5000;
+    return p;
   }
 }
 
 /// Возвращает имя кодировки с наибольшим рейтингом
 String getEncodingNameMustRaited(Map<String, int> map) {
-  var _mV = 0;
+  var _mV = -0x7fffffff;
   var _mK = '';
   map.forEach((key, value) {
     if (value > _mV) {
