@@ -1,4 +1,4 @@
-import '../structs/field.dart';
+import '../structs.dart';
 
 extension DbfFieldExt on DbfField {
   /// Получает отладочную информацию

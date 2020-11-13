@@ -1,13 +1,17 @@
 import 'dart:typed_data';
 
+import '../structs.dart';
 import '../texts.dart';
 
 /// Структура описания DBF полей
 class DbfField {
+  /// Указатель на базу данных
+  final Dbf dbf;
+
   /// Отображение памяти
   final ByteData byteData;
 
-  DbfField(this.byteData);
+  DbfField(this.byteData, this.dbf);
 
   /// `0-10` Имя поля.  If less than 10, it is padded with null characters (0x00)
   String get name => String.fromCharCodes(

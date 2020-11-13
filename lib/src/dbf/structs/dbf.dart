@@ -18,15 +18,16 @@ class Dbf {
   Dbf(this.byteData) {
     var offset = 32;
     while (byteData.getUint8(offset) != 0x0D) {
-      fields.add(DbfField(ByteData.sublistView(byteData, offset, offset + 32)));
+      fields.add(
+          DbfField(ByteData.sublistView(byteData, offset, offset + 32), this));
       offset += 32;
     }
     final _l = numberOfRecords;
     final _lR = lengthOfEachRecord;
     offset = lengthOfHeader;
     for (var i = 0; i < _l; i++) {
-      records
-          .add(DbfRecord(ByteData.sublistView(byteData, offset, offset + _lR)));
+      records.add(DbfRecord(
+          ByteData.sublistView(byteData, offset, offset + _lR), this));
       offset += _lR;
     }
   }

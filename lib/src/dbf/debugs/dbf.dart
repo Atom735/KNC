@@ -1,4 +1,4 @@
-import '../structs/dbf.dart';
+import '../structs.dart';
 import 'field.dart';
 import 'record.dart';
 

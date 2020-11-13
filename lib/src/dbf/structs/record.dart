@@ -1,9 +1,14 @@
 import 'dart:typed_data';
 
+import 'package:knc/src/dbf/index.dart';
+
 import 'field.dart';
 
 /// Структура записи DBF
 class DbfRecord {
+  /// Указатель на базу данных
+  final Dbf dbf;
+
   /// Отображение памяти
   final ByteData byteData;
 
@@ -32,5 +37,5 @@ class DbfRecord {
     }
   }
 
-  DbfRecord(this.byteData);
+  DbfRecord(this.byteData, this.dbf);
 }

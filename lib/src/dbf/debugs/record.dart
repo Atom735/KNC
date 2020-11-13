@@ -1,7 +1,6 @@
 import 'dart:math';
 
-import '../structs/field.dart';
-import '../structs/record.dart';
+import '../structs.dart';
 
 extension DbfRecordExt on DbfRecord {
   String debugString(final List<DbfField> fields, [bool head = false]) {
