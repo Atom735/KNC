@@ -14,25 +14,25 @@ final mimeResolver = MimeTypeResolver()
   ..addExtension('map', 'application/json');
 
 /// Корневые каталоги, где будут искаться файлы в первую очередь
-final httpDirs = <Directory>[
+final _httpDirs = <Directory>[
   Directory('web').absolute,
 ];
 
 /// Количество активных подключений
-int httpRequestCount = 0;
+int _httpRequestCount = 0;
 
 /// Закешированные файлы
-final httpFilesCache = <String, Uint8List>{};
+final _httpFilesCache = <String, Uint8List>{};
 
 /// Контрольная сумма закешированных файлов
-final httpFilesCrc = <String, String>{};
+final _httpFilesCrc = <String, String>{};
 
 Future<void> httpServerSpawn() async {
   httpServer = await HttpServer.bind(InternetAddress.anyIPv4, 80);
   print(
       'http: Listening on http://${Platform.localHostname}:${httpServer.port}/');
 
-  for (final dir in httpDirs) {
+  for (final dir in _httpDirs) {
     if (!dir.existsSync()) {
       dir.createSync(recursive: true);
     }
@@ -40,46 +40,46 @@ Future<void> httpServerSpawn() async {
     /// Следим за изменением файлов в папках
     dir.watch(recursive: true).listen((event) {
       final _key = File(event.path).absolute.path.toLowerCase();
-      if (httpFilesCache[_key] != null) {
-        httpFilesCache.remove(_key);
-        httpFilesCrc.remove(_key);
+      if (_httpFilesCache[_key] != null) {
+        _httpFilesCache.remove(_key);
+        _httpFilesCrc.remove(_key);
         print('$_key cached removed');
       }
     });
   }
 
   httpServer.listen((request) {
-    httpRequestCount++;
-    httpListner(request);
+    _httpRequestCount++;
+    _httpListner(request);
   },
       onError: getErrorFunc(
           'Ошибка в прослушке HTTP:${httpServer.address.address}:${httpServer.port}'));
 }
 
-void httpListner(HttpRequest request) {
+void _httpListner(HttpRequest request) {
   final response = request.response;
-  print('http: ${request.uri.path}\n\topend ($httpRequestCount)');
+  print('http: ${request.uri.path}\n\topend ($_httpRequestCount)');
 
   /// если есть необходимый файл в папках
-  for (final dir in httpDirs) {
+  for (final dir in _httpDirs) {
     final path = p.normalize(dir.absolute.path + request.uri.path);
     if (File(path).existsSync()) {
-      httpServeFile(request, response, path);
+      _httpServeFile(request, response, path);
       return;
     }
   }
-  httpServeFile(request, response, '');
+  _httpServeFile(request, response, '');
 }
 
-void httpServeFile(
+void _httpServeFile(
   HttpRequest request,
   HttpResponse response,
   String path,
 ) {
   final _key = path.toLowerCase();
-  if (httpFilesCrc.containsKey(_key)) {
+  if (_httpFilesCrc.containsKey(_key)) {
     if (request.headers.value(HttpHeaders.ifNoneMatchHeader) != null &&
-        httpFilesCrc[_key] ==
+        _httpFilesCrc[_key] ==
             (request.headers
                     .value(HttpHeaders.ifNoneMatchHeader)
                     ?.toLowerCase() ??
@@ -89,9 +89,9 @@ void httpServeFile(
         ..statusCode = HttpStatus.notModified
         ..flush().then((_) {
           response.close().then((_) {
-            httpRequestCount--;
+            _httpRequestCount--;
             print(
-                'http: ${request.uri.path}\n\tclosed ($httpRequestCount) not modified');
+                'http: ${request.uri.path}\n\tclosed ($_httpRequestCount) not modified');
           });
         });
     } else {
@@ -102,23 +102,23 @@ void httpServeFile(
         ..statusCode = HttpStatus.ok
         ..headers.contentType =
             mime != null ? ContentType.parse(mime /*!*/) : ContentType.binary
-        ..headers.add(HttpHeaders.etagHeader, httpFilesCrc[_key] /*!*/)
-        ..add(httpFilesCache[_key] /*!*/)
+        ..headers.add(HttpHeaders.etagHeader, _httpFilesCrc[_key] /*!*/)
+        ..add(_httpFilesCache[_key] /*!*/)
         ..flush().then((_) {
           response.close().then((_) {
-            httpRequestCount--;
+            _httpRequestCount--;
             print(
-                'http: ${request.uri.path}\n\tclosed ($httpRequestCount) from cache #${httpFilesCrc[_key] /*!*/}');
+                'http: ${request.uri.path}\n\tclosed ($_httpRequestCount) from cache #${_httpFilesCrc[_key] /*!*/}');
           });
         });
     }
   } else if (File(path).existsSync()) {
     /// Файл существует
     File(path).readAsBytes().then((bytes) {
-      httpFilesCache[_key] = bytes;
-      httpFilesCrc[_key] =
+      _httpFilesCache[_key] = bytes;
+      _httpFilesCrc[_key] =
           Crc64().convert(bytes).toRadixString(36).toLowerCase();
-      print('$_key cached #${httpFilesCrc[_key] /*!*/}');
+      print('$_key cached #${_httpFilesCrc[_key] /*!*/}');
 
       final mime = mimeResolver.lookup(_key);
 
@@ -127,13 +127,13 @@ void httpServeFile(
         ..statusCode = HttpStatus.ok
         ..headers.contentType =
             mime != null ? ContentType.parse(mime /*!*/) : ContentType.binary
-        ..headers.add(HttpHeaders.etagHeader, httpFilesCrc[_key] /*!*/)
+        ..headers.add(HttpHeaders.etagHeader, _httpFilesCrc[_key] /*!*/)
         ..add(bytes)
         ..flush().then((_) {
           response.close().then((_) {
-            httpRequestCount--;
+            _httpRequestCount--;
             print(
-                'http: ${request.uri.path}\n\tclosed ($httpRequestCount) and cached #${httpFilesCrc[_key] /*!*/}');
+                'http: ${request.uri.path}\n\tclosed ($_httpRequestCount) and cached #${_httpFilesCrc[_key] /*!*/}');
           });
         });
     });
@@ -144,9 +144,9 @@ void httpServeFile(
       ..write('404: Not Found')
       ..flush().then((_) {
         response.close().then((_) {
-          httpRequestCount--;
+          _httpRequestCount--;
           print(
-              'http: ${request.uri.path}\n\tclosed ($httpRequestCount) NOT FOUND');
+              'http: ${request.uri.path}\n\tclosed ($_httpRequestCount) NOT FOUND');
         });
       });
   }
