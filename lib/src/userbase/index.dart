@@ -55,6 +55,7 @@ User userNew(final User user) {
     throw Exception('Этот email уже зарегестрирован');
   }
   userbaseUsers[user.email.toLowerCase()] = user;
+  return user;
 }
 
 int _userTokenGeneratorCount = 0;
