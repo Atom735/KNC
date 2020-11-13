@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:knc/src/pos/index.dart';
+import '../pos/index.dart';
+import '../mymath.dart';
 
 class LasLineWithMnem extends LasLine {
   final Uint8List mnemUnit;
@@ -128,6 +129,9 @@ class Las {
     var asciiBeginIndex = -1;
     final nums = <double>[];
     var curvesNames = <String>[];
+    var wNull = -999.0;
+    var _wNull = true;
+    final _qErr = 0.0001;
 
     while ((p..skipToEndOfLine()).symbol != -1) {
       final line = LasLine(p, i0, sec, ver, notes);
@@ -187,6 +191,19 @@ class Las {
         _well = false;
       }
 
+      /// WNULL
+      if (_well &&
+          line is LasLineWithMnem &&
+          mnem.length == 5 &&
+          mnem[0] == 0x57 &&
+          byteAlphaToUpperCase(mnem[1]) == 0x4E &&
+          byteAlphaToUpperCase(mnem[2]) == 0x55 &&
+          byteAlphaToUpperCase(mnem[3]) == 0x4C &&
+          byteAlphaToUpperCase(mnem[4]) == 0x4C) {
+        wNull = double.tryParse(_encoding.decode(line.mnemData)) ?? double.nan;
+        _wNull = false;
+      }
+
       /// ~~A
       if (asciiBeginIndex == -1 &&
           mnem.length >= 3 &&
@@ -240,7 +257,8 @@ class Las {
                 .map((e) => double.tryParse(e) ?? double.nan)
                 .toList(growable: false);
             if (lineNums.length == curvesNames.length) {
-              nums.addAll(lineNums);
+              nums.addAll(
+                  lineNums.map((e) => doubleEqual(e, wNull) ? double.nan : e));
             } else {}
           }
         }
