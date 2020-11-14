@@ -10,6 +10,14 @@ double getMiddleArithmetic(final List<double> _list) {
   return _o;
 }
 
+/// Возвращает абсолютное значение
+double doubleAbs(final double a) => a < 0.0 ? -a : a;
+
+/// Возвращает равенство с погрешностью
+bool doubleEqual(final double a, final double b,
+        [final double _err = 0.0001]) =>
+    doubleAbs(a - b) <= _err;
+
 /// Получает шаг значение в списке
 ///
 /// `0.0` - в случае если шаг не постоянный
@@ -48,10 +56,3 @@ double /*?*/ convertAngleMinuts2Gradus(final double /*?*/ val) {
 
 /// проверяет может ли число быть в минутах
 bool maybeAngleInMinuts(final double val) => (val % 1.0) < 0.60;
-
-/// Преоразует строку пароля в шифрованный пароль
-String passwordEncode(final String pass) => sha256.convert([
-      ...'0x834^'.codeUnits,
-      ...pass.codeUnits,
-      ...'x12kdasdj'.codeUnits
-    ]).toString();

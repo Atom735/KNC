@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 const signatureTypeUnknown = 0x00;
 const signatureTypeArchive = 0x01;
 const signatureTypeMsOfficeBinary = 0x02;
