@@ -14,7 +14,7 @@ double doubleAbs(final double a) => a < 0.0 ? -a : a;
 /// Возвращает равенство с погрешностью
 bool doubleEqual(final double a, final double b,
         [final double _err = 0.0001]) =>
-    doubleAbs(a - b) <= _err;
+    a.isFinite && b.isFinite && doubleAbs(a - b) <= _err;
 
 /// Получает шаг значение в списке
 ///
