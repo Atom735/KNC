@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import '../pos/index.dart';
@@ -97,6 +98,27 @@ class LasLine {
   }
 }
 
+class LasCurve {
+  /// Наименование кривой
+  final String name;
+
+  final double strt;
+  final double stop;
+  final double step;
+
+  /// Количество цифр после точки
+  final int precison;
+
+  /// Макимальное количество символов при записи
+  final int length;
+
+  /// Значение
+  final List<double> data;
+
+  LasCurve(this.name, this.precison, this.length, this.data, this.strt,
+      this.stop, this.step);
+}
+
 class Las {
   final Uint8List data;
   final List<LasLine> lines;
@@ -107,10 +129,10 @@ class Las {
   final String well;
   final int vers;
   final bool wrap;
-  final List<String> curvesNames;
+  final List<LasCurve> curves;
 
   Las._(this.data, this.lines, this.encoding, this.lineFeed, this.notes,
-      this.well, this.vers, this.wrap, this.curvesNames);
+      this.well, this.vers, this.wrap, this.curves);
 
   factory Las(Uint8List data) {
     final _p = BytePos(data);
@@ -127,7 +149,6 @@ class Las {
     var _well = true;
     var well = '';
     var asciiBeginIndex = -1;
-    final nums = <double>[];
     var curvesNames = <String>[];
     var wNull = -999.0;
     var _wNull = true;
@@ -192,7 +213,7 @@ class Las {
       }
 
       /// WNULL
-      if (_well &&
+      if (_wNull &&
           line is LasLineWithMnem &&
           mnem.length == 5 &&
           mnem[0] == 0x57 &&
@@ -241,8 +262,15 @@ class Las {
     }
     lines.add(LasLine(p, i0, sec, ver, notes));
     final _lLines = lines.length;
-    if (asciiBeginIndex != -1) {
+    final _cnl = curvesNames.length;
+
+    /// Позиции разделителей ASCII секции, окончаний числа
+    /// 0 - позиция где кончается первое число
+    final _lAsciiDelimeters = () {
       if (wrap == false) {
+        /// Количество пробелов в строках на позиции
+        final _lSpacesCount = <int>[];
+        var iLine = 0;
         for (var i = asciiBeginIndex; i < _lLines; i++) {
           final line = lines[i];
           final mnem = line.mnem;
@@ -252,21 +280,157 @@ class Las {
               mnem[0] == 0x7E &&
               mnem[1] == 0x7E &&
               mnem[2] == 0x41) {
-            final lineNums = (String.fromCharCodes(line.data).split(' ')
-                  ..removeWhere((e) => e.isEmpty))
+            final _l = line.data.length;
+            while (_lSpacesCount.length < _l) {
+              _lSpacesCount.add(iLine);
+            }
+            for (var j = 0; j < _l; j++) {
+              /// space
+              if (line.data[j] == 0x20) {
+                _lSpacesCount[j]++;
+              }
+            }
+            iLine++;
+          }
+        }
+        final _l = _lSpacesCount.length;
+        var _lastSpacesCount = 0x7fffffff;
+        final _lAsciiLinesCount = (_lLines - asciiBeginIndex) ~/ 10;
+        final _delimeters = <int>[];
+        for (var j = 0; j < _l; j++) {
+          if (_lastSpacesCount + _lAsciiLinesCount < _lSpacesCount[j]) {
+            _delimeters.add(j);
+          }
+          _lastSpacesCount = _lSpacesCount[j];
+        }
+        while (_delimeters.length < _cnl) {
+          _delimeters.add(0x7fffffff);
+        }
+        return _delimeters;
+      }
+      throw Exception('!I:Не умеем разбирать многострочный файл');
+    }();
+
+    if (asciiBeginIndex == -1) {
+      throw Exception('!E:Секция ASCII не обнаруженна');
+    }
+    final curvesData = List<List<double>>.generate(_cnl, (i) => []);
+    final curvesPrec = List<int>.filled(_cnl, 0);
+    final curvesLeng = List<int>.filled(_cnl, 0);
+    if (wrap == false) {
+      for (var i = asciiBeginIndex; i < _lLines; i++) {
+        final line = lines[i];
+        final mnem = line.mnem;
+
+        /// ~~A
+        if (mnem.length >= 3 &&
+            mnem[0] == 0x7E &&
+            mnem[1] == 0x7E &&
+            mnem[2] == 0x41) {
+          final _str = String.fromCharCodes(line.data);
+          // Массив строк со значениями
+          final lineNumsStrings = _str.split(' ')
+            ..removeWhere((e) => e.isEmpty);
+          if (lineNumsStrings.length == _cnl) {
+            // Если значение столько же сколько кривых
+            // Массив значений
+            final lineNums = lineNumsStrings
                 .map((e) => double.tryParse(e) ?? double.nan)
+                .map((e) => doubleEqual(e, wNull) ? double.nan : e)
                 .toList(growable: false);
-            if (lineNums.length == curvesNames.length) {
-              nums.addAll(
-                  lineNums.map((e) => doubleEqual(e, wNull) ? double.nan : e));
-            } else {}
+            // Переносим значения и добаляем данные о количстве цифровой записи
+            for (var k = 0; k < _cnl; k++) {
+              if (lineNums[k].isFinite) {
+                final _str = lineNumsStrings[k].trim();
+                final _dot = _str.indexOf('.');
+                if (_dot == -1) {
+                  if (curvesLeng[k] < _str.length) {
+                    curvesLeng[k] = _str.length;
+                  }
+                } else {
+                  if (curvesLeng[k] < _dot) {
+                    curvesLeng[k] = _dot;
+                  }
+                  final _prec = _str.length - _dot - 1;
+                  if (curvesPrec[k] < _prec) {
+                    curvesPrec[k] = _prec;
+                  }
+                }
+              }
+              curvesData[k].add(lineNums[k]);
+            }
+          } else {
+            // Если количество чисел в строке не совпадает с количеством кривых
+            // разбиваем строку по пробелам
+            final _strL = _str.length;
+
+            final lineNumsStrings = List<String>.generate(_cnl, (j) {
+              if (j == 0) {
+                return _str.substring(0, min(_lAsciiDelimeters[j], _strL));
+              } else {
+                return _str.substring(min(_lAsciiDelimeters[j - 1], _strL),
+                    min(_lAsciiDelimeters[j], _strL));
+              }
+            });
+            final lineNums = lineNumsStrings
+                .map((e) => double.tryParse(e) ?? double.nan)
+                .map((e) => doubleEqual(e, wNull) ? double.nan : e)
+                .toList(growable: false);
+            for (var k = 0; k < _cnl; k++) {
+              if (lineNums[k].isFinite) {
+                final _str = lineNumsStrings[k].trim();
+                final _dot = _str.indexOf('.');
+                if (_dot == -1) {
+                  if (curvesLeng[k] < _str.length) {
+                    curvesLeng[k] = _str.length;
+                  }
+                } else {
+                  if (curvesLeng[k] < _dot) {
+                    curvesLeng[k] = _dot;
+                  }
+                  final _prec = _str.length - _dot - 1;
+                  if (curvesPrec[k] < _prec) {
+                    curvesPrec[k] = _prec;
+                  }
+                }
+              }
+              curvesData[k].add(lineNums[k]);
+            }
           }
         }
       }
+
+      final step = getStepOfList(curvesData[0]);
+      final curves = <LasCurve>[
+        LasCurve(curvesNames[0], curvesPrec[0], curvesLeng[0], curvesData[0],
+            curvesData[0].first, curvesData[0].last, step)
+      ];
+      for (var k = 1; k < _cnl; k++) {
+        /// Индекс первого не NaN значение
+        final _iB = curvesData[k].indexWhere((e) => e.isFinite);
+
+        /// Индекс последнего не NaN значение
+        final _iE = curvesData[k].lastIndexWhere((e) => e.isFinite);
+
+        if (_iB == -1 || _iE == -1) {
+          curves.add(LasCurve(curvesNames[k], 0, 0, [], 0.0, 0.0, 0.0));
+        } else {
+          curves.add(LasCurve(
+              curvesNames[k],
+              curvesPrec[k],
+              curvesLeng[k],
+              curvesData[k].sublist(_iB, _iE + 1),
+              curvesData[0][_iB],
+              curvesData[0][_iE],
+              step));
+        }
+      }
+
+      return Las._(data, lines, _encoding, _p.getLineFeed(), notes, well, ver,
+          wrap, curves);
     }
 
-    return Las._(data, lines, _encoding, _p.getLineFeed(), notes, well, ver,
-        wrap, curvesNames);
+    throw Exception('!I:Не умеем разбирать многострочный файл');
   }
 
   static bool validate(Uint8List data) {
