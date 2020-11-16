@@ -1,5 +1,3 @@
-import 'package:crypto/crypto.dart' show sha256;
-
 /// Получить среднее арефметическое списка значений
 double getMiddleArithmetic(final List<double> _list) {
   var _o = 0.0;
@@ -46,13 +44,14 @@ double getStepOfList(final List<double> _list, [final double _q = 0.00000001]) {
 
 /// преобразует число из минут в доли градуса
 /// - `1.30` в минутах => `1.50` в градусах
-double /*?*/ convertAngleMinuts2Gradus(final double /*?*/ val) {
-  if (val == null) {
-    return null;
+double convertAngleMinuts2Gradus(final double val) {
+  if (!val.isFinite) {
+    return val;
   }
   var v = (val % 1.0);
   return val + (v * 10.0 / 6.0) - v;
 }
 
 /// проверяет может ли число быть в минутах
-bool maybeAngleInMinuts(final double val) => (val % 1.0) < 0.60;
+bool maybeAngleInMinuts(final double val) =>
+    !val.isFinite || (val % 1.0) < 0.60;
