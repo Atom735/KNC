@@ -15,6 +15,21 @@ class LasLineWithMnem extends LasLine {
       : super.a(data, mnem);
 }
 
+class LasLineAscii extends LasLine {
+  /// Количество цифр после точки
+  final List<int> precison;
+
+  /// Макимальное количество символов до точки
+  final List<int> length;
+
+  /// Значение точек
+  final List<double> values;
+
+  LasLineAscii(
+      Uint8List data, Uint8List mnem, this.precison, this.length, this.values)
+      : super.a(data, mnem);
+}
+
 class LasLine {
   /// Сырые данные линии
   final Uint8List data;
@@ -109,7 +124,7 @@ class LasCurve {
   /// Количество цифр после точки
   final int precison;
 
-  /// Макимальное количество символов при записи
+  /// Макимальное количество символов до точки
   final int length;
 
   /// Значение
@@ -130,9 +145,10 @@ class Las {
   final int vers;
   final bool wrap;
   final List<LasCurve> curves;
+  final double wNull;
 
   Las._(this.data, this.lines, this.encoding, this.lineFeed, this.notes,
-      this.well, this.vers, this.wrap, this.curves);
+      this.well, this.vers, this.wrap, this.curves, this.wNull);
 
   factory Las(Uint8List data) {
     final _p = BytePos(data);
@@ -152,6 +168,8 @@ class Las {
     var curvesNames = <String>[];
     var wNull = -999.0;
     var _wNull = true;
+    var wNullLeng = 0;
+    var wNullPrec = 0;
     final _qErr = 0.0001;
 
     while ((p..skipToEndOfLine()).symbol != -1) {
@@ -221,8 +239,22 @@ class Las {
           byteAlphaToUpperCase(mnem[2]) == 0x55 &&
           byteAlphaToUpperCase(mnem[3]) == 0x4C &&
           byteAlphaToUpperCase(mnem[4]) == 0x4C) {
-        wNull = double.tryParse(_encoding.decode(line.mnemData)) ?? double.nan;
-        _wNull = false;
+        final _str = _encoding.decode(line.mnemData).trim();
+        wNull = double.tryParse(_str) ?? double.nan;
+        final _dot = _str.indexOf('.');
+        if (_dot == -1) {
+          if (wNullLeng < _str.length) {
+            wNullLeng = _str.length;
+          }
+        } else {
+          if (wNullLeng < _dot) {
+            wNullLeng = _dot;
+          }
+          final _prec = _str.length - _dot - 1;
+          if (wNullPrec < _prec) {
+            wNullPrec = _prec;
+          }
+        }
       }
 
       /// ~~A
@@ -315,8 +347,8 @@ class Las {
       throw Exception('!E:Секция ASCII не обнаруженна');
     }
     final curvesData = List<List<double>>.generate(_cnl, (i) => []);
-    final curvesPrec = List<int>.filled(_cnl, 0);
-    final curvesLeng = List<int>.filled(_cnl, 0);
+    final curvesPrec = List<int>.filled(_cnl, wNullPrec);
+    final curvesLeng = List<int>.filled(_cnl, wNullLeng);
     if (wrap == false) {
       for (var i = asciiBeginIndex; i < _lLines; i++) {
         final line = lines[i];
@@ -359,6 +391,8 @@ class Las {
               }
               curvesData[k].add(lineNums[k]);
             }
+            lines[i] = LasLineAscii(
+                line.data, line.mnem, curvesPrec, curvesLeng, lineNums);
           } else {
             // Если количество чисел в строке не совпадает с количеством кривых
             // разбиваем строку по пробелам
@@ -396,6 +430,8 @@ class Las {
               }
               curvesData[k].add(lineNums[k]);
             }
+            lines[i] = LasLineAscii(
+                line.data, line.mnem, curvesPrec, curvesLeng, lineNums);
           }
         }
       }
@@ -427,7 +463,12 @@ class Las {
       }
 
       return Las._(data, lines, _encoding, _p.getLineFeed(), notes, well, ver,
-          wrap, curves);
+          wrap, curves, wNull);
+    } else {
+      for (var i = asciiBeginIndex; i < _lLines; i++) {
+        final line = lines[i];
+        final mnem = line.mnem;
+      }
     }
 
     throw Exception('!I:Не умеем разбирать многострочный файл');
