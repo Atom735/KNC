@@ -170,7 +170,6 @@ class Las {
     var _wNull = true;
     var wNullLeng = 0;
     var wNullPrec = 0;
-    final _qErr = 0.0001;
 
     while ((p..skipToEndOfLine()).symbol != -1) {
       final line = LasLine(p, i0, sec, ver, notes);
@@ -296,10 +295,16 @@ class Las {
     final _lLines = lines.length;
     final _cnl = curvesNames.length;
 
-    /// Позиции разделителей ASCII секции, окончаний числа
-    /// 0 - позиция где кончается первое число
-    final _lAsciiDelimeters = () {
-      if (wrap == false) {
+    if (asciiBeginIndex == -1) {
+      throw Exception('!E:Секция ASCII не обнаруженна');
+    }
+    final curvesData = List<List<double>>.generate(_cnl, (i) => []);
+    final curvesPrec = List<int>.filled(_cnl, wNullPrec);
+    final curvesLeng = List<int>.filled(_cnl, wNullLeng);
+    if (wrap == false) {
+      /// Позиции разделителей ASCII секции, окончаний числа
+      /// 0 - позиция где кончается первое число
+      final _lAsciiDelimeters = () {
         /// Количество пробелов в строках на позиции
         final _lSpacesCount = <int>[];
         var iLine = 0;
@@ -339,17 +344,8 @@ class Las {
           _delimeters.add(0x7fffffff);
         }
         return _delimeters;
-      }
-      throw Exception('!I:Не умеем разбирать многострочный файл');
-    }();
+      }();
 
-    if (asciiBeginIndex == -1) {
-      throw Exception('!E:Секция ASCII не обнаруженна');
-    }
-    final curvesData = List<List<double>>.generate(_cnl, (i) => []);
-    final curvesPrec = List<int>.filled(_cnl, wNullPrec);
-    final curvesLeng = List<int>.filled(_cnl, wNullLeng);
-    if (wrap == false) {
       for (var i = asciiBeginIndex; i < _lLines; i++) {
         final line = lines[i];
         final mnem = line.mnem;
@@ -435,43 +431,94 @@ class Las {
           }
         }
       }
-
-      final step = getStepOfList(curvesData[0]);
-      final curves = <LasCurve>[
-        LasCurve(curvesNames[0], curvesPrec[0], curvesLeng[0], curvesData[0],
-            curvesData[0].first, curvesData[0].last, step)
-      ];
-      for (var k = 1; k < _cnl; k++) {
-        /// Индекс первого не NaN значение
-        final _iB = curvesData[k].indexWhere((e) => e.isFinite);
-
-        /// Индекс последнего не NaN значение
-        final _iE = curvesData[k].lastIndexWhere((e) => e.isFinite);
-
-        if (_iB == -1 || _iE == -1) {
-          curves.add(LasCurve(curvesNames[k], 0, 0, [], 0.0, 0.0, 0.0));
-        } else {
-          curves.add(LasCurve(
-              curvesNames[k],
-              curvesPrec[k],
-              curvesLeng[k],
-              curvesData[k].sublist(_iB, _iE + 1),
-              curvesData[0][_iB],
-              curvesData[0][_iE],
-              step));
-        }
-      }
-
-      return Las._(data, lines, _encoding, _p.getLineFeed(), notes, well, ver,
-          wrap, curves, wNull);
     } else {
+      /// Количество линий на одну строку значений глубины
+      var linesPerOneDepth = 0;
+      var valuesCount = 0;
+
+      final values = <double>[];
       for (var i = asciiBeginIndex; i < _lLines; i++) {
         final line = lines[i];
         final mnem = line.mnem;
+
+        /// ~~A
+        if (mnem.length >= 3 &&
+            mnem[0] == 0x7E &&
+            mnem[1] == 0x7E &&
+            mnem[2] == 0x41) {
+          final _str = String.fromCharCodes(line.data);
+
+          // Массив строк со значениями
+          final lineNumsStrings = _str.split(' ')
+            ..removeWhere((e) => e.isEmpty);
+          final lineNums = lineNumsStrings
+              .map((e) => double.tryParse(e) ?? double.nan)
+              .map((e) => doubleEqual(e, wNull) ? double.nan : e)
+              .toList(growable: false);
+          values.addAll(lineNums);
+          if (values.length > _cnl) {
+            throw Exception('!E:Количество чисел не совпало');
+          }
+          // Переносим значения и добаляем данные о количстве цифровой записи
+          for (var k = valuesCount; k < values.length; k++) {
+            if (lineNums[k - valuesCount].isFinite) {
+              final _str = lineNumsStrings[k - valuesCount].trim();
+              final _dot = _str.indexOf('.');
+              if (_dot == -1) {
+                if (curvesLeng[k] < _str.length) {
+                  curvesLeng[k] = _str.length;
+                }
+              } else {
+                if (curvesLeng[k] < _dot) {
+                  curvesLeng[k] = _dot;
+                }
+                final _prec = _str.length - _dot - 1;
+                if (curvesPrec[k] < _prec) {
+                  curvesPrec[k] = _prec;
+                }
+              }
+            }
+            curvesData[k].add(lineNums[k - valuesCount]);
+          }
+
+          /// Если количество накопленных значений совпадает с количеством кривых
+          if (values.length == _cnl) {
+            if (linesPerOneDepth == 0) {
+              linesPerOneDepth = i - asciiBeginIndex + 1;
+            }
+          }
+        }
       }
     }
 
-    throw Exception('!I:Не умеем разбирать многострочный файл');
+    final step = getStepOfList(curvesData[0]);
+    final curves = <LasCurve>[
+      LasCurve(curvesNames[0], curvesPrec[0], curvesLeng[0], curvesData[0],
+          curvesData[0].first, curvesData[0].last, step)
+    ];
+    for (var k = 1; k < _cnl; k++) {
+      /// Индекс первого не NaN значение
+      final _iB = curvesData[k].indexWhere((e) => e.isFinite);
+
+      /// Индекс последнего не NaN значение
+      final _iE = curvesData[k].lastIndexWhere((e) => e.isFinite);
+
+      if (_iB == -1 || _iE == -1) {
+        curves.add(LasCurve(curvesNames[k], 0, 0, [], 0.0, 0.0, 0.0));
+      } else {
+        curves.add(LasCurve(
+            curvesNames[k],
+            curvesPrec[k],
+            curvesLeng[k],
+            curvesData[k].sublist(_iB, _iE + 1),
+            curvesData[0][_iB],
+            curvesData[0][_iE],
+            step));
+      }
+    }
+
+    return Las._(data, lines, _encoding, _p.getLineFeed(), notes, well, ver,
+        wrap, curves, wNull);
   }
 
   static bool validate(Uint8List data) {
