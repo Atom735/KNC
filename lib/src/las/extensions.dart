@@ -13,7 +13,7 @@ extension LasLineAsciiExt on LasLineAscii {
     for (var i = 0; i < _l; i++) {
       str.write((values[i].isFinite ? values[i] : nan)
           .toStringAsFixed(precison[i])
-          .padRight(length[i] + precison[i] + 2));
+          .padLeft(length[i] + precison[i] + 2));
     }
 
     return str.toString();
