@@ -1,5 +1,25 @@
 import 'structs.dart';
 
+extension LasCurveExt on LasCurve {
+  String get debugString =>
+      '$name : from strt [$strt] to stop [$stop] with step [$step] ($length.$precison)';
+}
+
+extension LasLineAsciiExt on LasLineAscii {
+  String rewrited(double nan) {
+    final str = StringBuffer();
+    final _l = values.length;
+
+    for (var i = 0; i < _l; i++) {
+      str.write((values[i].isFinite ? values[i] : nan)
+          .toStringAsFixed(precison[i])
+          .padRight(length[i] + precison[i] + 2));
+    }
+
+    return str.toString();
+  }
+}
+
 extension LasExt on Las {
   /// Возвращает линию файла текстовой строкой.
   ///
@@ -16,6 +36,15 @@ extension LasExt on Las {
     str.writeln('==> VERS'.padRight(12) + '$vers');
     str.writeln('==> WRAP'.padRight(12) + '$wrap');
     str.writeln('==> WELL'.padRight(12) + '$well');
+    str.writeln('==> NULL'.padRight(12) + '$wNull');
+    return str.toString();
+  }
+
+  String get debugStringCurves {
+    final str = StringBuffer();
+    for (var curve in curves) {
+      str.writeln('==> ~C ${curve.debugString}$lineFeed');
+    }
     return str.toString();
   }
 
@@ -24,6 +53,7 @@ extension LasExt on Las {
     for (final note in notes) {
       str.writeln('==> ${note.debugString}');
     }
+
     return str.toString();
   }
 
@@ -39,5 +69,37 @@ extension LasExt on Las {
 
   /// Получает отладочную информацию
   String get debugStringFull =>
-      debugStringHead + debugStringNotes + debugStringLines;
+      debugStringHead + debugStringNotes + debugStringCurves + debugStringLines;
+
+  String getViaString(
+      {String /*?*/ lineFeed,
+      bool rewriteAscii = false,
+      bool addComments = false,
+      bool deleteEmptyLines = false}) {
+    lineFeed ??= this.lineFeed;
+    final str = StringBuffer();
+    if (addComments) {
+      str.write('# Modifided By Atom735$lineFeed');
+      for (var note in notes) {
+        str.write('# ${note.debugString}$lineFeed');
+      }
+      for (var curve in curves) {
+        str.write('# ~C ${curve.debugString}$lineFeed');
+      }
+    }
+    final _l = lines.length;
+    for (var i = 0; i < _l; i++) {
+      final line = lines[i];
+      if (line.mnem.isEmpty && deleteEmptyLines) {
+        continue;
+      }
+      if (line is LasLineAscii && rewriteAscii) {
+        str.write('${line.rewrited(wNull)}$lineFeed');
+      } else {
+        str.write('${line.getLineString(this)}$lineFeed');
+      }
+    }
+
+    return str.toString();
+  }
 }
