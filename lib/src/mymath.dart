@@ -19,7 +19,7 @@ bool doubleEqual(final double a, final double b,
 /// Получает шаг значение в списке
 ///
 /// `0.0` - в случае если шаг не постоянный
-double getStepOfList(final List<double> _list, [final double _q = 0.00000001]) {
+double getStepOfList(final List<double> _list, [final double _q = 1e-7]) {
   /// Создаём подсисок со значением разницы между соседними элементами
   /// родительского списка
   final _subList = _list.sublist(1);
