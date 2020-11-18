@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:knc/src/las/index.dart';
+import 'index.dart';
 
 void main(List<String> args) {
   final pathList = File(r'.ignore\files\las\__out.txt').readAsLinesSync()
@@ -12,6 +12,12 @@ void main(List<String> args) {
       final las = Las(data);
       s.writeln(las.well);
       File(path + '.txt').writeAsStringSync('\uFEFF' + las.debugStringFull);
+      File(path + '.min.txt').writeAsStringSync('\uFEFF' +
+          las.getViaString(
+              lineFeed: '\r\n',
+              addComments: true,
+              deleteEmptyLines: true,
+              rewriteAscii: true));
     }
   }
   File(r'.ignore\files\las\__wells.txt').writeAsStringSync(s.toString());

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:knc/src/dbf/index.dart';
+import 'index.dart';
 
 void main(List<String> args) {
   final pathList = File(r'.ignore\files\dbf\__out.txt').readAsLinesSync()
