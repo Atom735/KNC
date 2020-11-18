@@ -1,7 +1,7 @@
 import '../../dbf/index.dart';
 
 import '../../mymath.dart';
-import '../structs.dart';
+import '../index.dart';
 
 /// Данные инклинометрии каждой скважины
 class InkWellData<T extends InkRowData> {
