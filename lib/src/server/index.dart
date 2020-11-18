@@ -5,6 +5,7 @@ import 'package:crclib/reveng.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 
+import '../userbase/index.dart';
 import '../errors.dart';
 
 HttpServer httpServer;
@@ -16,6 +17,7 @@ final mimeResolver = MimeTypeResolver()
 /// Корневые каталоги, где будут искаться файлы в первую очередь
 final _httpDirs = <Directory>[
   Directory('web').absolute,
+  Directory('lib').absolute,
 ];
 
 /// Количество активных подключений
@@ -27,8 +29,8 @@ final _httpFilesCache = <String, Uint8List>{};
 /// Контрольная сумма закешированных файлов
 final _httpFilesCrc = <String, String>{};
 
-Future<void> httpServerSpawn() async {
-  httpServer = await HttpServer.bind(InternetAddress.anyIPv4, 80);
+Future<void> httpServerSpawn({int port = 80}) async {
+  httpServer = await HttpServer.bind(InternetAddress.anyIPv4, port);
   print(
       'http: Listening on http://${Platform.localHostname}:${httpServer.port}/');
 
@@ -56,6 +58,8 @@ Future<void> httpServerSpawn() async {
           'Ошибка в прослушке HTTP:${httpServer.address.address}:${httpServer.port}'));
 }
 
+void httpListenMsgs(String msg, UserSessionToken token) {}
+
 void _httpListner(HttpRequest request) {
   final response = request.response;
   print('http: ${request.uri.path}\n\topend ($_httpRequestCount)');
@@ -64,11 +68,51 @@ void _httpListner(HttpRequest request) {
   for (final dir in _httpDirs) {
     final path = p.normalize(dir.absolute.path + request.uri.path);
     if (File(path).existsSync()) {
-      _httpServeFile(request, response, path);
+      return _httpServeFile(request, response, path);
+    }
+  }
+
+  if (request.uri.pathSegments.isNotEmpty) {
+    if (request.uri.pathSegments.first == 'ws') {
+      /// Подключение [WebSocket]
+      if (request.uri.pathSegments.length >= 2 &&
+          userbaseTokens.containsKey(request.uri.pathSegments[1])) {
+        WebSocketTransformer.upgrade(request).then((ws) {
+          final token = userbaseTokens[request.uri.pathSegments[1]];
+          token.websockets.add(ws);
+          ws.listen(
+            (event) {
+              httpListenMsgs(event, token);
+            },
+            onDone: () {
+              token.websockets.remove(ws);
+            },
+          );
+          ws.add(token.user.toWsMsg());
+        }, onError: (e) {
+          print('!ERROR: $e');
+        });
+      } else {
+        WebSocketTransformer.upgrade(request).then((ws) {
+          final token = UserSessionToken.guest;
+          token.websockets.add(ws);
+          ws.listen(
+            (event) {
+              httpListenMsgs(event, token);
+            },
+            onDone: () {
+              token.websockets.remove(ws);
+            },
+          );
+          ws.add(token.user.toWsMsg());
+        }, onError: (e) {
+          print('!ERROR: $e');
+        });
+      }
       return;
     }
   }
-  _httpServeFile(request, response, '');
+  return _httpServeFile(request, response, '404.html');
 }
 
 void _httpServeFile(
