@@ -6,7 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'structs.dart';
 export 'structs.dart';
 
-final _fileBase = File('data/users.json');
+final _fileBase = File('data/userbase.json');
 
 /// key - email
 final Map<String, User> userbaseUsers = {};
@@ -51,12 +51,25 @@ void userbaseSave() => _fileBase.writeAsStringSync(jsonEncode({
     }));
 
 /// Создать нового пользователя
-User userNew(final User user) {
+User userReg(final User user) {
   if (userbaseUsers.containsKey(user.email.toLowerCase())) {
     throw Exception('Этот email уже зарегестрирован');
   }
   userbaseUsers[user.email.toLowerCase()] = user;
+  userbaseSave();
   return user;
+}
+
+/// Входит в систему, возвращает пользователя из базы
+User userPass(final User user) {
+  if (!userbaseUsers.containsKey(user.email.toLowerCase())) {
+    throw Exception('Этот email не зарегестрирован');
+  }
+  final o = userbaseUsers[user.email.toLowerCase()];
+  if (o.pass != user.pass) {
+    throw Exception('Неверный пароль');
+  }
+  return o;
 }
 
 int _userTokenGeneratorCount = 0;
@@ -71,5 +84,8 @@ UserSessionToken userNewToken(final User user) {
   if (userbaseTokens.containsKey(token)) {
     return userNewToken(user);
   }
-  return userbaseTokens[token] = UserSessionToken(user, token, user.access);
+  final o = UserSessionToken(user, token, user.access);
+  userbaseTokens[token] = o;
+  userbaseSave();
+  return o;
 }

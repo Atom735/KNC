@@ -1,4 +1,4 @@
-import 'package:knc/src/txt.dart';
+import 'package:knc/src/misc/txt.dart';
 
 import 'las.g.dart';
 

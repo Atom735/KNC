@@ -1,4 +1,4 @@
-import 'SocketWrapper.dart';
+import 'ws/index.dart';
 
 class ArchiverOutput {
   /// Имя выходного файла

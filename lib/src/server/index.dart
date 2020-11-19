@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crclib/reveng.dart';
-import 'package:knc/knc.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 
+import '../ws/index.dart';
 import '../app/msgListner.dart';
 import '../userbase/index.dart';
 import '../errors.dart';
