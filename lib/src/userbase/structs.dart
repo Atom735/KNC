@@ -74,6 +74,7 @@ class User {
         'access': access,
       };
 
+  /// Отправляет клиенту данные о пользователе
   String toWsMsg() => jsonEncode(toJson()..remove('pass'));
 }
 
