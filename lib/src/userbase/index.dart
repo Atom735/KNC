@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 
 import 'structs.dart';
+export 'structs.dart';
 
 final _fileBase = File('data/users.json');
 

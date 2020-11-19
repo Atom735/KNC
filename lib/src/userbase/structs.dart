@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 /// Класс содержащий данные о пользователе
 /// name fname mname lname	name (full name) given-name (first name) additional-name (middle name) family-name (last name)
 class User {
@@ -47,6 +50,8 @@ class User {
     this.access = '',
   });
 
+  static final guest = User('');
+
   factory User.fromJson(Map<String, dynamic> map) => User(
         map['pass'],
         name: map['name'] ?? '',
@@ -68,6 +73,8 @@ class User {
         'phone': phone,
         'access': access,
       };
+
+  String toWsMsg() => jsonEncode(toJson()..remove('pass'));
 }
 
 class UserSessionToken {
@@ -80,7 +87,11 @@ class UserSessionToken {
   /// Символы доступа токена
   final String access;
 
+  final List<WebSocket> websockets = [];
+
   UserSessionToken(this.user, this.token, this.access);
+
+  static final guest = UserSessionToken(User.guest, '', '');
 
   factory UserSessionToken.fromJson(Map<String, dynamic> map, User user) =>
       UserSessionToken(
