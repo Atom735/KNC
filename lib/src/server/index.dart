@@ -2,9 +2,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crclib/reveng.dart';
+import 'package:knc/knc.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 
+import '../app/msgListner.dart';
 import '../userbase/index.dart';
 import '../errors.dart';
 
@@ -58,7 +60,20 @@ Future<void> httpServerSpawn({int port = 80}) async {
           'Ошибка в прослушке HTTP:${httpServer.address.address}:${httpServer.port}'));
 }
 
-void httpListenMsgs(String msg, UserSessionToken token) {}
+void _httpWs(WebSocket ws, UserSessionToken token) {
+  final sw = SocketWrapper((String msg) => ws.add(msg));
+  token.websockets.add(sw);
+  final ender = wsOpen(sw, token);
+  ws.listen(
+    (event) {
+      sw.recv(event);
+    },
+    onDone: () {
+      ender();
+      token.websockets.remove(sw);
+    },
+  );
+}
 
 void _httpListner(HttpRequest request) {
   final response = request.response;
@@ -77,35 +92,14 @@ void _httpListner(HttpRequest request) {
       /// Подключение [WebSocket]
       if (request.uri.pathSegments.length >= 2 &&
           userbaseTokens.containsKey(request.uri.pathSegments[1])) {
-        WebSocketTransformer.upgrade(request).then((ws) {
-          final token = userbaseTokens[request.uri.pathSegments[1]];
-          token.websockets.add(ws);
-          ws.listen(
-            (event) {
-              httpListenMsgs(event, token);
-            },
-            onDone: () {
-              token.websockets.remove(ws);
-            },
-          );
-          ws.add(token.user.toWsMsg());
-        }, onError: (e) {
+        WebSocketTransformer.upgrade(request).then(
+            (ws) => _httpWs(ws, userbaseTokens[request.uri.pathSegments[1]]),
+            onError: (e) {
           print('!ERROR: $e');
         });
       } else {
-        WebSocketTransformer.upgrade(request).then((ws) {
-          final token = UserSessionToken.guest;
-          token.websockets.add(ws);
-          ws.listen(
-            (event) {
-              httpListenMsgs(event, token);
-            },
-            onDone: () {
-              token.websockets.remove(ws);
-            },
-          );
-          ws.add(token.user.toWsMsg());
-        }, onError: (e) {
+        WebSocketTransformer.upgrade(request)
+            .then((ws) => _httpWs(ws, UserSessionToken.guest), onError: (e) {
           print('!ERROR: $e');
         });
       }
