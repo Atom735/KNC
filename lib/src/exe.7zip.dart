@@ -15,7 +15,7 @@ String get7ZipPathSync() {
       return _e.path;
     }
   }
-  return '';
+  throw Exception('7Zip неудалось обнаружить');
 }
 
 /// Путь к программе `7z.exe`

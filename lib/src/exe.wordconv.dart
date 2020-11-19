@@ -22,7 +22,7 @@ String getWordConvPathSync() {
       }
     }
   }
-  return '';
+  throw Exception('WordConv неудалось обнаружить');
 }
 
 /// Путь к программе `WordConv.exe`
