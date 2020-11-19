@@ -4,6 +4,7 @@ library mydart_userbase;
 import 'dart:convert';
 
 import 'package:js/js.dart';
+import 'package:knc/src/constants.dart';
 
 import 'index.dart' show passwordEncode;
 
@@ -62,7 +63,9 @@ class JsUser {
       o.phone = map['phone'];
       o.access = map['access'];
     }
-    o.genJsonStringReg = allowInteropCaptureThis((JsUser _) => jsonEncode({
+    o.genJsonStringReg = allowInteropCaptureThis((JsUser _) =>
+        msgUserReg +
+        jsonEncode({
           'pass': passwordEncode(_.pass ?? ''),
           'name': _.name ?? '',
           'fname': _.fname ?? '',
@@ -71,7 +74,9 @@ class JsUser {
           'email': _.email ?? '',
           'phone': _.phone ?? '',
         }));
-    o.genJsonStringPass = allowInteropCaptureThis((JsUser _) => jsonEncode({
+    o.genJsonStringPass = allowInteropCaptureThis((JsUser _) =>
+        msgUserPass +
+        jsonEncode({
           'pass': passwordEncode(_.pass ?? ''),
           'email': _.email ?? '',
         }));

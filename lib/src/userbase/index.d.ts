@@ -1,4 +1,4 @@
-declare function JsUser(): JsUser;
+declare function JsUser(str?: string): JsUser;
 
 interface JsUser {
     name?: string;
@@ -9,4 +9,6 @@ interface JsUser {
     phone?: string;
     pass?: string;
     access?: string;
+    genJsonStringReg: () => string;
+    genJsonStringPass: () => string;
 }

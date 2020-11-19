@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../ws/index.dart';
+
 /// Класс содержащий данные о пользователе
 /// name fname mname lname	name (full name) given-name (first name) additional-name (middle name) family-name (last name)
 class User {
@@ -88,7 +90,7 @@ class UserSessionToken {
   /// Символы доступа токена
   final String access;
 
-  final List<WebSocket> websockets = [];
+  final List<SocketWrapper> websockets = [];
 
   UserSessionToken(this.user, this.token, this.access);
 
